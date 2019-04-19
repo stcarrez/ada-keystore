@@ -1,0 +1,11 @@
+<project>
+    <name>keystore</name>
+    <property name="author_email">Stephane.Carrez@gmail.com</property>
+    <property name="is_ado">FALSE</property>
+    <property name="license">apache</property>
+    <property name="is_gtk">FALSE</property>
+    <property name="is_lib">TRUE</property>
+    <property name="author">Stephane Carrez</property>
+    <property name="is_web">TRUE</property>
+    <property name="is_tool">FALSE</property>
+</project>
