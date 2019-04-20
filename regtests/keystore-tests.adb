@@ -38,6 +38,8 @@ package body Keystore.Tests is
                        Test_Tool_Help'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Create",
                        Test_Tool_Create'Access);
+      Caller.Add_Test (Suite, "Test AKT.Main",
+                       Test_Tool_Invalid'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -121,5 +123,21 @@ package body Keystore.Tests is
                                  Result, "list command failed");
 
    end Test_Tool_Create;
+
+   --  ------------------------------
+   --  Test the akt command with invalid parameters.
+   --  ------------------------------
+   procedure Test_Tool_Invalid (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-tool.akt");
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " -f " & Path & " -p admin unkown-cmd", Result, 1);
+      Util.Tests.Assert_Matches (T, "^ERROR: Unkown command 'unkown-cmd'",
+                                 Result, "Wrong message when command was not found");
+
+      T.Execute (Tool & " -f " & Path & " -p admin -k create", Result, 1);
+      Util.Tests.Assert_Matches (T, "^akt: unrecognized option '-k'",
+                                 Result, "Wrong message for invalid option");
+   end Test_Tool_Invalid;
 
 end Keystore.Tests;
