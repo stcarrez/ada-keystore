@@ -41,6 +41,7 @@ private package Keystore.Keys is
    WH_SALT_END       : constant IO.Block_Index := WH_SALT_START + WH_SALT_SIZE - 1;
    WH_KEY_LIST_START : constant IO.Block_Index := WH_SALT_END + 8 + 1;
 
+   --  Key slot type is using PBKDF2-HMAC-256.
    WH_KEY_PBKDF2     : constant := 16#0001#;
 
    protected type Key_Manager is
