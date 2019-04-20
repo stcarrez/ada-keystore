@@ -1,5 +1,6 @@
 *~
 #*
+*.ali
 *.log
 config.status
 CHANGES
@@ -8,13 +9,17 @@ Makefile.conf
 *.gb_project
 *.project
 *.log
+*.cov
 ChangeLog
 .settings
 configure.lineno
 util.gpr
-tests.xml
-keystoreada-test.xml
-keystoreada-aunit.xml
+gnatinspect.db*
+clang_ref_cache.db
+gpsauto.cgpr
+keystore-tests.xml
+keystore-test.xml
+keystore-aunit.xml
 autom4te.cache
 *.txt
 lib/
