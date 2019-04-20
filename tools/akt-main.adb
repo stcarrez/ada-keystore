@@ -47,14 +47,14 @@ begin
    end;
 
 exception
-   when GNAT.Command_Line.Exit_From_Command_Line =>
+   when GNAT.Command_Line.Exit_From_Command_Line | GNAT.Command_Line.Invalid_Switch =>
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
    when Keystore.Bad_Password =>
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
       Log.Error ("Invalid password to unlock the keystore file");
 
-   when AKT.Commands.Error =>
+   when AKT.Commands.Error | Util.Commands.Not_Found =>
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
    when E : others =>
