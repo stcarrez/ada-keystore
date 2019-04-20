@@ -40,6 +40,8 @@ package body Keystore.Tests is
                        Test_Tool_Create'Access);
       Caller.Add_Test (Suite, "Test AKT.Main",
                        Test_Tool_Invalid'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Create (password-file)",
+                       Test_Tool_Create_Password_File'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -125,6 +127,37 @@ package body Keystore.Tests is
    end Test_Tool_Create;
 
    --  ------------------------------
+   --  Test the akt keystore creation with password file.
+   --  ------------------------------
+   procedure Test_Tool_Create_Password_File (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-tool.akt");
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      if Ada.Directories.Exists (Path) then
+         Ada.Directories.Delete_File (Path);
+      end if;
+
+      --  Create keystore
+      --  file.key must have rw------- mode (600)
+      --  regtests/files must have rwx------ (700)
+      T.Execute (Tool & " -f " & Path & " --password-file regtests/files/file.key create",
+                 Result, 0);
+      Util.Tests.Assert_Equals (T, "", Result, "create command failed");
+      T.Assert (Ada.Directories.Exists (Path),
+                "Keystore file does not exist");
+
+      --  Set property
+      T.Execute (Tool & " -f " & Path & " --password-file regtests/files/file.key "
+                 & "set testing my-testing-value", Result);
+      Util.Tests.Assert_Equals (T, "", Result, "set command failed");
+
+      --  List content => one entry
+      T.Execute (Tool & " -f " & Path & " --password-file regtests/files/file.key list", Result);
+      Util.Tests.Assert_Matches (T, "^testing", Result, "list command failed");
+
+   end Test_Tool_Create_Password_File;
+
+   --  ------------------------------
    --  Test the akt command with invalid parameters.
    --  ------------------------------
    procedure Test_Tool_Invalid (T : in out Test) is
@@ -138,6 +171,19 @@ package body Keystore.Tests is
       T.Execute (Tool & " -f " & Path & " -p admin -k create", Result, 1);
       Util.Tests.Assert_Matches (T, "^akt: unrecognized option '-k'",
                                  Result, "Wrong message for invalid option");
+
+      --  Create keystore with a missing key file.
+      T.Execute (Tool & " -f " & Path & " --password-file regtests/missing.key create",
+                 Result, 1);
+      Util.Tests.Assert_Matches (T, "^ERROR: Invalid password to unlock the keystore file",
+                                 Result, "Wrong message when command was not found");
+
+      --  Create keystore with a key file that does not satisfy the security constraints.
+      T.Execute (Tool & " -f " & Path & " --password-file src/keystore.ads create",
+                 Result, 1);
+      Util.Tests.Assert_Matches (T, "^ERROR: Invalid password to unlock the keystore file",
+                                 Result, "Wrong message when command was not found");
+
    end Test_Tool_Invalid;
 
 end Keystore.Tests;
