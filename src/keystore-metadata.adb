@@ -600,6 +600,10 @@ package body Keystore.Metadata is
                         Stream  : in out IO.Wallet_Stream'Class) is
       Space : constant IO.Block_Index := WALLET_ENTRY_SIZE + Name'Length;
    begin
+      if Manager.Map.Contains (Name) then
+         raise Name_Exist;
+      end if;
+
       --  Create the new wallet entry.
       Item := new Wallet_Entry (Length => Name'Length);
       Item.Name := Name;
