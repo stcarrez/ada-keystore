@@ -59,6 +59,8 @@ package body AKT.Commands.List is
    procedure Help (Command   : in out Command_Type;
                    Context   : in out Context_Type) is
    begin
+      AKT.Commands.Usage (Context);
+
       Ada.Text_IO.Put_Line ("set: insert a new value in the keystore");
       Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("Usage: set <name> <value>");

@@ -26,9 +26,10 @@ package body AKT.Commands.Get is
                       Name      : in String;
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
+      pragma Unreferenced (Command, Name);
    begin
       if Args.Get_Count = 0 then
-         AKT.Commands.Usage (Context, Args);
+         AKT.Commands.Usage (Context);
       else
          Context.Open_Keystore;
          for I in 1 .. Args.Get_Count loop
@@ -43,10 +44,13 @@ package body AKT.Commands.Get is
    overriding
    procedure Help (Command   : in out Command_Type;
                    Context   : in out Context_Type) is
+      pragma Unreferenced (Command);
    begin
-      Ada.Text_IO.Put_Line ("set: insert a new value in the keystore");
+      AKT.Commands.Usage (Context);
       Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: set <name> <value>");
+      Ada.Text_IO.Put_Line ("akt get: get a value from the keystore");
+      Ada.Text_IO.New_Line;
+      Ada.Text_IO.Put_Line ("Usage: get <name>");
       Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("  ");
    end Help;

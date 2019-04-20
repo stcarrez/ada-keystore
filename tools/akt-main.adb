@@ -39,7 +39,7 @@ begin
    begin
       if Cmd_Name'Length = 0 then
          Ada.Text_IO.Put_Line ("Missing command name to execute.");
-         AKT.Commands.Usage (Context, Arguments);
+         AKT.Commands.Usage (Context);
          Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
          return;
       end if;

@@ -26,9 +26,10 @@ package body AKT.Commands.Set is
                       Name      : in String;
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
+      pragma Unreferenced (Command, Name);
    begin
       if Args.Get_Count /= 2 then
-         AKT.Commands.Usage (Context, Args);
+         AKT.Commands.Usage (Context);
       else
          Context.Open_Keystore;
          Context.Wallet.Add (Name    => Args.Get_Argument (1),
@@ -42,7 +43,10 @@ package body AKT.Commands.Set is
    overriding
    procedure Help (Command   : in out Command_Type;
                    Context   : in out Context_Type) is
+      pragma Unreferenced (Command);
    begin
+      AKT.Commands.Usage (Context);
+      Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("set: insert a new value in the keystore");
       Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("Usage: set <name> <value>");

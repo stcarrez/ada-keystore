@@ -40,12 +40,9 @@ package body AKT.Commands is
    --  ------------------------------
    --  Print the command usage.
    --  ------------------------------
-   procedure Usage (Context : in out Context_Type;
-                    Args    : in Argument_List'Class;
-                    Name    : in String := "") is
+   procedure Usage (Context : in out Context_Type) is
    begin
       GC.Display_Help (Context.Command_Config);
-      --  Driver.Usage (Args, Context, Name);
    end Usage;
 
    --  ------------------------------
@@ -63,7 +60,7 @@ package body AKT.Commands is
    procedure Open_Keystore (Context  : in out Context_Type) is
    begin
       Context.Wallet.Open (Password => Context.Provider.Get_Password,
-                           Path     => Ada.Strings.Unbounded.To_String (Context.Path));
+                           Path     => Context.Wallet_File.all);
    end Open_Keystore;
 
    --  ------------------------------
@@ -82,6 +79,8 @@ package body AKT.Commands is
                       Args    : in Argument_List'Class;
                       Context : in out Context_Type) is
    begin
+      Log.Info ("Execute command {0}", Name);
+
       Driver.Execute (Name, Args, Context);
    end Execute;
 

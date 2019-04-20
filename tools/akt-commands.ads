@@ -31,9 +31,7 @@ package AKT.Commands is
    type Context_Type is limited private;
 
    --  Print the command usage.
-   procedure Usage (Context : in out Context_Type;
-                    Args    : in Argument_List'Class;
-                    Name    : in String := "");
+   procedure Usage (Context : in out Context_Type);
 
    --  Set the keystore path.
    procedure Set_Keystore_Path (Context : in out Context_Type;
