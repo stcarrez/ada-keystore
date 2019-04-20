@@ -36,6 +36,9 @@ package Keystore is
    --  Exception raised when a keystore entry was not found.
    Not_Found     : exception;
 
+   --  Exception raised when a keystore entry already exist.
+   Name_Exist    : exception;
+
    --  Exception raised when the wallet cannot be opened with the given password.
    Bad_Password  : exception;
 
@@ -99,7 +102,7 @@ package Keystore is
    procedure Add (Container : in out Wallet;
                   Name      : in String;
                   Content   : in String) with
-     Pre  => Container.Is_Open and not Container.Contains (Name),
+     Pre  => Container.Is_Open,
      Post => Container.Contains (Name);
 
    --  Add in the wallet the named entry and associate it the content.
@@ -108,7 +111,7 @@ package Keystore is
    procedure Add (Container : in out Wallet;
                   Name      : in String;
                   Content   : in Ada.Streams.Stream_Element_Array) with
-     Pre  => Container.Is_Open and not Container.Contains (Name),
+     Pre  => Container.Is_Open,
      Post => Container.Contains (Name);
 
    --  Update in the wallet the named entry and associate it the new content.
@@ -116,13 +119,13 @@ package Keystore is
    procedure Update (Container : in out Wallet;
                      Name      : in String;
                      Content   : in String) with
-     Pre  => Container.Is_Open and Container.Contains (Name),
+     Pre  => Container.Is_Open,
      Post => Container.Contains (Name);
 
    --  Delete from the wallet the named entry.
    procedure Delete (Container : in out Wallet;
                      Name      : in String) with
-     Pre  => Container.Is_Open and Container.Contains (Name),
+     Pre  => Container.Is_Open,
      Post => not Container.Contains (Name);
 
    --  Get from the wallet the named entry.
