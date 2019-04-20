@@ -1,0 +1,183 @@
+.\"
+.\"
+.TH AKT 1 "Apr 7, 2019" "Ada Keystore Tool"
+.SH NAME
+akt - Ada Keystore Tool
+.SH SYNOPSIS
+.B akt
+[ -v ] [ -f
+.I file
+] [ -p
+.I password
+]
+.I command
+.br
+.SH DESCRIPTION
+\fIakt\fR is a tool to store information in secure wallets
+and protect the stored information by encrypting the content.
+It is necessary to know one of the wallet password to access its content.
+\fIakt\fR can be used to safely store passwords, credentials,
+bank accounts and even documents.
+.\"
+.PP
+Wallets are protected by a master key using AES-256 and the wallet
+master key is protected by a user password.
+The wallet defines up to 8 slots that identify
+a password key that is able to unlock the master key.  To open a wallet,
+it is necessary to unlock one of these 8 slots by providing the correct
+password.  Wallet key slots are protected by the user's password
+and the PBKDF2-HMAC-256 algorithm, a random salt, a random counter
+and they are encrypted using AES-256.
+.\"
+.PP
+Values stored in the wallet are protected by their own encryption keys
+using AES-256.  A wallet can contain another wallet which is then
+protected by its own encryption keys and passwords (with 8 independent slots).
+Because the child wallet has its own master key, it is necessary to known
+the primary password and the child password to unlock the parent wallet
+first and then the child wallet.
+.\"
+.PP
+The data is organized in blocks of 4K whose primary content is encrypted
+either by the wallet master key or by the entry keys.  The data block is
+signed by using HMAC-256.  A data block can contain several values but
+each of them is protected by its own encryption key.  Each value is also
+signed using HMAC-256.
+.\"
+.PP
+The tool provides several commands that allow to create a keystore,
+insert values, retrieve values or delete them.
+.\""
+.PP
+Passwords are retrieved using one of the following options:
+.IP \(bu 4
+by reading a file that contains the password,
+.IP \(bu 4
+by looking at an environment variable,
+.IP \(bu 4
+by using a command line argument,
+.IP \(bu 4
+by asking interactively the user for the password,
+.IP \(bu 4
+by asking through a network socket for the password.
+.\"
+.PP
+.SH OPTIONS
+The following options are recognized by \fIakt\fR:
+.TP 5
+-v
+Prints the
+.I akt
+version.
+.TP 5
+-d
+Enable debugging output.
+.TP 5
+-f file
+.br
+Specifies the path of the keystore file to open.
+.\"
+.SH COMMANDS
+.\"
+.SS The create command
+.RS 0
+akt \fBcreate\fR [--password-file \fI{path}\fR] [--password-env \fI{name}\fR]
+.RE
+.PP
+Create a new keystore and protect it with the password.
+.\"
+.PP
+The password to protect the wallet is passed using one of the following options:
+.B --password-file
+,
+.B --password-env
+,
+.B --password-unsafe
+,
+.B --password-socket
+.  When none of these options are passed, the password is asked interactively.
+.\"
+.SS The set command
+.RS 0
+akt \fBset \fIname\fR \fIcontent\fR
+.RE
+.PP
+The
+.I set
+command is used to store a content in the wallet.
+.\"
+.SS The delete command
+.RS 0
+akt \fBdelete\fP \fIname\fR
+.RE
+.PP
+The
+.I delete
+command is used to erase a content from the wallet.  The data block that contained
+the content to protect is erased and replaced by zeros.
+The secure key that protected the wallet entry is also cleared.
+.\"
+.SS The edit command
+.RS 0
+akt \fBedit \fIname\fR\fR
+.RE
+.PP
+The
+.I edit
+command can be used to edit the protected wallet entry by calling the
+user's prefered editor with the content.
+.\"
+.\"
+.SS The list command
+.RS 0
+akt \fBlist\fR
+.RE
+.PP
+The
+.I list
+command describes the entries stored in the wallet.
+.\"
+.\"
+.SS The get command
+.RS 0
+akt \fBget \fIname\fR\fR
+.RE
+.PP
+The
+.I get
+command allows to retrieve the value associated with a wallet entry.
+.\"
+.SH SECURITY
+.\"
+Wallet master keys are protected by a derived key that is created from the user's
+password using
+.B PBKDF2
+and
+.B HMAC-512
+as hashing operation.  When the wallet is first created, a random salt
+and counter are allocated which are then used by the
+.B PBKDF2
+generation.  The wallet can be protected by up to 8 different passwords.
+Despite this, the security of the wallet master key still depends on the
+strength of the user's password.  For this matter, it is best to use
+long passphrases.
+.\"
+.PP
+The passphrase can be passed within an environment variable or within a
+command line argument.  These two methods are considered unsafe because it
+could be possible for other processes to see these values.  It is best to
+use another method such as using the interactive form, passing the password
+through a file or passing using a socket based communication.
+.\"
+.\"
+.PP
+Each wallet data entry is protected by using its own secret key and IV vector.
+Wallet data are encrypted using AES-256-CBC.  The wallet data entry key and IV
+vectors are protected by the wallet master key.
+.\"
+.\"
+.\"
+.SH AUTHOR
+Written by Stephane Carrez.
+.\"
+
