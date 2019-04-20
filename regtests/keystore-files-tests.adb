@@ -16,6 +16,7 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 
+with Ahven;
 with Ada.Exceptions;
 with Util.Test_Caller;
 with Keystore.IO.Files;
@@ -115,12 +116,23 @@ package body Keystore.Files.Tests is
       for Block in IO.Block_Number (1) .. 3 loop
          for I in 1 .. IO.Block_Index'Last / 17 loop
             declare
-               Pos : constant IO.Block_Index := I * 17;
-               W   : Keystore.Files.Wallet_File;
+               Pos   : constant IO.Block_Index := I * 17;
+               W     : Keystore.Files.Wallet_File;
+               Items : Keystore.Entry_Map;
             begin
                Corrupt (Block, Pos);
                W.Open (Password => Password,
                        Path     => Corrupt_Path);
+
+               --  Block 1 and Block 2 are read by Open.
+               --  Corruption must have been detected by Open.
+               if Block <= 2 then
+                  T.Fail ("No corruption detected block" & IO.Block_Number'Image (Block)
+                          & " at" & IO.Block_Index'Image (Pos));
+               end if;
+
+               --  Block 3 is read only if we need the repository content.
+               W.List (Items);
                T.Fail ("No corruption detected block" & IO.Block_Number'Image (Block)
                        & " at" & IO.Block_Index'Image (Pos));
 
@@ -130,6 +142,9 @@ package body Keystore.Files.Tests is
 
                when Keystore.Invalid_Block =>
                   null;
+
+               when Ahven.Assertion_Error =>
+                  raise;
 
                when E : others =>
                   T.Fail ("Exception not expected: " & Ada.Exceptions.Exception_Name (E));
@@ -149,8 +164,6 @@ package body Keystore.Files.Tests is
          W        : Keystore.Files.Wallet_File;
       begin
          W.Create (Path => Path, Password => Password);
-         --  W.Add ("my-secret", "the secret");
-         --  T.Assert (W.Contains ("my-secret"), "Property not contained in wallet");
       end;
       declare
          W        : Keystore.Files.Wallet_File;
@@ -186,8 +199,6 @@ package body Keystore.Files.Tests is
          W        : Keystore.Files.Wallet_File;
       begin
          W.Create (Path => Path, Password => Password);
-         --  W.Add ("my-secret-add-get", "the secret add-get");
-         --  T.Assert (W.Contains ("my-secret-add-get"), "Property not contained in wallet");
       end;
 
       for Pass in 1 .. 10 loop
@@ -195,15 +206,9 @@ package body Keystore.Files.Tests is
             W        : Keystore.Files.Wallet_File;
          begin
             W.Open (Path => Path, Password => Password);
-            --  T.Assert (W.Contains ("my-secret-add-get"),
-            --          "Property not contained in wallet (load)");
 
-            --  Util.Tests.Assert_Equals (T, "the secret add-get", W.Get("my-secret-add-get"),
-            --                          "Property cannot be retrieved from keystore");
             W.Add ("my-second-secret " & Positive'Image (Pass),
                    "the second-secret padd " & Positive'Image (Pass));
-            --  T.Assert (W.Contains ("my-second-secret"), "Property not contained in wallet");
-            --  T.Assert (W.Contains ("my-secret"), "Property not contained in wallet");
 
             for Check in 1 .. Pass loop
                T.Assert (W.Contains ("my-second-secret " & Positive'Image (Check)),
