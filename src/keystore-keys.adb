@@ -20,6 +20,7 @@ with Interfaces;
 with Util.Log.Loggers;
 with Util.Encoders.HMAC.SHA256;
 with Util.Encoders.KDF.PBKDF2_HMAC_SHA256;
+with Keystore.Logs;
 
 --  Wallet header encrypted with the parent wallet id
 --  +------------------+
@@ -134,7 +135,7 @@ package body Keystore.Keys is
                           IV       : in Util.Encoders.AES.Word_Block_Type;
                           Stream   : in out IO.Wallet_Stream'Class) is
          Protect_Key : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
-         Counter     : Positive := 20000;
+         Counter     : constant Positive := 20000;
       begin
          Buffer.Pos := WH_KEY_LIST_START + IO.Block_Index (Slot) * WH_SLOT_SIZE - WH_SLOT_SIZE;
          Buffer.Data (Buffer.Pos .. Buffer.Pos + WH_KEY_SIZE - 1) := (others => 0);
@@ -178,15 +179,13 @@ package body Keystore.Keys is
                       Sign     => Sign,
                       Into     => Buffer);
          if IO.Get_Unsigned_32 (Buffer) /= IO.BT_WALLET_HEADER then
-            Log.Warn ("Invalid wallet block header BN{0}",
-                      IO.Block_Number'Image (Header_Block));
+            Keystore.Logs.Warn (Log, "Invalid wallet block header BN{0}", Header_Block);
             raise Invalid_Block;
          end if;
          Value := IO.Get_Unsigned_32 (Buffer);
          IO.Skip (Buffer, 8);
          if IO.Get_Unsigned_32 (Buffer) /= WH_MAGIC then
-            Log.Warn ("Invalid wallet magic in header BN{0}",
-                      IO.Block_Number'Image (Header_Block));
+            Keystore.Logs.Warn (Log, "Invalid wallet magic in header BN{0}", Header_Block);
             raise Invalid_Block;
          end if;
          Value := IO.Get_Unsigned_32 (Buffer);
@@ -228,8 +227,7 @@ package body Keystore.Keys is
                end if;
             end if;
          end loop;
-         Log.Info ("No password match for wallet block{0}",
-                   IO.Block_Number'Image (Header_Block));
+         Keystore.Logs.Info (Log, "No password match for wallet block{0}", Header_Block);
          raise Bad_Password;
       end Open;
 
@@ -256,8 +254,8 @@ package body Keystore.Keys is
 
          Random.Generate (Tmp_Rand);
 
-         --  Make a random counter in range 10_000 .. 272_140.
-         Counter := 10000 + Natural (Shift_Left (Interfaces.Unsigned_32 (Tmp_Rand (11)), 10))
+         --  Make a random counter in range 100_000 .. 372_140.
+         Counter := 100_000 + Natural (Shift_Left (Interfaces.Unsigned_32 (Tmp_Rand (11)), 10))
          + Natural (Shift_Left (Interfaces.Unsigned_32 (Tmp_Rand (23)), 2));
 
          --  Generate a master key from the random, salt, counter.
