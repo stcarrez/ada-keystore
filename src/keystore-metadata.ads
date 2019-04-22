@@ -88,6 +88,8 @@ private package Keystore.Metadata is
                    Content    : out Entry_Map;
                    Stream     : in out IO.Wallet_Stream'Class);
 
+   procedure Close (Repository : in out Wallet_Repository);
+
 private
 
    use Ada.Streams;
@@ -228,6 +230,8 @@ private
                        Content    : in Ada.Streams.Stream_Element_Array;
                        Stream     : in out IO.Wallet_Stream'Class) with
      Pre => 64 + AES_Align (Content'Length) <= Data_Block.Available;
+
+   procedure Release (Manager    : in out Wallet_Manager);
 
    protected type Safe_Wallet_Repository is
 
