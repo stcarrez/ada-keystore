@@ -65,6 +65,12 @@ private package Keystore.Metadata is
                   Content    : in Ada.Streams.Stream_Element_Array;
                   Stream     : in out IO.Wallet_Stream'Class);
 
+   procedure Update (Repository : in out Wallet_Repository;
+                     Name       : in String;
+                     Kind       : in Entry_Type;
+                     Content    : in Ada.Streams.Stream_Element_Array;
+                     Stream     : in out IO.Wallet_Stream'Class);
+
    procedure Delete (Repository : in out Wallet_Repository;
                      Name       : in String;
                      Stream     : in out IO.Wallet_Stream'Class);
@@ -188,6 +194,26 @@ private
       Buffer        : IO.Marshaller;
    end record;
 
+   --  Set the IV vector to be used for the encryption of the given block number.
+   procedure Set_IV (Manager : in out Wallet_Manager;
+                     Block   : in IO.Block_Number);
+
+   --  Find the data block instance with the given block number.
+   procedure Find_Data_Block (Manager    : in out Wallet_Manager;
+                              Block      : in IO.Block_Number;
+                              Data_Block : out Wallet_Block_Entry_Access);
+
+   --  Find the data block to hold a new data entry that occupies the given space.
+   --  The first data block that has enough space is used otherwise a new block
+   --  is allocated and initialized.
+   procedure Allocate_Data_Block (Manager    : in out Wallet_Manager;
+                                  Space      : in IO.Block_Index;
+                                  Data_Block : out Wallet_Block_Entry_Access;
+                                  Stream     : in out IO.Wallet_Stream'Class);
+
+   --  Initialize the data block with an empty content.
+   procedure Init_Data_Block (Manager    : in out Wallet_Manager);
+
    --  Load the wallet directory block in the wallet manager buffer.
    --  Extract the directory if this is the first time the data block is read.
    procedure Load_Directory (Manager   : in out Wallet_Manager;
@@ -222,14 +248,36 @@ private
                         Item    : out Wallet_Entry_Access;
                         Stream  : in out IO.Wallet_Stream'Class);
 
+   --  Save the data block.
+   procedure Save_Data (Manager    : in out Wallet_Manager;
+                        Data_Block : in out Wallet_Block_Entry;
+                        Stream     : in out IO.Wallet_Stream'Class);
+
    --  Add in the data block the wallet data entry with its content.
-   --  64 + AES_Align (Content'Length) <= Data_Block.Available
+   --  The data block must have been loaded and is not saved.
    procedure Add_Data (Manager    : in out Wallet_Manager;
                        Data_Block : in out Wallet_Block_Entry;
                        Item       : in Wallet_Entry_Access;
-                       Content    : in Ada.Streams.Stream_Element_Array;
-                       Stream     : in out IO.Wallet_Stream'Class) with
+                       Content    : in Ada.Streams.Stream_Element_Array) with
      Pre => 64 + AES_Align (Content'Length) <= Data_Block.Available;
+
+   --  Delete the data from the data block.
+   --  The data block must have been loaded and is not saved.
+   procedure Delete_Data (Manager    : in out Wallet_Manager;
+                          Data_Block : in out Wallet_Block_Entry;
+                          Item       : in Wallet_Entry_Access);
+
+   --  Get the data associated with the named entry.
+   procedure Get_Data (Manager    : in out Wallet_Manager;
+                       Name       : in String;
+                       Result     : out Entry_Info;
+                       Output     : out Ada.Streams.Stream_Element_Array;
+                       Stream     : in out IO.Wallet_Stream'Class);
+
+   --  Delete the entry from the repository.
+   procedure Delete_Entry (Manager    : in out Wallet_Manager;
+                           Item       : in Wallet_Entry_Access;
+                           Stream     : in out IO.Wallet_Stream'Class);
 
    procedure Release (Manager    : in out Wallet_Manager);
 
@@ -258,6 +306,11 @@ private
                      Kind       : in Entry_Type;
                      Content    : in Ada.Streams.Stream_Element_Array;
                      Stream     : in out IO.Wallet_Stream'Class);
+
+      procedure Update (Name       : in String;
+                        Kind       : in Entry_Type;
+                        Content    : in Ada.Streams.Stream_Element_Array;
+                        Stream     : in out IO.Wallet_Stream'Class);
 
       procedure Delete (Name       : in String;
                         Stream     : in out IO.Wallet_Stream'Class);
