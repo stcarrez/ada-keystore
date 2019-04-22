@@ -18,6 +18,7 @@
 with Ada.Streams;
 with Ada.Finalization;
 with Ada.Strings.Unbounded;
+with Util.Encoders.AES;
 private with Ada.Numerics.Discrete_Random;
 private with Interfaces;
 
@@ -40,6 +41,10 @@ private package Keystore.Random is
    --  Fill the array with pseudo-random numbers.
    procedure Generate (Gen  : in out Generator;
                        Into : out Ada.Streams.Stream_Element_Array);
+
+   --  Fill the array with pseudo-random numbers.
+   procedure Generate (Gen  : in out Generator;
+                       Into : out Util.Encoders.AES.Word_Block_Type);
 
    --  Generate a random sequence of bits and convert the result
    --  into a string in base64url.
