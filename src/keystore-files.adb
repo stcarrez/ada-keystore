@@ -77,6 +77,18 @@ package body Keystore.Files is
       Container.Repository.Create (Password, Block, 1, Master, Container.Stream.all);
    end Create;
 
+   --  ------------------------------
+   --  Close the keystore file.
+   --  ------------------------------
+   procedure Close (Container : in out Wallet_File) is
+   begin
+      Container.Container.Close;
+      if Container.Stream /= null then
+         Container.Stream.Close;
+      end if;
+      Free (Container.Stream);
+   end Close;
+
    --  Add in the wallet the named entry and associate it the children wallet.
    --  The children wallet meta data is protected by the container.
    --  The children wallet has its own key to protect the named entries it manages.
@@ -104,6 +116,9 @@ package body Keystore.Files is
    overriding
    procedure Finalize (Wallet : in out Wallet_File) is
    begin
+      if Wallet.Is_Open then
+         Wallet.Container.Close;
+      end if;
       if Wallet.Stream /= null then
          Wallet.Stream.Close;
       end if;
