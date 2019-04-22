@@ -658,7 +658,7 @@ package body Keystore.Metadata is
       end if;
 
       --  Move the data entry.
-      Last_Entry := Data_Entry_Offset (Data_Block.Count - 1);
+      Last_Entry := Data_Entry_Offset (Data_Block.Count) - 1;
       if Entry_Pos /= Data_Block.Count - 1 then
          Start_Entry := Data_Entry_Offset (Entry_Pos);
          Manager.Buffer.Data (Start_Entry .. Last_Entry - 64)
