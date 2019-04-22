@@ -43,6 +43,17 @@ package body Keystore.Random is
    end Generate;
 
    --  ------------------------------
+   --  Fill the array with pseudo-random numbers.
+   --  ------------------------------
+   procedure Generate (Gen  : in out Generator;
+                       Into : out Util.Encoders.AES.Word_Block_Type) is
+      Block : Ada.Streams.Stream_Element_Array (1 .. 16);
+      for Block'Address use Into'Address;
+   begin
+      Gen.Rand.Generate (Block);
+   end Generate;
+
+   --  ------------------------------
    --  Generate a random sequence of bits and convert the result
    --  into a string in base64url.
    --  ------------------------------
