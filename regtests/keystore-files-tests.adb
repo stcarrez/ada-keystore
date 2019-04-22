@@ -22,7 +22,7 @@ with Util.Test_Caller;
 with Keystore.IO.Files;
 package body Keystore.Files.Tests is
 
-   package Caller is new Util.Test_Caller (Test, "files");
+   package Caller is new Util.Test_Caller (Test, "Files");
 
    procedure Add_Tests (Suite : in Util.Tests.Access_Test_Suite) is
    begin
@@ -38,6 +38,8 @@ package body Keystore.Files.Tests is
                        Test_List'Access);
       Caller.Add_Test (Suite, "Test Keystore.Delete",
                        Test_Delete'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Files.Open+Close",
+                       Test_Open_Close'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -287,5 +289,23 @@ package body Keystore.Files.Tests is
       Verify_Entry ("list-3", 39);
       Verify_Entry ("list-4", 42);
    end Test_List;
+
+   --  ------------------------------
+   --  Test opening and closing keystore.
+   --  ------------------------------
+   procedure Test_Open_Close (T : in out Test) is
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.ks");
+      Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
+      W        : Keystore.Files.Wallet_File;
+   begin
+      --  Open and close the same wallet instance several times.
+      for I in 1 .. 5 loop
+         W.Open (Path => Path, Password => Password);
+         Util.Tests.Assert_Equals (T, "http://www.apache.org/licenses/LICENSE-2.0",
+                                   W.Get ("list-4"),
+                                   "Cannot get property list-4");
+         W.Close;
+      end loop;
+   end Test_Open_Close;
 
 end Keystore.Files.Tests;
