@@ -118,6 +118,12 @@ package body Keystore.Metadata is
      new Ada.Unchecked_Deallocation (Object => Wallet_Block_Entry,
                                      Name   => Wallet_Block_Entry_Access);
 
+   --  Start offset of the data entry descriptor in the data block.
+   function Data_Entry_Offset (Index : in Natural) return IO.Block_Index;
+
+   --  Size of the wallet entry in the repository.
+   function Entry_Size (Item : in Wallet_Entry_Access) return IO.Block_Index;
+
    function Hash (Value : in Wallet_Entry_Index) return Ada.Containers.Hash_Type is
    begin
       return Ada.Containers.Hash_Type (Value);
@@ -285,15 +291,17 @@ package body Keystore.Metadata is
       --  This is the first time we load this data block, scan the directory.
       if not Dir_Block.Ready then
          declare
-            Prev  : Wallet_Entry_Access := null;
-            Item  : Wallet_Entry_Access;
-            Index : Interfaces.Unsigned_32;
+            Prev   : Wallet_Entry_Access := null;
+            Item   : Wallet_Entry_Access;
+            Index  : Interfaces.Unsigned_32;
+            Offset : IO.Block_Index;
          begin
             IO.Skip (Manager.Buffer, 8);
             Dir_Block.Next_Block := IO.Get_Unsigned_32 (Manager.Buffer);
 
             --  Scan each entry
             loop
+               Offset := Manager.Buffer.Pos;
                Index := IO.Get_Unsigned_32 (Manager.Buffer);
                exit when Index = 0;
                declare
@@ -302,6 +310,7 @@ package body Keystore.Metadata is
                   Block : IO.Block_Number;
                begin
                   Item := new Wallet_Entry (Length => Len);
+                  Item.Entry_Offset := Offset;
                   Item.Id := Wallet_Entry_Index (Index);
                   Item.Create_Date := IO.Get_Date (Manager.Buffer);
                   Item.Header := Dir_Block;
@@ -388,6 +397,7 @@ package body Keystore.Metadata is
       Entry_Block.Available := IO.Block_Index'Last - IO.BT_DATA_START - Space - 4;
       Entry_Block.Count := 0;
       Entry_Block.Last_Pos := IO.BT_DATA_START + 4;
+      Entry_Block.Ready := True;
       Stream.Allocate (Entry_Block.Block);
       Manager.Entry_List.Append (Entry_Block);
 
@@ -422,6 +432,7 @@ package body Keystore.Metadata is
       Data_Block.Available := IO.Block_Index'Last - IO.BT_DATA_START;
       Data_Block.Count := 0;
       Data_Block.Last_Pos := IO.Block_Index'Last;
+      Data_Block.Ready := True;
       Stream.Allocate (Data_Block.Block);
       Manager.Data_List.Append (Data_Block);
    end Allocate_Data_Block;
@@ -521,6 +532,23 @@ package body Keystore.Metadata is
 
    end Load_Data;
 
+   --  ------------------------------
+   --  Start offset of the data entry descriptor in the data block.
+   --  ------------------------------
+   function Data_Entry_Offset (Index : in Natural) return IO.Block_Index is
+   begin
+      return IO.BT_DATA_START + Stream_Element_Offset (Index * 64);
+   end Data_Entry_Offset;
+
+   --  ------------------------------
+   --  Size of the wallet entry in the repository.
+   --  ------------------------------
+   function Entry_Size (Item : in Wallet_Entry_Access) return IO.Block_Index is
+   begin
+      return IO.SIZE_U32 + IO.SIZE_U16 + Item.Name'Length
+        + IO.SIZE_DATE + 32 + 16 + IO.SIZE_BLOCK;
+   end Entry_Size;
+
    --  Add in the data block the wallet data entry with its content.
    procedure Add_Data (Manager    : in out Wallet_Manager;
                        Data_Block : in out Wallet_Block_Entry;
@@ -549,7 +577,7 @@ package body Keystore.Metadata is
       end if;
 
       --  Serialize the data entry at end of data entry area.
-      Manager.Buffer.Pos := IO.BT_DATA_START + Stream_Element_Offset (Data_Block.Count * 64);
+      Manager.Buffer.Pos := Data_Entry_Offset (Data_Block.Count);
       IO.Put_Unsigned_32 (Manager.Buffer, Interfaces.Unsigned_32 (Item.Id));
       IO.Put_Kind (Manager.Buffer, Item.Kind);
       IO.Put_Unsigned_64 (Manager.Buffer, Item.Size);
@@ -565,6 +593,8 @@ package body Keystore.Metadata is
       Item.Data_Offset := Data_Block.Last_Pos;
       Start_Data := Item.Data_Offset;
       End_Data := Start_Data + Data_Size - 1;
+
+      pragma Assert (Check => Manager.Buffer.Pos = Data_Entry_Offset (Data_Block.Count));
 
       --  Encrypt the data content using the item encryption key and IV.
       Cipher_Data.Set_IV (Item.IV);
@@ -588,6 +618,74 @@ package body Keystore.Metadata is
                     Cipher       => Manager.Cipher,
                     Sign         => Manager.Sign);
    end Add_Data;
+
+   procedure Delete_Data (Manager    : in out Wallet_Manager;
+                          Data_Block : in Wallet_Block_Entry_Access;
+                          Item       : in Wallet_Entry_Access;
+                          Stream     : in out IO.Wallet_Stream'Class) is
+      Last_Pos      : IO.Block_Index;
+      Start_Data    : IO.Block_Index;
+      End_Data      : IO.Block_Index;
+      Start_Entry   : IO.Block_Index;
+      Last_Entry    : IO.Block_Index;
+      Data_Size     : IO.Block_Index;
+      Encrypt_Size  : IO.Block_Index;
+      Wallet_Entry  : Wallet_Entry_Access;
+      Prev_Entry    : Wallet_Entry_Access;
+      Entry_Pos     : Natural := 0;
+   begin
+      Keystore.Logs.Debug (Log, "Delete data from block{0}", Data_Block.Block);
+
+      Load_Data (Manager, Data_Block, Stream);
+      Last_Pos := Data_Block.Last_Pos;
+      Data_Size := AES_Align (IO.Block_Index (Item.Size));
+
+      --  Unlink the item from the data block list and identify the data entry position.
+      Wallet_Entry := Data_Block.First;
+      while Wallet_Entry /= null and Wallet_Entry /= Item loop
+         Prev_Entry := Wallet_Entry;
+         Wallet_Entry := Wallet_Entry.Next_Data;
+         Entry_Pos := Entry_Pos + 1;
+      end loop;
+
+      if Wallet_Entry = null then
+         return;
+      end if;
+      if Prev_Entry /= null then
+         Prev_Entry.Next_Data := Item.Next_Data;
+      else
+         Data_Block.First := Item.Next_Data;
+      end if;
+
+      --  Move the data entry.
+      Last_Entry := Data_Entry_Offset (Data_Block.Count - 1);
+      if Entry_Pos /= Data_Block.Count - 1 then
+         Start_Entry := Data_Entry_Offset (Entry_Pos);
+         Manager.Buffer.Data (Start_Entry .. Last_Entry - 64)
+           := Manager.Buffer.Data (Start_Entry + 64 .. Last_Entry);
+      end if;
+      Manager.Buffer.Data (Last_Entry - 64 .. Last_Entry) := (others => 0);
+
+      --  Move the data before the slot being removed.
+      if Item.Data_Offset /= Last_Pos then
+         Manager.Buffer.Data (Last_Pos + Data_Size .. Item.Data_Offset + Data_Size - 1)
+           := Manager.Buffer.Data (Last_Pos .. Item.Data_Offset - 1);
+      end if;
+
+      --  Erase the content that was dropped.
+      Manager.Buffer.Data (Last_Pos .. Last_Pos + Data_Size - 1) := (others => 0);
+      Data_Block.Last_Pos := Data_Block.Last_Pos + Data_Size;
+      Data_Block.Count := Data_Block.Count - 1;
+
+      Set_IV (Manager, Data_Block.Block);
+      Encrypt_Size := IO.Block_Index (Data_Block.Count * 64);
+      Stream.Write (Block        => Data_Block.Block,
+                    From         => Manager.Buffer,
+                    Encrypt_Size => Encrypt_Size,
+                    Cipher       => Manager.Cipher,
+                    Sign         => Manager.Sign);
+
+   end Delete_Data;
 
    --  ------------------------------
    --  Add a new entry in the wallet directory.
@@ -630,6 +728,7 @@ package body Keystore.Metadata is
       end if;
 
       --  Write the new entry.
+      Item.Entry_Offset := Item.Header.Last_Pos;
       Manager.Buffer.Pos := Item.Header.Last_Pos;
       IO.Put_Unsigned_32 (Manager.Buffer, Interfaces.Unsigned_32 (Item.Id));
       IO.Put_String (Manager.Buffer, Item.Name);
@@ -641,12 +740,62 @@ package body Keystore.Metadata is
       --  Remember the last valid position for the next entry to add.
       Item.Header.Last_Pos := Manager.Buffer.Pos;
 
+      pragma Assert (Check => Manager.Buffer.Pos = Item.Entry_Offset + Entry_Size (Item));
+
       Set_IV (Manager, Item.Header.Block);
       Stream.Write (Block  => Item.Header.Block,
                     From   => Manager.Buffer,
                     Cipher => Manager.Cipher,
                     Sign   => Manager.Sign);
    end Add_Entry;
+
+   procedure Delete_Entry (Manager    : in out Wallet_Manager;
+                           Item       : in Wallet_Entry_Access;
+                           Stream     : in out IO.Wallet_Stream'Class) is
+      Dir_Block    : Wallet_Block_Entry_Access := Item.Header;
+      Wallet_Entry : Wallet_Entry_Access;
+      Prev_Entry   : Wallet_Entry_Access;
+      Size         : IO.Block_Index;
+      End_Entry    : IO.Block_Index;
+   begin
+      Keystore.Logs.Debug (Log, "Delete entry from block{0}", Dir_Block.Block);
+
+      --  Load the directory block .
+      Load_Directory (Manager, Item.Header, Stream);
+
+      --  Unlink the item from the directory block list and identify the entry position.
+      Wallet_Entry := Dir_Block.First;
+      while Wallet_Entry /= null and Wallet_Entry /= Item loop
+         Prev_Entry := Wallet_Entry;
+         Wallet_Entry := Wallet_Entry.Next_Entry;
+      end loop;
+
+      if Wallet_Entry = null then
+         return;
+      end if;
+      if Prev_Entry /= null then
+         Prev_Entry.Next_Entry := Item.Next_Entry;
+      else
+         Dir_Block.First := Item.Next_Entry;
+      end if;
+
+      --  Move the data entry.
+      Size := Entry_Size (Item);
+      End_Entry := Item.Entry_Offset + Size;
+      if End_Entry /= Dir_Block.Last_Pos then
+         Manager.Buffer.Data (Item.Entry_Offset .. Dir_Block.Last_Pos - Size - 1)
+           := Manager.Buffer.Data (End_Entry .. Dir_Block.Last_Pos - 1);
+      end if;
+      Manager.Buffer.Data (Dir_Block.Last_Pos - Size .. Dir_Block.Last_Pos) := (others => 0);
+
+      Dir_Block.Last_Pos := Dir_Block.Last_Pos - Size;
+
+      Set_IV (Manager, Dir_Block.Block);
+      Stream.Write (Block        => Dir_Block.Block,
+                    From         => Manager.Buffer,
+                    Cipher       => Manager.Cipher,
+                    Sign         => Manager.Sign);
+   end Delete_Entry;
 
    procedure Get_Data (Manager    : in out Wallet_Manager;
                        Name       : in String;
@@ -664,26 +813,29 @@ package body Keystore.Metadata is
       Encoded    : Stream_Element_Offset;
    begin
       if not Wallet_Maps.Has_Element (Pos) then
+         Log.Info ("Data entry '{0}' not found", Name);
          raise Not_Found;
       end if;
 
       Item := Wallet_Maps.Element (Pos);
       Load_Data (Manager, Item.Data, Stream);
+      if Item.Size > 0 then
 
-      Decipher.Set_IV (Item.IV);
-      Decipher.Set_Key (Item.Key, Util.Encoders.AES.CBC);
-      Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
+         Decipher.Set_IV (Item.IV);
+         Decipher.Set_Key (Item.Key, Util.Encoders.AES.CBC);
+         Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
 
-      Start_Pos := Output'First;
-      Last_Pos  := Output'Last;
-      Start_Data := Item.Data_Offset;
-      End_Data := Start_Data + AES_Align (IO.Block_Index (Item.Size)) - 1;
-      Decipher.Transform (Data    => Manager.Buffer.Data (Start_Data .. End_Data),
-                          Into    => Output (Start_Pos .. Last_Pos),
-                          Last    => Last,
-                          Encoded => Encoded);
-      Decipher.Finish (Into => Output (Last + 1 .. Last_Pos),
-                       Last => Last);
+         Start_Pos := Output'First;
+         Last_Pos  := Output'Last;
+         Start_Data := Item.Data_Offset;
+         End_Data := Start_Data + AES_Align (IO.Block_Index (Item.Size)) - 1;
+         Decipher.Transform (Data    => Manager.Buffer.Data (Start_Data .. End_Data),
+                             Into    => Output (Start_Pos .. Last_Pos),
+                             Last    => Last,
+                             Encoded => Encoded);
+         Decipher.Finish (Into => Output (Last + 1 .. Last_Pos),
+                          Last => Last);
+      end if;
       Result.Size := Natural (Item.Size);
       Result.Kind := Item.Kind;
       Result.Create_Date := Item.Create_Date;
@@ -745,12 +897,22 @@ package body Keystore.Metadata is
                         Block    : in IO.Block_Number;
                         Keys     : in out Keystore.Keys.Key_Manager;
                         Stream   : in out IO.Wallet_Stream'Class) is
+         Entry_Block : Wallet_Block_Entry_Access;
       begin
          Stream.Allocate (Manager.Root);
          Manager.Id := Ident;
          Manager.Next_Id := 1;
          Keys.Create (Password, 1, Ident, Block, Manager.Root, Manager.Protect_Key,
                       Manager.IV, Manager.Cipher, Manager.Decipher, Stream);
+
+         --  We need a new wallet directory block.
+         Entry_Block := new Wallet_Block_Entry;
+         Entry_Block.Available := IO.Block_Index'Last - IO.BT_DATA_START - 4;
+         Entry_Block.Count := 0;
+         Entry_Block.Last_Pos := IO.BT_DATA_START + 4;
+         Entry_Block.Ready := True;
+         Entry_Block.Block := Manager.Root;
+         Manager.Entry_List.Append (Entry_Block);
 
          Manager.Buffer.Data := (others => 0);
          IO.Set_Header (Into => Manager.Buffer,
@@ -809,6 +971,22 @@ package body Keystore.Metadata is
          end if;
 
          Item := Wallet_Maps.Element (Pos);
+         begin
+            Delete_Data (Manager    => Manager,
+                         Data_Block => Item.Data,
+                         Item       => Item,
+                         Stream     => Stream);
+            Delete_Entry (Manager => Manager,
+                          Item    => Item,
+                          Stream  => Stream);
+         exception
+            when others =>
+               --  Handle data or directory block corruption or IO error.
+               Manager.Entry_Indexes.Delete (Item.Id);
+               Manager.Map.Delete (Pos);
+               Free (Item);
+               raise;
+         end;
          Manager.Entry_Indexes.Delete (Item.Id);
          Manager.Map.Delete (Pos);
          Free (Item);
