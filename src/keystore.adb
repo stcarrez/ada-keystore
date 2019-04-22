@@ -186,6 +186,14 @@ package body Keystore is
          Keystore.Metadata.List (Repository.all, Content, Stream.all);
       end List;
 
+      procedure Close is
+      begin
+         Keystore.Metadata.Close (Repository.all);
+         Repository := null;
+         Stream := null;
+         State := S_CLOSED;
+      end Close;
+
    end Wallet_Container;
 
 end Keystore;
