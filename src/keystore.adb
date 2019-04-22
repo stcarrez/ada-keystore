@@ -97,8 +97,13 @@ package body Keystore is
    procedure Update (Container : in out Wallet;
                      Name      : in String;
                      Content   : in String) is
+      use Ada.Streams;
+
+      Data : Stream_Element_Array (Stream_Element_Offset (Content'First)
+                                   .. Stream_Element_Offset (Content'Last));
+      for Data'Address use Content'Address;
    begin
-      null;
+      Container.Container.Update (Name, T_STRING, Data);
    end Update;
 
    --  ------------------------------
@@ -169,6 +174,13 @@ package body Keystore is
          Keystore.Metadata.Add (Repository.all, Name, Kind, Content, Stream.all);
       end Add;
 
+      procedure Update (Name    : in String;
+                        Kind    : in Entry_Type;
+                        Content : in Ada.Streams.Stream_Element_Array) is
+      begin
+         Keystore.Metadata.Update (Repository.all, Name, Kind, Content, Stream.all);
+      end Update;
+
       procedure Delete (Name : in String) is
       begin
          Keystore.Metadata.Delete (Repository.all, Name, Stream.all);
@@ -189,7 +201,6 @@ package body Keystore is
       procedure Close is
       begin
          Keystore.Metadata.Close (Repository.all);
-         Repository := null;
          Stream := null;
          State := S_CLOSED;
       end Close;
