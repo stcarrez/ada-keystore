@@ -35,6 +35,15 @@ private package Keystore.IO is
    BT_WALLET_REPOSITORY : constant := 16#02020202#;
    BT_WALLET_DATA       : constant := 16#03030303#;
 
+   SIZE_U16             : constant := 2;
+   SIZE_U32             : constant := 4;
+   SIZE_U64             : constant := 8;
+   SIZE_DATE            : constant := SIZE_U64;
+   SIZE_HMAC            : constant := BT_HMAC_HEADER_SIZE;
+   SIZE_KIND            : constant := SIZE_U32;
+   SIZE_BLOCK           : constant := SIZE_U32;
+   SIZE_SECRET          : constant := 32;
+
    subtype Block_Index is Stream_Element_Offset range 1 .. Block_Size;
 
    subtype Block_Type is Stream_Element_Array (Block_Index);
