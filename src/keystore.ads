@@ -167,6 +167,8 @@ private
 
       procedure List (Content : out Entry_Map);
 
+      procedure Close;
+
    private
       Repository : access Keystore.Metadata.Wallet_Repository;
       Stream     : access Keystore.IO.Wallet_Stream'Class;
