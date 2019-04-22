@@ -37,6 +37,11 @@ package Keystore.Files is
      Pre  => not Container.Is_Open,
      Post => Container.Is_Open;
 
+   --  Close the keystore file.
+   procedure Close (Container : in out Wallet_File) with
+     Pre  => Container.Is_Open,
+     Post => not Container.Is_Open;
+
    --  Add in the wallet the named entry and associate it the children wallet.
    --  The children wallet meta data is protected by the container.
    --  The children wallet has its own key to protect the named entries it manages.
