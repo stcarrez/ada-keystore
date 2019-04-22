@@ -36,6 +36,8 @@ package body Keystore.Files.Tests is
                        Test_Corruption'Access);
       Caller.Add_Test (Suite, "Test Keystore.List",
                        Test_List'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Delete",
+                       Test_Delete'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -221,6 +223,38 @@ package body Keystore.Files.Tests is
       end loop;
 
    end Test_Add_Get;
+
+   --  ------------------------------
+   --  Test deleting values.
+   --  ------------------------------
+   procedure Test_Delete (T : in out Test) is
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-delete.ks");
+      Password : Keystore.Secret_Key := Keystore.Create ("mypassword-delete");
+   begin
+      declare
+         W        : Keystore.Files.Wallet_File;
+      begin
+         W.Create (Path => Path, Password => Password);
+         W.Add ("my-secret-1", "the secret 1");
+         W.Add ("my-secret-2", "the secret 2");
+         W.Add ("my-secret-3", "the secret 3");
+         W.Add ("my-secret-4", "the secret 4");
+      end;
+      declare
+         W        : Keystore.Files.Wallet_File;
+      begin
+         W.Open (Path => Path, Password => Password);
+         W.Delete ("my-secret-2");
+         T.Assert (not W.Contains ("my-secret-2"),
+                   "Second property should have been removed");
+         T.Assert (W.Contains ("my-secret-1"),
+                   "First property should still be present");
+         T.Assert (W.Contains ("my-secret-3"),
+                   "Last property should still be present");
+         T.Assert (W.Contains ("my-secret-4"),
+                   "Last property should still be present");
+      end;
+   end Test_Delete;
 
    --  ------------------------------
    --  Test opening a keystore and listing the entries.
