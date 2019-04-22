@@ -38,13 +38,14 @@ package body AKT.Commands.List is
             Name : constant String := Keystore.Entry_Maps.Key (Iter);
             Item : constant Keystore.Entry_Info := Keystore.Entry_Maps.Element (Iter);
          begin
-            if Name'Length > 60 then
-               Ada.Text_IO.Put (Name (Name'First .. Name'First + 60));
+            if Name'Length > 50 then
+               Ada.Text_IO.Put (Name (Name'First .. Name'First + 50));
             else
                Ada.Text_IO.Put (Name);
             end if;
-            Ada.Text_IO.Set_Col (63);
+            Ada.Text_IO.Set_Col (53);
             Ada.Text_IO.Put (Integer'Image (Item.Size));
+            Ada.Text_IO.Set_Col (65);
             Ada.Text_IO.Put (Util.Dates.ISO8601.Image (Item.Create_Date, Util.Dates.ISO8601.MINUTE));
             Ada.Text_IO.New_Line;
          end;
