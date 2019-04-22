@@ -127,27 +127,28 @@ private
 
    type Wallet_Entry (Length : Natural) is limited record
       --  The block header that contains this entry.
-      Header      : Wallet_Block_Entry_Access;
+      Header       : Wallet_Block_Entry_Access;
+      Next_Entry   : Wallet_Entry_Access;
+      Entry_Offset : IO.Block_Index := IO.Block_Index'First;
 
       --  The block data that contains the entry content.
-      Data        : Wallet_Block_Entry_Access;
-      Next_Entry  : Wallet_Entry_Access;
-      Next_Data   : Wallet_Entry_Access;
+      Data         : Wallet_Block_Entry_Access;
+      Next_Data    : Wallet_Entry_Access;
 
       --  The data offset within the data block (aligned on 16-byte).
-      Data_Offset : IO.Block_Index := IO.Block_Index'First;
-      Id          : Wallet_Entry_Index;
-      Size        : Interfaces.Unsigned_64 := 0;
-      Kind        : Entry_Type := T_INVALID;
-      Create_Date : Ada.Calendar.Time;
-      Update_Date : Ada.Calendar.Time;
-      Access_Date : Ada.Calendar.Time;
-      IV          : Util.Encoders.AES.Word_Block_Type;
-      Hash        : Util.Encoders.SHA256.Hash_Array := (others => 0);
-      Key         : Util.Encoders.Secret_Key (Util.Encoders.AES.AES_256_Length);
-      Wallet      : Safe_Wallet_Repository_Access;
-      Block       : IO.Block_Count := 0;
-      Name        : aliased String (1 .. Length);
+      Data_Offset  : IO.Block_Index := IO.Block_Index'First;
+      Id           : Wallet_Entry_Index;
+      Size         : Interfaces.Unsigned_64 := 0;
+      Kind         : Entry_Type := T_INVALID;
+      Create_Date  : Ada.Calendar.Time;
+      Update_Date  : Ada.Calendar.Time;
+      Access_Date  : Ada.Calendar.Time;
+      IV           : Util.Encoders.AES.Word_Block_Type;
+      Hash         : Util.Encoders.SHA256.Hash_Array := (others => 0);
+      Key          : Util.Encoders.Secret_Key (Util.Encoders.AES.AES_256_Length);
+      Wallet       : Safe_Wallet_Repository_Access;
+      Block        : IO.Block_Count := 0;
+      Name         : aliased String (1 .. Length);
    end record;
 
    package Wallet_Block_List is
