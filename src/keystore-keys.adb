@@ -265,7 +265,9 @@ package body Keystore.Keys is
                              Result   => Master_Key);
 
          Cipher.Set_Key (Master_Key);
+         Cipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
          Decipher.Set_Key (Master_Key);
+         Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
 
          --  Build wallet header.
          Buffer.Data := (others => 0);
