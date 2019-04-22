@@ -223,6 +223,11 @@ package body Keystore.Metadata is
       Repository.Value.List (Content, Stream);
    end List;
 
+   procedure Close (Repository : in out Wallet_Repository) is
+   begin
+      Repository.Value.Release;
+   end Close;
+
    procedure Set_IV (Manager : in out Wallet_Manager;
                      Block   : in IO.Block_Number) is
       Block_IV : Util.Encoders.AES.Word_Block_Type;
@@ -714,6 +719,7 @@ package body Keystore.Metadata is
       Item.Id := Manager.Next_Id;
       Manager.Next_Id := Manager.Next_Id + 1;
       Manager.Random.Generate (Item.Hash);
+      Manager.Random.Generate (Item.IV);
       Util.Encoders.Create (Item.Hash, Item.Key);
 
       --  Register it in the local repository.
@@ -867,6 +873,31 @@ package body Keystore.Metadata is
 --                      Cipher => Cipher,
 --                      Sign   => Sign);
 --     end Save;
+
+   procedure Release (Manager    : in out Wallet_Manager) is
+      Block : Wallet_Block_Entry_Access;
+      First : Wallet_Maps.Cursor;
+      Item  : Wallet_Entry_Access;
+   begin
+      while not Manager.Entry_List.Is_Empty loop
+         Block := Manager.Entry_List.First_Element;
+         Manager.Entry_List.Delete_First;
+         Free (Block);
+      end loop;
+      while not Manager.Data_List.Is_Empty loop
+         Block := Manager.Data_List.First_Element;
+         Manager.Data_List.Delete_First;
+         Free (Block);
+      end loop;
+
+      Manager.Entry_Indexes.Clear;
+      while not Manager.Map.Is_Empty loop
+         First := Manager.Map.First;
+         Item := Wallet_Maps.Element (First);
+         Free (Item);
+         Manager.Map.Delete (First);
+      end loop;
+   end Release;
 
    protected body Safe_Wallet_Repository is
 
@@ -1048,18 +1079,8 @@ package body Keystore.Metadata is
       end List;
 
       procedure Release is
-         Item : Wallet_Block_Entry_Access;
       begin
-         while not Manager.Entry_List.Is_Empty loop
-            Item := Manager.Entry_List.First_Element;
-            Manager.Entry_List.Delete_First;
-            Free (Item);
-         end loop;
-         while not Manager.Data_List.Is_Empty loop
-            Item := Manager.Data_List.First_Element;
-            Manager.Data_List.Delete_First;
-            Free (Item);
-         end loop;
+         Release (Manager);
       end Release;
 
    end Safe_Wallet_Repository;
