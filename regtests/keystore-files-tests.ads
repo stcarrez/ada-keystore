@@ -35,6 +35,9 @@ package Keystore.Files.Tests is
    --  Test adding values and getting them back.
    procedure Test_Add_Get (T : in out Test);
 
+   --  Test deleting values.
+   procedure Test_Delete (T : in out Test);
+
    --  Test opening a keystore and listing the entries.
    procedure Test_List (T : in out Test);
 
