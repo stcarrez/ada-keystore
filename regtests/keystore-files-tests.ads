@@ -38,6 +38,9 @@ package Keystore.Files.Tests is
    --  Test deleting values.
    procedure Test_Delete (T : in out Test);
 
+   --  Test opening and closing keystore.
+   procedure Test_Open_Close (T : in out Test);
+
    --  Test opening a keystore and listing the entries.
    procedure Test_List (T : in out Test);
 
