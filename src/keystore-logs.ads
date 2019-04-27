@@ -38,4 +38,9 @@ private package Keystore.Logs is
                     Message : in String;
                     Block   : in IO.Block_Number);
 
+   procedure Debug (Log     : in Util.Log.Loggers.Logger;
+                    Message : in String;
+                    Block   : in IO.Block_Number;
+                    Size    : in IO.Block_Index);
+
 end Keystore.Logs;
