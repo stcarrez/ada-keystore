@@ -26,7 +26,8 @@ with Keystore.Logs;
 --  +------------------+
 --  | Block HMAC-256   | 32b
 --  +------------------+
---  | Block type       | 4b
+--  | Block type       | 2b
+--  | Encrypt 1 size   | 2b
 --  | Wallet id        | 4b
 --  | PAD 0            | 4b
 --  | PAD 0            | 4b
@@ -54,7 +55,8 @@ with Keystore.Logs;
 --  +------------------+
 --  | Block HMAC-256   | 32b
 --  +------------------+
---  | 02 02 02 02      | 4b
+--  | 02 02            | 2b
+--  | Encrypt 1 size   | 2b
 --  | Wallet id        | 4b
 --  | PAD 0            | 4b
 --  | PAD 0            | 4b
@@ -74,6 +76,11 @@ package body Keystore.IO is
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.IO");
 
+   procedure Put_Encrypt_Size (Into  : in out Block_Type;
+                               Value : in Block_Index);
+
+   function Get_Decrypt_Size (From : in Block_Type) return Interfaces.Unsigned_16;
+
    --  ------------------------------
    --  Read the block from the wallet IO stream and decrypt the block content using
    --  the decipher object.  The decrypted content is stored in the marshaller which
@@ -81,20 +88,32 @@ package body Keystore.IO is
    --  ------------------------------
    procedure Read (Stream       : in out Wallet_Stream'Class;
                    Block        : in Block_Number;
-                   Decrypt_Size : in Block_Index := BT_DATA_LENGTH;
                    Decipher     : in out Util.Encoders.AES.Decoder;
                    Sign         : in Stream_Element_Array;
+                   Decrypt_Size : out Block_Index;
                    Into         : in out Marshaller) is
 
       procedure Read (Data : in Block_Type);
 
       procedure Read (Data : in Block_Type) is
-         Last     : Stream_Element_Offset;
-         Encoded  : Stream_Element_Offset;
-         Hash     : Util.Encoders.SHA256.Hash_Array;
-         Last_Pos : constant Stream_Element_Offset := BT_DATA_START + Decrypt_Size - 1;
-         Context  : Util.Encoders.HMAC.SHA256.Context;
+         Last      : Stream_Element_Offset;
+         Encoded   : Stream_Element_Offset;
+         Hash      : Util.Encoders.SHA256.Hash_Array;
+         Last_Pos  : Stream_Element_Offset;
+         Context   : Util.Encoders.HMAC.SHA256.Context;
+         Size      : Interfaces.Unsigned_16;
       begin
+         Size := Get_Decrypt_Size (Data);
+
+         --  Check that the decrypt size looks correct.
+         if Size > Data'Length or else (Size mod 16) /= 0 then
+            Keystore.Logs.Warn (Log, "Bloc{0} has invalid size", Block);
+            raise Invalid_Block;
+         end if;
+         Decrypt_Size := Block_Index (Size);
+
+         Last_Pos := BT_DATA_START + Stream_Element_Offset (Decrypt_Size) - 1;
+
          Into.Data (Into.Data'First .. BT_DATA_START - 1)
            := Data (Data'First .. BT_DATA_START - 1);
          Log.Info ("Decrypt {0} .. {1}", Stream_Element_Offset'Image (BT_DATA_START),
@@ -152,7 +171,7 @@ package body Keystore.IO is
                     Encrypt_Size : in Block_Index := BT_DATA_LENGTH;
                     Cipher       : in out Util.Encoders.AES.Encoder;
                     Sign         : in Stream_Element_Array;
-                    From         : in Marshaller) is
+                    From         : in out Marshaller) is
 
       procedure Write (Data : out Block_Type);
 
@@ -163,6 +182,8 @@ package body Keystore.IO is
       begin
          Log.Info ("Encrypt {0} .. {1}", Stream_Element_Offset'Image (BT_DATA_START),
                    Stream_Element_Offset'Image (Last_Pos));
+
+         Put_Encrypt_Size (From.Data, Encrypt_Size);
 
          Data (BT_HEADER_START .. BT_DATA_START - 1)
            := From.Data (BT_HEADER_START .. BT_DATA_START - 1);
@@ -196,15 +217,24 @@ package body Keystore.IO is
    --  Set the block header with the tag and wallet identifier.
    --  ------------------------------
    procedure Set_Header (Into : in out Marshaller;
-                         Tag  : in Interfaces.Unsigned_32;
+                         Tag  : in Interfaces.Unsigned_16;
                          Id   : in Interfaces.Unsigned_32) is
    begin
       Into.Pos := BT_HEADER_START;
-      Put_Unsigned_32 (Into, Tag);
+      Put_Unsigned_16 (Into, Tag);
+      Put_Unsigned_16 (Into, 0);
       Put_Unsigned_32 (Into, Id);
       Put_Unsigned_32 (Into, 0);
       Put_Unsigned_32 (Into, 0);
    end Set_Header;
+
+   procedure Put_Encrypt_Size (Into  : in out Block_Type;
+                               Value : in Block_Index) is
+      V : constant Interfaces.Unsigned_16 := Interfaces.Unsigned_16 (Value);
+   begin
+      Into (BT_HEADER_START + 2) := Stream_Element (Shift_Right (V, 8));
+      Into (BT_HEADER_START + 3) := Stream_Element (V and 16#0ff#);
+   end Put_Encrypt_Size;
 
    procedure Put_Unsigned_16 (Into  : in out Marshaller;
                               Value : in Interfaces.Unsigned_16) is
@@ -315,6 +345,12 @@ package body Keystore.IO is
                                       Data   => Content,
                                       Result => Into.Data (Pos .. Into.Pos - 1));
    end Put_HMAC_SHA256;
+
+   function Get_Decrypt_Size (From : in Block_Type) return Interfaces.Unsigned_16 is
+   begin
+      return Shift_Left (Unsigned_16 (From (BT_HEADER_START + 2)), 8) or
+        Unsigned_16 (From (BT_HEADER_START + 3));
+   end Get_Decrypt_Size;
 
    function Get_Unsigned_16 (From  : in out Marshaller) return Interfaces.Unsigned_16 is
       Pos : constant Block_Index := From.Pos;
