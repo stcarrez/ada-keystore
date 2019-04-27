@@ -30,10 +30,10 @@ private package Keystore.IO is
    BT_TYPE_HEADER_SIZE  : constant := 16;
 
    --  Block type magic values.
-   BT_WALLET_UNUSED     : constant := 16#00000000#;
-   BT_WALLET_HEADER     : constant := 16#01010101#;
-   BT_WALLET_REPOSITORY : constant := 16#02020202#;
-   BT_WALLET_DATA       : constant := 16#03030303#;
+   BT_WALLET_UNUSED     : constant := 16#0000#;
+   BT_WALLET_HEADER     : constant := 16#0101#;
+   BT_WALLET_REPOSITORY : constant := 16#0202#;
+   BT_WALLET_DATA       : constant := 16#0303#;
 
    SIZE_U16             : constant := 2;
    SIZE_U32             : constant := 4;
@@ -91,11 +91,10 @@ private package Keystore.IO is
    --  is ready to read the start of the block header.
    procedure Read (Stream       : in out Wallet_Stream'Class;
                    Block        : in Block_Number;
-                   Decrypt_Size : in Block_Index := BT_DATA_LENGTH;
                    Decipher     : in out Util.Encoders.AES.Decoder;
                    Sign         : in Stream_Element_Array;
-                   Into         : in out Marshaller) with
-     Pre => Decrypt_Size mod 16 = 0 and Decrypt_Size <= BT_DATA_LENGTH;
+                   Decrypt_Size : out Block_Index;
+                   Into         : in out Marshaller);
 
    --  Write the block in the wallet IO stream.  Encrypt the block data using the
    --  cipher object.  Sign the header and encrypted data using HMAC-256 and the
@@ -105,7 +104,7 @@ private package Keystore.IO is
                     Encrypt_Size : in Block_Index := BT_DATA_LENGTH;
                     Cipher       : in out Util.Encoders.AES.Encoder;
                     Sign         : in Stream_Element_Array;
-                    From         : in Marshaller) with
+                    From         : in out Marshaller) with
      Pre => Encrypt_Size mod 16 = 0 and Encrypt_Size <= BT_DATA_LENGTH;
 
    type Marshaller is limited record
@@ -115,7 +114,7 @@ private package Keystore.IO is
 
    --  Set the block header with the tag and wallet identifier.
    procedure Set_Header (Into : in out Marshaller;
-                         Tag  : in Interfaces.Unsigned_32;
+                         Tag  : in Interfaces.Unsigned_16;
                          Id   : in Interfaces.Unsigned_32) with
      Post => Into.Pos = BT_DATA_START;
 
