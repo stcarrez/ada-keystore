@@ -238,16 +238,16 @@ package body Keystore.IO is
    begin
       case Value is
          when T_INVALID =>
-            Put_Unsigned_32 (Into, 0);
+            Put_Unsigned_16 (Into, 0);
 
          when T_STRING =>
-            Put_Unsigned_32 (Into, 1);
+            Put_Unsigned_16 (Into, 1);
 
          when T_BINARY =>
-            Put_Unsigned_32 (Into, 2);
+            Put_Unsigned_16 (Into, 2);
 
          when T_WALLET =>
-            Put_Unsigned_32 (Into, 3);
+            Put_Unsigned_16 (Into, 3);
 
       end case;
    end Put_Kind;
@@ -361,7 +361,7 @@ package body Keystore.IO is
    end Get_Date;
 
    function Get_Kind (From : in out Marshaller) return Entry_Type is
-      Value : constant Unsigned_32 := Get_Unsigned_32 (From);
+      Value : constant Unsigned_16 := Get_Unsigned_16 (From);
    begin
       case Value is
          when 0 =>
