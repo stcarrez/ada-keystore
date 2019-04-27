@@ -17,6 +17,7 @@
 -----------------------------------------------------------------------
 
 with Ahven;
+with Ada.Directories;
 with Ada.Exceptions;
 with Util.Test_Caller;
 with Keystore.IO.Files;
@@ -38,6 +39,8 @@ package body Keystore.Files.Tests is
                        Test_List'Access);
       Caller.Add_Test (Suite, "Test Keystore.Delete",
                        Test_Delete'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Update",
+                       Test_Update'Access);
       Caller.Add_Test (Suite, "Test Keystore.Files.Open+Close",
                        Test_Open_Close'Access);
    end Add_Tests;
@@ -289,6 +292,80 @@ package body Keystore.Files.Tests is
       Verify_Entry ("list-3", 39);
       Verify_Entry ("list-4", 42);
    end Test_List;
+
+   --  ------------------------------
+   --  Test update values.
+   --  ------------------------------
+   procedure Test_Update (T : in out Test) is
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-update.ks");
+      Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
+   begin
+      if Ada.Directories.Exists (Path) then
+         Ada.Directories.Delete_File (Path);
+      end if;
+
+      --  Step 1: create the keystore and add the values.
+      declare
+         W        : Keystore.Files.Wallet_File;
+      begin
+         W.Create (Path => Path, Password => Password);
+         for I in 1 .. 50 loop
+            W.Add (Name    => "test-update" & Natural'Image (I),
+                   Content => "Value before update" & Natural'Image (I));
+         end loop;
+      end;
+
+      --  Step 2: open the keystore and update the values.
+      declare
+         W        : Keystore.Files.Wallet_File;
+      begin
+         W.Open (Path => Path, Password => Password);
+         for I in 1 .. 50 loop
+            Util.Tests.Assert_Equals (T, "Value before update" & Natural'Image (I),
+                                      W.Get ("test-update" & Natural'Image (I)),
+                                      "Invalid property test-update" & Natural'Image (I));
+
+            W.Update (Name    => "test-update" & Natural'Image (I),
+                      Content => "Value after update" & Natural'Image (I));
+         end loop;
+         for I in 1 .. 50 loop
+            Util.Tests.Assert_Equals (T, "Value after update" & Natural'Image (I),
+                                      W.Get ("test-update" & Natural'Image (I)),
+                                      "Invalid property test-update" & Natural'Image (I));
+
+            W.Update (Name    => "test-update" & Natural'Image (I),
+                      Content => "Value after second update" & Natural'Image (I));
+         end loop;
+      end;
+
+      --  Step 3: open the keystore, get the values, update them.
+      declare
+         W        : Keystore.Files.Wallet_File;
+      begin
+         W.Open (Path => Path, Password => Password);
+         for I in 1 .. 1 loop
+            Util.Tests.Assert_Equals (T, "Value after second update" & Natural'Image (I),
+                                      W.Get ("test-update" & Natural'Image (I)),
+                                      "Invalid property test-update" & Natural'Image (I));
+
+            W.Update (Name    => "test-update" & Natural'Image (I),
+                      Content => "Value after third update              " & Natural'Image (I));
+         end loop;
+      end;
+
+      --  Step 4: open the keystore and verify the last values.
+      declare
+         W        : Keystore.Files.Wallet_File;
+      begin
+         W.Open (Path => Path, Password => Password);
+         for I in 1 .. 1 loop
+            Util.Tests.Assert_Equals (T, "Value after third update              "
+                                      & Natural'Image (I),
+                                      W.Get ("test-update" & Natural'Image (I)),
+                                      "Invalid property test-update" & Natural'Image (I));
+         end loop;
+      end;
+   end Test_Update;
 
    --  ------------------------------
    --  Test opening and closing keystore.
