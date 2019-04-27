@@ -72,4 +72,14 @@ package body Keystore.Logs is
       end if;
    end Debug;
 
+   procedure Debug (Log     : in Util.Log.Loggers.Logger;
+                    Message : in String;
+                    Block   : in IO.Block_Number;
+                    Size    : in IO.Block_Index) is
+   begin
+      if Log.Get_Level >= Util.Log.DEBUG_LEVEL then
+         Log.Debug (Message, IO.Block_Number'Image (Block), IO.Block_Index'Image (Size));
+      end if;
+   end Debug;
+
 end Keystore.Logs;
