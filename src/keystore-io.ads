@@ -43,6 +43,7 @@ private package Keystore.IO is
    SIZE_KIND            : constant := SIZE_U32;
    SIZE_BLOCK           : constant := SIZE_U32;
    SIZE_SECRET          : constant := 32;
+   SIZE_IV              : constant := 16;
 
    subtype Block_Index is Stream_Element_Offset range 1 .. Block_Size;
 
@@ -132,7 +133,7 @@ private package Keystore.IO is
 
    procedure Put_Kind (Into  : in out Marshaller;
                        Value : in Entry_Type) with
-     Pre => Into.Pos <= Block_Type'Last - 4;
+     Pre => Into.Pos <= Block_Type'Last - 2;
 
    procedure Put_Block_Number (Into  : in out Marshaller;
                                Value : in Block_Number) with
@@ -178,7 +179,7 @@ private package Keystore.IO is
      Pre => From.Pos <= Block_Type'Last - 8;
 
    function Get_Kind (From : in out Marshaller) return Entry_Type with
-     Pre => From.Pos <= Block_Type'Last - 4;
+     Pre => From.Pos <= Block_Type'Last - 2;
 
    function Get_Block_Number (From : in out Marshaller) return Block_Number is
      (Block_Number (Get_Unsigned_32 (From)));
