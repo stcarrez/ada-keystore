@@ -123,6 +123,7 @@ with Keystore.Logs;
 --  Data:      3968   => 3%
 package body Keystore.Metadata is
 
+   use type Interfaces.Unsigned_16;
    use type Interfaces.Unsigned_32;
    use type Interfaces.Unsigned_64;
    use type IO.Block_Count;
@@ -354,24 +355,27 @@ package body Keystore.Metadata is
    procedure Load_Directory (Manager   : in out Wallet_Manager;
                              Dir_Block : in Wallet_Block_Entry_Access;
                              Stream    : in out IO.Wallet_Stream'Class) is
-      Btype : Interfaces.Unsigned_32;
+      Btype : Interfaces.Unsigned_16;
       Wid   : Interfaces.Unsigned_32;
+      Size  : IO.Block_Index;
    begin
       Keystore.Logs.Debug (Log, "Load directory block{0}", Dir_Block.Block);
 
       --  Read wallet meta data block.
       Set_IV (Manager, Dir_Block.Block);
-      Stream.Read (Block    => Dir_Block.Block,
-                   Decipher => Manager.Decipher,
-                   Sign     => Manager.Sign,
-                   Into     => Manager.Buffer);
+      Stream.Read (Block        => Dir_Block.Block,
+                   Decipher     => Manager.Decipher,
+                   Sign         => Manager.Sign,
+                   Decrypt_Size => Size,
+                   Into         => Manager.Buffer);
 
       --  Check block type.
-      Btype := IO.Get_Unsigned_32 (Manager.Buffer);
+      Btype := IO.Get_Unsigned_16 (Manager.Buffer);
       if Btype /= IO.BT_WALLET_REPOSITORY then
          Logs.Error (Log, "Block{0} invalid block type", Dir_Block.Block);
          raise Keystore.Corrupted;
       end if;
+      IO.Skip (Manager.Buffer, 2);
 
       --  Check that this is a block for the current wallet.
       Wid := IO.Get_Unsigned_32 (Manager.Buffer);
@@ -506,26 +510,28 @@ package body Keystore.Metadata is
                         Data_Block : in Wallet_Block_Entry_Access;
                         Stream     : in out IO.Wallet_Stream'Class) is
       --  We only decrypt the data entry descriptors.
-      Size  : constant IO.Block_Index := IO.Block_Index (Data_Block.Count * DATA_ENTRY_SIZE);
-      Btype : Interfaces.Unsigned_32;
+      --  Size  : constant IO.Block_Index := IO.Block_Index (Data_Block.Count * DATA_ENTRY_SIZE);
+      Btype : Interfaces.Unsigned_16;
       Wid   : Interfaces.Unsigned_32;
+      Size  : IO.Block_Index;
    begin
-      Logs.Debug (Log, "Load data block{0} decrypt{1}", Data_Block.Block, Size);
+      --  Logs.Debug (Log, "Load data block{0} decrypt{1}", Data_Block.Block, Size);
 
       --  Read wallet data block.
       Set_IV (Manager, Data_Block.Block);
       Stream.Read (Block        => Data_Block.Block,
-                   Decrypt_Size => Size,
                    Decipher     => Manager.Decipher,
                    Sign         => Manager.Sign,
+                   Decrypt_Size => Size,
                    Into         => Manager.Buffer);
 
       --  Check block type.
-      Btype := IO.Get_Unsigned_32 (Manager.Buffer);
+      Btype := IO.Get_Unsigned_16 (Manager.Buffer);
       if Btype /= IO.BT_WALLET_DATA then
          Logs.Error (Log, "Block{0} invalid block type", Data_Block.Block);
          raise Keystore.Corrupted;
       end if;
+      IO.Skip (Manager.Buffer, 2);
 
       --  Check that this is a block for the current wallet.
       Wid := IO.Get_Unsigned_32 (Manager.Buffer);

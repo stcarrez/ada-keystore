@@ -26,7 +26,8 @@ with Keystore.Logs;
 --  +------------------+
 --  | Block HMAC-256   | 32b
 --  +------------------+
---  | 01 01 01 01      | 4b
+--  | 01 01            | 2b
+--  | Encrypt size     | 2b
 --  | Parent Wallet id | 4b
 --  | PAD 0            | 4b
 --  | PAD 0            | 4b
@@ -72,6 +73,7 @@ with Keystore.Logs;
 
 package body Keystore.Keys is
 
+   use type Interfaces.Unsigned_16;
    use type Interfaces.Unsigned_32;
    use Ada.Streams;
    use Util.Encoders.KDF;
@@ -172,16 +174,19 @@ package body Keystore.Keys is
 
          Value   : Interfaces.Unsigned_32;
          Counter : Interfaces.Unsigned_32;
+         Size    : IO.Block_Index;
       begin
          Header_Block := Block;
-         Stream.Read (Block    => Header_Block,
-                      Decipher => Header_Decipher,
-                      Sign     => Sign,
-                      Into     => Buffer);
-         if IO.Get_Unsigned_32 (Buffer) /= IO.BT_WALLET_HEADER then
+         Stream.Read (Block        => Header_Block,
+                      Decipher     => Header_Decipher,
+                      Sign         => Sign,
+                      Decrypt_Size => Size,
+                      Into         => Buffer);
+         if IO.Get_Unsigned_16 (Buffer) /= IO.BT_WALLET_HEADER then
             Keystore.Logs.Warn (Log, "Invalid wallet block header BN{0}", Header_Block);
             raise Invalid_Block;
          end if;
+         IO.Skip (Buffer, 2);
          Value := IO.Get_Unsigned_32 (Buffer);
          IO.Skip (Buffer, 8);
          if IO.Get_Unsigned_32 (Buffer) /= WH_MAGIC then
@@ -324,11 +329,13 @@ package body Keystore.Keys is
                          Stream   : in out IO.Wallet_Stream'Class) is
          Salt     : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
          IV       : Util.Encoders.AES.Word_Block_Type;
+         Size     : IO.Block_Index;
       begin
-         Stream.Read (Block    => Header_Block,
-                      Decipher => Header_Decipher,
-                      Sign     => Sign,
-                      Into     => Buffer);
+         Stream.Read (Block        => Header_Block,
+                      Decipher     => Header_Decipher,
+                      Sign         => Sign,
+                      Decrypt_Size => Size,
+                      Into         => Buffer);
          if IO.Get_Unsigned_32 (Buffer) /= IO.BT_WALLET_HEADER then
             Log.Warn ("Invalid wallet block header BN{0}",
                       IO.Block_Number'Image (Header_Block));
