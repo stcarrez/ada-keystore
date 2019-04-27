@@ -67,14 +67,16 @@ package body Keystore.IO.Tests is
          Stream   : Keystore.IO.Files.Wallet_File_Stream;
          Buffer   : Keystore.IO.Marshaller;
          Decipher : Util.Encoders.AES.Decoder;
+         Size     : Block_Index;
       begin
          Decipher.Set_Key (Secret);
          Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
          Stream.Open (Path => Path);
-         Stream.Read (Block    => 1,
-                      Decipher => Decipher,
-                      Sign     => Sign,
-                      Into     => Buffer);
+         Stream.Read (Block        => 1,
+                      Decipher     => Decipher,
+                      Sign         => Sign,
+                      Decrypt_Size => Size,
+                      Into         => Buffer);
          Util.Tests.Assert_Equals (T, BT_WALLET_HEADER,
                                    Integer (Get_Unsigned_32 (Buffer)),
                                    "Invalid wallet header tag");
@@ -98,15 +100,17 @@ package body Keystore.IO.Tests is
          Stream   : Keystore.IO.Files.Wallet_File_Stream;
          Buffer   : Keystore.IO.Marshaller;
          Decipher : Util.Encoders.AES.Decoder;
+         Size     : Block_Index;
       begin
          Decipher.Set_Key (Secret2);
          Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
          Stream.Open (Path => Path);
          begin
-            Stream.Read (Block    => 1,
-                         Decipher => Decipher,
-                         Sign     => Sign,
-                         Into     => Buffer);
+            Stream.Read (Block        => 1,
+                         Decipher     => Decipher,
+                         Sign         => Sign,
+                         Decrypt_Size => Size,
+                         Into         => Buffer);
             T.Fail ("An Invalid_Block exception is expected.");
 
          exception
@@ -163,16 +167,18 @@ package body Keystore.IO.Tests is
          Stream   : Keystore.IO.Files.Wallet_File_Stream;
          Buffer   : Keystore.IO.Marshaller;
          Decipher : Util.Encoders.AES.Decoder;
+         Size     : Block_Index;
       begin
          Decipher.Set_Key (Secret);
          Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
          Stream.Open (Path => Path);
 
          --  Read first block
-         Stream.Read (Block    => 1,
-                      Decipher => Decipher,
-                      Sign     => Sign,
-                      Into     => Buffer);
+         Stream.Read (Block        => 1,
+                      Decipher     => Decipher,
+                      Sign         => Sign,
+                      Decrypt_Size => Size,
+                      Into         => Buffer);
          Util.Tests.Assert_Equals (T, BT_WALLET_HEADER,
                                    Integer (Get_Unsigned_32 (Buffer)),
                                    "Invalid wallet header tag");
@@ -191,10 +197,11 @@ package body Keystore.IO.Tests is
 
          --  Read other blocks
          for I in 1 .. 1000 loop
-            Stream.Read (Block    => Block_Number (I + 1),
-                         Decipher => Decipher,
-                         Sign     => Sign,
-                         Into     => Buffer);
+            Stream.Read (Block        => Block_Number (I + 1),
+                         Decipher     => Decipher,
+                         Sign         => Sign,
+                         Decrypt_Size => Size,
+                         Into         => Buffer);
             Util.Tests.Assert_Equals (T, BT_WALLET_DATA,
                                       Integer (Get_Unsigned_32 (Buffer)),
                                       "Invalid wallet header tag");
