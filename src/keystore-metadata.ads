@@ -110,12 +110,35 @@ private
    WH_KEY_SIZE          : constant := 256;
    WALLET_ENTRY_SIZE    : constant := 4 + 2 + 8 + 32 + 16 + 4;
 
+   DATA_IV_OFFSET       : constant := 32;
+   DATA_ENTRY_SIZE      : constant := 112;
+   DATA_MAX_SIZE        : constant := IO.Block_Size - IO.BT_HMAC_HEADER_SIZE
+     - IO.BT_TYPE_HEADER_SIZE - 64 - 4;
+
    type Wallet_Entry_Index is new Positive;
 
    function Hash (Value : in Wallet_Entry_Index) return Ada.Containers.Hash_Type;
 
    type Wallet_Entry;
    type Wallet_Entry_Access is access all Wallet_Entry;
+
+   type Wallet_Block_Entry;
+   type Wallet_Block_Entry_Access is access Wallet_Block_Entry;
+
+   --  Describe a fragment of data stored in a data block.
+   type Wallet_Block_Fragment is record
+      Next_Fragment : Wallet_Block_Entry_Access;
+      Item          : Wallet_Entry_Access;
+      Block_Offset  : IO.Block_Index;
+      Size          : IO.Block_Index;
+      Data_Offset   : Stream_Element_Offset;
+   end record;
+
+   type Fragment_Count is new Natural range 0 .. 16;
+
+   subtype Fragment_Index is Fragment_Count range 1 .. 16;
+
+   type Fragment_Array is array (Fragment_Index) of Wallet_Block_Fragment;
 
    type Wallet_Block_Entry is record
       Block      : Keystore.IO.Block_Number;
@@ -124,14 +147,13 @@ private
       Available  : IO.Block_Index := IO.Block_Index'Last - IO.BT_DATA_START - 4;
       Data_Start : IO.Block_Index := IO.Block_Index'Last;
       Last_Pos   : IO.Block_Index := IO.BT_DATA_START + 4;
-      Count      : Natural := 0;
+      Count      : Fragment_Count := 0;
       Ready      : Boolean := False;
+      Fragments  : Fragment_Array;
    end record;
 
    type Safe_Wallet_Repository;
    type Safe_Wallet_Repository_Access is access all Safe_Wallet_Repository;
-
-   type Wallet_Block_Entry_Access is access Wallet_Block_Entry;
 
    type Wallet_Entry (Length : Natural) is limited record
       --  The block header that contains this entry.
@@ -141,19 +163,13 @@ private
 
       --  The block data that contains the entry content.
       Data         : Wallet_Block_Entry_Access;
-      Next_Data    : Wallet_Entry_Access;
 
-      --  The data offset within the data block (aligned on 16-byte).
-      Data_Offset  : IO.Block_Index := IO.Block_Index'First;
       Id           : Wallet_Entry_Index;
       Size         : Interfaces.Unsigned_64 := 0;
       Kind         : Entry_Type := T_INVALID;
       Create_Date  : Ada.Calendar.Time;
       Update_Date  : Ada.Calendar.Time;
       Access_Date  : Ada.Calendar.Time;
-      IV           : Util.Encoders.AES.Word_Block_Type;
-      Hash         : Util.Encoders.SHA256.Hash_Array := (others => 0);
-      Key          : Util.Encoders.Secret_Key (Util.Encoders.AES.AES_256_Length);
       Wallet       : Safe_Wallet_Repository_Access;
       Block        : IO.Block_Count := 0;
       Name         : aliased String (1 .. Length);
@@ -211,6 +227,11 @@ private
                                   Data_Block : out Wallet_Block_Entry_Access;
                                   Stream     : in out IO.Wallet_Stream'Class);
 
+   --  Release the data block to the stream.
+   procedure Release_Data_Block (Manager    : in out Wallet_Manager;
+                                 Data_Block : in out Wallet_Block_Entry_Access;
+                                 Stream     : in out IO.Wallet_Stream'Class);
+
    --  Initialize the data block with an empty content.
    procedure Init_Data_Block (Manager    : in out Wallet_Manager);
 
@@ -233,6 +254,11 @@ private
                                    Entry_Block : out Wallet_Block_Entry_Access;
                                    Stream      : in out IO.Wallet_Stream'Class);
 
+   --  Get the fragment position of the item within the data block.
+   --  Returns 0 if the data item was not found.
+   function Get_Fragment_Position (Data_Block : in Wallet_Block_Entry;
+                                   Item       : in Wallet_Entry_Access) return Fragment_Count;
+
    --  Load the data block in the wallet manager buffer.  Extract the data descriptors
    --  the first time the data block is read.
    procedure Load_Data (Manager    : in out Wallet_Manager;
@@ -253,19 +279,29 @@ private
                         Data_Block : in out Wallet_Block_Entry;
                         Stream     : in out IO.Wallet_Stream'Class);
 
+   --  Get the data fragment and write it to the output buffer.
+   procedure Get_Fragment (Manager  : in out Wallet_Manager;
+                           Item     : in Wallet_Entry_Access;
+                           Position : in Fragment_Index;
+                           Fragment : in Wallet_Block_Fragment;
+                           Output   : out Ada.Streams.Stream_Element_Array);
+
    --  Add in the data block the wallet data entry with its content.
    --  The data block must have been loaded and is not saved.
-   procedure Add_Data (Manager    : in out Wallet_Manager;
-                       Data_Block : in out Wallet_Block_Entry;
-                       Item       : in Wallet_Entry_Access;
-                       Content    : in Ada.Streams.Stream_Element_Array) with
+   procedure Add_Fragment (Manager     : in out Wallet_Manager;
+                           Data_Block  : in Wallet_Block_Entry_Access;
+                           Item        : in Wallet_Entry_Access;
+                           Data_Offset : in Ada.Streams.Stream_Element_Offset;
+                           Next_Block  : in Wallet_Block_Entry_Access;
+                           Content     : in Ada.Streams.Stream_Element_Array) with
      Pre => 64 + AES_Align (Content'Length) <= Data_Block.Available;
 
    --  Delete the data from the data block.
    --  The data block must have been loaded and is not saved.
-   procedure Delete_Data (Manager    : in out Wallet_Manager;
-                          Data_Block : in out Wallet_Block_Entry;
-                          Item       : in Wallet_Entry_Access);
+   procedure Delete_Fragment (Manager    : in out Wallet_Manager;
+                              Data_Block : in out Wallet_Block_Entry;
+                              Next_Block : out Wallet_Block_Entry_Access;
+                              Item       : in Wallet_Entry_Access);
 
    --  Get the data associated with the named entry.
    procedure Get_Data (Manager    : in out Wallet_Manager;
@@ -273,6 +309,13 @@ private
                        Result     : out Entry_Info;
                        Output     : out Ada.Streams.Stream_Element_Array;
                        Stream     : in out IO.Wallet_Stream'Class);
+
+   --  Update an existing entry in the wallet directory.
+   procedure Update_Entry (Manager : in out Wallet_Manager;
+                           Item    : in Wallet_Entry_Access;
+                           Kind    : in Entry_Type;
+                           Size    : in Interfaces.Unsigned_64;
+                           Stream  : in out IO.Wallet_Stream'Class);
 
    --  Delete the entry from the repository.
    procedure Delete_Entry (Manager    : in out Wallet_Manager;
