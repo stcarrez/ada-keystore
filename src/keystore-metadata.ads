@@ -65,6 +65,12 @@ private package Keystore.Metadata is
                   Content    : in Ada.Streams.Stream_Element_Array;
                   Stream     : in out IO.Wallet_Stream'Class);
 
+   procedure Set (Repository : in out Wallet_Repository;
+                  Name       : in String;
+                  Kind       : in Entry_Type;
+                  Content    : in Ada.Streams.Stream_Element_Array;
+                  Stream     : in out IO.Wallet_Stream'Class);
+
    procedure Update (Repository : in out Wallet_Repository;
                      Name       : in String;
                      Kind       : in Entry_Type;
@@ -129,9 +135,9 @@ private
    type Wallet_Block_Fragment is record
       Next_Fragment : Wallet_Block_Entry_Access;
       Item          : Wallet_Entry_Access;
-      Block_Offset  : IO.Block_Index;
-      Size          : IO.Block_Index;
-      Data_Offset   : Stream_Element_Offset;
+      Block_Offset  : IO.Block_Index := IO.Block_Index'First;
+      Size          : IO.Block_Index := IO.Block_Index'First;
+      Data_Offset   : Stream_Element_Offset := 0;
    end record;
 
    type Fragment_Count is new Natural range 0 .. 16;
@@ -296,6 +302,15 @@ private
                            Content     : in Ada.Streams.Stream_Element_Array) with
      Pre => 64 + AES_Align (Content'Length) <= Data_Block.Available;
 
+   procedure Update_Fragment (Manager     : in out Wallet_Manager;
+                              Data_Block  : in Wallet_Block_Entry_Access;
+                              Item        : in Wallet_Entry_Access;
+                              Data_Offset : in Ada.Streams.Stream_Element_Offset;
+                              Position    : in Fragment_Index;
+                              Fragment    : in Wallet_Block_Fragment;
+                              Next_Block  : in Wallet_Block_Entry_Access;
+                              Content     : in Ada.Streams.Stream_Element_Array);
+
    --  Delete the data from the data block.
    --  The data block must have been loaded and is not saved.
    procedure Delete_Fragment (Manager    : in out Wallet_Manager;
@@ -346,6 +361,11 @@ private
                      Stream   : in out IO.Wallet_Stream'Class);
 
       procedure Add (Name       : in String;
+                     Kind       : in Entry_Type;
+                     Content    : in Ada.Streams.Stream_Element_Array;
+                     Stream     : in out IO.Wallet_Stream'Class);
+
+      procedure Set (Name       : in String;
                      Kind       : in Entry_Type;
                      Content    : in Ada.Streams.Stream_Element_Array;
                      Stream     : in out IO.Wallet_Stream'Class);
