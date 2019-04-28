@@ -196,6 +196,15 @@ package body Keystore.Metadata is
       Repository.Value.Add (Name, Kind, Content, Stream);
    end Add;
 
+   procedure Set (Repository : in out Wallet_Repository;
+                  Name       : in String;
+                  Kind       : in Entry_Type;
+                  Content    : in Ada.Streams.Stream_Element_Array;
+                  Stream     : in out IO.Wallet_Stream'Class) is
+   begin
+      Repository.Value.Set (Name, Kind, Content, Stream);
+   end Set;
+
    procedure Update (Repository : in out Wallet_Repository;
                      Name       : in String;
                      Kind       : in Entry_Type;
@@ -553,6 +562,7 @@ package body Keystore.Metadata is
             Item_Size : Interfaces.Unsigned_64;
             Next_Block : Wallet_Block_Entry_Access;
             Block      : IO.Block_Count;
+            Data_Offset : Interfaces.Unsigned_32;
          begin
             IO.Skip (Manager.Buffer, 8);
 
@@ -566,15 +576,18 @@ package body Keystore.Metadata is
                   Slot_Size := IO.Get_Unsigned_16 (Manager.Buffer);
                   Item_Size := IO.Get_Unsigned_64 (Manager.Buffer);
                   Item.Size := Item_Size;
-                  Item.Update_Date := IO.Get_Date (Manager.Buffer);
                   Next_Block := null;
                   if Item_Size = Interfaces.Unsigned_64 (Slot_Size) then
+                     Item.Update_Date := IO.Get_Date (Manager.Buffer);
                      Item.Access_Date := IO.Get_Date (Manager.Buffer);
+                     Data_Offset := 0;
                   else
+                     Item.Access_Date := IO.Get_Date (Manager.Buffer);
                      Block := IO.Get_Block_Number (Manager.Buffer);
                      if Block /= 0 then
                         Find_Data_Block (Manager, Block, Next_Block);
                      end if;
+                     Data_Offset := IO.Get_Unsigned_32 (Manager.Buffer);
                   end if;
 
                   --  Skip the IV, Key, HMAC-256
@@ -588,6 +601,7 @@ package body Keystore.Metadata is
                   Data_Block.Fragments (Frag).Block_Offset := Offset;
                   Data_Block.Fragments (Frag).Size := IO.Block_Index (Slot_Size);
                   Data_Block.Fragments (Frag).Next_Fragment := Next_Block;
+                  Data_Block.Fragments (Frag).Data_Offset := Stream_Element_Offset (Data_Offset);
 
                else
                   Logs.Error (Log, "Block{0} unkown index", Data_Block.Block);
@@ -596,6 +610,7 @@ package body Keystore.Metadata is
                Frag := Frag + 1;
             end loop;
             Data_Block.Ready := True;
+            Data_Block.Count := Frag;
          end;
       end if;
 
@@ -739,6 +754,116 @@ package body Keystore.Metadata is
                              Last => Last_Pos);
       end if;
    end Add_Fragment;
+
+   --  ------------------------------
+   --  Add in the data block the wallet data fragment with its content.
+   --  The data block must have been loaded and is not saved.
+   --  ------------------------------
+   procedure Update_Fragment (Manager     : in out Wallet_Manager;
+                              Data_Block  : in Wallet_Block_Entry_Access;
+                              Item        : in Wallet_Entry_Access;
+                              Data_Offset : in Ada.Streams.Stream_Element_Offset;
+                              Position    : in Fragment_Index;
+                              Fragment    : in Wallet_Block_Fragment;
+                              Next_Block  : in Wallet_Block_Entry_Access;
+                              Content     : in Ada.Streams.Stream_Element_Array) is
+      Data_Size     : constant IO.Block_Index := AES_Align (Content'Length);
+      Old_Size      : constant IO.Block_Index := Fragment.Size;
+      Offset        : constant Stream_Element_Offset := AES_Align (Old_Size) - Data_Size;
+      Cipher_Data   : Util.Encoders.AES.Encoder;
+      IV            : Util.Encoders.AES.Word_Block_Type;
+      Secret        : Keystore.Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
+      Salt          : Ada.Streams.Stream_Element_Array (1 .. 32);
+      Start_Data    : IO.Block_Index;
+      End_Data      : IO.Block_Index;
+      Last_Encoded  : Ada.Streams.Stream_Element_Offset;
+      Last_Pos      : Ada.Streams.Stream_Element_Offset;
+   begin
+      --  Generate a key and IV for the data fragment.
+      --  Manager.Random.Generate (Salt);
+      --  Manager.Random.Generate (IV);
+      --  Util.Encoders.Create (Salt, Secret);
+
+      Manager.Buffer.Pos := Data_Entry_Offset (Position) + DATA_IV_OFFSET;
+      IO.Get_Data (Manager.Buffer, IV);
+      IO.Get_Secret (Manager.Buffer, Secret, Manager.Protect_Key);
+
+      --  Serialize the data entry at end of data entry area.
+      Manager.Buffer.Pos := Data_Entry_Offset (Position);
+      IO.Put_Unsigned_32 (Manager.Buffer, Interfaces.Unsigned_32 (Item.Id));
+      IO.Put_Kind (Manager.Buffer, Item.Kind);
+      IO.Put_Unsigned_16 (Manager.Buffer, Content'Length);
+      IO.Put_Unsigned_64 (Manager.Buffer, Item.Size);
+      if Item.Size = Content'Length then
+         IO.Put_Date (Manager.Buffer, Item.Update_Date);
+         IO.Put_Date (Manager.Buffer, Item.Access_Date);
+      else
+         IO.Put_Date (Manager.Buffer, Item.Access_Date);
+         if Next_Block /= null then
+            IO.Put_Block_Number (Manager.Buffer, Next_Block.Block);
+         else
+            IO.Put_Unsigned_32 (Manager.Buffer, 0);
+         end if;
+         IO.Put_Unsigned_32 (Manager.Buffer, Interfaces.Unsigned_32 (Data_Offset));
+      end if;
+
+      IO.Put_Data (Manager.Buffer, IV);
+      IO.Put_Secret (Manager.Buffer, Secret, Manager.Protect_Key);
+
+      --  Make HMAC-SHA256 signature of the data content before encryption.
+      IO.Put_HMAC_SHA256 (Manager.Buffer, Manager.Sign, Content);
+
+      --  Data_Block.Available := Data_Block.Available - Data_Size - DATA_ENTRY_SIZE;
+      --  Data_Block.Last_Pos := Data_Block.Last_Pos - Data_Size;
+
+      --  Record the fragment in the data block.
+      --  Data_Block.Fragments (Position).Item := Item;
+      --  Data_Block.Fragments (Position).Data_Offset := Data_Offset;
+      Data_Block.Fragments (Position).Size := Content'Length;
+      Data_Block.Fragments (Position).Next_Fragment := Next_Block;
+      if Item.Data = null then
+         Item.Data := Data_Block;
+      end if;
+
+      Start_Data := Data_Block.Fragments (Position).Block_Offset + Offset;
+      End_Data := Start_Data + Data_Size - 1;
+      Data_Block.Fragments (Position).Block_Offset := Start_Data;
+
+      pragma Assert (Check => Manager.Buffer.Pos = Data_Entry_Offset (Position + 1));
+      --  pragma Assert (Check => Data_Block.Last_Pos > Data_Entry_Offset (Data_Block.Count + 1));
+
+      --  Encrypt the data content using the item encryption key and IV.
+      Cipher_Data.Set_IV (IV);
+      Cipher_Data.Set_Key (Secret, Util.Encoders.AES.CBC);
+      Cipher_Data.Set_Padding (Util.Encoders.AES.ZERO_PADDING);
+
+      Cipher_Data.Transform (Data    => Content,
+                             Into    => Manager.Buffer.Data (Start_Data .. End_Data),
+                             Last    => Last_Pos,
+                             Encoded => Last_Encoded);
+      if Last_Pos < End_Data then
+         Cipher_Data.Finish (Into => Manager.Buffer.Data (Last_Pos + 1 .. End_Data),
+                             Last => Last_Pos);
+      end if;
+
+      if Offset /= 0 then
+         --  Shift the data offset to take into account the move of data content.
+         for J in Position + 1 .. Data_Block.Count loop
+            Data_Block.Fragments (J).Block_Offset
+              := Data_Block.Fragments (J).Block_Offset + Offset;
+         end loop;
+
+         --  Move the data before the slot being shrinked.
+         if Fragment.Block_Offset /= Last_Pos then
+            Manager.Buffer.Data (Last_Pos + Offset .. Fragment.Block_Offset - 1)
+              := Manager.Buffer.Data (Last_Pos .. Fragment.Block_Offset - Offset - 1);
+         end if;
+
+         --  Erase the content that was dropped.
+         Manager.Buffer.Data (Last_Pos .. Last_Pos + Offset - 1) := (others => 0);
+         Data_Block.Last_Pos := Data_Block.Last_Pos + Offset;
+      end if;
+   end Update_Fragment;
 
    --  ------------------------------
    --  Get the data fragment and write it to the output buffer.
@@ -891,10 +1016,12 @@ package body Keystore.Metadata is
       Load_Directory (Manager, Item.Header, Stream);
 
       --  Allocate first data block.
-      if Size > 0 and Size < DATA_MAX_SIZE then
-         Allocate_Data_Block (Manager, IO.Block_Index (Size), Item.Data, Stream);
-      elsif Size > 0 then
-         Allocate_Data_Block (Manager, DATA_MAX_SIZE, Item.Data, Stream);
+      if Size > 0 and Item.Data = null then
+         if Size < DATA_MAX_SIZE then
+            Allocate_Data_Block (Manager, IO.Block_Index (Size), Item.Data, Stream);
+         else
+            Allocate_Data_Block (Manager, DATA_MAX_SIZE, Item.Data, Stream);
+         end if;
       end if;
 
       --  Write the new entry.
@@ -971,15 +1098,16 @@ package body Keystore.Metadata is
                      Kind       : in Entry_Type;
                      Content    : in Ada.Streams.Stream_Element_Array;
                      Stream     : in out IO.Wallet_Stream'Class) is
-      Size   : constant Stream_Element_Offset := AES_Align (Content'Length);
-      Pos    : constant Wallet_Maps.Cursor := Manager.Map.Find (Name);
-      Item   : Wallet_Entry_Access;
+      Pos          : constant Wallet_Maps.Cursor := Manager.Map.Find (Name);
+      Item         : Wallet_Entry_Access;
       Loaded : Boolean := False;
-      Start       : Stream_Element_Offset := Content'First;
-      Last        : Stream_Element_Offset;
-      Block       : Wallet_Block_Entry_Access;
-      Next_Block  : Wallet_Block_Entry_Access;
-      Data_Offset : Ada.Streams.Stream_Element_Offset := 0;
+      Start        : Stream_Element_Offset := Content'First;
+      Last         : Stream_Element_Offset;
+      Data_Block   : Wallet_Block_Entry_Access;
+      Next_Block   : Wallet_Block_Entry_Access;
+      New_Block    : Wallet_Block_Entry_Access;
+      Delete_Block : Wallet_Block_Entry_Access;
+      Data_Offset  : Ada.Streams.Stream_Element_Offset := Content'First;
    begin
       Log.Debug ("Update keystore entry {0}", Name);
 
@@ -989,27 +1117,43 @@ package body Keystore.Metadata is
       end if;
 
       Item := Wallet_Maps.Element (Pos);
-      Item.Kind := Kind;
-      Item.Size := Content'Length;
 
       --  If there is enough room in the current data block, use it.
-      Block := Item.Data;
+      Data_Block := Item.Data;
 
-      --  Load the data block if we have partial information.
-      if not Block.Ready then
-         Load_Data (Manager, Block, Stream);
-         Loaded := True;
-      end if;
+      --  Update the data fragments.
+      while Data_Block /= null loop
+         Load_Data (Manager, Data_Block, Stream);
+         Item.Kind := Kind;
+         Item.Size := Content'Length;
+         for I in Data_Block.Fragments'First .. Data_Block.Count loop
+            if Data_Block.Fragments (I).Item = Item then
+               if Data_Block.Fragments (I).Size >= Content'Length - Data_Offset then
+                  Last := Content'Last;
+                  Delete_Block := Data_Block.Fragments (I).Next_Fragment;
+                  Next_Block := null;
+               else
+                  Last := Data_Offset + Data_Block.Fragments (I).Size - 1;
+                  Next_Block := Data_Block.Fragments (I).Next_Fragment;
+                  if Next_Block = null and Last < Content'Last then
+                     Allocate_Data_Block (Manager, DATA_MAX_SIZE, Next_Block, Stream);
+                     New_Block := Next_Block;
+                  end if;
+               end if;
 
-      if Block.Count > 0 then
-         Load_Data (Manager, Item.Data, Stream);
-      else
-         Init_Data_Block (Manager);
-      end if;
-      Block := Item.Data;
+               Update_Fragment (Manager, Data_Block, Item, Data_Offset, I, Data_Block.Fragments (I),
+                                Next_Block, Content (Data_Offset .. Last));
+               Data_Offset := Data_Offset + Data_Block.Fragments (I).Size;
+
+               Save_Data (Manager, Data_Block.all, Stream);
+               exit;
+            end if;
+         end loop;
+         exit when Data_Offset > Content'Last;
+      end loop;
 
       --  Write the data in one or several blocks.
-      while Block /= null loop
+      while New_Block /= null loop
          if Content'Last - Start + 1 > DATA_MAX_SIZE then
             Last := Start + DATA_MAX_SIZE - 1;
             Allocate_Data_Block (Manager, DATA_MAX_SIZE, Next_Block, Stream);
@@ -1018,38 +1162,30 @@ package body Keystore.Metadata is
             Next_Block := null;
          end if;
 
-         Add_Fragment (Manager, Block, Item, Data_Offset, Next_Block, Content (Start .. Last));
-         Save_Data (Manager, Block.all, Stream);
+         Add_Fragment (Manager, New_Block, Item, Data_Offset,
+                       Next_Block, Content (Start .. Last));
+         Save_Data (Manager, New_Block.all, Stream);
          Data_Offset := Data_Offset + Last - Start + 1;
          Start := Last + 1;
-         Block := Next_Block;
+         New_Block := Next_Block;
       end loop;
 
-      if Item.Data.Available + AES_Align (Stream_Element_Offset (Item.Size)) > Size then
-         if not Loaded then
-            Load_Data (Manager, Item.Data, Stream);
-         end if;
-         Delete_Fragment (Manager, Item.Data.all, Next_Block, Item);
-         Add_Fragment (Manager, Item.Data, Item, 0, Next_Block, Content);
-         Save_Data (Manager, Item.Data.all, Stream);
-      else
-         if not Loaded then
-            Load_Data (Manager, Item.Data, Stream);
-         end if;
-         Delete_Fragment (Manager, Item.Data.all, Next_Block, Item);
-         Save_Data (Manager, Item.Data.all, Stream);
-
-         Allocate_Data_Block (Manager, Size + 64, Item.Data, Stream);
-         if Item.Data.Count > 0 then
-            Load_Data (Manager, Item.Data, Stream);
+      --  Erase the data fragments which are not used by the entry.
+      while Delete_Block /= null loop
+         Load_Data (Manager, Delete_Block, Stream);
+         Delete_Fragment (Manager    => Manager,
+                          Data_Block => Delete_Block.all,
+                          Next_Block => Next_Block,
+                          Item       => Item);
+         if Delete_Block.Count = 0 then
+            Release_Data_Block (Manager, Delete_Block, Stream);
          else
-            Init_Data_Block (Manager);
+            Save_Data (Manager, Delete_Block.all, Stream);
          end if;
-         Add_Fragment (Manager, Item.Data, Item, 0, Next_Block, Content);
-         Save_Data (Manager, Item.Data.all, Stream);
+         Delete_Block := Next_Block;
+      end loop;
 
-         Update_Entry (Manager, Item, Kind, Content'Length, Stream);
-      end if;
+      Update_Entry (Manager, Item, Kind, Content'Length, Stream);
    end Update;
 
    procedure Add (Manager    : in out Wallet_Manager;
@@ -1288,6 +1424,18 @@ package body Keystore.Metadata is
       begin
          Add (Manager, Name, Kind, Content, Stream);
       end Add;
+
+      procedure Set (Name       : in String;
+                     Kind       : in Entry_Type;
+                     Content    : in Ada.Streams.Stream_Element_Array;
+                     Stream     : in out IO.Wallet_Stream'Class) is
+      begin
+         if Manager.Map.Contains (Name) then
+            Update (Manager, Name, Kind, Content, Stream);
+         else
+            Add (Manager, Name, Kind, Content, Stream);
+         end if;
+      end Set;
 
       procedure Update (Name       : in String;
                         Kind       : in Entry_Type;
