@@ -180,8 +180,8 @@ private package Keystore.IO is
    function Get_Kind (From : in out Marshaller) return Entry_Type with
      Pre => From.Pos <= Block_Type'Last - 2;
 
-   function Get_Block_Number (From : in out Marshaller) return Block_Number is
-     (Block_Number (Get_Unsigned_32 (From)));
+   function Get_Block_Number (From : in out Marshaller) return Block_Count is
+     (Block_Count (Get_Unsigned_32 (From)));
 
    function Get_Block_Index (From : in out Marshaller) return Block_Index is
      (Block_Index (Get_Unsigned_32 (From)));
