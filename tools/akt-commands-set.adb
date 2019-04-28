@@ -16,7 +16,10 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Ada.Text_IO;
+with Util.Files;
 package body AKT.Commands.Set is
+
+   use GNAT.Strings;
 
    --  ------------------------------
    --  Insert a new value in the keystore.
@@ -28,14 +31,42 @@ package body AKT.Commands.Set is
                       Context   : in out Context_Type) is
       pragma Unreferenced (Command, Name);
    begin
-      if Args.Get_Count /= 2 then
+      if Command.File /= null and then Command.File'Length > 0 then
+         if Args.Get_Count /= 1 then
+            AKT.Commands.Usage (Context);
+         else
+            declare
+               Content : Ada.Strings.Unbounded.Unbounded_String;
+            begin
+               Util.Files.Read_File (Command.File.all, Content);
+               Context.Open_Keystore;
+               Context.Wallet.Set (Name => Args.Get_Argument (1),
+                                   Content => Ada.Strings.Unbounded.To_String (Content));
+
+            end;
+         end if;
+
+      elsif Args.Get_Count /= 2 then
          AKT.Commands.Usage (Context);
+
       else
          Context.Open_Keystore;
-         Context.Wallet.Add (Name    => Args.Get_Argument (1),
+         Context.Wallet.Set (Name    => Args.Get_Argument (1),
                              Content => Args.Get_Argument (2));
       end if;
    end Execute;
+
+   --  ------------------------------
+   --  Setup the command before parsing the arguments and executing it.
+   --  ------------------------------
+   procedure Setup (Command : in out Command_Type;
+                    Config  : in out GNAT.Command_Line.Command_Line_Configuration;
+                    Context : in out Context_Type) is
+      package GC renames GNAT.Command_Line;
+   begin
+      GC.Define_Switch (Config, Command.File'Access,
+                        "-f:", "--file=", "Define the path of the file to read");
+   end Setup;
 
    --  ------------------------------
    --  Write the help associated with the command.
