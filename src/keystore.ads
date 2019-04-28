@@ -152,6 +152,25 @@ package Keystore is
      Pre  => Container.Is_Open,
      Post => Container.Contains (Name);
 
+   --  Add or update in the wallet the named entry and associate it the content.
+   --  The content is encrypted in AES-CBC with a secret key and an IV vector
+   --  that is created randomly for the new or updated named entry.
+   procedure Set (Container : in out Wallet;
+                  Name      : in String;
+                  Kind      : in Entry_Type := T_BINARY;
+                  Content   : in Ada.Streams.Stream_Element_Array) with
+     Pre  => Container.Is_Open,
+     Post => Container.Contains (Name);
+
+   --  Add or update in the wallet the named entry and associate it the content.
+   --  The content is encrypted in AES-CBC with a secret key and an IV vector
+   --  that is created randomly for the new or updated named entry.
+   procedure Set (Container : in out Wallet;
+                  Name      : in String;
+                  Content   : in String) with
+     Pre  => Container.Is_Open,
+     Post => Container.Contains (Name);
+
    --  Update in the wallet the named entry and associate it the new content.
    --  The secret key and IV vectors are not changed.
    procedure Update (Container : in out Wallet;
@@ -194,6 +213,10 @@ private
       function Contains (Name : in String) return Boolean;
 
       procedure Add (Name    : in String;
+                     Kind    : in Entry_Type;
+                     Content : in Ada.Streams.Stream_Element_Array);
+
+      procedure Set (Name    : in String;
                      Kind    : in Entry_Type;
                      Content : in Ada.Streams.Stream_Element_Array);
 
