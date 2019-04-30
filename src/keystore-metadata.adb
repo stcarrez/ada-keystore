@@ -557,16 +557,20 @@ package body Keystore.Metadata is
             Item      : Wallet_Entry_Access;
             Index     : Interfaces.Unsigned_32;
             Data_Size : IO.Block_Index;
-            Frag      : Fragment_Index := Fragment_Index'First;
+            Frag      : Fragment_Count := 0;
             Slot_Size : Interfaces.Unsigned_16;
             Item_Size : Interfaces.Unsigned_64;
-            Next_Block : Wallet_Block_Entry_Access;
-            Block      : IO.Block_Count;
+            Next_Block  : Wallet_Block_Entry_Access;
+            Block       : IO.Block_Count;
             Data_Offset : Interfaces.Unsigned_32;
          begin
             IO.Skip (Manager.Buffer, 8);
 
             while Manager.Buffer.Pos < IO.BT_DATA_START + Size loop
+               Frag := Frag + 1;
+
+               pragma Assert (Check => Manager.Buffer.Pos = Data_Entry_Offset (Frag));
+
                Index := IO.Get_Unsigned_32 (Manager.Buffer);
                exit when Index = 0;
                Pos := Manager.Entry_Indexes.Find (Wallet_Entry_Index (Index));
@@ -607,7 +611,6 @@ package body Keystore.Metadata is
                   Logs.Error (Log, "Block{0} unkown index", Data_Block.Block);
                   raise Keystore.Corrupted;
                end if;
-               Frag := Frag + 1;
             end loop;
             Data_Block.Ready := True;
             Data_Block.Count := Frag;
@@ -779,16 +782,7 @@ package body Keystore.Metadata is
       Last_Encoded  : Ada.Streams.Stream_Element_Offset;
       Last_Pos      : Ada.Streams.Stream_Element_Offset;
    begin
-      --  Generate a key and IV for the data fragment.
-      --  Manager.Random.Generate (Salt);
-      --  Manager.Random.Generate (IV);
-      --  Util.Encoders.Create (Salt, Secret);
-
-      Manager.Buffer.Pos := Data_Entry_Offset (Position) + DATA_IV_OFFSET;
-      IO.Get_Data (Manager.Buffer, IV);
-      IO.Get_Secret (Manager.Buffer, Secret, Manager.Protect_Key);
-
-      --  Serialize the data entry at end of data entry area.
+      --  Serialize the data entry at its position.
       Manager.Buffer.Pos := Data_Entry_Offset (Position);
       IO.Put_Unsigned_32 (Manager.Buffer, Interfaces.Unsigned_32 (Item.Id));
       IO.Put_Kind (Manager.Buffer, Item.Kind);
@@ -807,30 +801,50 @@ package body Keystore.Metadata is
          IO.Put_Unsigned_32 (Manager.Buffer, Interfaces.Unsigned_32 (Data_Offset));
       end if;
 
-      IO.Put_Data (Manager.Buffer, IV);
-      IO.Put_Secret (Manager.Buffer, Secret, Manager.Protect_Key);
+      IO.Get_Data (Manager.Buffer, IV);
+      IO.Get_Secret (Manager.Buffer, Secret, Manager.Protect_Key);
+
+      --  IO.Put_Data (Manager.Buffer, IV);
+      --  IO.Put_Secret (Manager.Buffer, Secret, Manager.Protect_Key);
 
       --  Make HMAC-SHA256 signature of the data content before encryption.
       IO.Put_HMAC_SHA256 (Manager.Buffer, Manager.Sign, Content);
 
-      --  Data_Block.Available := Data_Block.Available - Data_Size - DATA_ENTRY_SIZE;
-      --  Data_Block.Last_Pos := Data_Block.Last_Pos - Data_Size;
-
-      --  Record the fragment in the data block.
-      --  Data_Block.Fragments (Position).Item := Item;
-      --  Data_Block.Fragments (Position).Data_Offset := Data_Offset;
       Data_Block.Fragments (Position).Size := Content'Length;
       Data_Block.Fragments (Position).Next_Fragment := Next_Block;
       if Item.Data = null then
          Item.Data := Data_Block;
       end if;
 
+      pragma Assert (Check => Manager.Buffer.Pos = Data_Entry_Offset (Position + 1));
+
+      Last_Pos := Data_Block.Last_Pos;
       Start_Data := Data_Block.Fragments (Position).Block_Offset + Offset;
       End_Data := Start_Data + Data_Size - 1;
-      Data_Block.Fragments (Position).Block_Offset := Start_Data;
 
-      pragma Assert (Check => Manager.Buffer.Pos = Data_Entry_Offset (Position + 1));
-      --  pragma Assert (Check => Data_Block.Last_Pos > Data_Entry_Offset (Data_Block.Count + 1));
+      if Offset /= 0 then
+         Data_Block.Fragments (Position).Block_Offset := Start_Data;
+         Data_Block.Available := Data_Block.Available + Offset;
+         Data_Block.Last_Pos := Data_Block.Last_Pos + Offset;
+
+         --  Shift the data offset to take into account the move of data content.
+         for J in Position + 1 .. Data_Block.Count loop
+            Data_Block.Fragments (J).Block_Offset
+              := Data_Block.Fragments (J).Block_Offset + Offset;
+         end loop;
+
+         --  Move the existing data for other values before we update the value.
+         if Position /= Data_Block.Count then
+            Manager.Buffer.Data (Last_Pos + Offset .. Start_Data - 1)
+              := Manager.Buffer.Data (Last_Pos .. Start_Data - Offset - 1);
+         end if;
+
+         --  Erase the content that was dropped.
+         if Offset > 0 then
+            Manager.Buffer.Data (Last_Pos .. Last_Pos + Offset - 1) := (others => 0);
+            Data_Block.Last_Pos := Data_Block.Last_Pos + Offset;
+         end if;
+      end if;
 
       --  Encrypt the data content using the item encryption key and IV.
       Cipher_Data.Set_IV (IV);
@@ -846,23 +860,6 @@ package body Keystore.Metadata is
                              Last => Last_Pos);
       end if;
 
-      if Offset /= 0 then
-         --  Shift the data offset to take into account the move of data content.
-         for J in Position + 1 .. Data_Block.Count loop
-            Data_Block.Fragments (J).Block_Offset
-              := Data_Block.Fragments (J).Block_Offset + Offset;
-         end loop;
-
-         --  Move the data before the slot being shrinked.
-         if Fragment.Block_Offset /= Last_Pos then
-            Manager.Buffer.Data (Last_Pos + Offset .. Fragment.Block_Offset - 1)
-              := Manager.Buffer.Data (Last_Pos .. Fragment.Block_Offset - Offset - 1);
-         end if;
-
-         --  Erase the content that was dropped.
-         Manager.Buffer.Data (Last_Pos .. Last_Pos + Offset - 1) := (others => 0);
-         Data_Block.Last_Pos := Data_Block.Last_Pos + Offset;
-      end if;
    end Update_Fragment;
 
    --  ------------------------------
@@ -1103,6 +1100,7 @@ package body Keystore.Metadata is
       Loaded : Boolean := False;
       Start        : Stream_Element_Offset := Content'First;
       Last         : Stream_Element_Offset;
+      Space        : Stream_Element_Offset;
       Data_Block   : Wallet_Block_Entry_Access;
       Next_Block   : Wallet_Block_Entry_Access;
       New_Block    : Wallet_Block_Entry_Access;
@@ -1128,16 +1126,19 @@ package body Keystore.Metadata is
          Item.Size := Content'Length;
          for I in Data_Block.Fragments'First .. Data_Block.Count loop
             if Data_Block.Fragments (I).Item = Item then
-               if Data_Block.Fragments (I).Size >= Content'Length - Data_Offset then
+
+               --  See how much space we have in the current block.
+               Space := Data_Block.Available - AES_Align (Data_Block.Fragments (I).Size);
+               if Space >= AES_Align (Content'Length - Data_Offset) then
                   Last := Content'Last;
                   Delete_Block := Data_Block.Fragments (I).Next_Fragment;
                   Next_Block := null;
                else
-                  Last := Data_Offset + Data_Block.Fragments (I).Size - 1;
+                  Last := Data_Offset + Space - 1;
                   Next_Block := Data_Block.Fragments (I).Next_Fragment;
                   if Next_Block = null and Last < Content'Last then
-                     Allocate_Data_Block (Manager, DATA_MAX_SIZE, Next_Block, Stream);
-                     New_Block := Next_Block;
+                     Allocate_Data_Block (Manager, DATA_MAX_SIZE, New_Block, Stream);
+                     Next_Block := null;
                   end if;
                end if;
 
@@ -1146,6 +1147,7 @@ package body Keystore.Metadata is
                Data_Offset := Data_Offset + Data_Block.Fragments (I).Size;
 
                Save_Data (Manager, Data_Block.all, Stream);
+               Data_Block := Next_Block;
                exit;
             end if;
          end loop;
@@ -1285,10 +1287,11 @@ package body Keystore.Metadata is
                        Result     : out Entry_Info;
                        Output     : out Ada.Streams.Stream_Element_Array;
                        Stream     : in out IO.Wallet_Stream'Class) is
-      Pos        : constant Wallet_Maps.Cursor := Manager.Map.Find (Name);
-      Item       : Wallet_Entry_Access;
-      Data_Block : Wallet_Block_Entry_Access;
+      Pos         : constant Wallet_Maps.Cursor := Manager.Map.Find (Name);
+      Item        : Wallet_Entry_Access;
+      Data_Block  : Wallet_Block_Entry_Access;
       Data_Offset : Ada.Streams.Stream_Element_Offset := Output'First;
+      Position    : Fragment_Count;
    begin
       if not Wallet_Maps.Has_Element (Pos) then
          Log.Info ("Data entry '{0}' not found", Name);
@@ -1301,15 +1304,12 @@ package body Keystore.Metadata is
       --  Load the data fragments.
       while Data_Block /= null loop
          Load_Data (Manager, Data_Block, Stream);
-         for I in Data_Block.Fragments'First .. Data_Block.Count loop
-            if Data_Block.Fragments (I).Item = Item then
-               Get_Fragment (Manager, Item, I, Data_Block.Fragments (I),
-                             Output (Data_Offset .. Output'Last));
-               Data_Offset := Data_Offset + Data_Block.Fragments (I).Size;
-               Data_Block := Data_Block.Fragments (I).Next_Fragment;
-               exit;
-            end if;
-         end loop;
+         Position := Get_Fragment_Position (Data_Block.all, Item);
+         exit when Position = 0;
+         Get_Fragment (Manager, Item, Position, Data_Block.Fragments (Position),
+                       Output (Data_Offset .. Output'Last));
+         Data_Offset := Data_Offset + Data_Block.Fragments (Position).Size;
+         Data_Block := Data_Block.Fragments (Position).Next_Fragment;
       end loop;
 
       Result.Size := Natural (Item.Size);
