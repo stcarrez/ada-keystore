@@ -309,7 +309,10 @@ private
                               Position    : in Fragment_Index;
                               Fragment    : in Wallet_Block_Fragment;
                               Next_Block  : in Wallet_Block_Entry_Access;
-                              Content     : in Ada.Streams.Stream_Element_Array);
+                              Content     : in Ada.Streams.Stream_Element_Array) with
+     Pre => Position <= Data_Block.Count and
+     AES_Align (Content'Length) <= Data_Block.Available
+     + AES_Align (Data_Block.Fragments (Position).Size);
 
    --  Delete the data from the data block.
    --  The data block must have been loaded and is not saved.
