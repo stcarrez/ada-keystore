@@ -300,7 +300,7 @@ private
                            Data_Offset : in Ada.Streams.Stream_Element_Offset;
                            Next_Block  : in Wallet_Block_Entry_Access;
                            Content     : in Ada.Streams.Stream_Element_Array) with
-     Pre => 64 + AES_Align (Content'Length) <= Data_Block.Available;
+     Pre => DATA_ENTRY_SIZE + AES_Align (Content'Length) <= Data_Block.Available;
 
    procedure Update_Fragment (Manager     : in out Wallet_Manager;
                               Data_Block  : in Wallet_Block_Entry_Access;
