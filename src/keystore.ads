@@ -188,7 +188,7 @@ package Keystore is
    --  Get from the wallet the named entry.
    function Get (Container : in out Wallet;
                  Name      : in String) return String with
-     Pre => Container.Is_Open and Container.Contains (Name);
+     Pre => Container.Is_Open;
 
    --  Get the list of entries contained in the wallet.
    procedure List (Container : in out Wallet;
