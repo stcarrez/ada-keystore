@@ -346,6 +346,8 @@ package body Keystore.Metadata is
       Data_Block.Ready := True;
       Stream.Allocate (Data_Block.Block);
       Manager.Data_List.Append (Data_Block);
+
+      Logs.Debug (Log, "Allocated data block{0}", Data_Block.Block);
    end Allocate_Data_Block;
 
    --  ------------------------------
@@ -555,7 +557,7 @@ package body Keystore.Metadata is
       Wid   : Interfaces.Unsigned_32;
       Size  : IO.Block_Index;
    begin
-      --  Logs.Debug (Log, "Load data block{0} decrypt{1}", Data_Block.Block, Size);
+      Logs.Debug (Log, "Load data block{0}", Data_Block.Block);
 
       --  Read wallet data block.
       Set_IV (Manager, Data_Block.Block);
@@ -728,6 +730,8 @@ package body Keystore.Metadata is
       Last_Encoded  : Ada.Streams.Stream_Element_Offset;
       Last_Pos      : Ada.Streams.Stream_Element_Offset;
    begin
+      Logs.Debug (Log, "Add fragment block{0} at{1}", Data_Block.Block, Data_Block.Last_Pos);
+
       --  Generate a key and IV for the data fragment.
       Manager.Random.Generate (Salt);
       Manager.Random.Generate (IV);
@@ -820,6 +824,8 @@ package body Keystore.Metadata is
       Last_Encoded  : Ada.Streams.Stream_Element_Offset;
       Last_Pos      : Ada.Streams.Stream_Element_Offset;
    begin
+      Logs.Debug (Log, "Update fragment block{0} at{1}", Data_Block.Block, Data_Block.Last_Pos);
+
       --  Serialize the data entry at its position.
       Manager.Buffer.Pos := Data_Entry_Offset (Position);
       IO.Put_Unsigned_32 (Manager.Buffer, Interfaces.Unsigned_32 (Item.Id));
@@ -916,6 +922,8 @@ package body Keystore.Metadata is
       Secret     : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
       IV         : Util.Encoders.AES.Word_Block_Type;
    begin
+      Logs.Debug (Log, "Get fragment from{0} at{1}", Manager.Buffer.Block, Start_Data);
+
       Manager.Buffer.Pos := Data_Entry_Offset (Position) + DATA_IV_OFFSET;
       IO.Get_Data (Manager.Buffer, IV);
       IO.Get_Secret (Manager.Buffer, Secret, Manager.Protect_Key);
@@ -1008,6 +1016,7 @@ package body Keystore.Metadata is
          Log.Info ("Name '{0}' is already used", Name);
          raise Name_Exist;
       end if;
+      Log.Info ("Adding data entry {0}", Name);
 
       --  Create the new wallet entry.
       Item := new Wallet_Entry (Length => Name'Length);
@@ -1230,7 +1239,7 @@ package body Keystore.Metadata is
             Next_Block := Data_Block.Fragments (Position).Next_Fragment;
             if Next_Block = null and Last < Content'Last then
                Allocate_Data_Block (Manager, DATA_MAX_SIZE, New_Block, Stream);
-               Next_Block := null;
+               Next_Block := New_Block;
             end if;
          end if;
 
@@ -1242,7 +1251,7 @@ package body Keystore.Metadata is
 
          Save_Data (Manager, Data_Block.all, Stream);
          Data_Block := Next_Block;
-         exit when Data_Offset > Content'Last;
+         exit when Data_Offset > Content'Last or else New_Block /= null;
       end loop;
 
       --  Write the data in one or several blocks.
