@@ -959,13 +959,13 @@ package body Keystore.Metadata is
          end if;
 
          --  Move the data entry.
-         Last_Entry := Data_Entry_Offset (Data_Block.Count) - 1;
-         if Fragment_Pos /= Data_Block.Count - 1 then
+         Last_Entry := Data_Entry_Offset (Data_Block.Count) + DATA_ENTRY_SIZE - 1;
+         if Fragment_Pos /= Data_Block.Count then
             Start_Entry := Data_Entry_Offset (Fragment_Pos);
             Manager.Buffer.Data (Start_Entry .. Last_Entry - DATA_ENTRY_SIZE)
               := Manager.Buffer.Data (Start_Entry + DATA_ENTRY_SIZE .. Last_Entry);
          end if;
-         Manager.Buffer.Data (Last_Entry - DATA_ENTRY_SIZE .. Last_Entry) := (others => 0);
+         Manager.Buffer.Data (Last_Entry - DATA_ENTRY_SIZE + 1 .. Last_Entry) := (others => 0);
 
          --  Move the data before the slot being removed.
          if Fragment.Block_Offset /= Last_Pos then
