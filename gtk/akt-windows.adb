@@ -28,6 +28,7 @@ with Gtk.Main;
 with Gtk.Label;
 with Gtk.Enums;
 with Gtk.Tree_View_Column;
+with Gtk.Text_Iter;
 
 with AKT.Callbacks;
 package body AKT.Windows is
@@ -97,6 +98,9 @@ package body AKT.Windows is
       Application.Scrolled.Set_Policy (Gtk.Enums.Policy_Always, Gtk.Enums.Policy_Always);
       Application.Col_Text.Ref;
 
+      Gtk.Text_Buffer.Gtk_New (Application.Buffer);
+      Gtk.Text_View.Gtk_New (Application.Editor, Application.Buffer);
+
       Application.Main.Show_All;
    end Initialize_Widget;
 
@@ -163,6 +167,8 @@ package body AKT.Windows is
          Application.Tree.Destroy;
       end if;
       Gtk.Tree_View.Gtk_New (Application.Tree, Gtk.Tree_Store."+" (Application.List));
+      Application.Selection := Gtk.Tree_View.Get_Selection (Application.Tree);
+      Gtk.Tree_Selection.Set_Mode (Application.Selection, Gtk.Enums.Selection_Single);
 
       Add_Column ("Name", 1);
       Add_Column ("Type", 2);
@@ -197,6 +203,40 @@ package body AKT.Windows is
 
       Application.Scrolled.Show_All;
    end List_Keystore;
+
+   procedure Edit_Current (Application : in out Application_Type) is
+      Model : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+   begin
+      Gtk.Tree_Selection.Get_Selected (Selection => Application.Selection,
+                                       Model     => Model,
+                                       Iter      => Iter);
+      declare
+         Name : constant String := Gtk.Tree_Model.Get_String (Model, Iter, 0);
+      begin
+         Log.Info ("Selected {0}", Name);
+         Application.Current := Ada.Strings.Unbounded.To_Unbounded_String (Name);
+
+         Gtk.Text_Buffer.Set_Text (Application.Buffer, Application.Wallet.Get (Name));
+         if not Application.Editing then
+            Application.Viewport.Remove (Application.Tree);
+            Application.Viewport.Add (Application.Editor);
+            Application.Editor.Show_All;
+            Application.Editing := True;
+         end if;
+      end;
+   end Edit_Current;
+
+   procedure Save_Current (Application : in out Application_Type) is
+      Start : Gtk.Text_Iter.Gtk_Text_Iter;
+      Stop  : Gtk.Text_Iter.Gtk_Text_Iter;
+   begin
+      if Application.Editing then
+         Gtk.Text_Buffer.Get_Bounds (Application.Buffer, Start, Stop);
+         Application.Wallet.Set (Ada.Strings.Unbounded.To_String (Application.Current),
+                                 Gtk.Text_Buffer.Get_Text (Application.Buffer, Start, Stop));
+      end if;
+   end Save_Current;
 
    --  ------------------------------
    --  Set the UI label with the given value.
