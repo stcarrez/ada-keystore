@@ -348,6 +348,12 @@ private
                        Offset      : in Ada.Streams.Stream_Element_Offset;
                        Stream      : in out IO.Wallet_Stream'Class);
 
+   --  Delete the value associated with the given name.
+   --  Raises the Not_Found exception if the name was not found.
+   procedure Delete (Manager    : in out Wallet_Manager;
+                     Name       : in String;
+                     Stream     : in out IO.Wallet_Stream'Class);
+
    procedure Release (Manager    : in out Wallet_Manager);
 
    protected type Safe_Wallet_Repository is
