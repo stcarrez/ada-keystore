@@ -287,7 +287,6 @@ private
 
    --  Get the data fragment and write it to the output buffer.
    procedure Get_Fragment (Manager  : in out Wallet_Manager;
-                           Item     : in Wallet_Entry_Access;
                            Position : in Fragment_Index;
                            Fragment : in Wallet_Block_Fragment;
                            Output   : out Ada.Streams.Stream_Element_Array);
