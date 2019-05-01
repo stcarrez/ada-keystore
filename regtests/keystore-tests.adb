@@ -18,6 +18,7 @@
 
 with Ada.Text_IO;
 with Ada.Directories;
+with Util.Files;
 with Util.Test_Caller;
 with Util.Encoders.AES;
 with Util.Log.Loggers;
@@ -187,6 +188,7 @@ package body Keystore.Tests is
    --  ------------------------------
    procedure Test_Tool_Set_Big (T : in out Test) is
       Path   : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-tool.akt");
+      Path2  : constant String := Util.Tests.Get_Test_Path ("regtests/result/big-content.txt");
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       Test_Tool_Create (T);
@@ -199,7 +201,10 @@ package body Keystore.Tests is
       --  Get the property
       T.Execute (Tool & " -f " & Path & " -p admin "
                  & "get testing", Result);
-      Util.Tests.Assert_Equals (T, "", Result, "remove command failed");
+      Util.Files.Write_File (Path    => Path2,
+                             Content => Result);
+
+      Util.Tests.Assert_Equal_Files (T, "LICENSE.txt", Path2, "set/get big file failed");
 
    end Test_Tool_Set_Big;
 
