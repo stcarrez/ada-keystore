@@ -41,6 +41,9 @@ package Keystore.Files.Tests is
    --  Test update values.
    procedure Test_Update (T : in out Test);
 
+   --  Test update values in growing and descending sequences.
+   procedure Test_Update_Sequence (T : in out Test);
+
    --  Test opening and closing keystore.
    procedure Test_Open_Close (T : in out Test);
 
