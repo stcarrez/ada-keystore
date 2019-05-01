@@ -224,6 +224,8 @@ private
                         Kind    : in Entry_Type;
                         Content : in Ada.Streams.Stream_Element_Array);
 
+      function Find (Name    : in String) return Entry_Info;
+
       procedure Get_Data (Name       : in String;
                           Result     : out Entry_Info;
                           Output     : out Ada.Streams.Stream_Element_Array);
