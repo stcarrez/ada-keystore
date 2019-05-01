@@ -43,6 +43,8 @@ package body Keystore.Files.Tests is
                        Test_Update'Access);
       Caller.Add_Test (Suite, "Test Keystore.Files.Open+Close",
                        Test_Open_Close'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Add (Name_Exist)",
+                       Test_Add_Error'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -299,6 +301,7 @@ package body Keystore.Files.Tests is
    procedure Test_Update (T : in out Test) is
       Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-update.ks");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
+      Count    : constant Natural := 10;
    begin
       if Ada.Directories.Exists (Path) then
          Ada.Directories.Delete_File (Path);
@@ -309,7 +312,7 @@ package body Keystore.Files.Tests is
          W        : Keystore.Files.Wallet_File;
       begin
          W.Create (Path => Path, Password => Password);
-         for I in 1 .. 50 loop
+         for I in 1 .. Count loop
             W.Add (Name    => "test-update" & Natural'Image (I),
                    Content => "Value before update" & Natural'Image (I));
          end loop;
@@ -320,7 +323,7 @@ package body Keystore.Files.Tests is
          W        : Keystore.Files.Wallet_File;
       begin
          W.Open (Path => Path, Password => Password);
-         for I in 1 .. 50 loop
+         for I in 1 .. Count loop
             Util.Tests.Assert_Equals (T, "Value before update" & Natural'Image (I),
                                       W.Get ("test-update" & Natural'Image (I)),
                                       "Invalid property test-update" & Natural'Image (I));
@@ -328,7 +331,7 @@ package body Keystore.Files.Tests is
             W.Update (Name    => "test-update" & Natural'Image (I),
                       Content => "Value after update" & Natural'Image (I));
          end loop;
-         for I in 1 .. 50 loop
+         for I in 1 .. Count loop
             Util.Tests.Assert_Equals (T, "Value after update" & Natural'Image (I),
                                       W.Get ("test-update" & Natural'Image (I)),
                                       "Invalid property test-update" & Natural'Image (I));
@@ -384,5 +387,44 @@ package body Keystore.Files.Tests is
          W.Close;
       end loop;
    end Test_Open_Close;
+
+   --  ------------------------------
+   --  Test adding values that already exist.
+   --  ------------------------------
+   procedure Test_Add_Error (T : in out Test) is
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.ks");
+      Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
+      W        : Keystore.Files.Wallet_File;
+   begin
+      W.Open (Path => Path, Password => Password);
+      begin
+         W.Add ("list-1", "Value already contained in keystore, expect an exception");
+         T.Fail ("No Name_Exist exception was raised for Add");
+      exception
+         when Keystore.Name_Exist =>
+            null;
+      end;
+      begin
+         W.Update ("list-invalid", "Value does not exist in keystore, expect an exception");
+         T.Fail ("No Not_Found exception was raised for Add");
+      exception
+         when Keystore.Not_Found =>
+            null;
+      end;
+      begin
+         W.Delete ("list-invalid");
+         T.Fail ("No Name_Exist exception was raised for Add");
+      exception
+         when Keystore.Not_Found =>
+            null;
+      end;
+      begin
+         T.Fail ("No Not_Found exception, returned value: " & W.Get ("list-invalid"));
+      exception
+         when Keystore.Not_Found =>
+            null;
+      end;
+
+   end Test_Add_Error;
 
 end Keystore.Files.Tests;
