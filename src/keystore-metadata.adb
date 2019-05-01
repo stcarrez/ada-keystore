@@ -139,6 +139,10 @@ package body Keystore.Metadata is
      new Ada.Unchecked_Deallocation (Object => Wallet_Block_Entry,
                                      Name   => Wallet_Block_Entry_Access);
 
+   procedure Free is
+     new Ada.Unchecked_Deallocation (Object => Wallet_Directory_Entry,
+                                     Name   => Wallet_Directory_Entry_Access);
+
    --  Start offset of the data entry descriptor in the data block.
    function Data_Entry_Offset (Index : in Fragment_Index) return IO.Block_Index;
 
@@ -374,7 +378,7 @@ package body Keystore.Metadata is
    --  Extract the directory if this is the first time the data block is read.
    --  ------------------------------
    procedure Load_Directory (Manager   : in out Wallet_Manager;
-                             Dir_Block : in Wallet_Block_Entry_Access;
+                             Dir_Block : in Wallet_Directory_Entry_Access;
                              Stream    : in out IO.Wallet_Stream'Class) is
       Btype : Interfaces.Unsigned_16;
       Wid   : Interfaces.Unsigned_32;
@@ -474,13 +478,13 @@ package body Keystore.Metadata is
                                       Block   : in Keystore.IO.Block_Number;
                                       Stream  : in out IO.Wallet_Stream'Class) is
       Next      : Interfaces.Unsigned_32;
-      Dir_Block : Wallet_Block_Entry_Access;
+      Dir_Block : Wallet_Directory_Entry_Access;
    begin
       Manager.Root := Block;
       Manager.Next_Id := Wallet_Entry_Index'First;
       Next := Interfaces.Unsigned_32 (Block);
       while Next /= 0 loop
-         Dir_Block := new Wallet_Block_Entry;
+         Dir_Block := new Wallet_Directory_Entry;
          Dir_Block.Block := IO.Block_Number (Next);
          Manager.Entry_List.Append (Dir_Block);
          Load_Directory (Manager, Dir_Block, Stream);
@@ -496,12 +500,12 @@ package body Keystore.Metadata is
    --  ------------------------------
    procedure Find_Directory_Block (Manager     : in out Wallet_Manager;
                                    Space       : in IO.Block_Index;
-                                   Entry_Block : out Wallet_Block_Entry_Access;
+                                   Entry_Block : out Wallet_Directory_Entry_Access;
                                    Stream      : in out IO.Wallet_Stream'Class) is
    begin
       --  Scan for a block having enough space for us.
       for Block of Manager.Entry_List loop
-         if Block.Available >= Space and Block.Count < Fragment_Index'Last then
+         if Block.Available >= Space then
             Block.Available := Block.Available - Space;
             Block.Count := Block.Count + 1;
             Entry_Block := Block;
@@ -511,7 +515,7 @@ package body Keystore.Metadata is
       end loop;
 
       --  We need a new wallet directory block.
-      Entry_Block := new Wallet_Block_Entry;
+      Entry_Block := new Wallet_Directory_Entry;
       Entry_Block.Available := IO.Block_Index'Last - IO.BT_DATA_START - Space - 4;
       Entry_Block.Count := 0;
       Entry_Block.Last_Pos := IO.BT_DATA_START + 4;
@@ -1067,7 +1071,7 @@ package body Keystore.Metadata is
    procedure Delete_Entry (Manager    : in out Wallet_Manager;
                            Item       : in Wallet_Entry_Access;
                            Stream     : in out IO.Wallet_Stream'Class) is
-      Dir_Block    : constant Wallet_Block_Entry_Access := Item.Header;
+      Dir_Block    : constant Wallet_Directory_Entry_Access := Item.Header;
       Wallet_Entry : Wallet_Entry_Access;
       Prev_Entry   : Wallet_Entry_Access;
       Size         : IO.Block_Index;
@@ -1356,14 +1360,15 @@ package body Keystore.Metadata is
    end Get_Data;
 
    procedure Release (Manager    : in out Wallet_Manager) is
+      Dir   : Wallet_Directory_Entry_Access;
       Block : Wallet_Block_Entry_Access;
       First : Wallet_Maps.Cursor;
       Item  : Wallet_Entry_Access;
    begin
       while not Manager.Entry_List.Is_Empty loop
-         Block := Manager.Entry_List.First_Element;
+         Dir := Manager.Entry_List.First_Element;
          Manager.Entry_List.Delete_First;
-         Free (Block);
+         Free (Dir);
       end loop;
       while not Manager.Data_List.Is_Empty loop
          Block := Manager.Data_List.First_Element;
@@ -1409,7 +1414,7 @@ package body Keystore.Metadata is
                         Block    : in IO.Block_Number;
                         Keys     : in out Keystore.Keys.Key_Manager;
                         Stream   : in out IO.Wallet_Stream'Class) is
-         Entry_Block : Wallet_Block_Entry_Access;
+         Entry_Block : Wallet_Directory_Entry_Access;
       begin
          Stream.Allocate (Manager.Root);
          Manager.Id := Ident;
@@ -1418,7 +1423,7 @@ package body Keystore.Metadata is
                       Manager.IV, Manager.Cipher, Manager.Decipher, Stream);
 
          --  We need a new wallet directory block.
-         Entry_Block := new Wallet_Block_Entry;
+         Entry_Block := new Wallet_Directory_Entry;
          Entry_Block.Available := IO.Block_Index'Last - IO.BT_DATA_START - 4;
          Entry_Block.Count := 0;
          Entry_Block.Last_Pos := IO.BT_DATA_START + 4;
