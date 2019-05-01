@@ -150,7 +150,7 @@ private
       Block      : Keystore.IO.Block_Number;
       First      : Wallet_Entry_Access;
       Next_Block : Interfaces.Unsigned_32 := 0;
-      Available  : IO.Block_Index := IO.Block_Index'Last - IO.BT_DATA_START - 4;
+      Available  : Stream_Element_Offset := IO.Block_Index'Last - IO.BT_DATA_START - 4;
       Data_Start : IO.Block_Index := IO.Block_Index'Last;
       Last_Pos   : IO.Block_Index := IO.BT_DATA_START + 4;
       Count      : Fragment_Count := 0;
@@ -339,6 +339,14 @@ private
    procedure Delete_Entry (Manager    : in out Wallet_Manager;
                            Item       : in Wallet_Entry_Access;
                            Stream     : in out IO.Wallet_Stream'Class);
+
+   --  Write the data in one or several blocks.
+   procedure Add_Data (Manager     : in out Wallet_Manager;
+                       Item        : in Wallet_Entry_Access;
+                       Data_Block  : in Wallet_Block_Entry_Access;
+                       Content     : in Ada.Streams.Stream_Element_Array;
+                       Offset      : in Ada.Streams.Stream_Element_Offset;
+                       Stream      : in out IO.Wallet_Stream'Class);
 
    procedure Release (Manager    : in out Wallet_Manager);
 
