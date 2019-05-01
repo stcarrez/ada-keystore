@@ -68,6 +68,10 @@ package body AKT.Callbacks is
                                 Handler      => AKT.Callbacks.On_Close_About'Access);
       Builder.Register_Handler (Handler_Name => "close-password",
                                 Handler      => AKT.Callbacks.On_Close_Password'Access);
+      Builder.Register_Handler (Handler_Name => "tool-edit",
+                                Handler      => AKT.Callbacks.On_Tool_Edit'Access);
+      Builder.Register_Handler (Handler_Name => "tool-save",
+                                Handler      => AKT.Callbacks.On_Tool_Save'Access);
    end Initialize;
 
    --  ------------------------------
@@ -104,23 +108,39 @@ package body AKT.Callbacks is
       File_Chooser : Gtk.File_Chooser.Gtk_File_Chooser;
       Filter  : Gtk.File_Filter.Gtk_File_Filter;
    begin
-      Gtk.File_Filter.Gtk_New (Filter);
-      Gtk.File_Filter.Add_Pattern (Filter, "*.akt");
-      Gtk.File_Filter.Set_Name (Filter, "Keystore Files");
-
-      Gtk.File_Filter.Gtk_New (Filter);
-      Gtk.File_Filter.Add_Pattern (Filter, "*");
-      Gtk.File_Filter.Set_Name (Filter, "All Files");
       if Chooser /= null then
          File_Chooser := Gtk.File_Chooser_Dialog."+"
            (Gtk.File_Chooser_Dialog.Gtk_File_Chooser_Dialog (Chooser));
+
+         Gtk.File_Filter.Gtk_New (Filter);
+         Gtk.File_Filter.Add_Pattern (Filter, "*.akt");
+         Gtk.File_Filter.Set_Name (Filter, "Keystore Files");
          Gtk.File_Chooser.Add_Filter (File_Chooser, Filter);
 
+         Gtk.File_Filter.Gtk_New (Filter);
+         Gtk.File_Filter.Add_Pattern (Filter, "*");
+         Gtk.File_Filter.Set_Name (Filter, "All Files");
          Gtk.File_Chooser.Add_Filter (File_Chooser, Filter);
 
       end if;
       Chooser.Show;
    end On_Menu_Open;
+
+   --  ------------------------------
+   --  Callback executed when the "tool-save" action is executed from the toolbar.
+   --  ------------------------------
+   procedure On_Tool_Save (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
+   begin
+      App.Save_Current;
+   end On_Tool_Save;
+
+   --  ------------------------------
+   --  Callback executed when the "tool-edit" action is executed from the toolbar.
+   --  ------------------------------
+   procedure On_Tool_Edit (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
+   begin
+      App.Edit_Current;
+   end On_Tool_Edit;
 
    --  ------------------------------
    --  Callback executed when the "open-file" action is executed from the open_file dialog.
