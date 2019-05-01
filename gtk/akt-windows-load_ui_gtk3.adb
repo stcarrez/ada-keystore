@@ -17,10 +17,18 @@
 -----------------------------------------------------------------------
 separate (AKT.Windows)
 
+--  ------------------------------
 --  Load the glade XML definition.
+--  ------------------------------
 procedure Load_UI (Application : in out Application_Type) is
+   use type Glib.Guint;
+
    Result : Glib.Guint;
    Error  : aliased Glib.Error.GError;
 begin
    Result := Application.Builder.Add_From_File ("gatk.glade", Error'Access);
+   if Result /= 1 then
+      Log.Error ("Cannot load the 'gatk.glade' configuration file");
+      raise Initialize_Error;
+   end if;
 end Load_UI;

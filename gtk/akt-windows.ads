@@ -17,17 +17,21 @@
 -----------------------------------------------------------------------
 with Ada.Finalization;
 with Gtk.Widget;
-with Gtk.Status_Bar;
-with Gtk.Tree_View;
-with Gtk.Tree_Store;
-with Gtk.Tree_Model;
-with Gtk.Cell_Renderer_Text;
-with Gtk.Scrolled_Window;
-with Gtk.Frame;
-with Gtk.Viewport;
 with Gtkada.Builder;
 with Keystore.Files;
+private with Gtk.Scrolled_Window;
+private with Gtk.Frame;
+private with Gtk.Viewport;
+private with Gtk.Status_Bar;
+private with Gtk.Tree_View;
+private with Gtk.Tree_Store;
+private with Gtk.Tree_Model;
+private with Gtk.Cell_Renderer_Text;
+private with Gtk.Text_Buffer;
+private with Gtk.Text_View;
 package AKT.Windows is
+
+   Initialize_Error : exception;
 
    type Application_Type is limited new Ada.Finalization.Limited_Controlled with private;
    type Application_Access is access all Application_Type;
@@ -76,7 +80,9 @@ private
       List        : Gtk.Tree_Store.Gtk_Tree_Store;
       Current_Row : Gtk.Tree_Model.Gtk_Tree_Iter;
       Tree        : Gtk.Tree_View.Gtk_Tree_View;
-      Col_Text    : Gtk.Cell_Renderer_Text.Gtk_Cell_renderer_Text;
+      Col_Text    : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
+      Editor      : Gtk.Text_View.Gtk_Text_View;
+      Buffer      : Gtk.Text_Buffer.Gtk_Text_Buffer;
    end record;
 
 end AKT.Windows;

@@ -16,6 +16,7 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 
+with Ada.Command_Line;
 with Gtk.Widget; use Gtk;
 with AKT.Windows;
 procedure AKT.Gtk is
@@ -26,4 +27,8 @@ begin
                        Verbose => True);
    Application.Initialize_Widget (Main);
    Application.Main;
+
+exception
+   when AKT.Windows.Initialize_Error =>
+      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 end AKT.Gtk;
