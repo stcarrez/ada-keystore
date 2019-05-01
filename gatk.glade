@@ -187,6 +187,21 @@
                 <property name="is_important">True</property>
                 <property name="label" translatable="yes">Save</property>
                 <property name="use_underline">True</property>
+                <signal name="clicked" handler="tool-save" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkToolButton" id="tool_edit_button">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="is_important">True</property>
+                <property name="label" translatable="yes">Edit</property>
+                <property name="use_underline">True</property>
+                <signal name="clicked" handler="tool-edit" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
