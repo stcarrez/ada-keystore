@@ -81,20 +81,20 @@ Specifies the path of the keystore file to open.
 .\"
 .SS The create command
 .RS 0
-akt \fBcreate\fR [--password-file \fI{path}\fR] [--password-env \fI{name}\fR]
+akt \fBcreate\fR [--passfile \fI{path}\fR] [--passenv \fI{name}\fR]
 .RE
 .PP
 Create a new keystore and protect it with the password.
 .\"
 .PP
 The password to protect the wallet is passed using one of the following options:
-.B --password-file
+.B --passfile
 ,
-.B --password-env
+.B --passenv
 ,
-.B --password-unsafe
+.B --password
 ,
-.B --password-socket
+.B --passsocket
 .  When none of these options are passed, the password is asked interactively.
 .\"
 .SS The set command
