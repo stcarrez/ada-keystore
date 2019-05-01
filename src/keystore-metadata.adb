@@ -319,7 +319,7 @@ package body Keystore.Metadata is
       loop
          --  Scan for a block having enough space for us.
          for Block of Manager.Data_List loop
-            if Block.Available >= Space then
+            if Block.Available >= Space and Block.Count < Fragment_Index'Last then
                if Block.Ready then
                   Data_Block := Block;
                   return;
@@ -501,13 +501,10 @@ package body Keystore.Metadata is
    begin
       --  Scan for a block having enough space for us.
       for Block of Manager.Entry_List loop
-         if Block.Available >= Space then
+         if Block.Available >= Space and Block.Count < Fragment_Index'Last then
             Block.Available := Block.Available - Space;
             Block.Count := Block.Count + 1;
             Entry_Block := Block;
-
-            --  Load the directory block to write the new entry.
-            Load_Directory (Manager, Entry_Block, Stream);
 
             return;
          end if;
@@ -521,13 +518,6 @@ package body Keystore.Metadata is
       Entry_Block.Ready := True;
       Stream.Allocate (Entry_Block.Block);
       Manager.Entry_List.Append (Entry_Block);
-
-      --  Prepare the new directory block.
-      Manager.Buffer.Data := (others => 0);
-      IO.Set_Header (Into => Manager.Buffer,
-                     Tag  => IO.BT_WALLET_REPOSITORY,
-                     Id   => Interfaces.Unsigned_32 (Manager.Id));
-
    end Find_Directory_Block;
 
    --  ------------------------------
@@ -764,8 +754,11 @@ package body Keystore.Metadata is
       Start_Data := Data_Block.Last_Pos;
       End_Data := Start_Data + Data_Size - 1;
 
-      pragma Assert (Check => Manager.Buffer.Pos = Data_Entry_Offset (Data_Block.Count + 1));
-      pragma Assert (Check => Data_Block.Last_Pos >= Data_Entry_Offset (Data_Block.Count + 1) - 1);
+      pragma Assert
+        (Check => Manager.Buffer.Pos = Data_Entry_Offset (Data_Block.Count) + DATA_ENTRY_SIZE);
+      pragma Assert
+        (Check => Data_Block.Last_Pos >= Data_Entry_Offset (Data_Block.Count)
+         + DATA_ENTRY_SIZE - 1);
 
       --  Encrypt the data content using the item encryption key and IV.
       Cipher_Data.Set_IV (IV);
@@ -800,7 +793,6 @@ package body Keystore.Metadata is
       Cipher_Data   : Util.Encoders.AES.Encoder;
       IV            : Util.Encoders.AES.Word_Block_Type;
       Secret        : Keystore.Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
-      Salt          : Ada.Streams.Stream_Element_Array (1 .. 32);
       Start_Data    : IO.Block_Index;
       End_Data      : IO.Block_Index;
       Last_Encoded  : Ada.Streams.Stream_Element_Offset;
@@ -890,7 +882,6 @@ package body Keystore.Metadata is
    --  Get the data fragment and write it to the output buffer.
    --  ------------------------------
    procedure Get_Fragment (Manager  : in out Wallet_Manager;
-                           Item     : in Wallet_Entry_Access;
                            Position : in Fragment_Index;
                            Fragment : in Wallet_Block_Fragment;
                            Output   : out Ada.Streams.Stream_Element_Array) is
@@ -1043,8 +1034,16 @@ package body Keystore.Metadata is
          end if;
       end if;
 
-      --  Find and load the directory block that can hold the new entry.
-      Load_Directory (Manager, Item.Header, Stream);
+      if Item.Header.Count > 0 then
+         --  Find and load the directory block that can hold the new entry.
+         Load_Directory (Manager, Item.Header, Stream);
+      else
+         --  Prepare the new directory block.
+         Manager.Buffer.Data := (others => 0);
+         IO.Set_Header (Into => Manager.Buffer,
+                        Tag  => IO.BT_WALLET_REPOSITORY,
+                        Id   => Interfaces.Unsigned_32 (Manager.Id));
+      end if;
 
       --  Write the new entry.
       Manager.Buffer.Pos := Item.Entry_Offset;
@@ -1132,7 +1131,7 @@ package body Keystore.Metadata is
       Block       : Wallet_Block_Entry_Access := Data_Block;
    begin
       while Block /= null loop
-         -- Check if the current block has enough space or we need another block.
+         --  Check if the current block has enough space or we need another block.
          Space := Block.Available - DATA_ENTRY_SIZE;
          if Content'Last - Start + 1 >= Space then
             Last := Start + Space - 1;
@@ -1344,7 +1343,7 @@ package body Keystore.Metadata is
          Load_Data (Manager, Data_Block, Stream);
          Position := Get_Fragment_Position (Data_Block.all, Item);
          exit when Position = 0;
-         Get_Fragment (Manager, Item, Position, Data_Block.Fragments (Position),
+         Get_Fragment (Manager, Position, Data_Block.Fragments (Position),
                        Output (Data_Offset .. Output'Last));
          Data_Offset := Data_Offset + Data_Block.Fragments (Position).Size;
          Data_Block := Data_Block.Fragments (Position).Next_Fragment;
