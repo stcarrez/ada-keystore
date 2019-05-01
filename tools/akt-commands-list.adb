@@ -16,7 +16,7 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Ada.Text_IO;
-with Util.Dates.ISO8601;
+with Ada.Calendar.Formatting;
 package body AKT.Commands.List is
 
    --  ------------------------------
@@ -46,7 +46,7 @@ package body AKT.Commands.List is
             Ada.Text_IO.Set_Col (53);
             Ada.Text_IO.Put (Integer'Image (Item.Size));
             Ada.Text_IO.Set_Col (65);
-            Ada.Text_IO.Put (Util.Dates.ISO8601.Image (Item.Create_Date, Util.Dates.ISO8601.MINUTE));
+            Ada.Text_IO.Put (Ada.Calendar.Formatting.Image (Item.Create_Date));
             Ada.Text_IO.New_Line;
          end;
          Keystore.Entry_Maps.Next (Iter);
