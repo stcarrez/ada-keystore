@@ -78,8 +78,11 @@ package body Keystore.IO.Tests is
                       Decrypt_Size => Size,
                       Into         => Buffer);
          Util.Tests.Assert_Equals (T, BT_WALLET_HEADER,
-                                   Integer (Get_Unsigned_32 (Buffer)),
+                                   Integer (Get_Unsigned_16 (Buffer)),
                                    "Invalid wallet header tag");
+         Util.Tests.Assert_Equals (T, Natural (Size),
+                                   Integer (Get_Unsigned_16 (Buffer)),
+                                   "Invalid wallet encryption size");
          Util.Tests.Assert_Equals (T, 12,
                                    Integer (Get_Unsigned_32 (Buffer)),
                                    "Invalid wallet id");
@@ -180,8 +183,11 @@ package body Keystore.IO.Tests is
                       Decrypt_Size => Size,
                       Into         => Buffer);
          Util.Tests.Assert_Equals (T, BT_WALLET_HEADER,
-                                   Integer (Get_Unsigned_32 (Buffer)),
+                                   Integer (Get_Unsigned_16 (Buffer)),
                                    "Invalid wallet header tag");
+         Util.Tests.Assert_Equals (T, Natural (Size),
+                                   Integer (Get_Unsigned_16 (Buffer)),
+                                   "Invalid wallet encryption size");
          Util.Tests.Assert_Equals (T, 12,
                                    Integer (Get_Unsigned_32 (Buffer)),
                                    "Invalid wallet id");
@@ -203,8 +209,11 @@ package body Keystore.IO.Tests is
                          Decrypt_Size => Size,
                          Into         => Buffer);
             Util.Tests.Assert_Equals (T, BT_WALLET_DATA,
-                                      Integer (Get_Unsigned_32 (Buffer)),
+                                      Integer (Get_Unsigned_16 (Buffer)),
                                       "Invalid wallet header tag");
+            Util.Tests.Assert_Equals (T, Natural (Size),
+                                      Integer (Get_Unsigned_16 (Buffer)),
+                                      "Invalid wallet encryption size");
             Util.Tests.Assert_Equals (T, 12,
                                       Integer (Get_Unsigned_32 (Buffer)),
                                       "Invalid wallet id");
