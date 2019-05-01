@@ -150,11 +150,13 @@ package body Keystore is
    --  ------------------------------
    function Get (Container : in out Wallet;
                  Name      : in String) return String is
+      use Ada.Streams;
+
       Info   : Entry_Info := Container.Container.Find (Name);
       Result : String (1 .. Info.Size);
-      Buffer : Ada.Streams.Stream_Element_Array (1 .. Ada.Streams.Stream_Element_Offset (Info.Size));
+      Buffer : Stream_Element_Array (1 .. Stream_Element_Offset (Info.Size));
       for Buffer'Address use Result'Address;
-  begin
+   begin
       Container.Container.Get_Data (Name, Info, Buffer);
       return Result;
    end Get;
