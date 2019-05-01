@@ -128,6 +128,9 @@ private
    type Wallet_Entry;
    type Wallet_Entry_Access is access all Wallet_Entry;
 
+   type Wallet_Directory_Entry;
+   type Wallet_Directory_Entry_Access is access Wallet_Directory_Entry;
+
    type Wallet_Block_Entry;
    type Wallet_Block_Entry_Access is access Wallet_Block_Entry;
 
@@ -148,14 +151,22 @@ private
 
    type Wallet_Block_Entry is record
       Block      : Keystore.IO.Block_Number;
-      First      : Wallet_Entry_Access;
-      Next_Block : Interfaces.Unsigned_32 := 0;
       Available  : Stream_Element_Offset := IO.Block_Index'Last - IO.BT_DATA_START - 4;
-      Data_Start : IO.Block_Index := IO.Block_Index'Last;
       Last_Pos   : IO.Block_Index := IO.BT_DATA_START + 4;
+      Data_Start : IO.Block_Index := IO.Block_Index'Last;
       Count      : Fragment_Count := 0;
       Ready      : Boolean := False;
       Fragments  : Fragment_Array;
+   end record;
+
+   type Wallet_Directory_Entry is record
+      Block      : Keystore.IO.Block_Number;
+      Available  : Stream_Element_Offset := IO.Block_Index'Last - IO.BT_DATA_START - 4;
+      Last_Pos   : IO.Block_Index := IO.BT_DATA_START + 4;
+      First      : Wallet_Entry_Access;
+      Next_Block : Interfaces.Unsigned_32 := 0;
+      Count      : Natural := 0;
+      Ready      : Boolean := False;
    end record;
 
    type Safe_Wallet_Repository;
@@ -163,7 +174,7 @@ private
 
    type Wallet_Entry (Length : Natural) is limited record
       --  The block header that contains this entry.
-      Header       : Wallet_Block_Entry_Access;
+      Header       : Wallet_Directory_Entry_Access;
       Next_Entry   : Wallet_Entry_Access;
       Entry_Offset : IO.Block_Index := IO.Block_Index'First;
 
@@ -185,6 +196,10 @@ private
      new Ada.Containers.Doubly_Linked_Lists (Element_Type => Wallet_Block_Entry_Access,
                                              "="          => "=");
 
+   package Wallet_Directory_List is
+     new Ada.Containers.Doubly_Linked_Lists (Element_Type => Wallet_Directory_Entry_Access,
+                                             "="          => "=");
+
    package Wallet_Maps is
      new Ada.Containers.Indefinite_Hashed_Maps (Key_Type        => String,
                                                 Element_Type    => Wallet_Entry_Access,
@@ -203,7 +218,7 @@ private
       Id            : Wallet_Identifier;
       Next_Id       : Wallet_Entry_Index;
       Data_List     : Wallet_Block_List.List;
-      Entry_List    : Wallet_Block_List.List;
+      Entry_List    : Wallet_Directory_List.List;
       Root          : IO.Block_Number;
       IV            : Util.Encoders.AES.Word_Block_Type;
       Decipher      : Util.Encoders.AES.Decoder;
@@ -244,7 +259,7 @@ private
    --  Load the wallet directory block in the wallet manager buffer.
    --  Extract the directory if this is the first time the data block is read.
    procedure Load_Directory (Manager   : in out Wallet_Manager;
-                             Dir_Block : in Wallet_Block_Entry_Access;
+                             Dir_Block : in Wallet_Directory_Entry_Access;
                              Stream    : in out IO.Wallet_Stream'Class);
 
    --  Load the complete wallet directory by starting at the given block.
@@ -257,7 +272,7 @@ private
    --  is allocated and initialized.
    procedure Find_Directory_Block (Manager     : in out Wallet_Manager;
                                    Space       : in IO.Block_Index;
-                                   Entry_Block : out Wallet_Block_Entry_Access;
+                                   Entry_Block : out Wallet_Directory_Entry_Access;
                                    Stream      : in out IO.Wallet_Stream'Class);
 
    --  Get the fragment position of the item within the data block.
