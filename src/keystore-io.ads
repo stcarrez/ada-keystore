@@ -108,8 +108,9 @@ private package Keystore.IO is
      Pre => Encrypt_Size mod 16 = 0 and Encrypt_Size <= BT_DATA_LENGTH;
 
    type Marshaller is limited record
-      Data : Block_Type;
-      Pos  : Block_Index := Block_Type'First;
+      Data  : Block_Type;
+      Block : Block_Count := 0;
+      Pos   : Block_Index := Block_Type'First;
    end record;
 
    --  Set the block header with the tag and wallet identifier.
