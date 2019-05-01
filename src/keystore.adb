@@ -145,19 +145,18 @@ package body Keystore is
       Container.Container.Delete (Name);
    end Delete;
 
+   --  ------------------------------
    --  Get from the wallet the named entry.
+   --  ------------------------------
    function Get (Container : in out Wallet;
                  Name      : in String) return String is
-      Buffer : IO.Block_Type;
-      Result : Entry_Info;
-   begin
-      Container.Container.Get_Data (Name, Result, Buffer);
-      declare
-         S : String (1 .. Result.Size);
-         for S'Address use Buffer'Address;
-      begin
-         return S;
-      end;
+      Info   : Entry_Info := Container.Container.Find (Name);
+      Result : String (1 .. Info.Size);
+      Buffer : Ada.Streams.Stream_Element_Array (1 .. Ada.Streams.Stream_Element_Offset (Info.Size));
+      for Buffer'Address use Result'Address;
+  begin
+      Container.Container.Get_Data (Name, Info, Buffer);
+      return Result;
    end Get;
 
    --  ------------------------------
@@ -222,6 +221,13 @@ package body Keystore is
       begin
          Keystore.Metadata.Delete (Repository.all, Name, Stream.all);
       end Delete;
+
+      function Find (Name    : in String) return Entry_Info is
+         Result : Entry_Info;
+      begin
+         Keystore.Metadata.Find (Repository.all, Name, Result, Stream.all);
+         return Result;
+      end Find;
 
       procedure Get_Data (Name       : in String;
                           Result     : out Entry_Info;
