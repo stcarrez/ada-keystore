@@ -993,6 +993,7 @@ package body Keystore.Metadata is
       Space : constant IO.Block_Index := WALLET_ENTRY_SIZE + Name'Length;
    begin
       if Manager.Map.Contains (Name) then
+         Log.Info ("Name '{0}' is already used", Name);
          raise Name_Exist;
       end if;
 
@@ -1264,6 +1265,10 @@ package body Keystore.Metadata is
       Add_Data (Manager, Item, Item.Data, Content, 0, Stream);
    end Add;
 
+   --  ------------------------------
+   --  Delete the value associated with the given name.
+   --  Raises the Not_Found exception if the name was not found.
+   --  ------------------------------
    procedure Delete (Manager    : in out Wallet_Manager;
                      Name       : in String;
                      Stream     : in out IO.Wallet_Stream'Class) is
@@ -1273,6 +1278,7 @@ package body Keystore.Metadata is
       Next_Block : Wallet_Block_Entry_Access;
    begin
       if not Wallet_Maps.Has_Element (Pos) then
+         Log.Info ("Data entry '{0}' not found", Name);
          raise Not_Found;
       end if;
 
@@ -1436,9 +1442,8 @@ package body Keystore.Metadata is
                      Password : in Secret_Key;
                      Wallet   : out Wallet_Repository'Class;
                      Stream   : in out IO.Wallet_Stream'Class) is
-         Repo      : Safe_Wallet_Repository_Access := Wallet.Value;
+         Repo      : constant Safe_Wallet_Repository_Access := Wallet.Value;
          Item      : Wallet_Entry_Access;
-         Wallet_Id : Wallet_Identifier := 1;
          Keys      : Keystore.Keys.Key_Manager;
       begin
          Add_Entry (Manager, Name, T_WALLET, 0, Item, Stream);
@@ -1495,6 +1500,7 @@ package body Keystore.Metadata is
          Item : Wallet_Entry_Access;
       begin
          if not Wallet_Maps.Has_Element (Pos) then
+            Log.Info ("Data entry '{0}' not found", Name);
             raise Not_Found;
          end if;
 
