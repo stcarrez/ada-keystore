@@ -22,6 +22,7 @@ with AKT.Commands.Set;
 with AKT.Commands.Get;
 with AKT.Commands.Create;
 with AKT.Commands.List;
+with AKT.Commands.Remove;
 with AKT.Passwords.Input;
 with AKT.Passwords.Files;
 with AKT.Passwords.Unsafe;
@@ -34,6 +35,7 @@ package body AKT.Commands is
    Get_Command      : aliased AKT.Commands.Get.Command_Type;
    Create_Command   : aliased AKT.Commands.Create.Command_Type;
    List_Command     : aliased AKT.Commands.List.Command_Type;
+   Remove_Command   : aliased AKT.Commands.Remove.Command_Type;
 
    Driver           : Drivers.Driver_Type;
 
@@ -110,26 +112,26 @@ package body AKT.Commands is
                         Help   => "Defines the path for the wallet file");
       GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Password_File'Access,
-                        Long_Switch => "--password-file=",
+                        Long_Switch => "--passfile=",
                         Help   => "Read the file that contains the password");
       GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Unsafe_Password'Access,
-                        Long_Switch => "--password-fd=",
+                        Long_Switch => "--passfd=",
                         Help   => "Read the password from the pipe with"
                           & " the given file descriptor");
       GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Unsafe_Password'Access,
-                        Long_Switch => "--password-socket=",
+                        Long_Switch => "--passsocket=",
                         Help   => "The password is passed within the socket connection");
       GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Password_Env'Access,
-                        Long_Switch => "--password-env=",
+                        Long_Switch => "--passenv=",
                         Help   => "Read the environment variable that contains"
                         & " the password (not safe)");
       GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Unsafe_Password'Access,
                         Switch => "-p:",
-                        Long_Switch => "--password-unsafe=",
+                        Long_Switch => "--password=",
                         Help   => "The password is passed within the command line (not safe)");
       GC.Initialize_Option_Scan (Stop_At_First_Non_Switch => True);
 
@@ -144,6 +146,7 @@ package body AKT.Commands is
       Driver.Add_Command ("get", Get_Command'Access);
       Driver.Add_Command ("create", Create_Command'Access);
       Driver.Add_Command ("list", List_Command'Access);
+      Driver.Add_Command ("remove", Remove_Command'Access);
    end Initialize;
 
    procedure Parse (Context   : in out Context_Type;
