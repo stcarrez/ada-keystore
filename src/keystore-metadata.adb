@@ -302,7 +302,7 @@ package body Keystore.Metadata is
          end if;
       end loop;
       Data_Block := new Wallet_Block_Entry;
-      Data_Block.Available := IO.Block_Index'Last - IO.BT_DATA_START;
+      Data_Block.Available := IO.Block_Index'Last - IO.BT_DATA_START + 1;
       Data_Block.Count := 1;
       Data_Block.Block := Block;
       Data_Block.Last_Pos := IO.Block_Index'Last;
@@ -880,7 +880,6 @@ package body Keystore.Metadata is
          --  Erase the content that was dropped.
          if Offset > 0 then
             Manager.Buffer.Data (Last_Pos .. Last_Pos + Offset - 1) := (others => 0);
-            Data_Block.Last_Pos := Data_Block.Last_Pos + Offset;
          end if;
       end if;
 
@@ -1197,7 +1196,7 @@ package body Keystore.Metadata is
       Next_Block   : Wallet_Block_Entry_Access;
       New_Block    : Wallet_Block_Entry_Access;
       Delete_Block : Wallet_Block_Entry_Access;
-      Data_Offset  : Ada.Streams.Stream_Element_Offset := Content'First;
+      Data_Offset  : Ada.Streams.Stream_Element_Offset := 0;
       Position     : Fragment_Count;
    begin
       Log.Debug ("Update keystore entry {0}", Name);
@@ -1221,13 +1220,13 @@ package body Keystore.Metadata is
          exit when Position = 0;
 
          --  See how much space we have in the current block.
-         Space := Data_Block.Available - AES_Align (Data_Block.Fragments (Position).Size);
-         if Space >= AES_Align (Content'Length - Data_Offset) then
+         Space := Data_Block.Available + AES_Align (Data_Block.Fragments (Position).Size);
+         if Space >= AES_Align (Content'Last - Start + 1) then
             Last := Content'Last;
             Delete_Block := Data_Block.Fragments (Position).Next_Fragment;
             Next_Block := null;
          else
-            Last := Data_Offset + Space - 1;
+            Last := Start + Space - 1;
             Next_Block := Data_Block.Fragments (Position).Next_Fragment;
             if Next_Block = null and Last < Content'Last then
                Allocate_Data_Block (Manager, DATA_MAX_SIZE, New_Block, Stream);
