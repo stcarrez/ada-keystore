@@ -20,6 +20,7 @@ with Ahven;
 with Ada.Directories;
 with Ada.Exceptions;
 with Util.Test_Caller;
+with Util.Measures;
 with Keystore.IO.Files;
 package body Keystore.Files.Tests is
 
@@ -47,6 +48,8 @@ package body Keystore.Files.Tests is
                        Test_Open_Close'Access);
       Caller.Add_Test (Suite, "Test Keystore.Add (Name_Exist)",
                        Test_Add_Error'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Add (Perf)",
+                       Test_Perf_Add'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -537,5 +540,26 @@ package body Keystore.Files.Tests is
       end;
 
    end Test_Add_Error;
+
+   --  ------------------------------
+   --  Perforamce test adding values.
+   --  ------------------------------
+   procedure Test_Perf_Add (T : in out Test) is
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-perf.ks");
+      Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
+      W        : Keystore.Files.Wallet_File;
+   begin
+      W.Create (Path => Path, Password => Password);
+      declare
+         S        : Util.Measures.Stamp;
+         Data  : String (1 .. 80);
+      begin
+         for I in 1 .. 10_000 loop
+            Data := (others => Character'Val (30 + I mod 64));
+            W.Add ("Item" & Natural'Image (I), Data);
+         end loop;
+         Util.Measures.Report (S, "Keystore.Add", 10_000);
+      end;
+   end Test_Perf_Add;
 
 end Keystore.Files.Tests;
