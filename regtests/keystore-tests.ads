@@ -36,6 +36,9 @@ package Keystore.Tests is
    --  Test the akt command adding and removing values.
    procedure Test_Tool_Set_Remove (T : in out Test);
 
+   --  Test the akt command setting a big file.
+   procedure Test_Tool_Set_Big (T : in out Test);
+
    --  Test the akt command with invalid parameters.
    procedure Test_Tool_Invalid (T : in out Test);
 
