@@ -16,12 +16,8 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 
-with Glib.Main;
 with Gtk.Main;
 with Gtk.Widget;
-with Gtk.Handlers;
-with Gtk.Label;
-with Gtk.Window;
 with Gtk.GEntry;
 with Gtk.File_Filter;
 with Gtk.File_Chooser;
@@ -38,24 +34,7 @@ package body AKT.Callbacks is
    --  The logger
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Callbacks");
 
-   type Info is record
-      Builder : access Gtkada.Builder.Gtkada_Builder_Record'Class;
-   end record;
-
-   package Timer_Callback is
-     new Glib.Main.Generic_Sources (AKT.Windows.Application_Access);
-
-   Timer : Glib.Main.G_Source_Id;
-   MemTotal : Natural := 1;
-
    App : AKT.Windows.Application_Access;
-
-   --  Target : MAT.Targets.Gtkmat.Target_Type_Access;
-
-   function Refresh_Timeout (Application : in AKT.Windows.Application_Access) return Boolean is
-   begin
-      return True;
-   end Refresh_Timeout;
 
    --  ------------------------------
    --  Initialize and register the callbacks.
@@ -89,13 +68,13 @@ package body AKT.Callbacks is
                                 Handler      => AKT.Callbacks.On_Close_About'Access);
       Builder.Register_Handler (Handler_Name => "close-password",
                                 Handler      => AKT.Callbacks.On_Close_Password'Access);
-      --  Timer := Timer_Callback.Timeout_Add (1000, Refresh_Timeout'Access, Target);
    end Initialize;
 
    --  ------------------------------
    --  Callback executed when the "quit" action is executed from the menu.
    --  ------------------------------
    procedure On_Menu_Quit (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
+      pragma Unreferenced (Object);
    begin
       Gtk.Main.Main_Quit;
    end On_Menu_Quit;
@@ -126,6 +105,10 @@ package body AKT.Callbacks is
       Filter  : Gtk.File_Filter.Gtk_File_Filter;
    begin
       Gtk.File_Filter.Gtk_New (Filter);
+      Gtk.File_Filter.Add_Pattern (Filter, "*.akt");
+      Gtk.File_Filter.Set_Name (Filter, "Keystore Files");
+
+      Gtk.File_Filter.Gtk_New (Filter);
       Gtk.File_Filter.Add_Pattern (Filter, "*");
       Gtk.File_Filter.Set_Name (Filter, "All Files");
       if Chooser /= null then
@@ -133,9 +116,6 @@ package body AKT.Callbacks is
            (Gtk.File_Chooser_Dialog.Gtk_File_Chooser_Dialog (Chooser));
          Gtk.File_Chooser.Add_Filter (File_Chooser, Filter);
 
-         Gtk.File_Filter.Gtk_New (Filter);
-         Gtk.File_Filter.Add_Pattern (Filter, "*.akt");
-         Gtk.File_Filter.Set_Name (Filter, "Keystore Files");
          Gtk.File_Chooser.Add_Filter (File_Chooser, Filter);
 
       end if;
@@ -177,6 +157,7 @@ package body AKT.Callbacks is
    --  ------------------------------
    function On_Close_Window (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class)
                              return Boolean is
+      pragma Unreferenced (Object);
    begin
       Gtk.Main.Main_Quit;
       return True;

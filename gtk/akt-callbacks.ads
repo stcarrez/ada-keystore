@@ -16,7 +16,6 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Gtkada.Builder;
-with Gtk.Widget;
 
 with AKT.Windows;
 package AKT.Callbacks is

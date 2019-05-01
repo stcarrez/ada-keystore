@@ -19,15 +19,14 @@ with Ada.IO_Exceptions;
 with Ada.Exceptions;
 with Ada.Calendar.Formatting;
 
+with Util.Log.Loggers;
+
 with Glib.Error;
 with Glib.Object;
 
 with Gtk.Main;
 with Gtk.Label;
-with Gtk.Frame;
 with Gtk.Enums;
-with Gtk.Scrolled_Window;
-with Gtk.Viewport;
 with Gtk.Tree_View_Column;
 
 with AKT.Callbacks;
@@ -35,6 +34,9 @@ package body AKT.Windows is
 
    use type Glib.Gint;
    use type Gtk.Tree_View.Gtk_Tree_View;
+
+   --  The logger
+   Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Windows");
 
    --  ------------------------------
    --  Initialize the target instance.
@@ -67,23 +69,20 @@ package body AKT.Windows is
    --  ------------------------------
    procedure Initialize_Widget (Application : in out Application_Type;
                                 Widget : out Gtk.Widget.Gtk_Widget) is
-      Error    : aliased Glib.Error.GError;
-      Result   : Glib.Guint;
       Timeline : Gtk.Widget.Gtk_Widget;
       Scrolled : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
-      Viewport : Gtk.Viewport.Gtk_Viewport;
       Status   : Gtk.Status_Bar.Gtk_Status_Bar;
    begin
       Gtk.Main.Init;
       Gtkada.Builder.Gtk_New (Application.Builder);
-      --           Result := Target.Builder.Add_From_File ("gatk.glade", Error'Access);
       Load_UI (Application);
       AKT.Callbacks.Initialize (Application'Unchecked_Access, Application.Builder);
       Application.Builder.Do_Connect;
       Widget := Gtk.Widget.Gtk_Widget (Application.Builder.Get_Object ("main"));
       Application.Main := Widget;
       Application.About := Gtk.Widget.Gtk_Widget (Application.Builder.Get_Object ("about"));
-      Application.Chooser := Gtk.Widget.Gtk_Widget (Application.Builder.Get_Object ("filechooser"));
+      Application.Chooser
+        := Gtk.Widget.Gtk_Widget (Application.Builder.Get_Object ("filechooser"));
 
       Timeline := Gtk.Widget.Gtk_Widget (Application.Builder.Get_Object ("scrolledView"));
       Scrolled := Gtk.Scrolled_Window.Gtk_Scrolled_Window (Timeline);
@@ -93,14 +92,11 @@ package body AKT.Windows is
       Status := Gtk.Status_Bar.Gtk_Status_Bar (Application.Builder.Get_Object ("statusbar"));
       Application.Status := Status;
 
-      Application.Scrolled := Scrolled; --  Gtk.Scrolled_Window.Gtk_New (Application.Scrolled);
+      Application.Scrolled := Scrolled;
       Gtk.Cell_Renderer_Text.Gtk_New (Application.Col_Text);
       Application.Scrolled.Set_Policy (Gtk.Enums.Policy_Always, Gtk.Enums.Policy_Always);
-      --  Console.Frame := Frame;
-      --  Console.Frame.Add (Console.Scrolled);
       Application.Col_Text.Ref;
 
-      --  Viewport.Add (Application.Events.Drawing);
       Application.Main.Show_All;
    end Initialize_Widget;
 
@@ -109,6 +105,11 @@ package body AKT.Windows is
                         Password    : in Keystore.Secret_Key) is
       Msg : Gtk.Status_Bar.Message_Id;
    begin
+      --  Close the current wallet if necessary.
+      if Application.Wallet.Is_Open then
+         Application.Wallet.Close;
+      end if;
+
       Msg := Gtk.Status_Bar.Push (Application.Status, 1, "Loading " & Path);
       Application.Wallet.Open (Path => Path, Password => Password);
 
@@ -132,13 +133,17 @@ package body AKT.Windows is
    end Open_File;
 
    procedure List_Keystore (Application : in out Application_Type) is
+
+      procedure Add_Column (Name : in String; Column_Id : in Glib.Gint);
+
       List  : Keystore.Entry_Map;
       Iter  : Keystore.Entry_Cursor;
-      Types : Glib.GType_Array (0 .. 4) := (others => Glib.GType_String);
+      Types : constant Glib.GType_Array (0 .. 4) := (others => Glib.GType_String);
 
       procedure Add_Column (Name : in String; Column_Id : in Glib.Gint) is
          Col : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
          Num : Glib.Gint;
+         pragma Unreferenced (Num);
       begin
          Gtk.Tree_View_Column.Gtk_New (Col);
          Num := Application.Tree.Append_Column (Col);
@@ -150,7 +155,7 @@ package body AKT.Windows is
       end Add_Column;
 
    begin
-      -- <name> <type> <size> <date> <content>
+      --  <name> <type> <size> <date> <content>
       Application.Wallet.List (List);
 
       Gtk.Tree_Store.Gtk_New (Application.List, Types);
@@ -211,6 +216,7 @@ package body AKT.Windows is
    end Set_Label;
 
    procedure Main (Application : in out Application_Type) is
+      pragma Unreferenced (Application);
    begin
       Gtk.Main.Main;
    end Main;
