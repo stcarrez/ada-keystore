@@ -19,6 +19,7 @@ with Ada.Finalization;
 with Gtk.Widget;
 with Gtkada.Builder;
 with Keystore.Files;
+private with Ada.Strings.Unbounded;
 private with Gtk.Scrolled_Window;
 private with Gtk.Frame;
 private with Gtk.Viewport;
@@ -26,6 +27,7 @@ private with Gtk.Status_Bar;
 private with Gtk.Tree_View;
 private with Gtk.Tree_Store;
 private with Gtk.Tree_Model;
+private with Gtk.Tree_Selection;
 private with Gtk.Cell_Renderer_Text;
 private with Gtk.Text_Buffer;
 private with Gtk.Text_View;
@@ -59,6 +61,10 @@ package AKT.Windows is
 
    procedure List_Keystore (Application : in out Application_Type);
 
+   procedure Edit_Current (Application : in out Application_Type);
+
+   procedure Save_Current (Application : in out Application_Type);
+
    procedure Main (Application : in out Application_Type);
 
 private
@@ -80,9 +86,12 @@ private
       List        : Gtk.Tree_Store.Gtk_Tree_Store;
       Current_Row : Gtk.Tree_Model.Gtk_Tree_Iter;
       Tree        : Gtk.Tree_View.Gtk_Tree_View;
+      Selection   : Gtk.Tree_Selection.Gtk_Tree_Selection;
       Col_Text    : Gtk.Cell_Renderer_Text.Gtk_Cell_Renderer_Text;
       Editor      : Gtk.Text_View.Gtk_Text_View;
       Buffer      : Gtk.Text_Buffer.Gtk_Text_Buffer;
+      Current     : Ada.Strings.Unbounded.Unbounded_String;
+      Editing     : Boolean := False;
    end record;
 
 end AKT.Windows;
