@@ -47,4 +47,7 @@ package Keystore.Files.Tests is
    --  Test opening a keystore and listing the entries.
    procedure Test_List (T : in out Test);
 
+   --  Test adding values that already exist.
+   procedure Test_Add_Error (T : in out Test);
+
 end Keystore.Files.Tests;
