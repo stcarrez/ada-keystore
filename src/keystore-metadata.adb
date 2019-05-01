@@ -336,7 +336,7 @@ package body Keystore.Metadata is
 
       --  We need a new wallet directory block.
       Data_Block := new Wallet_Block_Entry;
-      Data_Block.Available := IO.Block_Index'Last - IO.BT_DATA_START;
+      Data_Block.Available := IO.Block_Index'Last - IO.BT_DATA_START + 1;
       Data_Block.Count := 0;
       Data_Block.Last_Pos := IO.Block_Index'Last;
       Data_Block.Ready := True;
@@ -765,7 +765,7 @@ package body Keystore.Metadata is
       End_Data := Start_Data + Data_Size - 1;
 
       pragma Assert (Check => Manager.Buffer.Pos = Data_Entry_Offset (Data_Block.Count + 1));
-      pragma Assert (Check => Data_Block.Last_Pos > Data_Entry_Offset (Data_Block.Count + 1));
+      pragma Assert (Check => Data_Block.Last_Pos >= Data_Entry_Offset (Data_Block.Count + 1) - 1);
 
       --  Encrypt the data content using the item encryption key and IV.
       Cipher_Data.Set_IV (IV);
@@ -1114,6 +1114,53 @@ package body Keystore.Metadata is
                     Sign         => Manager.Sign);
    end Delete_Entry;
 
+   --  ------------------------------
+   --  Write the data in one or several blocks.
+   --  ------------------------------
+   procedure Add_Data (Manager     : in out Wallet_Manager;
+                       Item        : in Wallet_Entry_Access;
+                       Data_Block  : in Wallet_Block_Entry_Access;
+                       Content     : in Ada.Streams.Stream_Element_Array;
+                       Offset      : in Ada.Streams.Stream_Element_Offset;
+                       Stream      : in out IO.Wallet_Stream'Class) is
+      Space       : Stream_Element_Offset;
+      Last        : Stream_Element_Offset;
+      Start       : Stream_Element_Offset := Content'First;
+      Next_Block  : Wallet_Block_Entry_Access;
+      Data_Offset : Stream_Element_Offset := Offset;
+      Block       : Wallet_Block_Entry_Access := Data_Block;
+   begin
+      while Block /= null loop
+         -- Check if the current block has enough space or we need another block.
+         Space := Block.Available - DATA_ENTRY_SIZE;
+         if Content'Last - Start + 1 >= Space then
+            Last := Start + Space - 1;
+            Block.Available := Block.Available - Space;
+            Allocate_Data_Block (Manager, DATA_MAX_SIZE, Next_Block, Stream);
+            Block.Available := Block.Available + Space;
+         else
+            Last := Content'Last;
+            Next_Block := null;
+         end if;
+
+         --  Get the current block if it has some content or fill an empty new one.
+         if Block.Count > 0 then
+            Load_Data (Manager, Block, Stream);
+         else
+            Init_Data_Block (Manager);
+         end if;
+
+         --  Add the data fragment and save the data block.
+         Add_Fragment (Manager, Block, Item, Data_Offset, Next_Block, Content (Start .. Last));
+         Save_Data (Manager, Block.all, Stream);
+
+         --  Move on to what remains.
+         Data_Offset := Data_Offset + Last - Start + 1;
+         Start := Last + 1;
+         Block := Next_Block;
+      end loop;
+   end Add_Data;
+
    procedure Update (Manager    : in out Wallet_Manager;
                      Name       : in String;
                      Kind       : in Entry_Type;
@@ -1121,7 +1168,6 @@ package body Keystore.Metadata is
                      Stream     : in out IO.Wallet_Stream'Class) is
       Pos          : constant Wallet_Maps.Cursor := Manager.Map.Find (Name);
       Item         : Wallet_Entry_Access;
-      Loaded : Boolean := False;
       Start        : Stream_Element_Offset := Content'First;
       Last         : Stream_Element_Offset;
       Space        : Stream_Element_Offset;
@@ -1169,8 +1215,9 @@ package body Keystore.Metadata is
 
          Update_Fragment (Manager, Data_Block, Item, Data_Offset, Position,
                           Data_Block.Fragments (Position),
-                          Next_Block, Content (Data_Offset .. Last));
+                          Next_Block, Content (Start .. Last));
          Data_Offset := Data_Offset + Data_Block.Fragments (Position).Size;
+         Start := Last + 1;
 
          Save_Data (Manager, Data_Block.all, Stream);
          Data_Block := Next_Block;
@@ -1178,22 +1225,10 @@ package body Keystore.Metadata is
       end loop;
 
       --  Write the data in one or several blocks.
-      while New_Block /= null loop
-         if Content'Last - Start + 1 > DATA_MAX_SIZE then
-            Last := Start + DATA_MAX_SIZE - 1;
-            Allocate_Data_Block (Manager, DATA_MAX_SIZE, Next_Block, Stream);
-         else
-            Last := Content'Last;
-            Next_Block := null;
-         end if;
-
-         Add_Fragment (Manager, New_Block, Item, Data_Offset,
-                       Next_Block, Content (Start .. Last));
-         Save_Data (Manager, New_Block.all, Stream);
-         Data_Offset := Data_Offset + Last - Start + 1;
-         Start := Last + 1;
-         New_Block := Next_Block;
-      end loop;
+      if New_Block /= null then
+         Add_Data (Manager, Item, New_Block, Content (Start .. Content'Last),
+                   Data_Offset, Stream);
+      end if;
 
       --  Erase the data fragments which are not used by the entry.
       while Delete_Block /= null loop
@@ -1219,11 +1254,6 @@ package body Keystore.Metadata is
                   Content    : in Ada.Streams.Stream_Element_Array;
                   Stream     : in out IO.Wallet_Stream'Class) is
       Item        : Wallet_Entry_Access;
-      Start       : Stream_Element_Offset := Content'First;
-      Last        : Stream_Element_Offset;
-      Block       : Wallet_Block_Entry_Access;
-      Next_Block  : Wallet_Block_Entry_Access;
-      Data_Offset : Ada.Streams.Stream_Element_Offset := 0;
    begin
       Add_Entry (Manager, Name, Kind, Content'Length, Item, Stream);
 
@@ -1231,28 +1261,7 @@ package body Keystore.Metadata is
          return;
       end if;
 
-      if Item.Data.Count > 0 then
-         Load_Data (Manager, Item.Data, Stream);
-      else
-         Init_Data_Block (Manager);
-      end if;
-      Block := Item.Data;
-
-      --  Write the data in one or several blocks.
-      while Block /= null loop
-         if Content'Last - Start + 1 > DATA_MAX_SIZE then
-            Last := Start + DATA_MAX_SIZE - 1;
-            Allocate_Data_Block (Manager, DATA_MAX_SIZE, Next_Block, Stream);
-         else
-            Last := Content'Last;
-            Next_Block := null;
-         end if;
-         Add_Fragment (Manager, Block, Item, Data_Offset, Next_Block, Content (Start .. Last));
-         Save_Data (Manager, Block.all, Stream);
-         Data_Offset := Data_Offset + Last - Start + 1;
-         Start := Last + 1;
-         Block := Next_Block;
-      end loop;
+      Add_Data (Manager, Item, Item.Data, Content, 0, Stream);
    end Add;
 
    procedure Delete (Manager    : in out Wallet_Manager;
