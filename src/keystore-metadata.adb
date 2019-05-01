@@ -16,6 +16,7 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Util.Log.Loggers;
+with Ada.IO_Exceptions;
 with Ada.Unchecked_Deallocation;
 with Keystore.Logs;
 
@@ -313,13 +314,24 @@ package body Keystore.Metadata is
                                   Space      : in IO.Block_Index;
                                   Data_Block : out Wallet_Block_Entry_Access;
                                   Stream     : in out IO.Wallet_Stream'Class) is
+      Candidate : Wallet_Block_Entry_Access;
    begin
-      --  Scan for a block having enough space for us.
-      for Block of Manager.Data_List loop
-         if Block.Available >= Space then
-            Data_Block := Block;
-            return;
-         end if;
+      loop
+         --  Scan for a block having enough space for us.
+         for Block of Manager.Data_List loop
+            if Block.Available >= Space then
+               if Block.Ready then
+                  Data_Block := Block;
+                  return;
+               end if;
+               Candidate := Block;
+            end if;
+         end loop;
+
+         exit when Candidate = null;
+
+         Load_Data (Manager, Candidate, Stream);
+         Candidate := null;
       end loop;
 
       --  We need a new wallet directory block.
@@ -393,7 +405,7 @@ package body Keystore.Metadata is
          raise Keystore.Corrupted;
       end if;
 
-      --  This is the first time we load this data block, scan the directory.
+      --  This is the first time we load this directory block, scan the directory.
       if not Dir_Block.Ready then
          declare
             Prev   : Wallet_Entry_Access := null;
@@ -434,6 +446,7 @@ package body Keystore.Metadata is
 
                   Manager.Map.Insert (Key => Name, New_Item => Item);
                   Manager.Entry_Indexes.Insert (Key => Item.Id, New_Item => Item);
+                  Dir_Block.Count := Dir_Block.Count + 1;
 
                exception
                   when E : others =>
@@ -446,6 +459,12 @@ package body Keystore.Metadata is
          end;
          Dir_Block.Ready := True;
       end if;
+
+   exception
+      when Ada.IO_Exceptions.End_Error | Ada.IO_Exceptions.Data_Error =>
+         Logs.Error (Log, "Block{0} cannot be read", Dir_Block.Block);
+         raise Keystore.Corrupted;
+
    end Load_Directory;
 
    --  ------------------------------
@@ -616,6 +635,11 @@ package body Keystore.Metadata is
             Data_Block.Count := Frag;
          end;
       end if;
+
+   exception
+      when Ada.IO_Exceptions.End_Error | Ada.IO_Exceptions.Data_Error =>
+         Logs.Error (Log, "Block{0} cannot be read", Data_Block.Block);
+         raise Keystore.Corrupted;
 
    end Load_Data;
 
@@ -1009,9 +1033,6 @@ package body Keystore.Metadata is
       Item.Update_Date := Ada.Calendar.Clock;
       Item.Access_Date := Item.Update_Date;
 
-      --  Find and load the directory block that can hold the new entry.
-      Load_Directory (Manager, Item.Header, Stream);
-
       --  Allocate first data block.
       if Size > 0 and Item.Data = null then
          if Size < DATA_MAX_SIZE then
@@ -1020,6 +1041,9 @@ package body Keystore.Metadata is
             Allocate_Data_Block (Manager, DATA_MAX_SIZE, Item.Data, Stream);
          end if;
       end if;
+
+      --  Find and load the directory block that can hold the new entry.
+      Load_Directory (Manager, Item.Header, Stream);
 
       --  Write the new entry.
       Manager.Buffer.Pos := Item.Entry_Offset;
@@ -1106,6 +1130,7 @@ package body Keystore.Metadata is
       New_Block    : Wallet_Block_Entry_Access;
       Delete_Block : Wallet_Block_Entry_Access;
       Data_Offset  : Ada.Streams.Stream_Element_Offset := Content'First;
+      Position     : Fragment_Count;
    begin
       Log.Debug ("Update keystore entry {0}", Name);
 
@@ -1124,33 +1149,31 @@ package body Keystore.Metadata is
          Load_Data (Manager, Data_Block, Stream);
          Item.Kind := Kind;
          Item.Size := Content'Length;
-         for I in Data_Block.Fragments'First .. Data_Block.Count loop
-            if Data_Block.Fragments (I).Item = Item then
+         Position := Get_Fragment_Position (Data_Block.all, Item);
+         exit when Position = 0;
 
-               --  See how much space we have in the current block.
-               Space := Data_Block.Available - AES_Align (Data_Block.Fragments (I).Size);
-               if Space >= AES_Align (Content'Length - Data_Offset) then
-                  Last := Content'Last;
-                  Delete_Block := Data_Block.Fragments (I).Next_Fragment;
-                  Next_Block := null;
-               else
-                  Last := Data_Offset + Space - 1;
-                  Next_Block := Data_Block.Fragments (I).Next_Fragment;
-                  if Next_Block = null and Last < Content'Last then
-                     Allocate_Data_Block (Manager, DATA_MAX_SIZE, New_Block, Stream);
-                     Next_Block := null;
-                  end if;
-               end if;
-
-               Update_Fragment (Manager, Data_Block, Item, Data_Offset, I, Data_Block.Fragments (I),
-                                Next_Block, Content (Data_Offset .. Last));
-               Data_Offset := Data_Offset + Data_Block.Fragments (I).Size;
-
-               Save_Data (Manager, Data_Block.all, Stream);
-               Data_Block := Next_Block;
-               exit;
+         --  See how much space we have in the current block.
+         Space := Data_Block.Available - AES_Align (Data_Block.Fragments (Position).Size);
+         if Space >= AES_Align (Content'Length - Data_Offset) then
+            Last := Content'Last;
+            Delete_Block := Data_Block.Fragments (Position).Next_Fragment;
+            Next_Block := null;
+         else
+            Last := Data_Offset + Space - 1;
+            Next_Block := Data_Block.Fragments (Position).Next_Fragment;
+            if Next_Block = null and Last < Content'Last then
+               Allocate_Data_Block (Manager, DATA_MAX_SIZE, New_Block, Stream);
+               Next_Block := null;
             end if;
-         end loop;
+         end if;
+
+         Update_Fragment (Manager, Data_Block, Item, Data_Offset, Position,
+                          Data_Block.Fragments (Position),
+                          Next_Block, Content (Data_Offset .. Last));
+         Data_Offset := Data_Offset + Data_Block.Fragments (Position).Size;
+
+         Save_Data (Manager, Data_Block.all, Stream);
+         Data_Block := Next_Block;
          exit when Data_Offset > Content'Last;
       end loop;
 
