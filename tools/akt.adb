@@ -43,6 +43,7 @@ package body AKT is
          Log_Config.Set ("log4j.logger.Util", "WARN");
          Log_Config.Set ("log4j.logger.AKT", "DEBUG");
          Log_Config.Set ("log4j.logger.Keystore", "DEBUG");
+         Log_Config.Set ("log4j.appender.console.layout", "full");
       end if;
       if Debug then
          Log_Config.Set ("log4j.appender.console.level", "DEBUG");
