@@ -103,6 +103,7 @@ package body Keystore.IO is
          Context   : Util.Encoders.HMAC.SHA256.Context;
          Size      : Interfaces.Unsigned_16;
       begin
+         Into.Block := Block;
          Size := Get_Decrypt_Size (Data);
 
          --  Check that the decrypt size looks correct.
