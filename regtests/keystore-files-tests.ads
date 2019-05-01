@@ -53,4 +53,7 @@ package Keystore.Files.Tests is
    --  Test adding values that already exist.
    procedure Test_Add_Error (T : in out Test);
 
+   --  Perforamce test adding values.
+   procedure Test_Perf_Add (T : in out Test);
+
 end Keystore.Files.Tests;
