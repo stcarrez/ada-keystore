@@ -42,6 +42,8 @@ package body Keystore.Tests is
                        Test_Tool_Invalid'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Create (password-file)",
                        Test_Tool_Create_Password_File'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Remove",
+                       Test_Tool_Create_Password_File'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -156,6 +158,27 @@ package body Keystore.Tests is
       Util.Tests.Assert_Matches (T, "^testing", Result, "list command failed");
 
    end Test_Tool_Create_Password_File;
+
+   --  ------------------------------
+   --  Test the akt command adding and removing values.
+   --  ------------------------------
+   procedure Test_Tool_Set_Remove (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-tool.akt");
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      Test_Tool_Create (T);
+
+      --  Set property
+      T.Execute (Tool & " -f " & Path & " -p admin "
+                 & "set testing my-new-testing-value", Result);
+      Util.Tests.Assert_Equals (T, "", Result, "set command failed");
+
+      --  Remove property
+      T.Execute (Tool & " -f " & Path & " -p admin "
+                 & "remove testing", Result);
+      Util.Tests.Assert_Equals (T, "", Result, "remove command failed");
+
+   end Test_Tool_Set_Remove;
 
    --  ------------------------------
    --  Test the akt command with invalid parameters.
