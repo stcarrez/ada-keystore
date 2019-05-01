@@ -140,19 +140,19 @@ package body Keystore.Tests is
       --  Create keystore
       --  file.key must have rw------- mode (600)
       --  regtests/files must have rwx------ (700)
-      T.Execute (Tool & " -f " & Path & " --password-file regtests/files/file.key create",
+      T.Execute (Tool & " -f " & Path & " --passfile regtests/files/file.key create",
                  Result, 0);
       Util.Tests.Assert_Equals (T, "", Result, "create command failed");
       T.Assert (Ada.Directories.Exists (Path),
                 "Keystore file does not exist");
 
       --  Set property
-      T.Execute (Tool & " -f " & Path & " --password-file regtests/files/file.key "
+      T.Execute (Tool & " -f " & Path & " --passfile regtests/files/file.key "
                  & "set testing my-testing-value", Result);
       Util.Tests.Assert_Equals (T, "", Result, "set command failed");
 
       --  List content => one entry
-      T.Execute (Tool & " -f " & Path & " --password-file regtests/files/file.key list", Result);
+      T.Execute (Tool & " -f " & Path & " --passfile regtests/files/file.key list", Result);
       Util.Tests.Assert_Matches (T, "^testing", Result, "list command failed");
 
    end Test_Tool_Create_Password_File;
@@ -173,13 +173,13 @@ package body Keystore.Tests is
                                  Result, "Wrong message for invalid option");
 
       --  Create keystore with a missing key file.
-      T.Execute (Tool & " -f " & Path & " --password-file regtests/missing.key create",
+      T.Execute (Tool & " -f " & Path & " --passfile regtests/missing.key create",
                  Result, 1);
       Util.Tests.Assert_Matches (T, "^ERROR: Invalid password to unlock the keystore file",
                                  Result, "Wrong message when command was not found");
 
       --  Create keystore with a key file that does not satisfy the security constraints.
-      T.Execute (Tool & " -f " & Path & " --password-file src/keystore.ads create",
+      T.Execute (Tool & " -f " & Path & " --passfile src/keystore.ads create",
                  Result, 1);
       Util.Tests.Assert_Matches (T, "^ERROR: Invalid password to unlock the keystore file",
                                  Result, "Wrong message when command was not found");
