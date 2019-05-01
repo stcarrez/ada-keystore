@@ -119,7 +119,7 @@ private
    DATA_IV_OFFSET       : constant := 32;
    DATA_ENTRY_SIZE      : constant := 112;
    DATA_MAX_SIZE        : constant := IO.Block_Size - IO.BT_HMAC_HEADER_SIZE
-     - IO.BT_TYPE_HEADER_SIZE - 64 - 4;
+     - IO.BT_TYPE_HEADER_SIZE - DATA_ENTRY_SIZE - 4;
 
    type Wallet_Entry_Index is new Positive;
 
