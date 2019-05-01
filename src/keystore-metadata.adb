@@ -502,6 +502,7 @@ package body Keystore.Metadata is
                                    Space       : in IO.Block_Index;
                                    Entry_Block : out Wallet_Directory_Entry_Access;
                                    Stream      : in out IO.Wallet_Stream'Class) is
+      Last_Block : Wallet_Directory_Entry_Access;
    begin
       --  Scan for a block having enough space for us.
       for Block of Manager.Entry_List loop
@@ -521,7 +522,24 @@ package body Keystore.Metadata is
       Entry_Block.Last_Pos := IO.BT_DATA_START + 4;
       Entry_Block.Ready := True;
       Stream.Allocate (Entry_Block.Block);
+
+      Logs.Info (Log, "Adding directory block{0}", Entry_Block.Block);
+
+      Last_Block := Manager.Entry_List.Last_Element;
       Manager.Entry_List.Append (Entry_Block);
+
+      --  Update the last directory block to link to the new one.
+      Load_Directory (Manager, Last_Block, Stream);
+      Last_Block.Next_Block := Interfaces.Unsigned_32 (Entry_Block.Block);
+
+      Manager.Buffer.Pos := IO.BT_DATA_START;
+      IO.Put_Block_Number (Manager.Buffer, Entry_Block.Block);
+
+      Set_IV (Manager, Last_Block.Block);
+      Stream.Write (Block  => Last_Block.Block,
+                    From   => Manager.Buffer,
+                    Cipher => Manager.Cipher,
+                    Sign   => Manager.Sign);
    end Find_Directory_Block;
 
    --  ------------------------------
