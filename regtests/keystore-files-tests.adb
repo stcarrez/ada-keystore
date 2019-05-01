@@ -41,6 +41,8 @@ package body Keystore.Files.Tests is
                        Test_Delete'Access);
       Caller.Add_Test (Suite, "Test Keystore.Update",
                        Test_Update'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Update (grow, shrink)",
+                       Test_Update_Sequence'Access);
       Caller.Add_Test (Suite, "Test Keystore.Files.Open+Close",
                        Test_Open_Close'Access);
       Caller.Add_Test (Suite, "Test Keystore.Add (Name_Exist)",
@@ -369,6 +371,115 @@ package body Keystore.Files.Tests is
          end loop;
       end;
    end Test_Update;
+
+   --  ------------------------------
+   --  Test update values in growing and descending sequences.
+   --  ------------------------------
+   procedure Test_Update_Sequence (T : in out Test) is
+
+      function Large (Len : in Positive; Content : in Character) return String;
+
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-sequence.ks");
+      Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
+
+      function Large (Len : in Positive; Content : in Character) return String is
+         Result : constant String (1 .. Len) := (others => Content);
+      begin
+         return Result;
+      end Large;
+
+   begin
+      if Ada.Directories.Exists (Path) then
+         Ada.Directories.Delete_File (Path);
+      end if;
+
+      --  Step 1: create the keystore and add the values.
+      declare
+         W        : Keystore.Files.Wallet_File;
+      begin
+         W.Create (Path => Path, Password => Password);
+         W.Add ("a", "b");
+         W.Add ("c", "d");
+         W.Add ("e", "f");
+
+         --  Update with new size < 16 (content uses same number of AES block).
+         W.Update ("a", "bcde");
+         Util.Tests.Assert_Equals (T, "bcde",
+                                   W.Get ("a"),
+                                   "Cannot get property a");
+         W.Update ("c", "ghij");
+         Util.Tests.Assert_Equals (T, "ghij",
+                                   W.Get ("c"),
+                                   "Cannot get property c");
+         W.Update ("e", "klmn");
+         Util.Tests.Assert_Equals (T, "klmn",
+                                   W.Get ("e"),
+                                   "Cannot get property e");
+
+         --  Update with size > 16 (a new AES block is necessary, hence shifting data in block).
+         W.Update ("a", "0123456789abcdef12345");
+         Util.Tests.Assert_Equals (T, "0123456789abcdef12345",
+                                   W.Get ("a"),
+                                   "Cannot get property a");
+         W.Update ("c", "c0123456789abcdef12345");
+         Util.Tests.Assert_Equals (T, "c0123456789abcdef12345",
+                                   W.Get ("c"),
+                                   "Cannot get property c");
+         W.Update ("e", "e0123456789abcdef12345");
+         Util.Tests.Assert_Equals (T, "e0123456789abcdef12345",
+                                   W.Get ("e"),
+                                   "Cannot get property e");
+      end;
+
+      --  Step 2: check the values.
+      declare
+         W        : Keystore.Files.Wallet_File;
+      begin
+         W.Open (Path => Path, Password => Password);
+         Util.Tests.Assert_Equals (T, "0123456789abcdef12345",
+                                   W.Get ("a"),
+                                   "Cannot get property a");
+         Util.Tests.Assert_Equals (T, "c0123456789abcdef12345",
+                                   W.Get ("c"),
+                                   "Cannot get property c");
+         Util.Tests.Assert_Equals (T, "e0123456789abcdef12345",
+                                   W.Get ("e"),
+                                   "Cannot get property e");
+
+         for I in 1 .. 5 loop
+            declare
+               L1 : constant String := Large (1024 * I, 'a');
+               L2 : constant String := Large (1023 * I, 'b');
+               L3 : constant String := Large (1022 * I, 'c');
+            begin
+               W.Update ("a", L1);
+               Util.Tests.Assert_Equals (T, L1,
+                                         W.Get ("a"),
+                                         "Cannot get property a");
+
+               W.Update ("c", "ghij");
+               Util.Tests.Assert_Equals (T, "ghij",
+                                         W.Get ("c"),
+                                         "Cannot get property c");
+
+               W.Update ("e", L2);
+               Util.Tests.Assert_Equals (T, L2,
+                                         W.Get ("e"),
+                                         "Cannot get property e");
+
+               W.Update ("a", "0123456789abcdef12345");
+               Util.Tests.Assert_Equals (T, "0123456789abcdef12345",
+                                         W.Get ("a"),
+                                         "Cannot get property a");
+
+               W.Update ("c", L3);
+               Util.Tests.Assert_Equals (T, L3,
+                                         W.Get ("c"),
+                                         "Cannot get property c");
+            end;
+         end loop;
+      end;
+   end Test_Update_Sequence;
 
    --  ------------------------------
    --  Test opening and closing keystore.
