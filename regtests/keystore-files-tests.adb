@@ -19,7 +19,9 @@
 with Ahven;
 with Ada.Directories;
 with Ada.Exceptions;
+with Ada.Streams.Stream_IO;
 with Util.Test_Caller;
+with Util.Streams.Files;
 with Util.Measures;
 with Keystore.IO.Files;
 package body Keystore.Files.Tests is
@@ -48,6 +50,8 @@ package body Keystore.Files.Tests is
                        Test_Open_Close'Access);
       Caller.Add_Test (Suite, "Test Keystore.Add (Name_Exist)",
                        Test_Add_Error'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Write",
+                       Test_Get_Stream'Access);
       Caller.Add_Test (Suite, "Test Keystore.Add (Perf)",
                        Test_Perf_Add'Access);
    end Add_Tests;
@@ -540,6 +544,33 @@ package body Keystore.Files.Tests is
       end;
 
    end Test_Add_Error;
+
+   --  ------------------------------
+   --  Test getting values through an Output_Stream.
+   --  ------------------------------
+   procedure Test_Get_Stream (T : in out Test) is
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.ks");
+      Output   : constant String := Util.Tests.Get_Path ("regtests/result/test-stream.txt");
+      Expect   : constant String := Util.Tests.Get_Path ("regtests/expect/test-stream.txt");
+      Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
+      W        : Keystore.Files.Wallet_File;
+      File     : Util.Streams.Files.File_Stream;
+   begin
+      File.Create (Mode => Ada.Streams.Stream_IO.Out_File,
+                   Name => Output);
+      W.Open (Path => Path, Password => Password);
+      W.Write (Name => "list-1", Output => File);
+      W.Write (Name => "list-2", Output => File);
+      W.Write (Name => "list-3", Output => File);
+      W.Write (Name => "list-4", Output => File);
+      W.Write (Name => "LICENSE.txt", Output => File);
+      File.Close;
+
+      Util.Tests.Assert_Equal_Files (T       => T,
+                                     Expect  => Expect,
+                                     Test    => Output,
+                                     Message => "Write operation failed");
+   end Test_Get_Stream;
 
    --  ------------------------------
    --  Perforamce test adding values.
