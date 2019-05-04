@@ -21,6 +21,7 @@ with Util.Encoders.SHA256;
 with Keystore.IO;
 with Ada.Streams;
 with Keystore.Keys;
+with Util.Streams;
 private with Interfaces;
 private with Util.Refs;
 private with Ada.Finalization;
@@ -94,6 +95,12 @@ private package Keystore.Metadata is
                        Result     : out Entry_Info;
                        Output     : out Ada.Streams.Stream_Element_Array;
                        Stream     : in out IO.Wallet_Stream'Class);
+
+   --  Write in the output stream the named entry value from the wallet.
+   procedure Write (Repository : in out Wallet_Repository;
+                    Name       : in String;
+                    Output     : in out Util.Streams.Output_Stream'Class;
+                    Stream     : in out IO.Wallet_Stream'Class);
 
    --  Get the list of entries contained in the wallet.
    procedure List (Repository : in out Wallet_Repository;
@@ -344,6 +351,12 @@ private
                        Output     : out Ada.Streams.Stream_Element_Array;
                        Stream     : in out IO.Wallet_Stream'Class);
 
+   --  Get the data associated with the named entry and write it in the output stream.
+   procedure Write (Manager    : in out Wallet_Manager;
+                    Name       : in String;
+                    Output     : in out Util.Streams.Output_Stream'Class;
+                    Stream     : in out IO.Wallet_Stream'Class);
+
    --  Update an existing entry in the wallet directory.
    procedure Update_Entry (Manager : in out Wallet_Manager;
                            Item    : in Wallet_Entry_Access;
@@ -419,6 +432,10 @@ private
                           Result     : out Entry_Info;
                           Output     : out Ada.Streams.Stream_Element_Array;
                           Stream     : in out IO.Wallet_Stream'Class);
+
+      procedure Write (Name       : in String;
+                       Output     : in out Util.Streams.Output_Stream'Class;
+                       Stream     : in out IO.Wallet_Stream'Class);
 
       function Contains (Name : in String) return Boolean;
 
