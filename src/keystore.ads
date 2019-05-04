@@ -16,6 +16,7 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Util.Encoders;
+with Util.Streams;
 with Ada.Streams;
 with Ada.Calendar;
 with Ada.Strings.Hash;
@@ -190,6 +191,12 @@ package Keystore is
                  Name      : in String) return String with
      Pre => Container.Is_Open;
 
+   --  Write in the output stream the named entry value from the wallet.
+   procedure Write (Container : in out Wallet;
+                    Name      : in String;
+                    Output    : in out Util.Streams.Output_Stream'Class) with
+     Pre => Container.Is_Open;
+
    --  Get the list of entries contained in the wallet.
    procedure List (Container : in out Wallet;
                    Content   : out Entry_Map) with
@@ -229,6 +236,9 @@ private
       procedure Get_Data (Name       : in String;
                           Result     : out Entry_Info;
                           Output     : out Ada.Streams.Stream_Element_Array);
+
+      procedure Write (Name      : in String;
+                       Output    : in out Util.Streams.Output_Stream'Class);
 
       procedure Delete (Name : in String);
 
