@@ -162,6 +162,16 @@ package body Keystore is
    end Get;
 
    --  ------------------------------
+   --  Write in the output stream the named entry value from the wallet.
+   --  ------------------------------
+   procedure Write (Container : in out Wallet;
+                    Name      : in String;
+                    Output    : in out Util.Streams.Output_Stream'Class) is
+   begin
+      Container.Container.Write (Name, Output);
+   end Write;
+
+   --  ------------------------------
    --  Get the list of entries contained in the wallet.
    --  ------------------------------
    procedure List (Container : in out Wallet;
@@ -237,6 +247,12 @@ package body Keystore is
       begin
          Keystore.Metadata.Get_Data (Repository.all, Name, Result, Output, Stream.all);
       end Get_Data;
+
+      procedure Write (Name      : in String;
+                       Output    : in out Util.Streams.Output_Stream'Class) is
+      begin
+         Keystore.Metadata.Write (Repository.all, Name, Output, Stream.all);
+      end Write;
 
       procedure List (Content : out Entry_Map) is
       begin
