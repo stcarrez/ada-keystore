@@ -258,6 +258,14 @@ package body Keystore.Metadata is
       Repository.Value.Get_Data (Name, Result, Output, Stream);
    end Get_Data;
 
+   procedure Write (Repository : in out Wallet_Repository;
+                    Name       : in String;
+                    Output     : in out Util.Streams.Output_Stream'Class;
+                    Stream     : in out IO.Wallet_Stream'Class) is
+   begin
+      Repository.Value.Write (Name, Output, Stream);
+   end Write;
+
    --  Get the list of entries contained in the wallet.
    procedure List (Repository : in out Wallet_Repository;
                    Content    : out Entry_Map;
@@ -940,6 +948,69 @@ package body Keystore.Metadata is
    end Get_Fragment;
 
    --  ------------------------------
+   --  Get the data fragment and write it to the output buffer.
+   --  ------------------------------
+   procedure Get_Fragment (Manager  : in out Wallet_Manager;
+                           Position : in Fragment_Index;
+                           Fragment : in Wallet_Block_Fragment;
+                           Output   : in out Util.Streams.Output_Stream'Class) is
+      Start_Data : IO.Block_Index := Fragment.Block_Offset;
+      End_Data   : constant IO.Block_Index := Start_Data + AES_Align (Fragment.Size) - 1;
+      Last       : Stream_Element_Offset;
+      Encoded    : Stream_Element_Offset;
+      Decipher   : Util.Encoders.AES.Decoder;
+      Secret     : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
+      IV         : Util.Encoders.AES.Word_Block_Type;
+      Buffer     : Ada.Streams.Stream_Element_Array (1 .. 1024);
+      Remain     : Ada.Streams.Stream_Element_Offset := Fragment.Size;
+   begin
+      Logs.Debug (Log, "Get fragment from{0} at{1} in stream", Manager.Buffer.Block, Start_Data);
+
+      Manager.Buffer.Pos := Data_Entry_Offset (Position) + DATA_IV_OFFSET;
+      IO.Get_Data (Manager.Buffer, IV);
+      IO.Get_Secret (Manager.Buffer, Secret, Manager.Protect_Key);
+
+      Decipher.Set_IV (IV);
+      Decipher.Set_Key (Secret, Util.Encoders.AES.CBC);
+      Decipher.Set_Padding (Util.Encoders.AES.ZERO_PADDING);
+
+      --  Decrypt and write in the output stream.
+      loop
+         Decipher.Transform (Data    => Manager.Buffer.Data (Start_Data .. End_Data),
+                             Into    => Buffer,
+                             Last    => Last,
+                             Encoded => Encoded);
+         exit when Encoded >= End_Data;
+         if Last - Buffer'First + 1 > Remain then
+            Last := Buffer'First + Remain - 1;
+         end if;
+         Output.Write (Buffer (Buffer'First .. Last));
+         Start_Data := Encoded;
+         Remain := Remain - (Last - Buffer'First + 1);
+      end loop;
+
+      pragma Assert (Check => Remain > 0);
+
+      --  Finish decrypt.
+      if Last >= Buffer'Last - 16 then
+         Output.Write (Buffer (Buffer'First .. Last));
+         Remain := Remain - (Last - Buffer'First + 1);
+
+         pragma Assert (Check => Remain <= 16);
+
+         Decipher.Finish (Into => Buffer (Buffer'First .. Buffer'First + Remain),
+                          Last => Last);
+         Output.Write (Buffer (Buffer'First .. Buffer'First + Remain));
+      else
+         Remain := Remain - (Last - Buffer'First + 1);
+         Decipher.Finish (Into => Buffer (Last + 1 .. Last + Remain),
+                          Last => Last);
+         Output.Write (Buffer (Buffer'First .. Last));
+      end if;
+
+   end Get_Fragment;
+
+   --  ------------------------------
    --  Delete the data from the data block.
    --  The data block must have been loaded and is not saved.
    --  ------------------------------
@@ -1385,6 +1456,33 @@ package body Keystore.Metadata is
       Result.Update_Date := Item.Update_Date;
    end Get_Data;
 
+   procedure Write (Manager    : in out Wallet_Manager;
+                    Name       : in String;
+                    Output     : in out Util.Streams.Output_Stream'Class;
+                    Stream     : in out IO.Wallet_Stream'Class) is
+      Pos         : constant Wallet_Maps.Cursor := Manager.Map.Find (Name);
+      Item        : Wallet_Entry_Access;
+      Data_Block  : Wallet_Block_Entry_Access;
+      Position    : Fragment_Count;
+   begin
+      if not Wallet_Maps.Has_Element (Pos) then
+         Log.Info ("Data entry '{0}' not found", Name);
+         raise Not_Found;
+      end if;
+
+      Item := Wallet_Maps.Element (Pos);
+      Data_Block := Item.Data;
+
+      --  Load the data fragments.
+      while Data_Block /= null loop
+         Load_Data (Manager, Data_Block, Stream);
+         Position := Get_Fragment_Position (Data_Block.all, Item);
+         exit when Position = 0;
+         Get_Fragment (Manager, Position, Data_Block.Fragments (Position), Output);
+         Data_Block := Data_Block.Fragments (Position).Next_Fragment;
+      end loop;
+   end Write;
+
    procedure Release (Manager    : in out Wallet_Manager) is
       Dir   : Wallet_Directory_Entry_Access;
       Block : Wallet_Block_Entry_Access;
@@ -1555,6 +1653,13 @@ package body Keystore.Metadata is
       begin
          Get_Data (Manager, Name, Result, Output, Stream);
       end Get_Data;
+
+      procedure Write (Name       : in String;
+                       Output     : in out Util.Streams.Output_Stream'Class;
+                       Stream     : in out IO.Wallet_Stream'Class) is
+      begin
+         Write (Manager, Name, Output, Stream);
+      end Write;
 
       procedure List (Content    : out Entry_Map;
                       Stream     : in out IO.Wallet_Stream'Class) is
