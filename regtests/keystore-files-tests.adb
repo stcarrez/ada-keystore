@@ -54,8 +54,10 @@ package body Keystore.Files.Tests is
                        Test_Get_Stream'Access);
       Caller.Add_Test (Suite, "Test Keystore.Add (Perf)",
                        Test_Perf_Add'Access);
-      Caller.Add_Test (Suite, "Test Keystore.Set (Input_Stream)",
+      Caller.Add_Test (Suite, "Test Keystore.Set (Input_Stream < 4K)",
                        Test_Set_From_Stream'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Set (Input_Stream > 4K)",
+                       Test_Set_From_Larger_Stream'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -574,13 +576,11 @@ package body Keystore.Files.Tests is
                                      Message => "Write operation failed");
    end Test_Get_Stream;
 
-   --  ------------------------------
-   --  Test setting values through an Input_Stream.
-   --  ------------------------------
-   procedure Test_Set_From_Stream (T : in out Test) is
+   procedure Test_File_Stream (T     : in out Test;
+                               Name  : in String;
+                               Input : in String) is
       Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-stream.akt");
-      Input    : constant String := Util.Tests.Get_Path ("Makefile");
-      Output   : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-set.txt");
+      Output   : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-" & Name);
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       W        : Keystore.Files.Wallet_File;
       File     : Util.Streams.Files.File_Stream;
@@ -588,7 +588,7 @@ package body Keystore.Files.Tests is
       File.Open (Mode => Ada.Streams.Stream_IO.In_File,
                  Name => Input);
       W.Create (Path => Path, Password => Password);
-      W.Set (Name => "makefile", Kind => Keystore.T_STRING, Input => File);
+      W.Set (Name => Name, Kind => Keystore.T_STRING, Input => File);
       File.Close;
       W.Close;
 
@@ -596,14 +596,29 @@ package body Keystore.Files.Tests is
 
       File.Create (Mode => Ada.Streams.Stream_IO.Out_File,
                    Name => Output);
-      W.Write (Name => "makefile", Output => File);
+      W.Write (Name => Name, Output => File);
       File.Close;
 
       Util.Tests.Assert_Equal_Files (T       => T,
                                      Expect  => Input,
                                      Test    => Output,
-                                     Message => "Set or write operation failed");
+                                     Message => "Set or write operation failed for " & Name);
+   end Test_File_Stream;
+
+   --  ------------------------------
+   --  Test setting values through an Input_Stream.
+   --  ------------------------------
+   procedure Test_Set_From_Stream (T : in out Test) is
+      Input    : constant String := Util.Tests.Get_Path ("Makefile");
+   begin
+      T.Test_File_Stream ("makefile.txt", Input);
    end Test_Set_From_Stream;
+
+   procedure Test_Set_From_Larger_Stream (T : in out Test) is
+      Input    : constant String := Util.Tests.Get_Path ("LICENSE.txt");
+   begin
+      T.Test_File_Stream ("LICENSE.txt", Input);
+   end Test_Set_From_Larger_Stream;
 
    --  ------------------------------
    --  Perforamce test adding values.
