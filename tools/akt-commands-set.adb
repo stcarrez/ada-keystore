@@ -78,10 +78,8 @@ package body AKT.Commands.Set is
    overriding
    procedure Help (Command   : in out Command_Type;
                    Context   : in out Context_Type) is
-      pragma Unreferenced (Command);
+      pragma Unreferenced (Command, Context);
    begin
-      AKT.Commands.Usage (Context, "set");
-      Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("set: insert or update a value in the keystore");
       Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("Usage: akt set <name> [<value> | -f <file>]");

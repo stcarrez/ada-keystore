@@ -46,10 +46,8 @@ package body AKT.Commands.Remove is
    overriding
    procedure Help (Command   : in out Command_Type;
                    Context   : in out Context_Type) is
-      pragma Unreferenced (Command);
+      pragma Unreferenced (Command, Context);
    begin
-      --  AKT.Commands.Usage (Context);
-      Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("akt remove: remove values from the keystore");
       Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("Usage: akt remove <name> [...]");

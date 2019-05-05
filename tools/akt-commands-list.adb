@@ -27,6 +27,8 @@ package body AKT.Commands.List is
                       Name      : in String;
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
+      pragma Unreferenced (Command, Name, Args);
+
       List : Keystore.Entry_Map;
       Iter : Keystore.Entry_Cursor;
    begin
@@ -59,14 +61,14 @@ package body AKT.Commands.List is
    overriding
    procedure Help (Command   : in out Command_Type;
                    Context   : in out Context_Type) is
+      pragma Unreferenced (Command, Context);
    begin
-      AKT.Commands.Usage (Context);
-
-      Ada.Text_IO.Put_Line ("set: insert a new value in the keystore");
+      Ada.Text_IO.Put_Line ("list: list values of the keystore");
       Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: set <name> <value>");
+      Ada.Text_IO.Put_Line ("Usage: akt list");
       Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("  ");
+      Ada.Text_IO.Put_Line ("  List the values stored in the keystore with their name,");
+      Ada.Text_IO.Put_Line ("  size, type and creation date.");
    end Help;
 
 end AKT.Commands.List;

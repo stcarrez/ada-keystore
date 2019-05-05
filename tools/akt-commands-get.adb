@@ -80,15 +80,16 @@ package body AKT.Commands.Get is
    overriding
    procedure Help (Command   : in out Command_Type;
                    Context   : in out Context_Type) is
-      pragma Unreferenced (Command);
+      pragma Unreferenced (Command, Context);
    begin
-      --  AKT.Commands.Usage (Context);
-      Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("akt get: get a value from the keystore");
       Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: get <name>");
+      Ada.Text_IO.Put_Line ("Usage: get [-n] <name> [...]");
       Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("  ");
+      Ada.Text_IO.Put_Line ("  The get command allows to retrieve the value associated with a");
+      Ada.Text_IO.Put_Line ("  wallet entry. It retrieves the value for each name passed");
+      Ada.Text_IO.Put_Line ("  to the command. By default a newline is emitted after each value.");
+      Ada.Text_IO.Put_Line ("  The '-n' option prevents the output of the trailing newline.");
    end Help;
 
 end AKT.Commands.Get;
