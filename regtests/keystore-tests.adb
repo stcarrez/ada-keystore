@@ -312,7 +312,8 @@ package body Keystore.Tests is
                  Result, 0);
 
       T.Execute (Tool & " -f " & Path & " -p admin get edit", Result, 0);
-      Util.Tests.Assert_Equals (T, "", Result, "get -n command failed");
+      Util.Tests.Assert_Matches (T, "fake editor .*VALUE.txt.*", Result,
+                                 "Invalid value after edit");
 
    end Test_Tool_Edit;
 

@@ -1,0 +1,5 @@
+#!/bin/sh
+if test $# -ne 1; then
+   exit 1
+fi
+echo "fake editor $1" > $1
