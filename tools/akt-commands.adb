@@ -23,12 +23,11 @@ with AKT.Commands.Get;
 with AKT.Commands.Create;
 with AKT.Commands.List;
 with AKT.Commands.Remove;
+with AKT.Commands.Edit;
 with AKT.Passwords.Input;
 with AKT.Passwords.Files;
 with AKT.Passwords.Unsafe;
 package body AKT.Commands is
-
-   Log     : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Commands");
 
    Help_Command     : aliased AKT.Commands.Drivers.Help_Command_Type;
    Set_Command      : aliased AKT.Commands.Set.Command_Type;
@@ -36,15 +35,31 @@ package body AKT.Commands is
    Create_Command   : aliased AKT.Commands.Create.Command_Type;
    List_Command     : aliased AKT.Commands.List.Command_Type;
    Remove_Command   : aliased AKT.Commands.Remove.Command_Type;
+   Edit_Command     : aliased AKT.Commands.Edit.Command_Type;
 
    Driver           : Drivers.Driver_Type;
+   Arguments        : Util.Commands.Dynamic_Argument_List;
 
    --  ------------------------------
    --  Print the command usage.
    --  ------------------------------
-   procedure Usage (Context : in out Context_Type) is
+   procedure Usage (Args    : in Argument_List'Class;
+                    Context : in out Context_Type;
+                    Name    : in String := "") is
    begin
       GC.Display_Help (Context.Command_Config);
+      if Name'Length > 0 then
+         Driver.Usage (Args, Context, Name);
+      end if;
+   end Usage;
+
+   procedure Usage (Context : in out Context_Type;
+                    Name    : in String := "") is
+   begin
+      GC.Display_Help (Context.Command_Config);
+      if Name'Length > 0 then
+         Driver.Usage (Arguments, Context, Name);
+      end if;
    end Usage;
 
    --  ------------------------------
@@ -141,12 +156,13 @@ package body AKT.Commands is
                           "  -v           Verbose execution mode" & ASCII.LF &
                           "  -d           Debug execution mode" & ASCII.LF &
                           "  -f keystore  The keystore file to use");
-      Driver.Add_Command ("help", Help_Command'Access);
-      Driver.Add_Command ("set", Set_Command'Access);
-      Driver.Add_Command ("get", Get_Command'Access);
-      Driver.Add_Command ("create", Create_Command'Access);
-      Driver.Add_Command ("list", List_Command'Access);
-      Driver.Add_Command ("remove", Remove_Command'Access);
+      Driver.Add_Command ("help", "print some help", Help_Command'Access);
+      Driver.Add_Command ("set", "insert or update a value in the keystore", Set_Command'Access);
+      Driver.Add_Command ("get", "get a value from the keystore", Get_Command'Access);
+      Driver.Add_Command ("create", "create the keystore", Create_Command'Access);
+      Driver.Add_Command ("list", "list values of the keystore", List_Command'Access);
+      Driver.Add_Command ("remove", "remove values from the keystore", Remove_Command'Access);
+      Driver.Add_Command ("edit", "edit the value with an external editor", Edit_Command'Access);
    end Initialize;
 
    procedure Parse (Context   : in out Context_Type;
