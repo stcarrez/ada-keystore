@@ -54,6 +54,8 @@ package body Keystore.Files.Tests is
                        Test_Get_Stream'Access);
       Caller.Add_Test (Suite, "Test Keystore.Add (Perf)",
                        Test_Perf_Add'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Set (Input_Stream)",
+                       Test_Set_From_Stream'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -571,6 +573,37 @@ package body Keystore.Files.Tests is
                                      Test    => Output,
                                      Message => "Write operation failed");
    end Test_Get_Stream;
+
+   --  ------------------------------
+   --  Test setting values through an Input_Stream.
+   --  ------------------------------
+   procedure Test_Set_From_Stream (T : in out Test) is
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-stream.akt");
+      Input    : constant String := Util.Tests.Get_Path ("Makefile");
+      Output   : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-set.txt");
+      Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
+      W        : Keystore.Files.Wallet_File;
+      File     : Util.Streams.Files.File_Stream;
+   begin
+      File.Open (Mode => Ada.Streams.Stream_IO.In_File,
+                 Name => Input);
+      W.Create (Path => Path, Password => Password);
+      W.Set (Name => "makefile", Kind => Keystore.T_STRING, Input => File);
+      File.Close;
+      W.Close;
+
+      W.Open (Path => Path, Password => Password);
+
+      File.Create (Mode => Ada.Streams.Stream_IO.Out_File,
+                   Name => Output);
+      W.Write (Name => "makefile", Output => File);
+      File.Close;
+
+      Util.Tests.Assert_Equal_Files (T       => T,
+                                     Expect  => Input,
+                                     Test    => Output,
+                                     Message => "Set or write operation failed");
+   end Test_Set_From_Stream;
 
    --  ------------------------------
    --  Perforamce test adding values.
