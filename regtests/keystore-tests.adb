@@ -44,7 +44,7 @@ package body Keystore.Tests is
       Caller.Add_Test (Suite, "Test AKT.Commands.Create (password-file)",
                        Test_Tool_Create_Password_File'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Remove",
-                       Test_Tool_Create_Password_File'Access);
+                       Test_Tool_Set_Remove'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Set",
                        Test_Tool_Set_Big'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Get",
