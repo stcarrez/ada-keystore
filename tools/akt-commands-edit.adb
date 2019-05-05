@@ -18,6 +18,7 @@
 with Ada.Text_IO;
 with Ada.Directories;
 with Ada.Environment_Variables;
+with Ada.Command_Line;
 with Interfaces.C.Strings;
 with Util.Files;
 with Util.Processes;
@@ -155,8 +156,11 @@ package body AKT.Commands.Edit is
             Export_Value (Context, Args.Get_Argument (1), Path);
             Util.Processes.Spawn (Proc, Editor & " " & Path);
             Util.Processes.Wait (Proc);
-            if Util.Processes.Get_Exit_Status (Proc) = 0 then
-               Ada.Text_IO.Put_Line ("Editor terminated");
+            if Util.Processes.Get_Exit_Status (Proc) /= 0 then
+               AKT.Commands.Log.Error ("Editor exited with status{0}",
+                                       Natural'Image (Util.Processes.Get_Exit_Status (Proc)));
+               Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+            else
                Import_Value (Context, Args.Get_Argument (1), Path);
             end if;
             Ada.Directories.Delete_File (Path);
