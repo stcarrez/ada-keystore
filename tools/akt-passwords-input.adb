@@ -44,7 +44,7 @@ package body AKT.Passwords.Input is
       C       : Character;
    begin
       Ada.Text_IO.Put_Line ("Enter password:");
-      loop
+      while not Ada.Text_IO.End_Of_File loop
          Ada.Text_IO.Get_Immediate (C);
          exit when C < ' ';
          Ada.Strings.Unbounded.Append (Content, C);
