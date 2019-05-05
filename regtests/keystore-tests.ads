@@ -50,4 +50,9 @@ package Keystore.Tests is
                       Result  : out Ada.Strings.Unbounded.Unbounded_String;
                       Status  : in Natural := 0);
 
+   procedure Execute (T       : in out Test;
+                      Command : in String;
+                      Expect  : in String;
+                      Status  : in Natural := 0);
+
 end Keystore.Tests;
