@@ -42,11 +42,17 @@ package Keystore.Tests is
    --  Test the akt get command.
    procedure Test_Tool_Get (T : in out Test);
 
+   --  Test the akt get command with errors.
+   procedure Test_Tool_Get_Error (T : in out Test);
+
    --  Test the akt command with invalid parameters.
    procedure Test_Tool_Invalid (T : in out Test);
 
    --  Test the akt edit command.
    procedure Test_Tool_Edit (T : in out Test);
+
+   --  Test the akt with an interactive password.
+   procedure Test_Tool_Interactive_Password (T : in out Test);
 
    procedure Execute (T       : in out Test;
                       Command : in String;
