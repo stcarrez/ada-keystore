@@ -45,6 +45,9 @@ package Keystore.Tests is
    --  Test the akt command with invalid parameters.
    procedure Test_Tool_Invalid (T : in out Test);
 
+   --  Test the akt edit command.
+   procedure Test_Tool_Edit (T : in out Test);
+
    procedure Execute (T       : in out Test;
                       Command : in String;
                       Result  : out Ada.Strings.Unbounded.Unbounded_String;
