@@ -41,7 +41,7 @@ package body AKT.Commands.Create is
                    Context   : in out Context_Type) is
       pragma Unreferenced (Command, Context);
    begin
-      Ada.Text_IO.Put_Line ("create: create the keystore");
+      Ada.Text_IO.Put_Line ("akt create: create the keystore");
       Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("Usage: akt create");
       Ada.Text_IO.New_Line;

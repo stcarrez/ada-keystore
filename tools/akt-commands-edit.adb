@@ -194,9 +194,9 @@ package body AKT.Commands.Edit is
                    Context   : in out Context_Type) is
       pragma Unreferenced (Command, Context);
    begin
-      Ada.Text_IO.Put_Line ("edit: edit the value with an external editor");
+      Ada.Text_IO.Put_Line ("akt edit: edit the value with an external editor");
       Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: akt editor [-e command] <name>");
+      Ada.Text_IO.Put_Line ("Usage: akt edit [-e command] <name>");
       Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("  The edit command can be used to edit the protected wallet entry");
       Ada.Text_IO.Put_Line ("  by calling the user's preferd editor with the content.");
