@@ -1,14 +1,22 @@
 .\"
 .\"
-.TH AKT 1 "Apr 7, 2019" "Ada Keystore Tool"
+.TH AKT 1 "May 1, 2019" "Ada Keystore Tool"
 .SH NAME
 akt - Ada Keystore Tool
 .SH SYNOPSIS
 .B akt
-[ -v ] [ -f
+[ -v ] [-d] [ -f
 .I file
 ] [ -p
 .I password
+] [--password
+.I password
+] [--passfile
+.I file
+] [--passenv
+.I name
+] [--passfd
+.I fd
 ]
 .I command
 .br
@@ -42,11 +50,14 @@ The data is organized in blocks of 4K whose primary content is encrypted
 either by the wallet master key or by the entry keys.  The data block is
 signed by using HMAC-256.  A data block can contain several values but
 each of them is protected by its own encryption key.  Each value is also
-signed using HMAC-256.
+signed using HMAC-256.  Large values can be written to several data
+blocks and in that case each fragment is encrypted by using its own
+encryption key.
 .\"
 .PP
 The tool provides several commands that allow to create a keystore,
-insert values, retrieve values or delete them.
+insert values, retrieve values or delete them.  You can use it to
+store your passwords, your secret keys and even your documents.
 .\""
 .PP
 Passwords are retrieved using one of the following options:
@@ -76,6 +87,31 @@ Enable debugging output.
 -f file
 .br
 Specifies the path of the keystore file to open.
+.TP 5
+-p password
+.br
+The keystore password is passed within the command line.
+Using this method is convenient but is not safe.
+.TP 5
+--passenv envname
+.br
+The keystore password is passed within an environment variable with the
+given name.  Using this method is considered safer but still provides
+some security leaks.
+.TP 5
+--passfile path
+.br
+The keystore password is passed within a file that is read.
+The file must not be readable or writable by other users or group:
+its mode must be r??------.  The directory that contains the file
+must also satisfy the not readable by other users or group members,
+This method is safer.
+.TP 5
+--passfd fd
+.br
+The keystore password is passed within a pipe whose file descriptor
+number is given.  The file descriptor is read to obtain the password.
+This method is safer.
 .\"
 .SH COMMANDS
 .\"
@@ -99,33 +135,48 @@ The password to protect the wallet is passed using one of the following options:
 .\"
 .SS The set command
 .RS 0
-akt \fBset \fIname\fR \fIcontent\fR
+akt \fBset \fIname\fR [\fIvalue\fR | -f \fIfile\fR] \fR
 .RE
 .PP
 The
 .I set
-command is used to store a content in the wallet.
+command is used to store a content in the wallet.  The content is either
+passed as argument or it can be read from a file by using the
+.I -f
+option.
 .\"
-.SS The delete command
+.SS The remove command
 .RS 0
-akt \fBdelete\fP \fIname\fR
+akt \fBremove\fP \fIname\fR ...
 .RE
 .PP
 The
-.I delete
+.I remove
 command is used to erase a content from the wallet.  The data block that contained
 the content to protect is erased and replaced by zeros.
 The secure key that protected the wallet entry is also cleared.
+It is possible to remove several contents.
 .\"
 .SS The edit command
 .RS 0
-akt \fBedit \fIname\fR\fR
+akt \fBedit [-e editor] \fIname\fR\fR
 .RE
 .PP
 The
 .I edit
 command can be used to edit the protected wallet entry by calling the
-user's prefered editor with the content.
+user's prefered editor with the content.  The content is saved in a
+temporary directory and in a temporary file.  The editor is launched
+with the path and when editing is finished the temporary file is read.
+The temporary directory and files are erased when the editor terminates
+successfully or not.  The editor can be specified by using the
+.I -e
+option, by setting up the
+.I EDITOR
+environment variable or by updating the
+.IR editor (1)
+alternative with
+.IR update-alternative (1).
 .\"
 .\"
 .SS The list command
@@ -159,8 +210,8 @@ and counter are allocated which are then used by the
 .B PBKDF2
 generation.  The wallet can be protected by up to 8 different passwords.
 Despite this, the security of the wallet master key still depends on the
-strength of the user's password.  For this matter, it is best to use
-long passphrases.
+strength of the user's password.  For this matter, it is still critical
+for the security to use long passphrases.
 .\"
 .PP
 The passphrase can be passed within an environment variable or within a
@@ -175,6 +226,8 @@ Each wallet data entry is protected by using its own secret key and IV vector.
 Wallet data are encrypted using AES-256-CBC.  The wallet data entry key and IV
 vectors are protected by the wallet master key.
 .\"
+.SH SEE ALSO
+\fIeditor(1)\fR, \fIupdate-alternative(1)\fR
 .\"
 .\"
 .SH AUTHOR
