@@ -72,6 +72,12 @@ private package Keystore.Metadata is
                   Content    : in Ada.Streams.Stream_Element_Array;
                   Stream     : in out IO.Wallet_Stream'Class);
 
+   procedure Set (Repository : in out Wallet_Repository;
+                  Name       : in String;
+                  Kind       : in Entry_Type;
+                  Input      : in out Util.Streams.Input_Stream'Class;
+                  Stream     : in out IO.Wallet_Stream'Class);
+
    procedure Update (Repository : in out Wallet_Repository;
                      Name       : in String;
                      Kind       : in Entry_Type;
@@ -372,9 +378,10 @@ private
    --  Write the data in one or several blocks.
    procedure Add_Data (Manager     : in out Wallet_Manager;
                        Item        : in Wallet_Entry_Access;
-                       Data_Block  : in Wallet_Block_Entry_Access;
+                       Data_Block  : in out Wallet_Block_Entry_Access;
                        Content     : in Ada.Streams.Stream_Element_Array;
-                       Offset      : in Ada.Streams.Stream_Element_Offset;
+                       Offset      : in out Ada.Streams.Stream_Element_Offset;
+                       Full_Block  : in Boolean;
                        Stream      : in out IO.Wallet_Stream'Class);
 
    --  Delete the value associated with the given name.
@@ -416,9 +423,19 @@ private
                      Content    : in Ada.Streams.Stream_Element_Array;
                      Stream     : in out IO.Wallet_Stream'Class);
 
+      procedure Set (Name       : in String;
+                     Kind       : in Entry_Type;
+                     Input      : in out Util.Streams.Input_Stream'Class;
+                     Stream     : in out IO.Wallet_Stream'Class);
+
       procedure Update (Name       : in String;
                         Kind       : in Entry_Type;
                         Content    : in Ada.Streams.Stream_Element_Array;
+                        Stream     : in out IO.Wallet_Stream'Class);
+
+      procedure Update (Name       : in String;
+                        Kind       : in Entry_Type;
+                        Input      : in out Util.Streams.Input_Stream'Class;
                         Stream     : in out IO.Wallet_Stream'Class);
 
       procedure Delete (Name       : in String;
