@@ -1,0 +1,5 @@
+akt create: create the keystore
+
+Usage: akt create
+
+  The create command is used to create the new keystore file.
