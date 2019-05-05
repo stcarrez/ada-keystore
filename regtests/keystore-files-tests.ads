@@ -58,8 +58,13 @@ package Keystore.Files.Tests is
 
    --  Test setting values through an Input_Stream.
    procedure Test_Set_From_Stream (T : in out Test);
+   procedure Test_Set_From_Larger_Stream (T : in out Test);
 
    --  Perforamce test adding values.
    procedure Test_Perf_Add (T : in out Test);
+
+   procedure Test_File_Stream (T     : in out Test;
+                               Name  : in String;
+                               Input : in String);
 
 end Keystore.Files.Tests;
