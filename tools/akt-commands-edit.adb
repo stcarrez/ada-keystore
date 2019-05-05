@@ -24,13 +24,16 @@ with Util.Processes;
 with Util.Systems.Os;
 with Util.Systems.Types;
 with Util.Streams.Raw;
-with Util.Log;
 with Keystore.Random;
 package body AKT.Commands.Edit is
 
    use GNAT.Strings;
 
    procedure Export_Value (Context : in out Context_Type;
+                           Name    : in String;
+                           Path    : in String);
+
+   procedure Import_Value (Context : in out Context_Type;
                            Name    : in String;
                            Path    : in String);
 
@@ -61,13 +64,13 @@ package body AKT.Commands.Edit is
       if Context.Wallet.Contains (Name) then
          Context.Wallet.Write (Name, File);
       end if;
+      Interfaces.C.Strings.Free (P);
    end Export_Value;
 
    procedure Import_Value (Context : in out Context_Type;
                            Name    : in String;
                            Path    : in String) is
       use Util.Systems.Os;
-      use type Interfaces.C.int;
       use type Util.Systems.Types.File_Type;
 
       Fd   : Util.Systems.Os.File_Type;
@@ -82,6 +85,7 @@ package body AKT.Commands.Edit is
       end if;
       File.Initialize (Fd);
       Context.Wallet.Set (Name, Keystore.T_STRING, File);
+      Interfaces.C.Strings.Free (P);
    end Import_Value;
 
    --  ------------------------------
@@ -108,6 +112,8 @@ package body AKT.Commands.Edit is
    --  ------------------------------
    function Get_Directory (Command : in Command_Type;
                            Context : in out Context_Type) return String is
+      pragma Unreferenced (Command);
+
       Rand : Keystore.Random.Generator;
       Name : constant String := "akt-" & Rand.Generate (Bits => 32);
    begin
@@ -186,17 +192,15 @@ package body AKT.Commands.Edit is
    overriding
    procedure Help (Command   : in out Command_Type;
                    Context   : in out Context_Type) is
-      pragma Unreferenced (Command);
+      pragma Unreferenced (Command, Context);
    begin
-      AKT.Commands.Usage (Context, "edit");
+      Ada.Text_IO.Put_Line ("edit: edit the value with an external editor");
       Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("set: insert or update a value in the keystore");
+      Ada.Text_IO.Put_Line ("Usage: akt editor [-e command] <name>");
       Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: akt set <name> [<value> | -f <file>]");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("  The set command is used to store a content in the wallet.");
-      Ada.Text_IO.Put_Line ("  The content is either passed as argument or read from a file.");
-      Ada.Text_IO.Put_Line ("  If the wallet already contains the name, the value is updated.");
+      Ada.Text_IO.Put_Line ("  The edit command can be used to edit the protected wallet entry");
+      Ada.Text_IO.Put_Line ("  by calling the user's preferd editor with the content.");
+      Ada.Text_IO.Put_Line ("  You can use the '-e' option to define the editor command to use.");
    end Help;
 
 end AKT.Commands.Edit;
