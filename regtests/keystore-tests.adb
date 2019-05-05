@@ -77,6 +77,8 @@ package body Keystore.Tests is
                        Test_Tool_Help_Remove'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.List (help)",
                        Test_Tool_Help_List'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Edit",
+                       Test_Tool_Edit'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -296,5 +298,22 @@ package body Keystore.Tests is
                                  Result, "Wrong message when command was not found");
 
    end Test_Tool_Invalid;
+
+   --  ------------------------------
+   --  Test the akt edit command.
+   --  ------------------------------
+   procedure Test_Tool_Edit (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-tool.akt");
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " -f " & Path & " -p admin edit -e bad-command testing", Result, 1);
+
+      T.Execute (Tool & " -f " & Path & " -p admin edit -e ./regtests/files/fake-editor edit",
+                 Result, 0);
+
+      T.Execute (Tool & " -f " & Path & " -p admin get edit", Result, 0);
+      Util.Tests.Assert_Equals (T, "", Result, "get -n command failed");
+
+   end Test_Tool_Edit;
 
 end Keystore.Tests;
