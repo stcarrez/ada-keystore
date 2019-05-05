@@ -68,7 +68,9 @@ package body Keystore.IO.Files is
       --  ------------------------------
       procedure Close is
       begin
-         Block_IO.Close (File);
+         if Block_IO.Is_Open (File) then
+            Block_IO.Close (File);
+         end if;
       end Close;
 
       --  ------------------------------
