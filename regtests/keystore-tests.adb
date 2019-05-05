@@ -25,6 +25,7 @@ with Util.Log.Loggers;
 with Util.Processes;
 with Util.Streams.Buffered;
 with Util.Streams.Pipes;
+with Util.Streams.Texts;
 package body Keystore.Tests is
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Tool");
@@ -79,6 +80,10 @@ package body Keystore.Tests is
                        Test_Tool_Help_List'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Edit",
                        Test_Tool_Edit'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Get (error)",
+                       Test_Tool_Get_Error'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Get (interactive password)",
+                       Test_Tool_Interactive_Password'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -271,6 +276,21 @@ package body Keystore.Tests is
    end Test_Tool_Get;
 
    --  ------------------------------
+   --  Test the akt get command with errors.
+   --  ------------------------------
+   procedure Test_Tool_Get_Error (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.akt");
+      Output : constant String := Util.Tests.Get_Path ("regtests/result/test-get.txt");
+      Expect : constant String := Util.Tests.Get_Test_Path ("regtests/expect/test-stream.txt");
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " -f " & Path
+                 & " -p mypassword get", Result, 1);
+      T.Execute (Tool & " -f " & Path
+                 & " -p mypassword get missing-property", Result, 1);
+   end Test_Tool_Get_Error;
+
+   --  ------------------------------
    --  Test the akt command with invalid parameters.
    --  ------------------------------
    procedure Test_Tool_Invalid (T : in out Test) is
@@ -316,5 +336,31 @@ package body Keystore.Tests is
                                  "Invalid value after edit");
 
    end Test_Tool_Edit;
+
+   --  ------------------------------
+   --  Test the akt with an interactive password.
+   --  ------------------------------
+   procedure Test_Tool_Interactive_Password (T : in out Test) is
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-tool.akt");
+      Result   : Ada.Strings.Unbounded.Unbounded_String;
+      P        : aliased Util.Streams.Pipes.Pipe_Stream;
+      Buffer   : Util.Streams.Texts.Print_Stream;
+   begin
+      P.Open (Tool & " -f " & Path & " list", Util.Processes.WRITE);
+      Buffer.Initialize (P'Unchecked_Access, 8192);
+      Buffer.Write ("admin");
+      Buffer.Flush;
+      P.Close;
+      Util.Tests.Assert_Equals (T, 0, P.Get_Exit_Status,
+                                "Failed to pass the password as interactive");
+
+      P.Open (Tool & " -f " & Path & " list", Util.Processes.WRITE);
+      Buffer.Write ("invalid");
+      Buffer.Flush;
+      P.Close;
+      Util.Tests.Assert_Equals (T, 1, P.Get_Exit_Status,
+                                "Failed to pass the password as interactive");
+
+   end Test_Tool_Interactive_Password;
 
 end Keystore.Tests;
