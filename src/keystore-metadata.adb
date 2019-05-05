@@ -210,6 +210,15 @@ package body Keystore.Metadata is
       Repository.Value.Set (Name, Kind, Content, Stream);
    end Set;
 
+   procedure Set (Repository : in out Wallet_Repository;
+                  Name       : in String;
+                  Kind       : in Entry_Type;
+                  Input      : in out Util.Streams.Input_Stream'Class;
+                  Stream     : in out IO.Wallet_Stream'Class) is
+   begin
+      Repository.Value.Set (Name, Kind, Input, Stream);
+   end Set;
+
    procedure Update (Repository : in out Wallet_Repository;
                      Name       : in String;
                      Kind       : in Entry_Type;
@@ -1220,9 +1229,10 @@ package body Keystore.Metadata is
    --  ------------------------------
    procedure Add_Data (Manager     : in out Wallet_Manager;
                        Item        : in Wallet_Entry_Access;
-                       Data_Block  : in Wallet_Block_Entry_Access;
+                       Data_Block  : in out Wallet_Block_Entry_Access;
                        Content     : in Ada.Streams.Stream_Element_Array;
-                       Offset      : in Ada.Streams.Stream_Element_Offset;
+                       Offset      : in out Ada.Streams.Stream_Element_Offset;
+                       Full_Block  : in Boolean;
                        Stream      : in out IO.Wallet_Stream'Class) is
       Space       : Stream_Element_Offset;
       Last        : Stream_Element_Offset;
@@ -1239,6 +1249,10 @@ package body Keystore.Metadata is
             Block.Available := Block.Available - Space;
             Allocate_Data_Block (Manager, DATA_MAX_SIZE, Next_Block, Stream);
             Block.Available := Block.Available + Space;
+         elsif Full_Block then
+            Data_Block := Block;
+            Offset := Data_Offset;
+            return;
          else
             Last := Content'Last;
             Next_Block := null;
@@ -1260,42 +1274,32 @@ package body Keystore.Metadata is
          Start := Last + 1;
          Block := Next_Block;
       end loop;
+      Offset := Data_Offset;
    end Add_Data;
 
-   procedure Update (Manager    : in out Wallet_Manager;
-                     Name       : in String;
-                     Kind       : in Entry_Type;
-                     Content    : in Ada.Streams.Stream_Element_Array;
-                     Stream     : in out IO.Wallet_Stream'Class) is
-      Pos          : constant Wallet_Maps.Cursor := Manager.Map.Find (Name);
-      Item         : Wallet_Entry_Access;
+      --  Update the data fragments.
+   procedure Update_Data (Manager      : in out Wallet_Manager;
+                          Item         : in Wallet_Entry_Access;
+                          Data_Block   : in out Wallet_Block_Entry_Access;
+                          Content      : in Ada.Streams.Stream_Element_Array;
+                          Offset       : in out Ada.Streams.Stream_Element_Offset;
+                          Full_Block   : in Boolean;
+                          New_Block    : out Wallet_Block_Entry_Access;
+                          Delete_Block : out Wallet_Block_Entry_Access;
+                          Stream       : in out IO.Wallet_Stream'Class) is
       Start        : Stream_Element_Offset := Content'First;
       Last         : Stream_Element_Offset;
       Space        : Stream_Element_Offset;
-      Data_Block   : Wallet_Block_Entry_Access;
       Next_Block   : Wallet_Block_Entry_Access;
-      New_Block    : Wallet_Block_Entry_Access;
-      Delete_Block : Wallet_Block_Entry_Access;
-      Data_Offset  : Ada.Streams.Stream_Element_Offset := 0;
       Position     : Fragment_Count;
+      Kind         : constant Entry_Type := Item.Kind;
    begin
-      Log.Debug ("Update keystore entry {0}", Name);
-
-      if not Wallet_Maps.Has_Element (Pos) then
-         Log.Info ("Data entry '{0}' not found", Name);
-         raise Not_Found;
-      end if;
-
-      Item := Wallet_Maps.Element (Pos);
-
-      --  If there is enough room in the current data block, use it.
-      Data_Block := Item.Data;
-
-      --  Update the data fragments.
+      New_Block := null;
+      Delete_Block := null;
       while Data_Block /= null loop
          Load_Data (Manager, Data_Block, Stream);
          Item.Kind := Kind;
-         Item.Size := Content'Length;
+         Item.Size := Interfaces.Unsigned_64 (Offset + Content'Length);
          Position := Get_Fragment_Position (Data_Block.all, Item);
          exit when Position = 0;
 
@@ -1314,39 +1318,156 @@ package body Keystore.Metadata is
             end if;
          end if;
 
-         Update_Fragment (Manager, Data_Block, Item, Data_Offset, Position,
+         Update_Fragment (Manager, Data_Block, Item, Offset, Position,
                           Data_Block.Fragments (Position),
                           Next_Block, Content (Start .. Last));
-         Data_Offset := Data_Offset + Data_Block.Fragments (Position).Size;
+         Offset := Offset + Data_Block.Fragments (Position).Size;
          Start := Last + 1;
 
          Save_Data (Manager, Data_Block.all, Stream);
          Data_Block := Next_Block;
-         exit when Data_Offset > Content'Last or else New_Block /= null;
+         exit when Last >= Content'Last or else New_Block /= null;
       end loop;
+   end Update_Data;
+
+   --  Erase the data fragments which are not used by the entry.
+   procedure Delete_Data (Manager    : in out Wallet_Manager;
+                          Item       : in Wallet_Entry_Access;
+                          Data_Block : in Wallet_Block_Entry_Access;
+                          Stream     : in out IO.Wallet_Stream'Class) is
+      Block      : Wallet_Block_Entry_Access := Data_Block;
+      Next_Block : Wallet_Block_Entry_Access;
+   begin
+      while Block /= null loop
+         Load_Data (Manager, Block, Stream);
+         Delete_Fragment (Manager    => Manager,
+                          Data_Block => Block.all,
+                          Next_Block => Next_Block,
+                          Item       => Item);
+         if Block.Count = 0 then
+            Release_Data_Block (Manager, Block, Stream);
+         else
+            Save_Data (Manager, Block.all, Stream);
+         end if;
+         Block := Next_Block;
+      end loop;
+   end Delete_Data;
+
+   procedure Update (Manager    : in out Wallet_Manager;
+                     Name       : in String;
+                     Kind       : in Entry_Type;
+                     Content    : in Ada.Streams.Stream_Element_Array;
+                     Stream     : in out IO.Wallet_Stream'Class) is
+      Pos          : constant Wallet_Maps.Cursor := Manager.Map.Find (Name);
+      Item         : Wallet_Entry_Access;
+      Start        : Stream_Element_Offset := Content'First;
+      Data_Block   : Wallet_Block_Entry_Access;
+      New_Block    : Wallet_Block_Entry_Access;
+      Delete_Block : Wallet_Block_Entry_Access;
+      Data_Offset  : Ada.Streams.Stream_Element_Offset := 0;
+   begin
+      Log.Debug ("Update keystore entry {0}", Name);
+
+      if not Wallet_Maps.Has_Element (Pos) then
+         Log.Info ("Data entry '{0}' not found", Name);
+         raise Not_Found;
+      end if;
+
+      Item := Wallet_Maps.Element (Pos);
+
+      --  If there is enough room in the current data block, use it.
+      Data_Block := Item.Data;
+
+      Item.Kind := Kind;
+      Update_Data (Manager, Item, Data_Block, Content,
+                   Data_Offset, True, New_Block, Delete_Block, Stream);
 
       --  Write the data in one or several blocks.
       if New_Block /= null then
+         Start := Content'First + Data_Offset;
          Add_Data (Manager, Item, New_Block, Content (Start .. Content'Last),
-                   Data_Offset, Stream);
+                   Data_Offset, False, Stream);
       end if;
 
-      --  Erase the data fragments which are not used by the entry.
-      while Delete_Block /= null loop
-         Load_Data (Manager, Delete_Block, Stream);
-         Delete_Fragment (Manager    => Manager,
-                          Data_Block => Delete_Block.all,
-                          Next_Block => Next_Block,
-                          Item       => Item);
-         if Delete_Block.Count = 0 then
-            Release_Data_Block (Manager, Delete_Block, Stream);
-         else
-            Save_Data (Manager, Delete_Block.all, Stream);
-         end if;
-         Delete_Block := Next_Block;
-      end loop;
+      if Delete_Block /= null then
+         Delete_Data (Manager, Item, Delete_Block, Stream);
+      end if;
 
       Update_Entry (Manager, Item, Kind, Content'Length, Stream);
+   end Update;
+
+   procedure Update (Manager    : in out Wallet_Manager;
+                     Name       : in String;
+                     Kind       : in Entry_Type;
+                     Input      : in out Util.Streams.Input_Stream'Class;
+                     Stream     : in out IO.Wallet_Stream'Class) is
+      Item_Pos     : constant Wallet_Maps.Cursor := Manager.Map.Find (Name);
+      Item         : Wallet_Entry_Access;
+      Data_Block   : Wallet_Block_Entry_Access;
+      New_Block    : Wallet_Block_Entry_Access;
+      Delete_Block : Wallet_Block_Entry_Access;
+      Pos          : Ada.Streams.Stream_Element_Offset;
+      Last         : Ada.Streams.Stream_Element_Offset;
+      Old_Offset   : Ada.Streams.Stream_Element_Offset;
+      Data_Offset  : Ada.Streams.Stream_Element_Offset := 0;
+      Content      : Stream_Element_Array (1 .. 4 * 4096);
+      Remain       : Stream_Element_Offset;
+   begin
+      Log.Debug ("Update keystore entry {0}", Name);
+
+      if not Wallet_Maps.Has_Element (Item_Pos) then
+         Log.Info ("Data entry '{0}' not found", Name);
+         raise Not_Found;
+      end if;
+
+      Item := Wallet_Maps.Element (Item_Pos);
+
+      --  If there is enough room in the current data block, use it.
+      Data_Block := Item.Data;
+
+      Item.Kind := Kind;
+      Pos := Content'First;
+      loop
+         while Pos < Content'Last loop
+            Input.Read (Content (Pos .. Content'Last), Last);
+            exit when Last < Pos;
+            Pos := Last + 1;
+         end loop;
+
+         Old_Offset := Data_Offset;
+         if New_Block = null then
+            if Last < Content'Last then
+               Update_Data (Manager, Item, Data_Block, Content (Content'First .. Last),
+                            Data_Offset, False, New_Block, Delete_Block, Stream);
+               exit when New_Block = null;
+            else
+               Update_Data (Manager, Item, Data_Block, Content,
+                            Data_Offset, True, New_Block, Delete_Block, Stream);
+            end if;
+         else
+            if Last < Content'Last then
+               Add_Data (Manager, Item, New_Block, Content (Content'First .. Last),
+                         Data_Offset, False, Stream);
+               exit;
+            else
+               --  Write the data in one or several blocks.
+               Add_Data (Manager, Item, New_Block, Content,
+                         Data_Offset, True, Stream);
+            end if;
+         end if;
+         Remain := (Last - Content'First + 1) - (Data_Offset - Old_Offset);
+         Pos := Content'First + Remain;
+         if Remain > 0 then
+            Content (Content'First .. Content'First + Remain - 1)
+              := Content (Last - Remain + 1 .. Last);
+         end if;
+      end loop;
+
+      if Delete_Block /= null then
+         Delete_Data (Manager, Item, Delete_Block, Stream);
+      end if;
+
+      Update_Entry (Manager, Item, Kind, Interfaces.Unsigned_64 (Data_Offset), Stream);
    end Update;
 
    procedure Add (Manager    : in out Wallet_Manager;
@@ -1355,6 +1476,7 @@ package body Keystore.Metadata is
                   Content    : in Ada.Streams.Stream_Element_Array;
                   Stream     : in out IO.Wallet_Stream'Class) is
       Item        : Wallet_Entry_Access;
+      Data_Offset : Stream_Element_Offset := 0;
    begin
       Add_Entry (Manager, Name, Kind, Content'Length, Item, Stream);
 
@@ -1362,7 +1484,7 @@ package body Keystore.Metadata is
          return;
       end if;
 
-      Add_Data (Manager, Item, Item.Data, Content, 0, Stream);
+      Add_Data (Manager, Item, Item.Data, Content, Data_Offset, False, Stream);
    end Add;
 
    --  ------------------------------
@@ -1586,8 +1708,61 @@ package body Keystore.Metadata is
                      Kind       : in Entry_Type;
                      Content    : in Ada.Streams.Stream_Element_Array;
                      Stream     : in out IO.Wallet_Stream'Class) is
+         Item        : Wallet_Entry_Access;
+         Data_Offset : Stream_Element_Offset := 0;
       begin
-         Add (Manager, Name, Kind, Content, Stream);
+         Add_Entry (Manager, Name, Kind, Content'Length, Item, Stream);
+
+         if Content'Length = 0 then
+            return;
+         end if;
+
+         Add_Data (Manager, Item, Item.Data, Content, Data_Offset, False, Stream);
+      end Add;
+
+      procedure Add (Name       : in String;
+                     Kind       : in Entry_Type;
+                     Input      : in out Util.Streams.Input_Stream'Class;
+                     Stream     : in out IO.Wallet_Stream'Class) is
+         Item        : Wallet_Entry_Access;
+         Content     : Ada.Streams.Stream_Element_Array (1 .. 4 * 4096);
+         Last        : Stream_Element_Offset;
+         Data_Offset : Stream_Element_Offset := 0;
+         Old_Offset  : Stream_Element_Offset;
+         Pos         : Stream_Element_Offset;
+         Remain      : Stream_Element_Offset;
+         Block       : Wallet_Block_Entry_Access;
+      begin
+         Pos := Content'First;
+         loop
+            while Pos < Content'Last loop
+               Input.Read (Content (Pos .. Content'Last), Last);
+               exit when Last < Pos;
+               Pos := Last + 1;
+            end loop;
+
+            if Item = null then
+               Add_Entry (Manager, Name, Kind, Interfaces.Unsigned_64 (Last - Content'First + 1),
+                          Item, Stream);
+
+               Block := Item.Data;
+            end if;
+
+            if Last < Content'Last then
+               Add_Data (Manager, Item, Block, Content (Content'First .. Last),
+                         Data_Offset, False, Stream);
+               return;
+            else
+               Old_Offset := Data_Offset;
+               Add_Data (Manager, Item, Block, Content, Data_Offset, True, Stream);
+               Remain := Content'Length - (Data_Offset - Old_Offset + 1);
+               Pos := Content'First + Remain;
+               if Remain > 0 then
+                  Content (Content'First .. Content'First + Remain - 1)
+                    := Content (Content'Last - Remain + 1 .. Content'Last);
+               end if;
+            end if;
+         end loop;
       end Add;
 
       procedure Set (Name       : in String;
@@ -1602,12 +1777,32 @@ package body Keystore.Metadata is
          end if;
       end Set;
 
+      procedure Set (Name       : in String;
+                     Kind       : in Entry_Type;
+                     Input      : in out Util.Streams.Input_Stream'Class;
+                     Stream     : in out IO.Wallet_Stream'Class) is
+      begin
+         if Manager.Map.Contains (Name) then
+            Update (Name, Kind, Input, Stream);
+         else
+            Add (Name, Kind, Input, Stream);
+         end if;
+      end Set;
+
       procedure Update (Name       : in String;
                         Kind       : in Entry_Type;
                         Content    : in Ada.Streams.Stream_Element_Array;
                         Stream     : in out IO.Wallet_Stream'Class) is
       begin
          Update (Manager, Name, Kind, Content, Stream);
+      end Update;
+
+      procedure Update (Name       : in String;
+                        Kind       : in Entry_Type;
+                        Input      : in out Util.Streams.Input_Stream'Class;
+                        Stream     : in out IO.Wallet_Stream'Class) is
+      begin
+         Update (Manager, Name, Kind, Input, Stream);
       end Update;
 
       procedure Delete (Name       : in String;
