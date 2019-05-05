@@ -47,6 +47,8 @@ package body Keystore.Tests is
                        Test_Tool_Create_Password_File'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Set",
                        Test_Tool_Set_Big'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Get",
+                       Test_Tool_Get'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -207,6 +209,23 @@ package body Keystore.Tests is
       Util.Tests.Assert_Equal_Files (T, "LICENSE.txt", Path2, "set/get big file failed");
 
    end Test_Tool_Set_Big;
+
+   --  ------------------------------
+   --  Test the akt get command.
+   --  ------------------------------
+   procedure Test_Tool_Get (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.akt");
+      Output : constant String := Util.Tests.Get_Path ("regtests/result/test-get.txt");
+      Expect : constant String := Util.Tests.Get_Test_Path ("regtests/expect/test-stream.txt");
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " -f " & Path
+                 & " -p mypassword get -n list-1 list-2 list-3 list-4 LICENSE.txt "
+                 & "> " & Output, Result, 0);
+      Util.Tests.Assert_Equals (T, "", Result, "get -n command failed");
+      Util.Tests.Assert_Equal_Files (T, Expect, Output,
+                                     "akt get command returned invalid content");
+   end Test_Tool_Get;
 
    --  ------------------------------
    --  Test the akt command with invalid parameters.
