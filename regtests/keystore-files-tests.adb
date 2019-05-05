@@ -64,7 +64,7 @@ package body Keystore.Files.Tests is
    --  Test creation of a keystore and re-opening it.
    --  ------------------------------
    procedure Test_Create (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-create.ks");
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-create.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
    begin
       declare
@@ -101,10 +101,10 @@ package body Keystore.Files.Tests is
                          Pos   : in IO.Block_Index);
 
       Path         : constant String
-        := Util.Tests.Get_Path ("regtests/files/test-keystore.ks");
+        := Util.Tests.Get_Path ("regtests/files/test-keystore.akt");
 
       Corrupt_Path : constant String
-        := Util.Tests.Get_Test_Path ("regtests/result/test-corrupt.ks");
+        := Util.Tests.Get_Test_Path ("regtests/result/test-corrupt.akt");
 
       procedure Corrupt (Block : in IO.Block_Number;
                          Pos   : in IO.Block_Index) is
@@ -179,7 +179,7 @@ package body Keystore.Files.Tests is
    --  Test adding values to a keystore.
    --  ------------------------------
    procedure Test_Add (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-add.ks");
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-add.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
    begin
       declare
@@ -214,7 +214,7 @@ package body Keystore.Files.Tests is
    --  Test adding values and getting them back.
    --  ------------------------------
    procedure Test_Add_Get (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-add-get.ks");
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-add-get.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword-add-get");
    begin
       declare
@@ -248,7 +248,7 @@ package body Keystore.Files.Tests is
    --  Test deleting values.
    --  ------------------------------
    procedure Test_Delete (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-delete.ks");
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-delete.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword-delete");
    begin
       declare
@@ -282,7 +282,7 @@ package body Keystore.Files.Tests is
    procedure Test_List (T : in out Test) is
       procedure Verify_Entry (Name : in String; Size : in Integer);
 
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.ks");
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       W        : Keystore.Files.Wallet_File;
       Items    : Keystore.Entry_Map;
@@ -312,7 +312,7 @@ package body Keystore.Files.Tests is
    --  Test update values.
    --  ------------------------------
    procedure Test_Update (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-update.ks");
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-update.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       Count    : constant Natural := 10;
    begin
@@ -390,7 +390,7 @@ package body Keystore.Files.Tests is
 
       function Large (Len : in Positive; Content : in Character) return String;
 
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-sequence.ks");
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-sequence.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
 
       function Large (Len : in Positive; Content : in Character) return String is
@@ -496,7 +496,7 @@ package body Keystore.Files.Tests is
    --  Test opening and closing keystore.
    --  ------------------------------
    procedure Test_Open_Close (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.ks");
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       W        : Keystore.Files.Wallet_File;
    begin
@@ -514,7 +514,7 @@ package body Keystore.Files.Tests is
    --  Test adding values that already exist.
    --  ------------------------------
    procedure Test_Add_Error (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.ks");
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       W        : Keystore.Files.Wallet_File;
    begin
@@ -553,7 +553,7 @@ package body Keystore.Files.Tests is
    --  Test getting values through an Output_Stream.
    --  ------------------------------
    procedure Test_Get_Stream (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.ks");
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.akt");
       Output   : constant String := Util.Tests.Get_Path ("regtests/result/test-stream.txt");
       Expect   : constant String := Util.Tests.Get_Path ("regtests/expect/test-stream.txt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
@@ -624,7 +624,7 @@ package body Keystore.Files.Tests is
    --  Perforamce test adding values.
    --  ------------------------------
    procedure Test_Perf_Add (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-perf.ks");
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-perf.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       W        : Keystore.Files.Wallet_File;
    begin
