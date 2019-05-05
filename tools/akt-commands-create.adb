@@ -39,10 +39,13 @@ package body AKT.Commands.Create is
    overriding
    procedure Help (Command   : in out Command_Type;
                    Context   : in out Context_Type) is
+      pragma Unreferenced (Command, Context);
    begin
       Ada.Text_IO.Put_Line ("create: create the keystore");
       Ada.Text_IO.New_Line;
-      Command.Usage ("create", Context);
+      Ada.Text_IO.Put_Line ("Usage: akt create");
+      Ada.Text_IO.New_Line;
+      Ada.Text_IO.Put_Line ("  The create command is used to create the new keystore file.");
    end Help;
 
 end AKT.Commands.Create;
