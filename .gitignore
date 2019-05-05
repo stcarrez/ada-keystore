@@ -21,7 +21,6 @@ keystore-tests.xml
 keystore-test.xml
 keystore-aunit.xml
 autom4te.cache
-*.txt
 lib/
 obj/
 keystoreada.gpr
