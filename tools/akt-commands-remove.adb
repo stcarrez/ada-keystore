@@ -26,20 +26,18 @@ package body AKT.Commands.Remove is
                       Name      : in String;
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
-      pragma Unreferenced (Command, Name);
+      pragma Unreferenced (Command);
    begin
       if Args.Get_Count = 0 then
-         AKT.Commands.Usage (Context);
+         AKT.Commands.Usage (Args, Context, Name);
       else
          Context.Open_Keystore;
          for I in 1 .. Args.Get_Count loop
-            Context.Wallet.Delete (Args.Get_Argument (I));
+            if Context.Wallet.Contains (Args.Get_Argument (I)) then
+               Context.Wallet.Delete (Args.Get_Argument (I));
+            end if;
          end loop;
       end if;
-
-   exception
-      when Keystore.Not_Found =>
-         null;
    end Execute;
 
    --  ------------------------------
@@ -50,13 +48,16 @@ package body AKT.Commands.Remove is
                    Context   : in out Context_Type) is
       pragma Unreferenced (Command);
    begin
-      AKT.Commands.Usage (Context);
+      --  AKT.Commands.Usage (Context);
       Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("akt remove: remove values from the keystore");
       Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: remove <name>");
+      Ada.Text_IO.Put_Line ("Usage: akt remove <name> [...]");
       Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("  ");
+      Ada.Text_IO.Put_Line ("  The remove command is used to erase a content from the wallet.");
+      Ada.Text_IO.Put_Line ("  The data blocks that contained the content are cleared.");
+      Ada.Text_IO.Put_Line ("  The secure keys that protect the content are also cleared.");
+      Ada.Text_IO.Put_Line ("  You can erase several values at the same time.");
    end Help;
 
 end AKT.Commands.Remove;
