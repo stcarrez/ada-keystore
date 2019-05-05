@@ -16,7 +16,8 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Ada.Text_IO;
-with Util.Files;
+with Ada.Streams.Stream_IO;
+with Util.Streams.Files;
 package body AKT.Commands.Set is
 
    use GNAT.Strings;
@@ -29,25 +30,26 @@ package body AKT.Commands.Set is
                       Name      : in String;
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
-      pragma Unreferenced (Command, Name);
    begin
       if Command.File /= null and then Command.File'Length > 0 then
          if Args.Get_Count /= 1 then
-            AKT.Commands.Usage (Context);
+            AKT.Commands.Usage (Args, Context, Name);
          else
             declare
-               Content : Ada.Strings.Unbounded.Unbounded_String;
+               File    : Util.Streams.Files.File_Stream;
             begin
-               Util.Files.Read_File (Command.File.all, Content);
+               File.Open (Mode => Ada.Streams.Stream_IO.In_File,
+                          Name => Command.File.all);
                Context.Open_Keystore;
-               Context.Wallet.Set (Name => Args.Get_Argument (1),
-                                   Content => Ada.Strings.Unbounded.To_String (Content));
+               Context.Wallet.Set (Name  => Args.Get_Argument (1),
+                                   Kind  => Keystore.T_STRING,
+                                   Input => File);
 
             end;
          end if;
 
       elsif Args.Get_Count /= 2 then
-         AKT.Commands.Usage (Context);
+         AKT.Commands.Usage (Args, Context, Name);
 
       else
          Context.Open_Keystore;
@@ -62,6 +64,8 @@ package body AKT.Commands.Set is
    procedure Setup (Command : in out Command_Type;
                     Config  : in out GNAT.Command_Line.Command_Line_Configuration;
                     Context : in out Context_Type) is
+      pragma Unreferenced (Context);
+
       package GC renames GNAT.Command_Line;
    begin
       GC.Define_Switch (Config, Command.File'Access,
@@ -76,13 +80,15 @@ package body AKT.Commands.Set is
                    Context   : in out Context_Type) is
       pragma Unreferenced (Command);
    begin
-      AKT.Commands.Usage (Context);
+      AKT.Commands.Usage (Context, "set");
       Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("set: insert a new value in the keystore");
+      Ada.Text_IO.Put_Line ("set: insert or update a value in the keystore");
       Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: set <name> <value>");
+      Ada.Text_IO.Put_Line ("Usage: akt set <name> [<value> | -f <file>]");
       Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("  ");
+      Ada.Text_IO.Put_Line ("  The set command is used to store a content in the wallet.");
+      Ada.Text_IO.Put_Line ("  The content is either passed as argument or read from a file.");
+      Ada.Text_IO.Put_Line ("  If the wallet already contains the name, the value is updated.");
    end Help;
 
 end AKT.Commands.Set;
