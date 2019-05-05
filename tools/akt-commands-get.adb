@@ -16,6 +16,7 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Ada.Text_IO;
+with Ada.Command_Line;
 with Util.Streams.Raw;
 with Util.Systems.Os;
 with GNAT.Command_Line;
@@ -23,6 +24,8 @@ package body AKT.Commands.Get is
 
    Sep : Ada.Streams.Stream_Element_Array (1 .. Util.Systems.Os.Line_Separator'Length);
    for Sep'Address use Util.Systems.Os.Line_Separator'Address;
+
+   Output : Util.Streams.Raw.Raw_Stream;
 
    --  ------------------------------
    --  Get a value from the keystore.
@@ -32,7 +35,6 @@ package body AKT.Commands.Get is
                       Name      : in String;
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
-      Output : Util.Streams.Raw.Raw_Stream;
    begin
       if Args.Get_Count = 0 then
          AKT.Commands.Usage (Args, Context, Name);
@@ -40,16 +42,22 @@ package body AKT.Commands.Get is
          Context.Open_Keystore;
          Output.Initialize (File => Util.Systems.Os.STDOUT_FILENO);
          for I in 1 .. Args.Get_Count loop
-            Context.Wallet.Write (Args.Get_Argument (I), Output);
-            if not Command.No_Newline then
-               Output.Write (Sep);
-            end if;
+            declare
+               Key : constant String := Args.Get_Argument (I);
+            begin
+               Context.Wallet.Write (Key, Output);
+               if not Command.No_Newline then
+                  Output.Write (Sep);
+               end if;
+
+            exception
+               when Keystore.Not_Found =>
+                  AKT.Commands.Log.Error ("Value '{0}' not found", Key);
+                  Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+
+            end;
          end loop;
       end if;
-
-   exception
-      when Keystore.Not_Found =>
-         null;
    end Execute;
 
    --  ------------------------------
