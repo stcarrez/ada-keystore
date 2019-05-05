@@ -17,6 +17,7 @@
 -----------------------------------------------------------------------
 with AKT.Passwords;
 with Util.Commands;
+private with Util.Log.Loggers;
 private with Keystore.Files;
 private with Ada.Strings.Unbounded;
 private with Ada.Finalization;
@@ -31,7 +32,11 @@ package AKT.Commands is
    type Context_Type is limited private;
 
    --  Print the command usage.
-   procedure Usage (Context : in out Context_Type);
+   procedure Usage (Args    : in Argument_List'Class;
+                    Context : in out Context_Type;
+                    Name    : in String := "");
+   procedure Usage (Context : in out Context_Type;
+                    Name    : in String := "");
 
    --  Set the keystore path.
    procedure Set_Keystore_Path (Context : in out Context_Type;
@@ -53,6 +58,8 @@ package AKT.Commands is
                     Arguments : out Util.Commands.Dynamic_Argument_List);
 
 private
+
+   Log     : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Commands");
 
    package GC renames GNAT.Command_Line;
 
