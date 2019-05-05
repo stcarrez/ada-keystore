@@ -120,6 +120,14 @@ package body Keystore is
       Container.Container.Set (Name, T_STRING, Data);
    end Set;
 
+   procedure Set (Container : in out Wallet;
+                  Name      : in String;
+                  Kind      : in Entry_Type := T_BINARY;
+                  Input     : in out Util.Streams.Input_Stream'Class) is
+   begin
+      Container.Container.Set (Name, Kind, Input);
+   end Set;
+
    --  ------------------------------
    --  Update in the wallet the named entry and associate it the new content.
    --  The secret key and IV vectors are not changed.
@@ -220,6 +228,13 @@ package body Keystore is
                      Content : in Ada.Streams.Stream_Element_Array) is
       begin
          Keystore.Metadata.Set (Repository.all, Name, Kind, Content, Stream.all);
+      end Set;
+
+      procedure Set (Name    : in String;
+                     Kind    : in Entry_Type;
+                     Input   : in out Util.Streams.Input_Stream'Class) is
+      begin
+         Keystore.Metadata.Set (Repository.all, Name, Kind, Input, Stream.all);
       end Set;
 
       procedure Update (Name    : in String;
