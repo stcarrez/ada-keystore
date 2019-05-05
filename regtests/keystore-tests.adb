@@ -33,6 +33,22 @@ package body Keystore.Tests is
 
    package Caller is new Util.Test_Caller (Test, "AKT");
 
+   generic
+      Command : String;
+   procedure Test_Help_Command (T : in out Test);
+
+   procedure Test_Help_Command (T : in out Test) is
+   begin
+      T.Execute (Tool & " help " & Command, "akt-help-" & Command & ".txt");
+   end Test_Help_Command;
+
+   procedure Test_Tool_Help_Create is new Test_Help_Command ("create");
+   procedure Test_Tool_Help_Edit is new Test_Help_Command ("edit");
+   procedure Test_Tool_Help_Get is new Test_Help_Command ("get");
+   procedure Test_Tool_Help_List is new Test_Help_Command ("list");
+   procedure Test_Tool_Help_Remove is new Test_Help_Command ("remove");
+   procedure Test_Tool_Help_Set is new Test_Help_Command ("set");
+
    procedure Add_Tests (Suite : in Util.Tests.Access_Test_Suite) is
    begin
       Caller.Add_Test (Suite, "Test AKT.Commands.Help",
@@ -49,6 +65,18 @@ package body Keystore.Tests is
                        Test_Tool_Set_Big'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Get",
                        Test_Tool_Get'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Create (help)",
+                       Test_Tool_Help_Create'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Edit (help)",
+                       Test_Tool_Help_Edit'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Get (help)",
+                       Test_Tool_Help_Get'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Set (help)",
+                       Test_Tool_Help_Set'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Remove (help)",
+                       Test_Tool_Help_Remove'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.List (help)",
+                       Test_Tool_Help_List'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -80,6 +108,19 @@ package body Keystore.Tests is
       Ada.Text_IO.Put_Line (Ada.Strings.Unbounded.To_String (Result));
       Log.Info ("Command result: {0}", Result);
       Util.Tests.Assert_Equals (T, Status, P.Get_Exit_Status, "Command '" & Command & "' failed");
+   end Execute;
+
+   procedure Execute (T       : in out Test;
+                      Command : in String;
+                      Expect  : in String;
+                      Status  : in Natural := 0) is
+      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/expect/" & Expect);
+      Output : constant String := Util.Tests.Get_Test_Path ("regtests/result/" & Expect);
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Command & " > " & Output, Result, Status);
+
+      Util.Tests.Assert_Equal_Files (T, Path, Output, "Command '" & Command & "' invalid output");
    end Execute;
 
    --  ------------------------------
