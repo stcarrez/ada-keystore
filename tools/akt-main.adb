@@ -17,6 +17,9 @@
 -----------------------------------------------------------------------
 with Ada.Text_IO;
 with Ada.Command_Line;
+with Ada.IO_Exceptions;
+with Ada.Exceptions;
+
 with GNAT.Command_Line;
 
 with Util.Log.Loggers;
@@ -39,7 +42,7 @@ begin
    begin
       if Cmd_Name'Length = 0 then
          Ada.Text_IO.Put_Line ("Missing command name to execute.");
-         AKT.Commands.Usage (Context);
+         AKT.Commands.Usage (Arguments, Context);
          Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
          return;
       end if;
@@ -55,6 +58,10 @@ exception
       Log.Error ("Invalid password to unlock the keystore file");
 
    when AKT.Commands.Error | Util.Commands.Not_Found =>
+      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+
+   when E : Ada.IO_Exceptions.Name_Error =>
+      Log.Error ("Cannot access file: {0}", Ada.Exceptions.Exception_Message (E));
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
    when E : others =>
