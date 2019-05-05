@@ -1,0 +1,7 @@
+set: insert or update a value in the keystore
+
+Usage: akt set <name> [<value> | -f <file>]
+
+  The set command is used to store a content in the wallet.
+  The content is either passed as argument or read from a file.
+  If the wallet already contains the name, the value is updated.
