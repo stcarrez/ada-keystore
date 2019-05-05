@@ -172,6 +172,13 @@ package Keystore is
      Pre  => Container.Is_Open,
      Post => Container.Contains (Name);
 
+   procedure Set (Container : in out Wallet;
+                  Name      : in String;
+                  Kind      : in Entry_Type := T_BINARY;
+                  Input     : in out Util.Streams.Input_Stream'Class) with
+     Pre  => Container.Is_Open,
+     Post => Container.Contains (Name);
+
    --  Update in the wallet the named entry and associate it the new content.
    --  The secret key and IV vectors are not changed.
    procedure Update (Container : in out Wallet;
@@ -226,6 +233,10 @@ private
       procedure Set (Name    : in String;
                      Kind    : in Entry_Type;
                      Content : in Ada.Streams.Stream_Element_Array);
+
+      procedure Set (Name    : in String;
+                     Kind    : in Entry_Type;
+                     Input   : in out Util.Streams.Input_Stream'Class);
 
       procedure Update (Name    : in String;
                         Kind    : in Entry_Type;
