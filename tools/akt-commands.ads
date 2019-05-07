@@ -61,7 +61,7 @@ private
    type Context_Type is limited new Ada.Finalization.Limited_Controlled with record
       Wallet            : Keystore.Files.Wallet_File;
       Provider          : AKT.Passwords.Provider_Access;
-      Verbose           : aliased Boolean := False;
+      Version           : aliased Boolean := False;
       Debug             : aliased Boolean := False;
       Wallet_File       : aliased GNAT.Strings.String_Access;
       Password_File     : aliased GNAT.Strings.String_Access;
