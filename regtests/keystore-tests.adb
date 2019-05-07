@@ -18,6 +18,7 @@
 
 with Ada.Text_IO;
 with Ada.Directories;
+with Ada.Environment_Variables;
 with Util.Files;
 with Util.Test_Caller;
 with Util.Encoders.AES;
@@ -231,6 +232,10 @@ package body Keystore.Tests is
                  & "remove testing", Result);
       Util.Tests.Assert_Equals (T, "", Result, "remove command failed");
 
+      T.Execute (Tool & " -f " & Path & " -p admin "
+                 & "remove", Result, 1);
+
+
    end Test_Tool_Set_Remove;
 
    --  ------------------------------
@@ -280,8 +285,6 @@ package body Keystore.Tests is
    --  ------------------------------
    procedure Test_Tool_Get_Error (T : in out Test) is
       Path   : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.akt");
-      Output : constant String := Util.Tests.Get_Path ("regtests/result/test-get.txt");
-      Expect : constant String := Util.Tests.Get_Test_Path ("regtests/expect/test-stream.txt");
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " -f " & Path
@@ -317,6 +320,33 @@ package body Keystore.Tests is
       Util.Tests.Assert_Matches (T, "^ERROR: Invalid password to unlock the keystore file",
                                  Result, "Wrong message when command was not found");
 
+      T.Execute (Tool & " -f " & Path & " -p admin "
+                 & "set", Result, 1);
+
+      T.Execute (Tool & " -f " & Path & " -p admin "
+                 & "set a b c", Result, 1);
+
+      T.Execute (Tool & " -f " & Path & " -p admin "
+                 & "set -f test", Result, 1);
+
+      T.Execute (Tool & " -f " & Path & " -p admin "
+                 & "set -f test c d", Result, 1);
+
+      T.Execute (Tool & " -f " & Path & " -p admin"
+                 & "set", Result, 1);
+
+      T.Execute (Tool & " -f " & Path & " -p admin"
+                 & "", Result, 1);
+
+      T.Execute (Tool & " -d -f " & Path & " -p admin "
+                 & "get testing", Result, 0);
+
+      T.Execute (Tool & " -v -f " & Path & " -p admin "
+                 & "get testing", Result, 0);
+
+      T.Execute (Tool & " -v -f x" & Path & " -p admin "
+                 & "get testing", Result, 1);
+
    end Test_Tool_Invalid;
 
    --  ------------------------------
@@ -335,6 +365,16 @@ package body Keystore.Tests is
       Util.Tests.Assert_Matches (T, "fake editor .*VALUE.txt.*", Result,
                                  "Invalid value after edit");
 
+      --  Setup EDITOR environment variable.
+      Ada.Environment_Variables.Set ("EDITOR", "./regtests/files/fake-editor");
+
+      T.Execute (Tool & " -f " & Path & " -p admin edit edit-env-test",
+                 Result, 0);
+
+      T.Execute (Tool & " -f " & Path & " -p admin get edit-env-test", Result, 0);
+      Util.Tests.Assert_Matches (T, "fake editor .*VALUE.txt.*", Result,
+                                 "Invalid value after edit");
+
    end Test_Tool_Edit;
 
    --  ------------------------------
@@ -342,7 +382,6 @@ package body Keystore.Tests is
    --  ------------------------------
    procedure Test_Tool_Interactive_Password (T : in out Test) is
       Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-tool.akt");
-      Result   : Ada.Strings.Unbounded.Unbounded_String;
       P        : aliased Util.Streams.Pipes.Pipe_Stream;
       Buffer   : Util.Streams.Texts.Print_Stream;
    begin
