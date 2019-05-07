@@ -16,8 +16,12 @@ build-test::	setup
 
 build:: tools
 
-tools:
+tools:  tools/akt-configs.ads
 	$(GNATMAKE) $(GPRFLAGS) -p -P$(NAME)_tools $(MAKE_ARGS)
+
+tools/akt-configs.ads:   Makefile.conf tools/akt-configs.gpb
+	gnatprep -DCONFIG_DIR='"$(config_dir)/base"' -DVERSION='"$(VERSION)"' \
+		  tools/akt-configs.gpb tools/akt-configs.ads
 
 install::
 	$(INSTALL) bin/akt $(DESTDIR)$(prefix)/bin/akt
