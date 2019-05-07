@@ -15,7 +15,6 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Ada.Text_IO;
 with Ada.Command_Line;
 with Ada.IO_Exceptions;
 with Ada.Exceptions;
@@ -36,18 +35,6 @@ begin
    AKT.Configure_Logs (Debug => False, Verbose => False);
 
    AKT.Commands.Parse (Context, Arguments);
-
-   declare
-      Cmd_Name : constant String := Arguments.Get_Command_Name;
-   begin
-      if Cmd_Name'Length = 0 then
-         Ada.Text_IO.Put_Line ("Missing command name to execute.");
-         AKT.Commands.Usage (Arguments, Context);
-         Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
-         return;
-      end if;
-      AKT.Commands.Execute (Cmd_Name, Arguments, Context);
-   end;
 
 exception
    when GNAT.Command_Line.Exit_From_Command_Line | GNAT.Command_Line.Invalid_Switch =>

@@ -16,7 +16,9 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Ada.Command_Line;
+with Ada.Text_IO;
 with Util.Commands.Parsers.GNAT_Parser;
+with AKT.Configs;
 with AKT.Commands.Drivers;
 with AKT.Commands.Set;
 with AKT.Commands.Get;
@@ -105,9 +107,10 @@ package body AKT.Commands is
                     Usage  => "[switchs] command [arguments]",
                     Help   => "akt - tool to store and protect your sensitive data");
       GC.Define_Switch (Config => Context.Command_Config,
-                        Output => Context.Verbose'Access,
+                        Output => Context.Version'Access,
                         Switch => "-v",
-                        Help   => "Enable verbose execution");
+                        Long_Switch => "--version",
+                        Help   => "Print the version");
       GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Debug'Access,
                         Switch => "-d",
@@ -146,7 +149,7 @@ package body AKT.Commands is
       Driver.Set_Description ("akt - tool to store and protect your sensitive data");
       Driver.Set_Usage ("[-v] [-d] [-f keystore] [-p <password>] <command> [<args>]" & ASCII.LF &
                           "where:" & ASCII.LF &
-                          "  -v           Verbose execution mode" & ASCII.LF &
+                          "  -v           Print the tool version" & ASCII.LF &
                           "  -d           Debug execution mode" & ASCII.LF &
                           "  -f keystore  The keystore file to use");
       Driver.Add_Command ("help", "print some help", Help_Command'Access);
@@ -164,8 +167,8 @@ package body AKT.Commands is
       GC.Getopt (Config => Context.Command_Config);
       Util.Commands.Parsers.GNAT_Parser.Get_Arguments (Arguments, GC.Get_Argument);
 
-      if Context.Verbose or Context.Debug then
-         AKT.Configure_Logs (Debug => Context.Debug, Verbose => Context.Verbose);
+      if Context.Debug then
+         AKT.Configure_Logs (Debug => Context.Debug, Verbose => Context.Debug);
       end if;
 
       if Context.Password_File'Length > 0 then
@@ -173,6 +176,24 @@ package body AKT.Commands is
       elsif Context.Unsafe_Password'Length > 0 then
          Context.Set_Password_Provider (Passwords.Unsafe.Create (Context.Unsafe_Password.all));
       end if;
+
+      if Context.Version then
+         Ada.Text_IO.Put_Line (AKT.Configs.RELEASE);
+         return;
+      end if;
+
+      declare
+         Cmd_Name : constant String := Arguments.Get_Command_Name;
+      begin
+         if Cmd_Name'Length = 0 then
+            Ada.Text_IO.Put_Line ("Missing command name to execute.");
+            AKT.Commands.Usage (Arguments, Context);
+            Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+            return;
+         end if;
+         AKT.Commands.Execute (Cmd_Name, Arguments, Context);
+      end;
+
    end Parse;
 
 end AKT.Commands;
