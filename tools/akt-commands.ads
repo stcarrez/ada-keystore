@@ -19,7 +19,6 @@ with AKT.Passwords;
 with Util.Commands;
 private with Util.Log.Loggers;
 private with Keystore.Files;
-private with Ada.Strings.Unbounded;
 private with Ada.Finalization;
 private with GNAT.Command_Line;
 private with GNAT.Strings;
@@ -37,10 +36,6 @@ package AKT.Commands is
                     Name    : in String := "");
    procedure Usage (Context : in out Context_Type;
                     Name    : in String := "");
-
-   --  Set the keystore path.
-   procedure Set_Keystore_Path (Context : in out Context_Type;
-                                Path    : in String);
 
    --  Set the password provider to get a password.
    procedure Set_Password_Provider (Context  : in out Context_Type;
@@ -65,7 +60,6 @@ private
 
    type Context_Type is limited new Ada.Finalization.Limited_Controlled with record
       Wallet            : Keystore.Files.Wallet_File;
-      Path              : Ada.Strings.Unbounded.Unbounded_String;
       Provider          : AKT.Passwords.Provider_Access;
       Verbose           : aliased Boolean := False;
       Debug             : aliased Boolean := False;
