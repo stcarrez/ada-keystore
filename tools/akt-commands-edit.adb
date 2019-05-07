@@ -58,14 +58,15 @@ package body AKT.Commands.Edit is
       Fd := Util.Systems.Os.Sys_Open (Path  => P,
                                       Flags => O_CREAT + O_WRONLY + O_TRUNC,
                                       Mode  => 8#600#);
+      Interfaces.C.Strings.Free (P);
       if Fd < 0 then
+         AKT.Commands.Log.Error ("Cannot create file for the editor");
          raise Error;
       end if;
       File.Initialize (Fd);
       if Context.Wallet.Contains (Name) then
          Context.Wallet.Write (Name, File);
       end if;
-      Interfaces.C.Strings.Free (P);
    end Export_Value;
 
    procedure Import_Value (Context : in out Context_Type;
@@ -81,12 +82,13 @@ package body AKT.Commands.Edit is
       Fd := Util.Systems.Os.Sys_Open (Path  => P,
                                       Flags => O_RDONLY,
                                       Mode  => 0);
+      Interfaces.C.Strings.Free (P);
       if Fd < 0 then
+         AKT.Commands.Log.Error ("Cannot read the editor's output");
          raise Error;
       end if;
       File.Initialize (Fd);
       Context.Wallet.Set (Name, Keystore.T_STRING, File);
-      Interfaces.C.Strings.Free (P);
    end Import_Value;
 
    --  ------------------------------
@@ -113,7 +115,7 @@ package body AKT.Commands.Edit is
    --  ------------------------------
    function Get_Directory (Command : in Command_Type;
                            Context : in out Context_Type) return String is
-      pragma Unreferenced (Command);
+      pragma Unreferenced (Command, Context);
 
       Rand : Keystore.Random.Generator;
       Name : constant String := "akt-" & Rand.Generate (Bits => 32);
@@ -122,14 +124,17 @@ package body AKT.Commands.Edit is
    end Get_Directory;
 
    procedure Make_Directory (Path : in String) is
-      P : Interfaces.C.Strings.chars_ptr;
+      P      : Interfaces.C.Strings.chars_ptr;
+      Result : Integer;
    begin
       Ada.Directories.Create_Path (Path);
       P := Interfaces.C.Strings.New_String (Path);
-      if Util.Systems.Os.Sys_Chmod (P, 8#0700#) /= 0 then
-         AKT.Commands.Log.Error ("Cannot set the permission of {0}", Path);
-      end if;
+      Result := Util.Systems.Os.Sys_Chmod (P, 8#0700#);
       Interfaces.C.Strings.Free (P);
+      if Result /= 0 then
+         AKT.Commands.Log.Error ("Cannot set the permission of {0}", Path);
+         raise Error;
+      end if;
    end Make_Directory;
 
    --  ------------------------------
@@ -151,6 +156,19 @@ package body AKT.Commands.Edit is
             Path   : constant String := Util.Files.Compose (Dir, "VALUE.txt");
             Editor : constant String := Command.Get_Editor;
             Proc   : Util.Processes.Process;
+
+            procedure Cleanup;
+
+            procedure Cleanup is
+            begin
+               if Ada.Directories.Exists (Path) then
+                  Ada.Directories.Delete_File (Path);
+               end if;
+               if Ada.Directories.Exists (Dir) then
+                  Ada.Directories.Delete_Tree (Dir);
+               end if;
+            end Cleanup;
+
          begin
             Make_Directory (Dir);
             Export_Value (Context, Args.Get_Argument (1), Path);
@@ -163,13 +181,11 @@ package body AKT.Commands.Edit is
             else
                Import_Value (Context, Args.Get_Argument (1), Path);
             end if;
-            Ada.Directories.Delete_File (Path);
-            Ada.Directories.Delete_Tree (Dir);
+            Cleanup;
 
          exception
             when others =>
-               Ada.Directories.Delete_File (Path);
-               Ada.Directories.Delete_Tree (Dir);
+               Cleanup;
                raise;
 
          end;
