@@ -69,10 +69,12 @@ package body AKT.Passwords.Files is
                                        Stat => Stat'Access);
       Interfaces.C.Strings.Free (Path);
       if Res /= 0 then
-         raise Keystore.Bad_Password with "Directory that contains password file cannot be checked";
+         raise Keystore.Bad_Password
+         with "Directory that contains password file cannot be checked";
       end if;
       if (Stat.st_mode and 8#0077#) /= 0 then
-         raise Keystore.Bad_Password with "Directory that contains password file is not safe";
+         raise Keystore.Bad_Password
+         with "Directory that contains password file is not safe";
       end if;
 
       Util.Files.Read_File (Path => From.Path,

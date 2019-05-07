@@ -40,6 +40,8 @@ package body AKT.Passwords.Input is
    --  ------------------------------
    overriding
    function Get_Password (From : in Provider) return Keystore.Secret_Key is
+      pragma Unreferenced (From);
+
       Content : Ada.Strings.Unbounded.Unbounded_String;
       C       : Character;
    begin
