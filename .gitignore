@@ -2,6 +2,7 @@
 #*
 *.ali
 *.log
+tools/akt-configs.ads
 config.status
 CHANGES
 Makefile.conf
