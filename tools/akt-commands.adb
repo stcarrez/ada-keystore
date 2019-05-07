@@ -15,7 +15,7 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Util.Log.Loggers;
+with Ada.Command_Line;
 with Util.Commands.Parsers.GNAT_Parser;
 with AKT.Commands.Drivers;
 with AKT.Commands.Set;
@@ -51,6 +51,7 @@ package body AKT.Commands is
       if Name'Length > 0 then
          Driver.Usage (Args, Context, Name);
       end if;
+      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
    end Usage;
 
    procedure Usage (Context : in out Context_Type;
@@ -60,16 +61,8 @@ package body AKT.Commands is
       if Name'Length > 0 then
          Driver.Usage (Arguments, Context, Name);
       end if;
+      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
    end Usage;
-
-   --  ------------------------------
-   --  Set the keystore path.
-   --  ------------------------------
-   procedure Set_Keystore_Path (Context : in out Context_Type;
-                                Path    : in String) is
-   begin
-      Context.Path := Ada.Strings.Unbounded.To_Unbounded_String (Path);
-   end Set_Keystore_Path;
 
    --  ------------------------------
    --  Open the keystore file using the password password.
