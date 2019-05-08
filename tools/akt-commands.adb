@@ -17,6 +17,7 @@
 -----------------------------------------------------------------------
 with Ada.Command_Line;
 with Ada.Text_IO;
+with Ada.Unchecked_Deallocation;
 with Util.Commands.Parsers.GNAT_Parser;
 with AKT.Configs;
 with AKT.Commands.Drivers;
@@ -102,7 +103,6 @@ package body AKT.Commands is
    overriding
    procedure Initialize (Context : in out Context_Type) is
    begin
-      Context.Provider := AKT.Passwords.Input.Create (False);
       GC.Set_Usage (Config => Context.Command_Config,
                     Usage  => "[switchs] command [arguments]",
                     Help   => "akt - tool to store and protect your sensitive data");
@@ -171,15 +171,17 @@ package body AKT.Commands is
          AKT.Configure_Logs (Debug => Context.Debug, Verbose => Context.Debug);
       end if;
 
-      if Context.Password_File'Length > 0 then
-         Context.Set_Password_Provider (Passwords.Files.Create (Context.Password_File.all));
-      elsif Context.Unsafe_Password'Length > 0 then
-         Context.Set_Password_Provider (Passwords.Unsafe.Create (Context.Unsafe_Password.all));
-      end if;
-
       if Context.Version then
          Ada.Text_IO.Put_Line (AKT.Configs.RELEASE);
          return;
+      end if;
+
+      if Context.Password_File'Length > 0 then
+         Context.Provider := Passwords.Files.Create (Context.Password_File.all);
+      elsif Context.Unsafe_Password'Length > 0 then
+         Context.Provider := Passwords.Unsafe.Create (Context.Unsafe_Password.all);
+      else
+         Context.Provider := AKT.Passwords.Input.Create (False);
       end if;
 
       declare
@@ -195,5 +197,15 @@ package body AKT.Commands is
       end;
 
    end Parse;
+
+   overriding
+   procedure Finalize (Context : in out Context_Type) is
+      procedure Free is
+        new Ada.Unchecked_Deallocation (Object => AKT.Passwords.Provider'Class,
+                                        Name   => AKT.Passwords.Provider_Access);
+   begin
+      GC.Free (Context.Command_Config);
+      Free (Context.Provider);
+   end Finalize;
 
 end AKT.Commands;
