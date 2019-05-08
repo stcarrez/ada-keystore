@@ -344,7 +344,7 @@ package body Keystore.Tests is
       T.Execute (Tool & " -v -f " & Path & " -p admin "
                  & "get testing", Result, 0);
 
-      T.Execute (Tool & " -v -f x" & Path & " -p admin "
+      T.Execute (Tool & " -f x" & Path & " -p admin "
                  & "get testing", Result, 1);
 
    end Test_Tool_Invalid;
