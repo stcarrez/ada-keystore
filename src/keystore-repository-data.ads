@@ -19,24 +19,8 @@ with Util.Encoders.AES;
 with Keystore.IO;
 with Ada.Streams;
 with Util.Streams;
-with Interfaces;
 
 private package Keystore.Repository.Data is
-
-   function AES_Align (Size : in Stream_Element_Offset) return Stream_Element_Offset
-     renames Util.Encoders.AES.Align;
-
-   ET_WALLET_ENTRY      : constant := 16#0001#;
-   ET_STRING_ENTRY      : constant := 16#0010#;
-   ET_BINARY_ENTRY      : constant := 16#0200#;
-
-   WH_KEY_SIZE          : constant := 256;
-   WALLET_ENTRY_SIZE    : constant := 4 + 2 + 8 + 32 + 16 + 4;
-
-   DATA_IV_OFFSET       : constant := 32;
-   DATA_ENTRY_SIZE      : constant := 112;
-   DATA_MAX_SIZE        : constant := IO.Block_Size - IO.BT_HMAC_HEADER_SIZE
-     - IO.BT_TYPE_HEADER_SIZE - DATA_ENTRY_SIZE - 4;
 
    --  Set the IV vector to be used for the encryption of the given block number.
    procedure Set_IV (Manager : in out Wallet_Manager;
@@ -65,25 +49,6 @@ private package Keystore.Repository.Data is
    --  Initialize the data block with an empty content.
    procedure Init_Data_Block (Manager    : in out Wallet_Manager);
 
-   --  Load the wallet directory block in the wallet manager buffer.
-   --  Extract the directory if this is the first time the data block is read.
-   procedure Load_Directory (Manager   : in out Wallet_Manager;
-                             Dir_Block : in Wallet_Directory_Entry_Access;
-                             Stream    : in out IO.Wallet_Stream'Class);
-
-   --  Load the complete wallet directory by starting at the given block.
-   procedure Load_Complete_Directory (Manager : in out Wallet_Manager;
-                                      Block   : in Keystore.IO.Block_Number;
-                                      Stream  : in out IO.Wallet_Stream'Class);
-
-   --  Find and load a directory block to hold a new entry that occupies the given space.
-   --  The first directory block that has enough space is used otherwise a new block
-   --  is allocated and initialized.
-   procedure Find_Directory_Block (Manager     : in out Wallet_Manager;
-                                   Space       : in IO.Block_Index;
-                                   Entry_Block : out Wallet_Directory_Entry_Access;
-                                   Stream      : in out IO.Wallet_Stream'Class);
-
    --  Get the fragment position of the item within the data block.
    --  Returns 0 if the data item was not found.
    function Get_Fragment_Position (Data_Block : in Wallet_Block_Entry;
@@ -95,14 +60,6 @@ private package Keystore.Repository.Data is
                         Data_Block : in Wallet_Block_Entry_Access;
                         Stream     : in out IO.Wallet_Stream'Class) with
      Pre => Data_Block.Count > 0;
-
-   --  Add a new entry in the wallet directory.
-   procedure Add_Entry (Manager : in out Wallet_Manager;
-                        Name    : in String;
-                        Kind    : in Entry_Type;
-                        Size    : in Interfaces.Unsigned_64;
-                        Item    : out Wallet_Entry_Access;
-                        Stream  : in out IO.Wallet_Stream'Class);
 
    --  Save the data block.
    procedure Save_Data (Manager    : in out Wallet_Manager;
@@ -177,18 +134,6 @@ private package Keystore.Repository.Data is
                     Name       : in String;
                     Output     : in out Util.Streams.Output_Stream'Class;
                     Stream     : in out IO.Wallet_Stream'Class);
-
-   --  Update an existing entry in the wallet directory.
-   procedure Update_Entry (Manager : in out Wallet_Manager;
-                           Item    : in Wallet_Entry_Access;
-                           Kind    : in Entry_Type;
-                           Size    : in Interfaces.Unsigned_64;
-                           Stream  : in out IO.Wallet_Stream'Class);
-
-   --  Delete the entry from the repository.
-   procedure Delete_Entry (Manager    : in out Wallet_Manager;
-                           Item       : in Wallet_Entry_Access;
-                           Stream     : in out IO.Wallet_Stream'Class);
 
    --  Write the data in one or several blocks.
    procedure Add_Data (Manager     : in out Wallet_Manager;

@@ -16,10 +16,10 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Util.Log.Loggers;
-with Ada.IO_Exceptions;
 with Ada.Unchecked_Deallocation;
 with Keystore.Logs;
 with Keystore.Repository.Data;
+with Keystore.Repository.Entries;
 
 --  Block = 4K, 8K, 16K, 64K, 128K ?
 --
@@ -40,89 +40,6 @@ with Keystore.Repository.Data;
 --  +------------------+
 --  | ...AES-CTR...    | B
 --  +------------------+
---
---
---  Wallet repository encrypted with Wallet id AES-CTR key
---  +------------------+
---  | Block HMAC-256   | 32b
---  +------------------+
---  | 02 02 02 02      | 4b
---  | Wallet id        | 4b
---  | PAD 0            | 4b
---  | PAD 0            | 4b
---  +------------------+
---  | Next block ID    | 4b  Block number for next repository
---  +------------------+
---  | Entry ID         | 4b
---  | Name size        | 2b
---  | Name             | Nb
---  | Create date      | 8b
---  | Data block ID    | 4b
---  +------------------+
---  | ...              |
---  +------------------+--
---
---
---  Data block start encrypted with wallet id, data encrypted with their own key
---  +------------------+
---  | Block HMAC-256   | 32b
---  +------------------+
---  | 03 03 03 03      | 4b
---  | Wallet id        | 4b
---  | PAD 0            | 4b
---  | PAD 0            | 4b
---  +------------------+-----
---  | Entry 1 ID       | 4b  Encrypted with wallet id
---  | Entry type       | 2b
---  | Slot size        | 2b
---  | Size 1           | 8b      Size < 4Kb and Slot size = Size
---  | Update date      | 8b
---  | Access date      | 8b
---  | Content IV       | 16b
---  | Content key      | 32b
---  | Content HMAC-256 | 32b => 112b
---  +------------------+-----
---  | Entry 2 ID       | 4b  Encrypted with wallet id
---  | Entry type       | 2b
---  | Slot size        | 2b
---  | Size 2           | 8b     Size > 4Kb and Slot size < Size
---  | Update date      | 8b
---  | Next block ID    | 4b
---  | 0 0 0 0          | 4b
---  | Content IV       | 16b
---  | Content key      | 32b
---  | Content HMAC-256 | 32b => 112b
---  +------------------+
---  | ...              |
---  +------------------+
---
---  Data block start encrypted with wallet id, data encrypted with their own key
---  +------------------+
---  | Block HMAC-256   | 32b
---  +------------------+
---  | 03 03 03 03      | 4b
---  | Wallet id        | 4b
---  | PAD 0            | 4b
---  | PAD 0            | 4b
---  +------------------+-----
---  | Entry 2 ID       | 4b  Encrypted with wallet id
---  | Entry type       | 2b
---  | Slot size        | 2b
---  | Size 2           | 8b     Size > 4Kb and Slot size < Size
---  | Access date      | 8b
---  | Next block ID    | 4b
---  | Data offset      | 4b
---  | Content IV       | 16b
---  | Content key      | 32b
---  | Content HMAC-256 | 32b => 112b
---  +------------------+
---  | Data content     |     Encrypted with entry key
---  +------------------+-----
---
---  Header: 32 + 16
---  Entry :      64
---  Entry-end:   16
---  Data:      3968   => 3%
 package body Keystore.Repository is
 
    use type Interfaces.Unsigned_16;
@@ -143,9 +60,6 @@ package body Keystore.Repository is
    procedure Free is
      new Ada.Unchecked_Deallocation (Object => Wallet_Directory_Entry,
                                      Name   => Wallet_Directory_Entry_Access);
-
-   --  Size of the wallet entry in the repository.
-   function Entry_Size (Item : in Wallet_Entry_Access) return IO.Block_Index;
 
    function Hash (Value : in Wallet_Entry_Index) return Ada.Containers.Hash_Type is
    begin
@@ -389,355 +303,6 @@ package body Keystore.Repository is
       Free (Data_Block);
    end Release_Data_Block;
 
-   --  ------------------------------
-   --  Initialize the data block with an empty content.
-   --  ------------------------------
-   procedure Init_Data_Block (Manager    : in out Wallet_Manager) is
-   begin
-      --  Prepare the new data block.
-      Manager.Buffer.Data := (others => 0);
-      IO.Set_Header (Into => Manager.Buffer,
-                     Tag  => IO.BT_WALLET_DATA,
-                     Id   => Interfaces.Unsigned_32 (Manager.Id));
-   end Init_Data_Block;
-
-   --  ------------------------------
-   --  Load the wallet directory block in the wallet manager buffer.
-   --  Extract the directory if this is the first time the data block is read.
-   --  ------------------------------
-   procedure Load_Directory (Manager   : in out Wallet_Manager;
-                             Dir_Block : in Wallet_Directory_Entry_Access;
-                             Stream    : in out IO.Wallet_Stream'Class) is
-      Btype : Interfaces.Unsigned_16;
-      Wid   : Interfaces.Unsigned_32;
-      Size  : IO.Block_Index;
-   begin
-      Keystore.Logs.Debug (Log, "Load directory block{0}", Dir_Block.Block);
-
-      --  Read wallet meta data block.
-      Set_IV (Manager, Dir_Block.Block);
-      Stream.Read (Block        => Dir_Block.Block,
-                   Decipher     => Manager.Decipher,
-                   Sign         => Manager.Sign,
-                   Decrypt_Size => Size,
-                   Into         => Manager.Buffer);
-
-      --  Check block type.
-      Btype := IO.Get_Unsigned_16 (Manager.Buffer);
-      if Btype /= IO.BT_WALLET_REPOSITORY then
-         Logs.Error (Log, "Block{0} invalid block type", Dir_Block.Block);
-         raise Keystore.Corrupted;
-      end if;
-      IO.Skip (Manager.Buffer, 2);
-
-      --  Check that this is a block for the current wallet.
-      Wid := IO.Get_Unsigned_32 (Manager.Buffer);
-      if Wid /= Interfaces.Unsigned_32 (Manager.Id) then
-         Logs.Error (Log, "Block{0} invalid block wallet identifier", Dir_Block.Block);
-         raise Keystore.Corrupted;
-      end if;
-
-      --  This is the first time we load this directory block, scan the directory.
-      if not Dir_Block.Ready then
-         declare
-            Prev   : Wallet_Entry_Access := null;
-            Item   : Wallet_Entry_Access;
-            Index  : Interfaces.Unsigned_32;
-            Offset : IO.Block_Index;
-         begin
-            IO.Skip (Manager.Buffer, 8);
-            Dir_Block.Next_Block := IO.Get_Unsigned_32 (Manager.Buffer);
-
-            --  Scan each entry
-            loop
-               Offset := Manager.Buffer.Pos;
-               Index := IO.Get_Unsigned_32 (Manager.Buffer);
-               exit when Index = 0;
-               declare
-                  Len  : constant Natural := Natural (IO.Get_Unsigned_16 (Manager.Buffer));
-                  Name : constant String := IO.Get_String (Manager.Buffer, Len);
-               begin
-                  Item := new Wallet_Entry (Length => Len);
-                  Item.Entry_Offset := Offset;
-                  Item.Id := Wallet_Entry_Index (Index);
-                  Item.Create_Date := IO.Get_Date (Manager.Buffer);
-                  Item.Header := Dir_Block;
-                  Item.Name := Name;
-                  Find_Data_Block (Manager, IO.Get_Block_Number (Manager.Buffer), Item.Data);
-
-                  if Prev = null then
-                     Dir_Block.First := Item;
-                  else
-                     Prev.Next_Entry := Item;
-                  end if;
-                  Prev := Item;
-                  Item.Next_Entry := null;
-                  if Item.Id >= Manager.Next_Id then
-                     Manager.Next_Id := Item.Id + 1;
-                  end if;
-
-                  Manager.Map.Insert (Key => Name, New_Item => Item);
-                  Manager.Entry_Indexes.Insert (Key => Item.Id, New_Item => Item);
-                  Dir_Block.Count := Dir_Block.Count + 1;
-
-               exception
-                  when E : others =>
-                     Free (Item);
-                     Logs.Error (Log, "Block{0} contains invalid data entry", Dir_Block.Block);
-                     raise Keystore.Corrupted;
-               end;
-            end loop;
-            Dir_Block.Last_Pos := Manager.Buffer.Pos - 4;
-         end;
-         Dir_Block.Ready := True;
-      end if;
-
-   exception
-      when Ada.IO_Exceptions.End_Error | Ada.IO_Exceptions.Data_Error =>
-         Logs.Error (Log, "Block{0} cannot be read", Dir_Block.Block);
-         raise Keystore.Corrupted;
-
-   end Load_Directory;
-
-   --  ------------------------------
-   --  Load the complete wallet directory by starting at the given block.
-   --  ------------------------------
-   procedure Load_Complete_Directory (Manager : in out Wallet_Manager;
-                                      Block   : in Keystore.IO.Block_Number;
-                                      Stream  : in out IO.Wallet_Stream'Class) is
-      Next      : Interfaces.Unsigned_32;
-      Dir_Block : Wallet_Directory_Entry_Access;
-   begin
-      Manager.Root := Block;
-      Manager.Next_Id := Wallet_Entry_Index'First;
-      Next := Interfaces.Unsigned_32 (Block);
-      while Next /= 0 loop
-         Dir_Block := new Wallet_Directory_Entry;
-         Dir_Block.Block := IO.Block_Number (Next);
-         Manager.Entry_List.Append (Dir_Block);
-         Load_Directory (Manager, Dir_Block, Stream);
-
-         Next := Dir_Block.Next_Block;
-      end loop;
-   end Load_Complete_Directory;
-
-   --  ------------------------------
-   --  Find and load a directory block to hold a new entry that occupies the given space.
-   --  The first directory block that has enough space is used otherwise a new block
-   --  is allocated and initialized.
-   --  ------------------------------
-   procedure Find_Directory_Block (Manager     : in out Wallet_Manager;
-                                   Space       : in IO.Block_Index;
-                                   Entry_Block : out Wallet_Directory_Entry_Access;
-                                   Stream      : in out IO.Wallet_Stream'Class) is
-      Last_Block : Wallet_Directory_Entry_Access;
-   begin
-      --  Scan for a block having enough space for us.
-      for Block of Manager.Entry_List loop
-         if Block.Available >= Space then
-            Block.Available := Block.Available - Space;
-            Block.Count := Block.Count + 1;
-            Entry_Block := Block;
-
-            return;
-         end if;
-      end loop;
-
-      --  We need a new wallet directory block.
-      Entry_Block := new Wallet_Directory_Entry;
-      Entry_Block.Available := IO.Block_Index'Last - IO.BT_DATA_START - Space - 4;
-      Entry_Block.Count := 0;
-      Entry_Block.Last_Pos := IO.BT_DATA_START + 4;
-      Entry_Block.Ready := True;
-      Stream.Allocate (Entry_Block.Block);
-
-      Logs.Info (Log, "Adding directory block{0}", Entry_Block.Block);
-
-      Last_Block := Manager.Entry_List.Last_Element;
-      Manager.Entry_List.Append (Entry_Block);
-
-      --  Update the last directory block to link to the new one.
-      Load_Directory (Manager, Last_Block, Stream);
-      Last_Block.Next_Block := Interfaces.Unsigned_32 (Entry_Block.Block);
-
-      Manager.Buffer.Pos := IO.BT_DATA_START;
-      IO.Put_Block_Number (Manager.Buffer, Entry_Block.Block);
-
-      Set_IV (Manager, Last_Block.Block);
-      Stream.Write (Block  => Last_Block.Block,
-                    From   => Manager.Buffer,
-                    Cipher => Manager.Cipher,
-                    Sign   => Manager.Sign);
-   end Find_Directory_Block;
-
-   --  ------------------------------
-   --  Size of the wallet entry in the repository.
-   --  ------------------------------
-   function Entry_Size (Item : in Wallet_Entry_Access) return IO.Block_Index is
-   begin
-      return IO.SIZE_U32 + IO.SIZE_U16 + Item.Name'Length
-        + IO.SIZE_DATE + IO.SIZE_BLOCK;
-   end Entry_Size;
-
-   --  ------------------------------
-   --  Get the fragment position of the item within the data block.
-   --  Returns 0 if the data item was not found.
-   --  ------------------------------
-   function Get_Fragment_Position (Data_Block : in Wallet_Block_Entry;
-                                   Item       : in Wallet_Entry_Access) return Fragment_Count is
-   begin
-      for I in 1 .. Data_Block.Count loop
-         if Data_Block.Fragments (I).Item = Item then
-            return I;
-         end if;
-      end loop;
-
-      return 0;
-   end Get_Fragment_Position;
-
-   --  ------------------------------
-   --  Add a new entry in the wallet directory.
-   --  ------------------------------
-   procedure Add_Entry (Manager : in out Wallet_Manager;
-                        Name    : in String;
-                        Kind    : in Entry_Type;
-                        Size    : in Interfaces.Unsigned_64;
-                        Item    : out Wallet_Entry_Access;
-                        Stream  : in out IO.Wallet_Stream'Class) is
-      Space : constant IO.Block_Index := WALLET_ENTRY_SIZE + Name'Length;
-   begin
-      if Manager.Map.Contains (Name) then
-         Log.Info ("Name '{0}' is already used", Name);
-         raise Name_Exist;
-      end if;
-      Log.Info ("Adding data entry {0}", Name);
-
-      --  Create the new wallet entry.
-      Item := new Wallet_Entry (Length => Name'Length);
-      Item.Name := Name;
-      Item.Create_Date := Ada.Calendar.Clock;
-      Item.Id := Manager.Next_Id;
-      Manager.Next_Id := Manager.Next_Id + 1;
-
-      --  Find and load the directory block that can hold the new entry.
-      Find_Directory_Block (Manager, Space, Item.Header, Stream);
-
-      --  Write the new entry at end of existing entries.
-      Item.Entry_Offset := Item.Header.Last_Pos;
-
-      --  Remember the last valid position for the next entry to add.
-      Item.Header.Last_Pos := Item.Entry_Offset + Entry_Size (Item);
-
-      --  Register it in the local repository.
-      Manager.Map.Insert (Name, Item);
-      Manager.Entry_Indexes.Insert (Item.Id, Item);
-
-      Update_Entry (Manager, Item, Kind, Size, Stream);
-   end Add_Entry;
-
-   --  ------------------------------
-   --  Update an existing entry in the wallet directory.
-   --  ------------------------------
-   procedure Update_Entry (Manager : in out Wallet_Manager;
-                           Item    : in Wallet_Entry_Access;
-                           Kind    : in Entry_Type;
-                           Size    : in Interfaces.Unsigned_64;
-                           Stream  : in out IO.Wallet_Stream'Class) is
-   begin
-      Item.Kind := Kind;
-      Item.Size := Size;
-      Item.Update_Date := Ada.Calendar.Clock;
-      Item.Access_Date := Item.Update_Date;
-
-      --  Allocate first data block.
-      if Size > 0 and Item.Data = null then
-         if Size < DATA_MAX_SIZE then
-            Allocate_Data_Block (Manager, IO.Block_Index (Size), Item.Data, Stream);
-         else
-            Allocate_Data_Block (Manager, DATA_MAX_SIZE, Item.Data, Stream);
-         end if;
-      end if;
-
-      if Item.Header.Count > 0 then
-         --  Find and load the directory block that can hold the new entry.
-         Load_Directory (Manager, Item.Header, Stream);
-      else
-         --  Prepare the new directory block.
-         Manager.Buffer.Data := (others => 0);
-         IO.Set_Header (Into => Manager.Buffer,
-                        Tag  => IO.BT_WALLET_REPOSITORY,
-                        Id   => Interfaces.Unsigned_32 (Manager.Id));
-      end if;
-
-      --  Write the new entry.
-      Manager.Buffer.Pos := Item.Entry_Offset;
-      IO.Put_Unsigned_32 (Manager.Buffer, Interfaces.Unsigned_32 (Item.Id));
-      IO.Put_String (Manager.Buffer, Item.Name);
-      IO.Put_Date (Manager.Buffer, Item.Create_Date);
-      IO.Put_Block_Number (Manager.Buffer, Item.Data.Block);
-
-      pragma Assert (Check => Manager.Buffer.Pos = Item.Entry_Offset + Entry_Size (Item));
-
-      Set_IV (Manager, Item.Header.Block);
-      Stream.Write (Block  => Item.Header.Block,
-                    From   => Manager.Buffer,
-                    Cipher => Manager.Cipher,
-                    Sign   => Manager.Sign);
-   end Update_Entry;
-
-   --  ------------------------------
-   --  Delete the entry from the repository.
-   --  ------------------------------
-   procedure Delete_Entry (Manager    : in out Wallet_Manager;
-                           Item       : in Wallet_Entry_Access;
-                           Stream     : in out IO.Wallet_Stream'Class) is
-      Dir_Block    : constant Wallet_Directory_Entry_Access := Item.Header;
-      Wallet_Entry : Wallet_Entry_Access;
-      Prev_Entry   : Wallet_Entry_Access;
-      Size         : IO.Block_Index;
-      End_Entry    : IO.Block_Index;
-   begin
-      Keystore.Logs.Debug (Log, "Delete entry from block{0}", Dir_Block.Block);
-
-      Item.Header.Count := Item.Header.Count - 1;
-
-      --  Load the directory block .
-      Load_Directory (Manager, Item.Header, Stream);
-
-      --  Unlink the item from the directory block list and identify the entry position.
-      Wallet_Entry := Dir_Block.First;
-      while Wallet_Entry /= null and Wallet_Entry /= Item loop
-         Prev_Entry := Wallet_Entry;
-         Wallet_Entry := Wallet_Entry.Next_Entry;
-      end loop;
-
-      if Wallet_Entry = null then
-         return;
-      end if;
-      if Prev_Entry /= null then
-         Prev_Entry.Next_Entry := Item.Next_Entry;
-      else
-         Dir_Block.First := Item.Next_Entry;
-      end if;
-
-      --  Move the data entry.
-      Size := Entry_Size (Item);
-      End_Entry := Item.Entry_Offset + Size;
-      if End_Entry /= Dir_Block.Last_Pos then
-         Manager.Buffer.Data (Item.Entry_Offset .. Dir_Block.Last_Pos - Size - 1)
-           := Manager.Buffer.Data (End_Entry .. Dir_Block.Last_Pos - 1);
-      end if;
-      Manager.Buffer.Data (Dir_Block.Last_Pos - Size .. Dir_Block.Last_Pos) := (others => 0);
-
-      Dir_Block.Last_Pos := Dir_Block.Last_Pos - Size;
-
-      Set_IV (Manager, Dir_Block.Block);
-      Stream.Write (Block        => Dir_Block.Block,
-                    From         => Manager.Buffer,
-                    Cipher       => Manager.Cipher,
-                    Sign         => Manager.Sign);
-   end Delete_Entry;
-
    procedure Update (Manager    : in out Wallet_Manager;
                      Name       : in String;
                      Kind       : in Entry_Type;
@@ -778,7 +343,7 @@ package body Keystore.Repository is
          Data.Delete_Data (Manager, Item, Delete_Block, Stream);
       end if;
 
-      Update_Entry (Manager, Item, Kind, Content'Length, Stream);
+      Entries.Update_Entry (Manager, Item, Kind, Content'Length, Stream);
    end Update;
 
    procedure Update (Manager    : in out Wallet_Manager;
@@ -852,7 +417,7 @@ package body Keystore.Repository is
          Data.Delete_Data (Manager, Item, Delete_Block, Stream);
       end if;
 
-      Update_Entry (Manager, Item, Kind, Interfaces.Unsigned_64 (Data_Offset), Stream);
+      Entries.Update_Entry (Manager, Item, Kind, Interfaces.Unsigned_64 (Data_Offset), Stream);
    end Update;
 
    procedure Add (Manager    : in out Wallet_Manager;
@@ -863,7 +428,7 @@ package body Keystore.Repository is
       Item        : Wallet_Entry_Access;
       Data_Offset : Stream_Element_Offset := 0;
    begin
-      Add_Entry (Manager, Name, Kind, Content'Length, Item, Stream);
+      Entries.Add_Entry (Manager, Name, Kind, Content'Length, Item, Stream);
 
       if Content'Length = 0 then
          return;
@@ -908,9 +473,9 @@ package body Keystore.Repository is
          end loop;
 
          --  Erase the entry from the repository.
-         Delete_Entry (Manager => Manager,
-                       Item    => Item,
-                       Stream  => Stream);
+         Entries.Delete_Entry (Manager => Manager,
+                               Item    => Item,
+                               Stream  => Stream);
       exception
          when others =>
             --  Handle data or directory block corruption or IO error.
@@ -923,33 +488,6 @@ package body Keystore.Repository is
       Manager.Map.Delete (Pos);
       Free (Item);
    end Delete;
-
-   procedure Write (Manager    : in out Wallet_Manager;
-                    Name       : in String;
-                    Output     : in out Util.Streams.Output_Stream'Class;
-                    Stream     : in out IO.Wallet_Stream'Class) is
-      Pos         : constant Wallet_Maps.Cursor := Manager.Map.Find (Name);
-      Item        : Wallet_Entry_Access;
-      Data_Block  : Wallet_Block_Entry_Access;
-      Position    : Fragment_Count;
-   begin
-      if not Wallet_Maps.Has_Element (Pos) then
-         Log.Info ("Data entry '{0}' not found", Name);
-         raise Not_Found;
-      end if;
-
-      Item := Wallet_Maps.Element (Pos);
-      Data_Block := Item.Data;
-
-      --  Load the data fragments.
-      while Data_Block /= null loop
-         Data.Load_Data (Manager, Data_Block, Stream);
-         Position := Get_Fragment_Position (Data_Block.all, Item);
-         exit when Position = 0;
-         Data.Get_Fragment (Manager, Position, Data_Block.Fragments (Position), Output);
-         Data_Block := Data_Block.Fragments (Position).Next_Fragment;
-      end loop;
-   end Write;
 
    procedure Release (Manager    : in out Wallet_Manager) is
       Dir   : Wallet_Directory_Entry_Access;
@@ -998,7 +536,7 @@ package body Keystore.Repository is
          Keys.Open (Password, Ident, Block, Manager.Root, Manager.Protect_Key,
                     Manager.IV, Manager.Cipher, Manager.Decipher, Stream);
 
-         Load_Complete_Directory (Manager, Manager.Root, Stream);
+         Entries.Load_Complete_Directory (Manager, Manager.Root, Stream);
       end Open;
 
       procedure Create (Password : in Secret_Key;
@@ -1042,7 +580,7 @@ package body Keystore.Repository is
          Item      : Wallet_Entry_Access;
          Keys      : Keystore.Keys.Key_Manager;
       begin
-         Add_Entry (Manager, Name, T_WALLET, 0, Item, Stream);
+         Entries.Add_Entry (Manager, Name, T_WALLET, 0, Item, Stream);
 
          Stream.Allocate (Item.Block);
 
@@ -1057,7 +595,7 @@ package body Keystore.Repository is
          Item        : Wallet_Entry_Access;
          Data_Offset : Stream_Element_Offset := 0;
       begin
-         Add_Entry (Manager, Name, Kind, Content'Length, Item, Stream);
+         Entries.Add_Entry (Manager, Name, Kind, Content'Length, Item, Stream);
 
          if Content'Length = 0 then
             return;
@@ -1088,8 +626,9 @@ package body Keystore.Repository is
             end loop;
 
             if Item = null then
-               Add_Entry (Manager, Name, Kind, Interfaces.Unsigned_64 (Last - Content'First + 1),
-                          Item, Stream);
+               Entries.Add_Entry (Manager, Name, Kind,
+                                  Interfaces.Unsigned_64 (Last - Content'First + 1),
+                                  Item, Stream);
 
                Block := Item.Data;
             end if;
@@ -1199,7 +738,7 @@ package body Keystore.Repository is
                        Output     : in out Util.Streams.Output_Stream'Class;
                        Stream     : in out IO.Wallet_Stream'Class) is
       begin
-         Write (Manager, Name, Output, Stream);
+         Data.Write (Manager, Name, Output, Stream);
       end Write;
 
       procedure List (Content    : out Entry_Map;
