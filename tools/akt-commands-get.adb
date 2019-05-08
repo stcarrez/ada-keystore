@@ -17,6 +17,7 @@
 -----------------------------------------------------------------------
 with Ada.Text_IO;
 with Ada.Command_Line;
+with Ada.Streams;
 with Util.Streams.Raw;
 with Util.Systems.Os;
 with GNAT.Command_Line;
