@@ -30,7 +30,7 @@ private with Interfaces;
 --  within a protected type.  The generator defines a <tt>Generate</tt> operation
 --  that returns either a binary random array or the base64url encoding of the
 --  binary array.
-private package Keystore.Random is
+package Keystore.Random is
 
    type Generator is limited new Ada.Finalization.Limited_Controlled with private;
 

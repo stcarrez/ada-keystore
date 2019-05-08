@@ -18,15 +18,11 @@
 with Ada.Unchecked_Deallocation;
 with Util.Encoders.AES;
 with Util.Log.Loggers;
-with Keystore.Keys;
 package body Keystore.Files is
 
    procedure Free is
      new Ada.Unchecked_Deallocation (Object => IO.Files.Wallet_File_Stream,
                                      Name   => Wallet_File_Stream_Access);
-
-   Header_Key : constant Secret_Key
-     := Util.Encoders.Create ("If you can't give me poetry, can't you give me poetical science?");
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Keys");
 
@@ -37,23 +33,19 @@ package body Keystore.Files is
    procedure Open (Container : in out Wallet_File;
                    Password  : in Secret_Key;
                    Path      : in String) is
-      Master : Keystore.Keys.Key_Manager;
+      use IO.Files;
+      Stream : IO.Files.Wallet_File_Stream_Access;
    begin
       Log.Debug ("Open keystore {0}", Path);
 
-      Container.Stream := new IO.Files.Wallet_File_Stream;
-      Container.Stream.Open (Path);
-      Master.Set_Header_Key (Header_Key);
-      Container.Repository.Open (Password, 1, 1, Master, Container.Stream.all);
-      Container.Container.Set_Stream (Container.Stream);
+      Stream := new IO.Files.Wallet_File_Stream;
+      Stream.Open (Path);
+      Container.Container.Open (Password, 1, 1, Stream.all'Access);
       Log.Info ("Keystore {0} is opened", Path);
 
    exception
       when others =>
-         if Container.Stream /= null then
-            Container.Stream.Close;
-         end if;
-         Free (Container.Stream);
+         --  Free (Stream);
          raise;
    end Open;
 
@@ -64,17 +56,15 @@ package body Keystore.Files is
    procedure Create (Container : in out Wallet_File;
                      Password  : in Secret_Key;
                      Path      : in String) is
-      Master : Keystore.Keys.Key_Manager;
       Block  : IO.Block_Number;
+      Stream : IO.Files.Wallet_File_Stream_Access;
    begin
       Log.Debug ("Create keystore {0}", Path);
 
-      Container.Stream := new IO.Files.Wallet_File_Stream;
-      Container.Stream.Create (Path);
-      Container.Container.Set_Stream (Container.Stream);
-      Master.Set_Header_Key (Header_Key);
-      Container.Stream.Allocate (Block);
-      Container.Repository.Create (Password, Block, 1, Master, Container.Stream.all);
+      Stream := new IO.Files.Wallet_File_Stream;
+      Stream.Create (Path);
+      Stream.Allocate (Block);
+      Container.Container.Create (Password, Block, 1, Stream.all'Access);
    end Create;
 
    --  ------------------------------
@@ -83,10 +73,6 @@ package body Keystore.Files is
    procedure Close (Container : in out Wallet_File) is
    begin
       Container.Container.Close;
-      if Container.Stream /= null then
-         Container.Stream.Close;
-      end if;
-      Free (Container.Stream);
    end Close;
 
    --  Add in the wallet the named entry and associate it the children wallet.
@@ -94,23 +80,176 @@ package body Keystore.Files is
    --  The children wallet has its own key to protect the named entries it manages.
    procedure Add (Container : in out Wallet_File;
                   Name      : in String;
+                  Password  : in Secret_Key;
                   Wallet    : in out Wallet_File'Class) is
    begin
-      null;
+      null; --  Wallet.Stream := Container.Stream;
+      --  Container.Container.Add (Name, Password, Wallet.Repository);
    end Add;
 
    --  Load from the container the named children wallet.
-   procedure Load (Container : in out Wallet_File;
+   procedure Open (Container : in out Wallet_File;
                    Name      : in String;
+                   Password  : in Secret_Key;
                    Wallet    : in out Wallet_File'Class) is
    begin
       null;
-   end Load;
+      --  Wallet.Stream := Container.Stream;
+      --  Container.Container.Open (Name, Password, Wallet.Repository, Container.Stream.Value.all);
+   end Open;
+
+   --  ------------------------------
+   --  Return True if the container was configured.
+   --  ------------------------------
+   overriding
+   function Is_Configured (Container : in Wallet_File) return Boolean is
+   begin
+      return Container.Container.Get_State = S_CONFIGURED;
+   end Is_Configured;
+
+   --  ------------------------------
+   --  Return True if the container can be accessed.
+   --  ------------------------------
+   overriding
+   function Is_Open (Container : in Wallet_File) return Boolean is
+   begin
+      return Container.Container.Get_State = S_OPEN;
+   end Is_Open;
+
+   --  ------------------------------
+   --  Get the wallet state.
+   --  ------------------------------
+   overriding
+   function State (Container : in Wallet_File) return State_Type is
+   begin
+      return Container.Container.Get_State;
+   end State;
+
+   --  ------------------------------
+   --  Set the key to encrypt and decrypt the container meta data.
+   --  ------------------------------
+   overriding
+   procedure Set_Key (Container : in out Wallet_File;
+                      Secret    : in Secret_Key) is
+   begin
+      null;
+   end Set_Key;
+
+   --  ------------------------------
+   --  Return True if the container contains the given named entry.
+   --  ------------------------------
+   overriding
+   function Contains (Container : in Wallet_File;
+                      Name      : in String) return Boolean is
+   begin
+      return Container.Container.Contains (Name);
+   end Contains;
+
+   --  ------------------------------
+   --  Add in the wallet the named entry and associate it the content.
+   --  The content is encrypted in AES-CBC with a secret key and an IV vector
+   --  that is created randomly for the new named entry.
+   --  ------------------------------
+   overriding
+   procedure Add (Container : in out Wallet_File;
+                  Name      : in String;
+                  Kind      : in Entry_Type := T_BINARY;
+                  Content   : in Ada.Streams.Stream_Element_Array) is
+   begin
+      Container.Container.Add (Name, Kind, Content);
+   end Add;
+
+   --  ------------------------------
+   --  Add or update in the wallet the named entry and associate it the content.
+   --  The content is encrypted in AES-CBC with a secret key and an IV vector
+   --  that is created randomly for the new or updated named entry.
+   --  ------------------------------
+   overriding
+   procedure Set (Container : in out Wallet_File;
+                  Name      : in String;
+                  Kind      : in Entry_Type := T_BINARY;
+                  Content   : in Ada.Streams.Stream_Element_Array) is
+   begin
+      Container.Container.Set (Name, Kind, Content);
+   end Set;
+
+   --  ------------------------------
+   --  Add or update in the wallet the named entry and associate it the content.
+   --  The content is encrypted in AES-CBC with a secret key and an IV vector
+   --  that is created randomly for the new or updated named entry.
+   --  ------------------------------
+   overriding
+   procedure Set (Container : in out Wallet_File;
+                  Name      : in String;
+                  Kind      : in Entry_Type := T_BINARY;
+                  Input     : in out Util.Streams.Input_Stream'Class) is
+   begin
+      Container.Container.Set (Name, Kind, Input);
+   end Set;
+
+   --  ------------------------------
+   --  Update in the wallet the named entry and associate it the new content.
+   --  The secret key and IV vectors are not changed.
+   --  ------------------------------
+   procedure Update (Container : in out Wallet_File;
+                     Name      : in String;
+                     Kind      : in Entry_Type := T_BINARY;
+                     Content   : in Ada.Streams.Stream_Element_Array) is
+   begin
+      Container.Container.Update (Name, Kind, Content);
+   end Update;
+
+   --  ------------------------------
+   --  Delete from the wallet the named entry.
+   --  ------------------------------
+   overriding
+   procedure Delete (Container : in out Wallet_File;
+                     Name      : in String) is
+   begin
+      Container.Container.Delete (Name);
+   end Delete;
+
+   overriding
+   procedure Get (Container : in out Wallet_File;
+                  Name      : in String;
+                  Info      : out Entry_Info;
+                  Content   : out Ada.Streams.Stream_Element_Array) is
+   begin
+      Container.Container.Get_Data (Name, Info, Content);
+   end Get;
+
+   --  ------------------------------
+   --  Write in the output stream the named entry value from the wallet.
+   --  ------------------------------
+   overriding
+   procedure Write (Container : in out Wallet_File;
+                    Name      : in String;
+                    Output    : in out Util.Streams.Output_Stream'Class) is
+   begin
+      Container.Container.Write (Name, Output);
+   end Write;
+
+   --  ------------------------------
+   --  Get the list of entries contained in the wallet.
+   --  ------------------------------
+   overriding
+   procedure List (Container : in out Wallet_File;
+                   Content   : out Entry_Map) is
+   begin
+      Container.Container.List (Content);
+   end List;
+
+   overriding
+   function Find (Container : in Wallet_File;
+                  Name      : in String) return Entry_Info is
+   begin
+      return Container.Container.Find (Name);
+   end Find;
 
    overriding
    procedure Initialize (Wallet : in out Wallet_File) is
    begin
-      Wallet.Container.Set_Repository (Wallet.Repository'Unchecked_Access);
+      null; --  Wallet.Container.Set_Repository (Wallet.Repository);
    end Initialize;
 
    overriding
@@ -119,10 +258,15 @@ package body Keystore.Files is
       if Wallet.Is_Open then
          Wallet.Container.Close;
       end if;
-      if Wallet.Stream /= null then
-         Wallet.Stream.Close;
-      end if;
-      Free (Wallet.Stream);
+      --  if Wallet.Stream /= null then
+      --    Wallet.Stream.Close;
+      --  end if;
+      --  Free (Wallet.Stream);
+   end Finalize;
+
+   procedure Finalize (Stream : in out IO.Files.Wallet_File_Stream) is
+   begin
+      Stream.Close;
    end Finalize;
 
 end Keystore.Files;

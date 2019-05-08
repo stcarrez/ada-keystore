@@ -60,6 +60,7 @@ private package Keystore.IO is
    type Marshaller;
 
    type Wallet_Stream is synchronized interface;
+   type Wallet_Stream_Access is access all Wallet_Stream'Class;
 
    --  Returns true if the block number is allocated.
    function Is_Used (Stream : in Wallet_Stream;
@@ -85,6 +86,9 @@ private package Keystore.IO is
    --  Release the block number.
    procedure Release (Stream : in out Wallet_Stream;
                       Block  : in Block_Number) is abstract;
+
+   --  Close the wallet stream and release any resource.
+   procedure Close (Stream : in out Wallet_Stream) is abstract;
 
    --  Read the block from the wallet IO stream and decrypt the block content using
    --  the decipher object.  The decrypted content is stored in the marshaller which

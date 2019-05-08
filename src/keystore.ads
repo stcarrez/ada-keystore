@@ -22,8 +22,6 @@ with Ada.Calendar;
 with Ada.Strings.Hash;
 with Ada.Containers.Indefinite_Hashed_Maps;
 private with Ada.Finalization;
-limited private with Keystore.IO;
-limited private with Keystore.Metadata;
 
 --  == Keystore ==
 --  The `Keystore` package provides operations to store information in secure wallets and
@@ -114,26 +112,26 @@ package Keystore is
    --  Defines the key slot number.
    type Key_Slot is new Positive range 1 .. 8;
 
-   type Wallet is tagged limited private;
+   type Wallet is abstract tagged limited private;
 
    --  Return True if the container was configured.
-   function Is_Configured (Container : in Wallet) return Boolean;
+   function Is_Configured (Container : in Wallet) return Boolean is abstract;
 
    --  Return True if the container can be accessed.
-   function Is_Open (Container : in Wallet) return Boolean;
+   function Is_Open (Container : in Wallet) return Boolean is abstract;
 
    --  Get the wallet state.
-   function State (Container : in Wallet) return State_Type;
+   function State (Container : in Wallet) return State_Type is abstract;
 
    --  Set the key to encrypt and decrypt the container meta data.
    procedure Set_Key (Container : in out Wallet;
-                      Secret    : in Secret_Key) with
-     Pre => Container.State /= S_OPEN;
+                      Secret    : in Secret_Key) is abstract with
+     Pre'Class => Container.State /= S_OPEN;
 
    --  Return True if the container contains the given named entry.
    function Contains (Container : in Wallet;
-                      Name      : in String) return Boolean with
-     Pre => Container.Is_Open;
+                      Name      : in String) return Boolean is abstract with
+     Pre'Class => Container.Is_Open;
 
    --  Add in the wallet the named entry and associate it the content.
    --  The content is encrypted in AES-CBC with a secret key and an IV vector
@@ -141,17 +139,18 @@ package Keystore is
    procedure Add (Container : in out Wallet;
                   Name      : in String;
                   Content   : in String) with
-     Pre  => Container.Is_Open,
-     Post => Container.Contains (Name);
+     Pre  => Wallet'Class (Container).Is_Open,
+     Post => Wallet'Class (Container).Contains (Name);
 
    --  Add in the wallet the named entry and associate it the content.
    --  The content is encrypted in AES-CBC with a secret key and an IV vector
    --  that is created randomly for the new named entry.
    procedure Add (Container : in out Wallet;
                   Name      : in String;
-                  Content   : in Ada.Streams.Stream_Element_Array) with
-     Pre  => Container.Is_Open,
-     Post => Container.Contains (Name);
+                  Kind      : in Entry_Type := T_BINARY;
+                  Content   : in Ada.Streams.Stream_Element_Array) is abstract with
+     Pre'Class  => Container.Is_Open,
+     Post'Class => Container.Contains (Name);
 
    --  Add or update in the wallet the named entry and associate it the content.
    --  The content is encrypted in AES-CBC with a secret key and an IV vector
@@ -159,9 +158,9 @@ package Keystore is
    procedure Set (Container : in out Wallet;
                   Name      : in String;
                   Kind      : in Entry_Type := T_BINARY;
-                  Content   : in Ada.Streams.Stream_Element_Array) with
-     Pre  => Container.Is_Open,
-     Post => Container.Contains (Name);
+                  Content   : in Ada.Streams.Stream_Element_Array) is abstract with
+     Pre'Class  => Container.Is_Open,
+     Post'Class => Container.Contains (Name);
 
    --  Add or update in the wallet the named entry and associate it the content.
    --  The content is encrypted in AES-CBC with a secret key and an IV vector
@@ -169,102 +168,69 @@ package Keystore is
    procedure Set (Container : in out Wallet;
                   Name      : in String;
                   Content   : in String) with
-     Pre  => Container.Is_Open,
-     Post => Container.Contains (Name);
+     Pre  => Wallet'Class (Container).Is_Open,
+     Post => Wallet'Class (Container).Contains (Name);
 
    procedure Set (Container : in out Wallet;
                   Name      : in String;
                   Kind      : in Entry_Type := T_BINARY;
-                  Input     : in out Util.Streams.Input_Stream'Class) with
-     Pre  => Container.Is_Open,
-     Post => Container.Contains (Name);
+                  Input     : in out Util.Streams.Input_Stream'Class) is abstract with
+     Pre'Class  => Container.Is_Open,
+     Post'Class => Container.Contains (Name);
 
    --  Update in the wallet the named entry and associate it the new content.
    --  The secret key and IV vectors are not changed.
    procedure Update (Container : in out Wallet;
                      Name      : in String;
                      Content   : in String) with
-     Pre  => Container.Is_Open,
-     Post => Container.Contains (Name);
+     Pre  => Wallet'Class (Container).Is_Open,
+     Post => Wallet'Class (Container).Contains (Name);
+
+   --  Update in the wallet the named entry and associate it the new content.
+   --  The secret key and IV vectors are not changed.
+   procedure Update (Container : in out Wallet;
+                     Name      : in String;
+                     Kind      : in Entry_Type := T_BINARY;
+                     Content   : in Ada.Streams.Stream_Element_Array) is abstract with
+     Pre'Class  => Container.Is_Open,
+     Post'Class => Container.Contains (Name);
 
    --  Delete from the wallet the named entry.
    procedure Delete (Container : in out Wallet;
-                     Name      : in String) with
-     Pre  => Container.Is_Open,
-     Post => not Container.Contains (Name);
+                     Name      : in String) is abstract with
+     Pre'Class  => Container.Is_Open,
+     Post'Class => not Container.Contains (Name);
 
    --  Get from the wallet the named entry.
    function Get (Container : in out Wallet;
                  Name      : in String) return String with
-     Pre => Container.Is_Open;
+     Pre => Wallet'Class (Container).Is_Open;
+
+   procedure Get (Container : in out Wallet;
+                  Name      : in String;
+                  Info      : out Entry_Info;
+                  Content   : out Ada.Streams.Stream_Element_Array) is abstract with
+     Pre'Class => Wallet'Class (Container).Is_Open;
 
    --  Write in the output stream the named entry value from the wallet.
    procedure Write (Container : in out Wallet;
                     Name      : in String;
-                    Output    : in out Util.Streams.Output_Stream'Class) with
-     Pre => Container.Is_Open;
+                    Output    : in out Util.Streams.Output_Stream'Class) is abstract with
+     Pre'Class => Container.Is_Open;
 
    --  Get the list of entries contained in the wallet.
    procedure List (Container : in out Wallet;
-                   Content   : out Entry_Map) with
-     Pre => Container.Is_Open;
+                   Content   : out Entry_Map) is abstract with
+     Pre'Class => Container.Is_Open;
+
+   function Find (Container : in Wallet;
+                  Name      : in String) return Entry_Info is abstract with
+     Pre'Class => Container.Is_Open;
 
 private
 
    type Wallet_Identifier is new Positive;
 
-   --  The `Wallet_Container` protects concurrent accesses to the repository.
-   protected type Wallet_Container is
-
-      function Get_State return State_Type;
-
-      procedure Set_Key (Secret : in Secret_Key);
-
-      procedure Set_Repository (R : access Keystore.Metadata.Wallet_Repository);
-
-      procedure Set_Stream (S : access Keystore.IO.Wallet_Stream'Class);
-
-      function Contains (Name : in String) return Boolean;
-
-      procedure Add (Name    : in String;
-                     Kind    : in Entry_Type;
-                     Content : in Ada.Streams.Stream_Element_Array);
-
-      procedure Set (Name    : in String;
-                     Kind    : in Entry_Type;
-                     Content : in Ada.Streams.Stream_Element_Array);
-
-      procedure Set (Name    : in String;
-                     Kind    : in Entry_Type;
-                     Input   : in out Util.Streams.Input_Stream'Class);
-
-      procedure Update (Name    : in String;
-                        Kind    : in Entry_Type;
-                        Content : in Ada.Streams.Stream_Element_Array);
-
-      function Find (Name    : in String) return Entry_Info;
-
-      procedure Get_Data (Name       : in String;
-                          Result     : out Entry_Info;
-                          Output     : out Ada.Streams.Stream_Element_Array);
-
-      procedure Write (Name      : in String;
-                       Output    : in out Util.Streams.Output_Stream'Class);
-
-      procedure Delete (Name : in String);
-
-      procedure List (Content : out Entry_Map);
-
-      procedure Close;
-
-   private
-      Repository : access Keystore.Metadata.Wallet_Repository;
-      Stream     : access Keystore.IO.Wallet_Stream'Class;
-      State      : State_Type := S_INVALID;
-   end Wallet_Container;
-
-   type Wallet is limited new Ada.Finalization.Limited_Controlled with record
-      Container : Wallet_Container;
-   end record;
+   type Wallet is abstract limited new Ada.Finalization.Limited_Controlled with null record;
 
 end Keystore;
