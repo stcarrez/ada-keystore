@@ -43,6 +43,9 @@ endif
 
 # Build and run the unit tests
 test:	build
+	# Apply access constraints to the test key and directory.
+	chmod 600 regtests/files/file.key
+	chmod 700 regtests/files
 	bin/keystore_harness -xml keystore-aunit.xml -config tests.properties
 
 install-samples:
