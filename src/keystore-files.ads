@@ -16,7 +16,6 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 private with Keystore.IO.Files;
-private with Util.Refs;
 private with Keystore.Containers;
 package Keystore.Files is
 
@@ -158,14 +157,6 @@ package Keystore.Files is
 private
 
    type Wallet_File_Stream_Access is access all Keystore.IO.Files.Wallet_File_Stream;
-
-   procedure Finalize (Stream : in out IO.Files.Wallet_File_Stream);
-
-   package Refs is
-     new Util.Refs.General_References (Element_Type => IO.Files.Wallet_File_Stream,
-                                       Finalize     => Finalize);
-
-   subtype Wallet_File_Stream_Ref is Refs.Ref;
 
    type Wallet_File is limited new Wallet with record
       Container  : Keystore.Containers.Wallet_Container;

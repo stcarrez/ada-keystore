@@ -264,9 +264,4 @@ package body Keystore.Files is
       --  Free (Wallet.Stream);
    end Finalize;
 
-   procedure Finalize (Stream : in out IO.Files.Wallet_File_Stream) is
-   begin
-      Stream.Close;
-   end Finalize;
-
 end Keystore.Files;
