@@ -75,4 +75,7 @@ private
    overriding
    procedure Initialize (Context : in out Context_Type);
 
+   overriding
+   procedure Finalize (Context : in out Context_Type);
+
 end AKT.Commands;
