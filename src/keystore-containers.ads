@@ -29,12 +29,12 @@ private package Keystore.Containers is
       procedure Open (Password      : in Secret_Key;
                       Ident         : in Wallet_Identifier;
                       Block         : in Keystore.IO.Block_Number;
-                      Wallet_Stream : in Keystore.IO.Wallet_Stream_Access);
+                      Wallet_Stream : in out Keystore.IO.Refs.Stream_Ref);
 
       procedure Create (Password      : in Secret_Key;
                         Block         : in IO.Block_Number;
                         Ident         : in Wallet_Identifier;
-                        Wallet_Stream : in Keystore.IO.Wallet_Stream_Access);
+                        Wallet_Stream : in out IO.Refs.Stream_Ref);
 
       function Get_State return State_Type;
 
