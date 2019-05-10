@@ -22,10 +22,6 @@ with Util.Streams;
 
 private package Keystore.Repository.Data is
 
-   --  Set the IV vector to be used for the encryption of the given block number.
-   procedure Set_IV (Manager : in out Wallet_Manager;
-                     Block   : in IO.Block_Number);
-
    --  Find the data block instance with the given block number.
    procedure Find_Data_Block (Manager    : in out Wallet_Manager;
                               Block      : in IO.Block_Number;

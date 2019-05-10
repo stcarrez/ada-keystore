@@ -100,20 +100,6 @@ package body Keystore.Repository.Data is
    function Data_Entry_Offset (Index : in Fragment_Index) return IO.Block_Index;
 
    --  ------------------------------
-   --  Set the IV vector to be used for the encryption of the given block number.
-   --  ------------------------------
-   procedure Set_IV (Manager : in out Wallet_Manager;
-                     Block   : in IO.Block_Number) is
-      Block_IV : Util.Encoders.AES.Word_Block_Type;
-   begin
-      Block_IV := Manager.IV;
-      Block_IV (1) := Block_IV (1) xor Interfaces.Unsigned_32 (Block);
-      Block_IV (4) := Block_IV (4) xor Interfaces.Unsigned_32 (Block);
-      Manager.Decipher.Set_IV (Block_IV);
-      Manager.Cipher.Set_IV (Block_IV);
-   end Set_IV;
-
-   --  ------------------------------
    --  Find the data block instance with the given block number.
    --  ------------------------------
    procedure Find_Data_Block (Manager    : in out Wallet_Manager;
