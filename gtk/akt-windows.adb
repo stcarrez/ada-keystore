@@ -98,9 +98,6 @@ package body AKT.Windows is
       Application.Scrolled.Set_Policy (Gtk.Enums.Policy_Always, Gtk.Enums.Policy_Always);
       Application.Col_Text.Ref;
 
-      Gtk.Text_Buffer.Gtk_New (Application.Buffer);
-      Gtk.Text_View.Gtk_New (Application.Editor, Application.Buffer);
-
       Application.Main.Show_All;
    end Initialize_Widget;
 
@@ -175,6 +172,11 @@ package body AKT.Windows is
       Add_Column ("Size", 3);
       Add_Column ("Date", 4);
       Add_Column ("Content", 5);
+
+      if Application.Editing then
+         Application.Viewport.Remove (Application.Editor);
+         Application.Editing := False;
+      end if;
       Application.Viewport.Add (Application.Tree);
 
       Iter := List.First;
@@ -217,6 +219,8 @@ package body AKT.Windows is
          Log.Info ("Selected {0}", Name);
          Application.Current := Ada.Strings.Unbounded.To_Unbounded_String (Name);
 
+         Gtk.Text_Buffer.Gtk_New (Application.Buffer);
+         Gtk.Text_View.Gtk_New (Application.Editor, Application.Buffer);
          Gtk.Text_Buffer.Set_Text (Application.Buffer, Application.Wallet.Get (Name));
          if not Application.Editing then
             Application.Viewport.Remove (Application.Tree);
@@ -235,6 +239,7 @@ package body AKT.Windows is
          Gtk.Text_Buffer.Get_Bounds (Application.Buffer, Start, Stop);
          Application.Wallet.Set (Ada.Strings.Unbounded.To_String (Application.Current),
                                  Gtk.Text_Buffer.Get_Text (Application.Buffer, Start, Stop));
+         Application.List_Keystore;
       end if;
    end Save_Current;
 
@@ -254,6 +259,16 @@ package body AKT.Windows is
          Label.Set_Label (Value);
       end if;
    end Set_Label;
+
+   --  ------------------------------
+   --  Report a message in the status area.
+   --  ------------------------------
+   procedure Message (Application : in out Application_Type;
+                      Message     : in String) is
+      Msg : Gtk.Status_Bar.Message_Id;
+   begin
+      Msg := Gtk.Status_Bar.Push (Application.Status, 1, Message);
+   end Message;
 
    procedure Main (Application : in out Application_Type) is
       pragma Unreferenced (Application);

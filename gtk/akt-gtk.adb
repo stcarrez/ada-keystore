@@ -23,7 +23,7 @@ procedure AKT.Gtk is
    Main        : Widget.Gtk_Widget;
    Application : aliased AKT.Windows.Application_Type;
 begin
-   AKT.Configure_Logs (Debug   => True,
+   AKT.Configure_Logs (Debug   => False,
                        Verbose => True);
    Application.Initialize_Widget (Main);
    Application.Main;

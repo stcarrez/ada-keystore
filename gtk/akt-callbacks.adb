@@ -152,13 +152,17 @@ package body AKT.Callbacks is
       Password : constant Gtk.GEntry.Gtk_Entry
         := Gtk.GEntry.Gtk_Entry (Object.Get_Object ("open_file_password"));
    begin
-      Chooser.Hide;
       if Chooser /= null and Password /= null then
-         File_Chooser := Gtk.File_Chooser_Dialog."+"
-           (Gtk.File_Chooser_Dialog.Gtk_File_Chooser_Dialog (Chooser));
-         Log.Info ("Selected file {0}", Gtk.File_Chooser.Get_Filename (File_Chooser));
-         App.Open_File (Path     => Gtk.File_Chooser.Get_Filename (File_Chooser),
-                        Password => Keystore.Create (Gtk.GEntry.Get_Text (Password)));
+         if Gtk.GEntry.Get_Text (Password) = "" then
+            App.Message ("Password is empty");
+         else
+            Chooser.Hide;
+            File_Chooser := Gtk.File_Chooser_Dialog."+"
+              (Gtk.File_Chooser_Dialog.Gtk_File_Chooser_Dialog (Chooser));
+            Log.Info ("Selected file {0}", Gtk.File_Chooser.Get_Filename (File_Chooser));
+            App.Open_File (Path     => Gtk.File_Chooser.Get_Filename (File_Chooser),
+                           Password => Keystore.Create (Gtk.GEntry.Get_Text (Password)));
+         end if;
       end if;
    end On_Open_File;
 

@@ -67,6 +67,10 @@ package AKT.Windows is
 
    procedure Main (Application : in out Application_Type);
 
+   --  Report a message in the status area.
+   procedure Message (Application : in out Application_Type;
+                      Message     : in String);
+
 private
 
    --  Load the glade XML definition.
