@@ -27,25 +27,25 @@ package body Keystore.Containers is
       procedure Open (Password      : in Secret_Key;
                       Ident         : in Wallet_Identifier;
                       Block         : in Keystore.IO.Block_Number;
-                      Wallet_Stream : in Keystore.IO.Wallet_Stream_Access) is
+                      Wallet_Stream : in out Keystore.IO.Refs.Stream_Ref) is
          Master : Keystore.Keys.Key_Manager;
       begin
-         Stream := IO.Refs.Create (Wallet_Stream.all'Access);
+         Stream := Wallet_Stream;
          Master.Set_Header_Key (Header_Key);
-         Keystore.Repository.Open (Repository, Password, Ident, Block, Master, Wallet_Stream.all);
+         Keystore.Repository.Open (Repository, Password, Ident, Block, Master, Stream.Value.all);
          State := S_OPEN;
       end Open;
 
       procedure Create (Password      : in Secret_Key;
                         Block         : in IO.Block_Number;
                         Ident         : in Wallet_Identifier;
-                        Wallet_Stream : in Keystore.IO.Wallet_Stream_Access) is
+                        Wallet_Stream : in out IO.Refs.Stream_Ref) is
          Master : Keystore.Keys.Key_Manager;
       begin
-         Stream := IO.Refs.Create (Wallet_Stream.all'Access);
+         Stream := Wallet_Stream;
          Master.Set_Header_Key (Header_Key);
          Keystore.Repository.Create (Repository, Password, Block, Ident,
-                                     Master, Wallet_Stream.all);
+                                     Master, Stream.Value.all);
          State := S_OPEN;
       end Create;
 

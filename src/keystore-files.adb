@@ -15,14 +15,10 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Ada.Unchecked_Deallocation;
 with Util.Encoders.AES;
 with Util.Log.Loggers;
+with Keystore.IO.Refs;
 package body Keystore.Files is
-
-   procedure Free is
-     new Ada.Unchecked_Deallocation (Object => IO.Files.Wallet_File_Stream,
-                                     Name   => Wallet_File_Stream_Access);
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Keys");
 
@@ -34,19 +30,16 @@ package body Keystore.Files is
                    Password  : in Secret_Key;
                    Path      : in String) is
       use IO.Files;
-      Stream : IO.Files.Wallet_File_Stream_Access;
+      Wallet_Stream : IO.Files.Wallet_File_Stream_Access;
+      Stream        : IO.Refs.Stream_Ref;
    begin
       Log.Debug ("Open keystore {0}", Path);
 
-      Stream := new IO.Files.Wallet_File_Stream;
-      Stream.Open (Path);
-      Container.Container.Open (Password, 1, 1, Stream.all'Access);
+      Wallet_Stream := new IO.Files.Wallet_File_Stream;
+      Stream := IO.Refs.Create (Wallet_Stream.all'Access);
+      Wallet_Stream.Open (Path);
+      Container.Container.Open (Password, 1, 1, Stream);
       Log.Info ("Keystore {0} is opened", Path);
-
-   exception
-      when others =>
-         --  Free (Stream);
-         raise;
    end Open;
 
    --  ------------------------------
@@ -56,15 +49,18 @@ package body Keystore.Files is
    procedure Create (Container : in out Wallet_File;
                      Password  : in Secret_Key;
                      Path      : in String) is
-      Block  : IO.Block_Number;
-      Stream : IO.Files.Wallet_File_Stream_Access;
+      Block         : IO.Block_Number;
+      Wallet_Stream : IO.Files.Wallet_File_Stream_Access;
+      Stream        : IO.Refs.Stream_Ref;
    begin
       Log.Debug ("Create keystore {0}", Path);
 
-      Stream := new IO.Files.Wallet_File_Stream;
-      Stream.Create (Path);
-      Stream.Allocate (Block);
-      Container.Container.Create (Password, Block, 1, Stream.all'Access);
+      Wallet_Stream := new IO.Files.Wallet_File_Stream;
+      Stream := IO.Refs.Create (Wallet_Stream.all'Access);
+
+      Wallet_Stream.Create (Path);
+      Wallet_Stream.Allocate (Block);
+      Container.Container.Create (Password, Block, 1, Stream);
    end Create;
 
    --  ------------------------------
