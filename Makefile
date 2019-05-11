@@ -24,7 +24,7 @@ tools/akt-configs.ads:   Makefile.conf tools/akt-configs.gpb
 		  tools/akt-configs.gpb tools/akt-configs.ads
 
 install::
-	mkdir -p $(DESTDIR)$(prefix)
+	mkdir -p $(DESTDIR)$(prefix)/bin
 	$(INSTALL) bin/akt $(DESTDIR)$(prefix)/bin/akt
 	$(INSTALL) docs/akt.1 $(DESTDIR)$(prefix)/share/man/man1/akt.1
 
