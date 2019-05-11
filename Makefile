@@ -26,6 +26,7 @@ tools/akt-configs.ads:   Makefile.conf tools/akt-configs.gpb
 install::
 	mkdir -p $(DESTDIR)$(prefix)/bin
 	$(INSTALL) bin/akt $(DESTDIR)$(prefix)/bin/akt
+	mkdir -p $(DESTDIR)$(prefix)/share/man/man1
 	$(INSTALL) docs/akt.1 $(DESTDIR)$(prefix)/share/man/man1/akt.1
 
 ifeq ($(HAVE_GTK),yes)
