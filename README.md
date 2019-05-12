@@ -4,6 +4,7 @@
 [![Test Status](https://img.shields.io/jenkins/t/http/jenkins.vacs.fr/Ada-Keystore.svg)](http://jenkins.vacs.fr/job/Ada-Keystore/)
 [![License](http://img.shields.io/badge/license-APACHE2-blue.svg)](LICENSE)
 ![Commits](https://img.shields.io/github/commits-since/stcarrez/ada-keystore/1.0.0.svg)
+![semver](https://img.shields.io/badge/semver-2.0.0-blue.svg?cacheSeconds=2592000)
 
 Ada Keystore is a library and tool to store information in secure wallets
 and protect the stored information by encrypting the content.
