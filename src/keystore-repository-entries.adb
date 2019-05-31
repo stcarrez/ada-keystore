@@ -305,7 +305,12 @@ package body Keystore.Repository.Entries is
          Load_Directory (Manager, Item.Header, Stream);
       else
          --  Prepare the new directory block.
-         Manager.Buffer.Data := (others => 0);
+         --  Fill the new block with random values or with zeros.
+         if Manager.Randomize then
+            Manager.Random.Generate (Manager.Buffer.Data);
+         else
+            Manager.Buffer.Data := (others => 0);
+         end if;
          IO.Set_Header (Into => Manager.Buffer,
                         Tag  => IO.BT_WALLET_REPOSITORY,
                         Id   => Interfaces.Unsigned_32 (Manager.Id));
@@ -369,7 +374,13 @@ package body Keystore.Repository.Entries is
          Manager.Buffer.Data (Item.Entry_Offset .. Dir_Block.Last_Pos - Size - 1)
            := Manager.Buffer.Data (End_Entry .. Dir_Block.Last_Pos - 1);
       end if;
-      Manager.Buffer.Data (Dir_Block.Last_Pos - Size .. Dir_Block.Last_Pos) := (others => 0);
+      if Manager.Randomize then
+         --  When strong security is necessary, fill with random values.
+         Manager.Random.Generate
+           (Manager.Buffer.Data (Dir_Block.Last_Pos - Size .. Dir_Block.Last_Pos));
+         else
+         Manager.Buffer.Data (Dir_Block.Last_Pos - Size .. Dir_Block.Last_Pos) := (others => 0);
+      end if;
 
       Dir_Block.Last_Pos := Dir_Block.Last_Pos - Size;
 
