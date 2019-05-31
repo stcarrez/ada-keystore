@@ -51,16 +51,12 @@ insert values, retrieve values or delete them.  You can use it to
 store your passwords, your secret keys and even your documents.
 
 Passwords are retrieved using one of the following options:
-.IP \(bu 4
-by reading a file that contains the password,
-.IP \(bu 4
-by looking at an environment variable,
-.IP \(bu 4
-by using a command line argument,
-.IP \(bu 4
-by asking interactively the user for the password,
-.IP \(bu 4
-by asking through a network socket for the password.
+
+* by reading a file that contains the password,
+* by looking at an environment variable,
+* by using a command line argument,
+* by asking interactively the user for the password,
+* by asking through a network socket for the password.
 
 
 ## OPTIONS
@@ -117,7 +113,7 @@ The password to protect the wallet is passed using one of the following options:
 *--passfile* ,
 *--passenv* ,
 *--password* ,
-*--passsocket* .  When none of these options are passed, the password is asked interactively.
+*--passsocket*. When none of these options are passed, the password is asked interactively.
 
 ### The set command
 ```
