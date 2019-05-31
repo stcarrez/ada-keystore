@@ -238,6 +238,7 @@ private
       Next_Id       : Wallet_Entry_Index;
       Data_List     : Wallet_Block_List.List;
       Entry_List    : Wallet_Directory_List.List;
+      Randomize     : Boolean := True;
       Root          : IO.Block_Number;
       IV            : Util.Encoders.AES.Word_Block_Type;
       Decipher      : Util.Encoders.AES.Decoder;
