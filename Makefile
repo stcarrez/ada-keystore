@@ -56,6 +56,39 @@ install-samples:
 	cp -p $(srcdir)/samples.gpr $(samplesdir)
 	cp -p $(srcdir)/config.gpr $(samplesdir)
 
+ifeq ($(HAVE_PANDOC),yes)
+ifeq ($(HAVE_DYNAMO),yes)
+doc::  docs/keystore-book.pdf docs/keystore-book.html
+	$(DYNAMO) build-doc -markdown wiki
+
+KEYSTORE_DOC= \
+  title.md \
+  pagebreak.tex \
+  index.md \
+  pagebreak.tex \
+  Installation.md \
+  pagebreak.tex \
+  Using.md \
+  pagebreak.tex \
+  Programming.md \
+  Keystore.md \
+  pagebreak.tex \
+  annex.md \
+  akt.md
+
+DOC_OPTIONS=-f markdown -o keystore-book.pdf --listings --number-sections --toc
+HTML_OPTIONS=-f markdown -o keystore-book.html --listings --number-sections --toc --css pandoc.css
+
+docs/keystore-book.pdf: $(KEYSTORE_DOC_DEP) force
+	$(DYNAMO) build-doc -pandoc docs
+	cd docs && pandoc $(DOC_OPTIONS) --template=./eisvogel.tex $(KEYSTORE_DOC)
+
+docs/keystore-book.html: docs/keystore-book.pdf force
+	cd docs && pandoc $(HTML_OPTIONS) $(KEYSTORE_DOC)
+
+endif
+endif
+
 $(eval $(call ada_library,$(NAME)))
 
 .PHONY: tools gtk
