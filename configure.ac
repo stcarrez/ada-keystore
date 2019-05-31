@@ -20,6 +20,9 @@ EXEC_PREFIX="$prefix"
 AC_SUBST(EXEC_PREFIX)
 AM_GNAT_LIBRARY_PROJECT(keystore)
 
+AC_CHECK_PROG(HAVE_PANDOC,pandoc,yes)
+AC_CHECK_PROG(HAVE_DYNAMO,dynamo,yes)
+
 ##########################################
 # Ada Util library
 ##########################################
