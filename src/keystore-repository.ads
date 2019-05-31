@@ -260,15 +260,6 @@ private
                               Data_Block : out Wallet_Block_Entry_Access) with
      Post => Data_Block.Available = AES_Align (Data_Block.Available);
 
-   --  Find the data block to hold a new data entry that occupies the given space.
-   --  The first data block that has enough space is used otherwise a new block
-   --  is allocated and initialized.
-   procedure Allocate_Data_Block (Manager    : in out Wallet_Manager;
-                                  Space      : in IO.Block_Index;
-                                  Data_Block : out Wallet_Block_Entry_Access;
-                                  Stream     : in out IO.Wallet_Stream'Class) with
-     Post => Data_Block.Available = AES_Align (Data_Block.Available);
-
    --  Release the data block to the stream.
    procedure Release_Data_Block (Manager    : in out Wallet_Manager;
                                  Data_Block : in out Wallet_Block_Entry_Access;
