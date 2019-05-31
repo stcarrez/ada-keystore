@@ -19,6 +19,7 @@ with Util.Log.Loggers;
 with Ada.IO_Exceptions;
 with Ada.Unchecked_Deallocation;
 with Keystore.Logs;
+with Keystore.Repository.Data;
 
 --
 --  Wallet repository encrypted with Wallet id AES-CTR key
@@ -293,9 +294,9 @@ package body Keystore.Repository.Entries is
       --  Allocate first data block.
       if Size > 0 and Item.Data = null then
          if Size < DATA_MAX_SIZE then
-            Allocate_Data_Block (Manager, IO.Block_Index (Size), Item.Data, Stream);
+            Data.Allocate_Data_Block (Manager, IO.Block_Index (Size), Item.Data, Stream);
          else
-            Allocate_Data_Block (Manager, DATA_MAX_SIZE, Item.Data, Stream);
+            Data.Allocate_Data_Block (Manager, DATA_MAX_SIZE, Item.Data, Stream);
          end if;
       end if;
 
