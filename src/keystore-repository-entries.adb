@@ -121,7 +121,7 @@ package body Keystore.Repository.Entries is
                   Item.Create_Date := IO.Get_Date (Manager.Buffer);
                   Item.Header := Dir_Block;
                   Item.Name := Name;
-                  Find_Data_Block (Manager, IO.Get_Block_Number (Manager.Buffer), Item.Data);
+                  Data.Find_Data_Block (Manager, IO.Get_Block_Number (Manager.Buffer), Item.Data);
 
                   if Prev = null then
                      Dir_Block.First := Item;
