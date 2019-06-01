@@ -23,12 +23,15 @@ with Ada.Streams;
 with Keystore.Keys;
 with Util.Streams;
 with Interfaces;
-private with Util.Refs;
-private with Ada.Finalization;
+
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Hash;
+
+private with Util.Refs;
 private with Keystore.Random;
+private with Ada.Containers.Ordered_Maps;
+limited private with Keystore.Repository.Data;
 private package Keystore.Repository is
 
    type Wallet_Repository is tagged private;
@@ -211,13 +214,14 @@ private
       Name         : aliased String (1 .. Length);
    end record;
 
-   package Wallet_Block_List is
-     new Ada.Containers.Doubly_Linked_Lists (Element_Type => Wallet_Block_Entry_Access,
-                                             "="          => "=");
-
    package Wallet_Directory_List is
      new Ada.Containers.Doubly_Linked_Lists (Element_Type => Wallet_Directory_Entry_Access,
                                              "="          => "=");
+
+   package Wallet_Block_Maps is
+     new Ada.Containers.Ordered_Maps (Key_Type      => IO.Block_Number,
+                                      Element_Type  => Wallet_Block_Entry_Access,
+                                      "<" => IO."<");
 
    package Wallet_Maps is
      new Ada.Containers.Indefinite_Hashed_Maps (Key_Type        => String,
@@ -233,10 +237,12 @@ private
                                                 Equivalent_Keys => "=",
                                                 "="             => "=");
 
+   type Wallet_Worker_Access is access all Keystore.Repository.Data.Wallet_Worker;
+
    type Wallet_Manager is limited record
       Id            : Wallet_Identifier;
       Next_Id       : Wallet_Entry_Index;
-      Data_List     : Wallet_Block_List.List;
+      Data_List     : Wallet_Block_Maps.Map;
       Entry_List    : Wallet_Directory_List.List;
       Randomize     : Boolean := True;
       Root          : IO.Block_Number;
@@ -249,22 +255,12 @@ private
       Protect_Key   : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
       Random        : Keystore.Random.Generator;
       Buffer        : IO.Marshaller;
+      Workers       : Wallet_Worker_Access;
    end record;
 
    --  Set the IV vector to be used for the encryption of the given block number.
    procedure Set_IV (Manager : in out Wallet_Manager;
                      Block   : in IO.Block_Number);
-
-   --  Find the data block instance with the given block number.
-   procedure Find_Data_Block (Manager    : in out Wallet_Manager;
-                              Block      : in IO.Block_Number;
-                              Data_Block : out Wallet_Block_Entry_Access) with
-     Post => Data_Block.Available = AES_Align (Data_Block.Available);
-
-   --  Release the data block to the stream.
-   procedure Release_Data_Block (Manager    : in out Wallet_Manager;
-                                 Data_Block : in out Wallet_Block_Entry_Access;
-                                 Stream     : in out IO.Wallet_Stream'Class);
 
    --  Delete the value associated with the given name.
    --  Raises the Not_Found exception if the name was not found.
