@@ -405,8 +405,6 @@ package body Keystore.Repository is
                      Stream     : in out IO.Wallet_Stream'Class) is
       Pos        : Wallet_Maps.Cursor := Manager.Map.Find (Name);
       Item       : Wallet_Entry_Access;
-      Block      : Wallet_Block_Entry_Access;
-      Next_Block : Wallet_Block_Entry_Access;
    begin
       if not Wallet_Maps.Has_Element (Pos) then
          Log.Info ("Data entry '{0}' not found", Name);
@@ -416,20 +414,7 @@ package body Keystore.Repository is
       Item := Wallet_Maps.Element (Pos);
       begin
          --  Erase the data fragments used by the entry.
-         Block := Item.Data;
-         while Block /= null loop
-            Data.Load_Data (Manager, Block, Stream);
-            Data.Delete_Fragment (Manager    => Manager,
-                                  Data_Block => Block.all,
-                                  Next_Block => Next_Block,
-                                  Item       => Item);
-            if Block.Count = 0 then
-               Release_Data_Block (Manager, Block, Stream);
-            else
-               Data.Save_Data (Manager, Block.all, Stream);
-            end if;
-            Block := Next_Block;
-         end loop;
+         Data.Delete_Data (Manager, Item, Item.Data, Stream);
 
          --  Erase the entry from the repository.
          Entries.Delete_Entry (Manager => Manager,
