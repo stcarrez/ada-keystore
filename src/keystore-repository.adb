@@ -61,6 +61,10 @@ package body Keystore.Repository is
      new Ada.Unchecked_Deallocation (Object => Wallet_Directory_Entry,
                                      Name   => Wallet_Directory_Entry_Access);
 
+   procedure Free is
+     new Ada.Unchecked_Deallocation (Object => Keystore.Repository.Data.Wallet_Worker,
+                                     Name   => Wallet_Worker_Access);
+
    function Hash (Value : in Wallet_Entry_Index) return Ada.Containers.Hash_Type is
    begin
       return Ada.Containers.Hash_Type (Value);
@@ -226,41 +230,6 @@ package body Keystore.Repository is
       Manager.Decipher.Set_IV (Block_IV);
       Manager.Cipher.Set_IV (Block_IV);
    end Set_IV;
-
-   --  ------------------------------
-   --  Find the data block instance with the given block number.
-   --  ------------------------------
-   procedure Find_Data_Block (Manager    : in out Wallet_Manager;
-                              Block      : in IO.Block_Number;
-                              Data_Block : out Wallet_Block_Entry_Access) is
-   begin
-      for D of Manager.Data_List loop
-         if D.Block = Block then
-            Data_Block := D;
-            Data_Block.Count := Data_Block.Count + 1;
-            return;
-         end if;
-      end loop;
-      Data_Block := new Wallet_Block_Entry;
-      Data_Block.Available := IO.Block_Index'Last - IO.BT_DATA_START + 1;
-      Data_Block.Count := 1;
-      Data_Block.Block := Block;
-      Data_Block.Last_Pos := IO.Block_Index'Last;
-      Manager.Data_List.Append (Data_Block);
-   end Find_Data_Block;
-
-   --  ------------------------------
-   --  Release the data block to the stream.
-   --  ------------------------------
-   procedure Release_Data_Block (Manager    : in out Wallet_Manager;
-                                 Data_Block : in out Wallet_Block_Entry_Access;
-                                 Stream     : in out IO.Wallet_Stream'Class) is
-      Pos : Wallet_Block_List.Cursor := Manager.Data_List.Find (Data_Block);
-   begin
-      Manager.Data_List.Delete (Pos);
-      Stream.Release (Block => Data_Block.Block);
-      Free (Data_Block);
-   end Release_Data_Block;
 
    procedure Update (Manager    : in out Wallet_Manager;
                      Name       : in String;
@@ -457,6 +426,7 @@ package body Keystore.Repository is
          Free (Item);
          Manager.Map.Delete (First);
       end loop;
+      Free (Manager.Workers);
    end Release;
 
    protected body Safe_Wallet_Repository is
