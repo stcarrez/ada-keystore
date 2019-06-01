@@ -21,19 +21,23 @@ package body Keystore.Logs is
    procedure Dump (Log     : in Util.Log.Loggers.Logger;
                    Content : in Ada.Streams.Stream_Element_Array) is
       use type Ada.Streams.Stream_Element_Offset;
-
-      Encoder : Util.Encoders.Base16.Encoder;
-      Start   : Ada.Streams.Stream_Element_Offset := Content'First;
-      Last    : Ada.Streams.Stream_Element_Offset;
    begin
-      while Start <= Content'Last loop
-         Last := Start + 31;
-         if Last > Content'Last then
-            Last := Content'Last;
-         end if;
-         Log.Debug (" {0}", Encoder.Transform (Content (Start .. Last)));
-         Start := Last + 1;
-      end loop;
+      if Log.Get_Level >= Util.Log.DEBUG_LEVEL then
+         declare
+            Encoder : Util.Encoders.Base16.Encoder;
+            Start   : Ada.Streams.Stream_Element_Offset := Content'First;
+            Last    : Ada.Streams.Stream_Element_Offset;
+         begin
+            while Start <= Content'Last loop
+               Last := Start + 31;
+               if Last > Content'Last then
+                  Last := Content'Last;
+               end if;
+               Log.Debug (" {0}", Encoder.Transform (Content (Start .. Last)));
+               Start := Last + 1;
+            end loop;
+         end;
+      end if;
    end Dump;
 
    procedure Error (Log     : in Util.Log.Loggers.Logger;
