@@ -27,6 +27,7 @@ with Interfaces;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Hash;
+with Keystore.Workers;
 
 private with Util.Refs;
 private with Keystore.Random;
@@ -122,6 +123,9 @@ private package Keystore.Repository is
                    Content    : out Entry_Map;
                    Stream     : in out IO.Wallet_Stream'Class);
 
+   procedure Set_Work_Manager (Repository : in out Wallet_Repository;
+                               Workers    : in Keystore.Workers.Work_Manager_Access);
+
    procedure Close (Repository : in out Wallet_Repository);
 
 private
@@ -141,7 +145,7 @@ private
    DATA_IV_OFFSET       : constant := 32;
    DATA_ENTRY_SIZE      : constant := 112;
    DATA_MAX_SIZE        : constant := IO.Block_Size - IO.BT_HMAC_HEADER_SIZE
-     - IO.BT_TYPE_HEADER_SIZE - DATA_ENTRY_SIZE - 4;
+     - IO.BT_TYPE_HEADER_SIZE - DATA_ENTRY_SIZE;
 
    type Wallet_Entry_Index is new Positive;
 
@@ -337,10 +341,12 @@ private
       procedure List (Content    : out Entry_Map;
                       Stream     : in out IO.Wallet_Stream'Class);
 
+      procedure Set_Work_Manager (Workers : in Keystore.Workers.Work_Manager_Access);
+
       procedure Release;
 
    private
-      Manager       : Wallet_Manager;
+      Manager       : aliased Wallet_Manager;
       Parent        : Safe_Wallet_Repository_Access;
       Self          : Safe_Wallet_Repository_Access;
    end Safe_Wallet_Repository;
