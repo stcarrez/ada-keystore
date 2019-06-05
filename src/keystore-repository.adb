@@ -217,6 +217,12 @@ package body Keystore.Repository is
       Repository := Empty;
    end Close;
 
+   procedure Set_Work_Manager (Repository : in out Wallet_Repository;
+                               Workers    : in Keystore.Workers.Work_Manager_Access) is
+   begin
+      Repository.Value.Set_Work_Manager (Workers);
+   end Set_Work_Manager;
+
    --  ------------------------------
    --  Set the IV vector to be used for the encryption of the given block number.
    --  ------------------------------
@@ -447,6 +453,7 @@ package body Keystore.Repository is
                       Stream       : in out IO.Wallet_Stream'Class) is
       begin
          Manager.Id := Ident;
+         Manager.Workers := Data.Create (Manager'Access, null, 1);
          Keys.Open (Password, Ident, Block, Manager.Root, Manager.Protect_Key,
                     Manager.IV, Manager.Cipher, Manager.Decipher, Stream);
 
@@ -463,6 +470,7 @@ package body Keystore.Repository is
          Stream.Allocate (Manager.Root);
          Manager.Id := Ident;
          Manager.Next_Id := 1;
+         Manager.Workers := Data.Create (Manager'Access, null, 1);
          Keys.Create (Password, 1, Ident, Block, Manager.Root, Manager.Protect_Key,
                       Manager.IV, Manager.Cipher, Manager.Decipher, Stream);
 
@@ -554,7 +562,7 @@ package body Keystore.Repository is
             else
                Old_Offset := Data_Offset;
                Data.Add_Data (Manager, Item, Block, Content, Data_Offset, True, Stream);
-               Remain := Content'Length - (Data_Offset - Old_Offset + 1);
+               Remain := Content'Length - (Data_Offset - Old_Offset);
                Pos := Content'First + Remain;
                if Remain > 0 then
                   Content (Content'First .. Content'First + Remain - 1)
@@ -628,7 +636,7 @@ package body Keystore.Repository is
 
          Item := Wallet_Maps.Element (Pos);
          if Item.Kind = T_INVALID then
-            Data.Load_Data (Manager, Item.Data, Stream);
+            Data.Load_Data (Manager, Item.Data, Manager.Buffer, Stream);
             if Item.Kind = T_INVALID then
                Log.Error ("Wallet entry {0} is corrupted", Name);
                raise Corrupted;
@@ -661,7 +669,7 @@ package body Keystore.Repository is
       begin
          for Item of Manager.Map loop
             if Item.Kind = T_INVALID then
-               Data.Load_Data (Manager, Item.Data, Stream);
+               Data.Load_Data (Manager, Item.Data, Manager.Buffer, Stream);
             end if;
             Value.Size := Integer (Item.Size);
             Value.Kind := Item.Kind;
@@ -671,6 +679,12 @@ package body Keystore.Repository is
                              New_Item => Value);
          end loop;
       end List;
+
+      procedure Set_Work_Manager (Workers    : in Keystore.Workers.Work_Manager_Access) is
+      begin
+         Free (Manager.Workers);
+         Manager.Workers := Data.Create (Manager'Access, Workers, Workers.Count);
+      end Set_Work_Manager;
 
       procedure Release is
       begin
