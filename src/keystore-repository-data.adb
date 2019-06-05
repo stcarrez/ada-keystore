@@ -80,9 +80,9 @@ with Keystore.Logs;
 --  +------------------+-----
 --
 --  Header: 32 + 16
---  Entry :      64
+--  Entry :      112
 --  Entry-end:   16
---  Data:      3968   => 3%
+--  Data:      3920   => 3%
 package body Keystore.Repository.Data is
 
    use type Interfaces.Unsigned_16;
@@ -91,6 +91,8 @@ package body Keystore.Repository.Data is
    use type IO.Block_Count;
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Metadata");
+
+   use type Keystore.Workers.Work_Manager_Access;
 
    procedure Free is
      new Ada.Unchecked_Deallocation (Object => Wallet_Block_Entry,
@@ -105,20 +107,20 @@ package body Keystore.Repository.Data is
    procedure Find_Data_Block (Manager    : in out Wallet_Manager;
                               Block      : in IO.Block_Number;
                               Data_Block : out Wallet_Block_Entry_Access) is
+      Pos : Wallet_Block_Maps.Cursor := Manager.Data_List.Find (Block);
    begin
-      for D of Manager.Data_List loop
-         if D.Block = Block then
-            Data_Block := D;
-            Data_Block.Count := Data_Block.Count + 1;
-            return;
-         end if;
-      end loop;
+      if Wallet_Block_Maps.Has_Element (Pos) then
+         Data_Block := Wallet_Block_Maps.Element (Pos);
+         Data_Block.Count := Data_Block.Count + 1;
+         return;
+      end if;
+
       Data_Block := new Wallet_Block_Entry;
       Data_Block.Available := IO.Block_Index'Last - IO.BT_DATA_START + 1;
       Data_Block.Count := 1;
       Data_Block.Block := Block;
       Data_Block.Last_Pos := IO.Block_Index'Last;
-      Manager.Data_List.Append (Data_Block);
+      Manager.Data_List.Insert (Block, Data_Block);
    end Find_Data_Block;
 
    --  ------------------------------
@@ -146,7 +148,7 @@ package body Keystore.Repository.Data is
 
          exit when Candidate = null;
 
-         Load_Data (Manager, Candidate, Stream);
+         Load_Data (Manager, Candidate, Manager.Buffer, Stream);
          Candidate := null;
       end loop;
 
@@ -157,7 +159,7 @@ package body Keystore.Repository.Data is
       Data_Block.Last_Pos := IO.Block_Index'Last;
       Data_Block.Ready := True;
       Stream.Allocate (Data_Block.Block);
-      Manager.Data_List.Append (Data_Block);
+      Manager.Data_List.Insert (Data_Block.Block, Data_Block);
 
       Logs.Debug (Log, "Allocated data block{0}", Data_Block.Block);
    end Allocate_Data_Block;
@@ -168,7 +170,7 @@ package body Keystore.Repository.Data is
    procedure Release_Data_Block (Manager    : in out Wallet_Manager;
                                  Data_Block : in out Wallet_Block_Entry_Access;
                                  Stream     : in out IO.Wallet_Stream'Class) is
-      Pos : Wallet_Block_List.Cursor := Manager.Data_List.Find (Data_Block);
+      Pos : Wallet_Block_Maps.Cursor := Manager.Data_List.Find (Data_Block.Block);
    begin
       Manager.Data_List.Delete (Pos);
       Stream.Release (Block => Data_Block.Block);
@@ -193,6 +195,7 @@ package body Keystore.Repository.Data is
    --  ------------------------------
    procedure Load_Data (Manager    : in out Wallet_Manager;
                         Data_Block : in Wallet_Block_Entry_Access;
+                        Buffer     : in out IO.Marshaller;
                         Stream     : in out IO.Wallet_Stream'Class) is
       --  We only decrypt the data entry descriptors.
       --  Size  : constant IO.Block_Index := IO.Block_Index (Data_Block.Count * DATA_ENTRY_SIZE);
@@ -208,18 +211,18 @@ package body Keystore.Repository.Data is
                    Decipher     => Manager.Decipher,
                    Sign         => Manager.Sign,
                    Decrypt_Size => Size,
-                   Into         => Manager.Buffer);
+                   Into         => Buffer);
 
       --  Check block type.
-      Btype := IO.Get_Unsigned_16 (Manager.Buffer);
+      Btype := IO.Get_Unsigned_16 (Buffer);
       if Btype /= IO.BT_WALLET_DATA then
          Logs.Error (Log, "Block{0} invalid block type", Data_Block.Block);
          raise Keystore.Corrupted;
       end if;
-      IO.Skip (Manager.Buffer, 2);
+      IO.Skip (Buffer, 2);
 
       --  Check that this is a block for the current wallet.
-      Wid := IO.Get_Unsigned_32 (Manager.Buffer);
+      Wid := IO.Get_Unsigned_32 (Buffer);
       if Wid /= Interfaces.Unsigned_32 (Manager.Id) then
          Logs.Error (Log, "Block{0} invalid block wallet identifier", Data_Block.Block);
          raise Keystore.Corrupted;
@@ -240,38 +243,38 @@ package body Keystore.Repository.Data is
             Block       : IO.Block_Count;
             Data_Offset : Interfaces.Unsigned_32;
          begin
-            IO.Skip (Manager.Buffer, 8);
+            IO.Skip (Buffer, 8);
 
-            while Manager.Buffer.Pos < IO.BT_DATA_START + Size loop
+            while Buffer.Pos < IO.BT_DATA_START + Size loop
                Frag := Frag + 1;
 
-               pragma Assert (Check => Manager.Buffer.Pos = Data_Entry_Offset (Frag));
+               pragma Assert (Check => Buffer.Pos = Data_Entry_Offset (Frag));
 
-               Index := IO.Get_Unsigned_32 (Manager.Buffer);
+               Index := IO.Get_Unsigned_32 (Buffer);
                exit when Index = 0;
                Pos := Manager.Entry_Indexes.Find (Wallet_Entry_Index (Index));
                if Wallet_Indexs.Has_Element (Pos) then
                   Item := Wallet_Indexs.Element (Pos);
-                  Item.Kind := IO.Get_Kind (Manager.Buffer);
-                  Slot_Size := IO.Get_Unsigned_16 (Manager.Buffer);
-                  Item_Size := IO.Get_Unsigned_64 (Manager.Buffer);
+                  Item.Kind := IO.Get_Kind (Buffer);
+                  Slot_Size := IO.Get_Unsigned_16 (Buffer);
+                  Item_Size := IO.Get_Unsigned_64 (Buffer);
                   Item.Size := Item_Size;
                   Next_Block := null;
                   if Item_Size = Interfaces.Unsigned_64 (Slot_Size) then
-                     Item.Update_Date := IO.Get_Date (Manager.Buffer);
-                     Item.Access_Date := IO.Get_Date (Manager.Buffer);
+                     Item.Update_Date := IO.Get_Date (Buffer);
+                     Item.Access_Date := IO.Get_Date (Buffer);
                      Data_Offset := 0;
                   else
-                     Item.Access_Date := IO.Get_Date (Manager.Buffer);
-                     Block := IO.Get_Block_Number (Manager.Buffer);
+                     Item.Access_Date := IO.Get_Date (Buffer);
+                     Block := IO.Get_Block_Number (Buffer);
                      if Block /= 0 then
                         Find_Data_Block (Manager, Block, Next_Block);
                      end if;
-                     Data_Offset := IO.Get_Unsigned_32 (Manager.Buffer);
+                     Data_Offset := IO.Get_Unsigned_32 (Buffer);
                   end if;
 
                   --  Skip the IV, Key, HMAC-256
-                  IO.Skip (Manager.Buffer, IO.SIZE_HMAC + IO.SIZE_SECRET + IO.SIZE_IV);
+                  IO.Skip (Buffer, IO.SIZE_HMAC + IO.SIZE_SECRET + IO.SIZE_IV);
 
                   Data_Size := AES_Align (IO.Block_Index (Slot_Size));
                   Offset := Offset - Data_Size;
@@ -579,6 +582,24 @@ package body Keystore.Repository.Data is
    procedure Get_Fragment (Manager  : in out Wallet_Manager;
                            Position : in Fragment_Index;
                            Fragment : in Wallet_Block_Fragment;
+                           Work     : in out Data_Work) is
+      Start_Data : constant IO.Block_Index := Fragment.Block_Offset;
+   begin
+      Logs.Debug (Log, "Get fragment from{0} at{1}", Work.Block.Block, Start_Data);
+
+      Work.Buffer_Pos := Work.Data'First;
+      Work.Block.Pos := Data_Entry_Offset (Position) + DATA_IV_OFFSET;
+      Work.Last_Pos := Work.Buffer_Pos + Fragment.Size - 1;
+      Work.Start_Data := Start_Data;
+      Work.End_Data := Start_Data + AES_Align (Fragment.Size) - 1;
+   end Get_Fragment;
+
+   --  ------------------------------
+   --  Get the data fragment and write it to the output buffer.
+   --  ------------------------------
+   procedure Get_Fragment (Manager  : in out Wallet_Manager;
+                           Position : in Fragment_Index;
+                           Fragment : in Wallet_Block_Fragment;
                            Output   : in out Util.Streams.Output_Stream'Class) is
       Start_Data : IO.Block_Index := Fragment.Block_Offset;
       End_Data   : constant IO.Block_Index := Start_Data + AES_Align (Fragment.Size) - 1;
@@ -734,7 +755,7 @@ package body Keystore.Repository.Data is
 
          --  Get the current block if it has some content or fill an empty new one.
          if Block.Count > 0 then
-            Load_Data (Manager, Block, Stream);
+            Load_Data (Manager, Block, Manager.Buffer, Stream);
          else
             Init_Data_Block (Manager);
          end if;
@@ -771,7 +792,7 @@ package body Keystore.Repository.Data is
       New_Block := null;
       Delete_Block := null;
       while Data_Block /= null loop
-         Load_Data (Manager, Data_Block, Stream);
+         Load_Data (Manager, Data_Block, Manager.Buffer, Stream);
          Item.Kind := Kind;
          Item.Size := Interfaces.Unsigned_64 (Offset + Content'Length);
          Position := Get_Fragment_Position (Data_Block.all, Item);
@@ -813,7 +834,7 @@ package body Keystore.Repository.Data is
       Next_Block : Wallet_Block_Entry_Access;
    begin
       while Block /= null loop
-         Load_Data (Manager, Block, Stream);
+         Load_Data (Manager, Block, Manager.Buffer, Stream);
          Delete_Fragment (Manager    => Manager,
                           Data_Block => Block.all,
                           Next_Block => Next_Block,
@@ -851,7 +872,7 @@ package body Keystore.Repository.Data is
 
       --  Load the data fragments.
       while Data_Block /= null loop
-         Load_Data (Manager, Data_Block, Stream);
+         Load_Data (Manager, Data_Block, Manager.Buffer, Stream);
          Position := Get_Fragment_Position (Data_Block.all, Item);
          exit when Position = 0;
          Get_Fragment (Manager, Position, Data_Block.Fragments (Position),
@@ -874,23 +895,146 @@ package body Keystore.Repository.Data is
       Item        : Wallet_Entry_Access;
       Data_Block  : Wallet_Block_Entry_Access;
       Position    : Fragment_Count;
+      Sequence    : Natural := 0;
+      seq         : Natural;
+      Work        : Data_Work_Access;
+
+      procedure Flush_Queue (Worker : in out Wallet_Worker) is
+         Seq : Natural;
+      begin
+         while Worker.Pool_Count < Worker.Work_Count loop
+            Worker.Data_Queue.Dequeue (Work, Seq);
+            Output.Write (Work.Data (Work.Buffer_Pos .. Work.Last_Pos));
+            Put_Work (Worker, Work);
+         end loop;
+      end Flush_Queue;
+
    begin
       if not Wallet_Maps.Has_Element (Pos) then
          Log.Info ("Data entry '{0}' not found", Name);
          raise Not_Found;
       end if;
 
+      Manager.Workers.Data_Queue.Reset_Sequence;
       Item := Wallet_Maps.Element (Pos);
       Data_Block := Item.Data;
 
       --  Load the data fragments.
       while Data_Block /= null loop
-         Load_Data (Manager, Data_Block, Stream);
-         Position := Get_Fragment_Position (Data_Block.all, Item);
-         exit when Position = 0;
-         Get_Fragment (Manager, Position, Data_Block.Fragments (Position), Output);
-         Data_Block := Data_Block.Fragments (Position).Next_Fragment;
+         Work := Get_Work (Manager.Workers.all);
+         if Work /= null then
+            Work.Sequence := Sequence;
+            Sequence := Sequence + 1;
+            Load_Data (Manager, Data_Block, Work.Block, Stream);
+            Position := Get_Fragment_Position (Data_Block.all, Item);
+            exit when Position = 0;
+            Get_Fragment (Manager, Position, Data_Block.Fragments (Position), Work.all);
+            Data_Block := Data_Block.Fragments (Position).Next_Fragment;
+            if Manager.Workers.Work_Manager /= null then
+               Manager.Workers.Work_Manager.Execute (Work.all'Access);
+            else
+               Work.Decipher;
+               Put_Work (Manager.Workers.all, Work);
+               Flush_Queue (Manager.Workers.all);
+               Output.Write (Work.Data (Work.Buffer_Pos .. Work.Last_Pos));
+            end if;
+         else
+            Manager.Workers.Data_Queue.Dequeue (Work, Seq);
+            Output.Write (Work.Data (Work.Buffer_Pos .. Work.Last_Pos));
+            Put_Work (Manager.Workers.all, Work);
+         end if;
       end loop;
+      Flush_Queue (Manager.Workers.all);
+
+   exception
+      when E : others =>
+         Log.Error ("Exception while decrypting data: {0}", E);
+         Wait_Workers (Manager.Workers.all);
+         raise;
+
    end Write;
+
+   procedure Wait_Workers (Worker : in out Wallet_Worker) is
+      Work : Data_Work_Access;
+      Seq  : Natural;
+   begin
+      while Worker.Pool_Count < Worker.Work_Count loop
+         Worker.Data_Queue.Dequeue (Work, Seq);
+         Put_Work (Worker, Work);
+      end loop;
+   end Wait_Workers;
+
+   procedure Put_Work (Worker : in out Wallet_Worker;
+                       Work   : in Data_Work_Access) is
+   begin
+      Worker.Pool_Count := Worker.Pool_Count + 1;
+      Worker.Work_Pool (Worker.Pool_Count) := Work;
+   end Put_Work;
+
+   function Get_Work (Worker : in out Wallet_Worker) return Data_Work_Access is
+   begin
+      if Worker.Pool_Count = 0 then
+         return null;
+      else
+         Worker.Pool_Count := Worker.Pool_Count - 1;
+         return Worker.Work_Pool (Worker.Pool_Count + 1);
+      end if;
+   end Get_Work;
+
+   procedure Decipher (Work : in out Data_Work) is
+      Last      : Stream_Element_Offset;
+      Encoded   : Stream_Element_Offset;
+      Start_Pos : constant Stream_Element_Offset := Work.Buffer_Pos;
+      Last_Pos  : constant Stream_Element_Offset := Work.Last_Pos;
+      Secret    : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
+      IV        : Util.Encoders.AES.Word_Block_Type;
+      Decipher  : Util.Encoders.AES.Decoder;
+   begin
+      Logs.Debug (Log, "Decipher from{0}", Work.Block.Block);
+
+      IO.Get_Data (Work.Block, IV);
+      IO.Get_Secret (Work.Block, Secret, Work.Manager.Protect_Key);
+
+      Decipher.Set_IV (IV);
+      Decipher.Set_Key (Secret, Util.Encoders.AES.CBC);
+      Decipher.Set_Padding (Util.Encoders.AES.ZERO_PADDING);
+
+      Decipher.Transform
+        (Data    => Work.Block.Data (Work.Start_Data .. Work.End_Data),
+         Into    => Work.Data (Start_Pos .. Last_Pos),
+         Last    => Last,
+         Encoded => Encoded);
+
+      Decipher.Finish (Into => Work.Data (Last + 1 .. Last_Pos),
+                       Last => Last);
+   end Decipher;
+
+   overriding
+   procedure Execute (Work : in out Data_Work) is
+   begin
+      Work.Decipher;
+      Work.Queue.Enqueue (Work'Unchecked_Access, Work.Sequence);
+   end Execute;
+
+   --  ------------------------------
+   --  Create the wallet encryption and decryption work manager.
+   --  ------------------------------
+   function Create (Manager      : access Wallet_Manager;
+                    Work_Manager : in Keystore.Workers.Work_Manager_Access;
+                    Count        : in Positive) return access Wallet_Worker is
+      Result : access Wallet_Worker := new Wallet_Worker (Count);
+      Size   : constant Stream_Element_Offset := Stream_Element_Offset (Count) * DATA_MAX_SIZE;
+   begin
+      Result.Stream_Buffer := new Ada.Streams.Stream_Element_Array (1 .. Size);
+      Result.Work_Manager := Work_Manager;
+      Result.Data_Queue.Set_Size (Capacity => Count);
+      for I in 1 .. Count loop
+         Result.Work_Pool (I) := Result.Work_Slots (I)'Access;
+         Result.Work_Slots (I).Queue := Result.Data_Queue'Access;
+         Result.Work_Slots (I).Manager := Manager;
+      end loop;
+      Result.Pool_Count := Count;
+      return Result;
+   end Create;
 
 end Keystore.Repository.Data;
