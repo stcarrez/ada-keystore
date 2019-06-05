@@ -20,7 +20,16 @@ with Keystore.IO;
 with Ada.Streams;
 with Util.Streams;
 
+with Keystore.Workers;
+private with Util.Concurrent.Sequence_Queues;
 private package Keystore.Repository.Data is
+
+   type Wallet_Worker (Work_Count : Natural) is limited private;
+
+   --  Create the wallet encryption and decryption work manager.
+   function Create (Manager      : access Wallet_Manager;
+                    Work_Manager : in Keystore.Workers.Work_Manager_Access;
+                    Count        : in Positive) return access Wallet_Worker;
 
    --  Find the data block instance with the given block number.
    procedure Find_Data_Block (Manager    : in out Wallet_Manager;
@@ -54,6 +63,7 @@ private package Keystore.Repository.Data is
    --  the first time the data block is read.
    procedure Load_Data (Manager    : in out Wallet_Manager;
                         Data_Block : in Wallet_Block_Entry_Access;
+                        Buffer     : in out IO.Marshaller;
                         Stream     : in out IO.Wallet_Stream'Class) with
      Pre => Data_Block.Count > 0;
 
@@ -139,5 +149,57 @@ private package Keystore.Repository.Data is
                        Offset      : in out Ada.Streams.Stream_Element_Offset;
                        Full_Block  : in Boolean;
                        Stream      : in out IO.Wallet_Stream'Class);
+
+private
+
+   type Data_Work;
+   type Data_Work_Access is access all Data_Work;
+
+   package Work_Queues is
+     new Util.Concurrent.Sequence_Queues (Element_Type     => Data_Work_Access,
+                                          Sequence_Type    => Natural,
+                                          Default_Size     => 32,
+                                          Clear_On_Dequeue => False);
+
+   type Work_Type is (DATA_ENCRYPT, DATA_DECRYPT);
+
+   type Data_Work is limited new Workers.Work_Type with record
+      Kind       : Work_Type := DATA_DECRYPT;
+      Block      : IO.Marshaller;
+      Sequence   : Natural;
+      Start_Data : Stream_Element_Offset;
+      End_Data   : Stream_Element_Offset;
+      Buffer_Pos : Stream_Element_Offset;
+      Last_Pos   : Stream_Element_Offset;
+      Buffer     : access Ada.Streams.Stream_Element_Array;
+      Queue      : access Work_Queues.Queue;
+      Manager    : access Keystore.Repository.Wallet_Manager;
+      Data       : aliased Ada.Streams.Stream_Element_Array (1 .. DATA_MAX_SIZE);
+   end record;
+
+   type Data_Work_Array is array (Positive range <>) of aliased Data_Work;
+
+   type Data_Work_Access_Array is array (Positive range <>) of Data_Work_Access;
+
+   overriding
+   procedure Execute (Work : in out Data_Work);
+
+   procedure Decipher (Work : in out Data_Work);
+
+   type Wallet_Worker (Work_Count : Natural) is limited record
+      Work_Manager  : Keystore.Workers.Work_Manager_Access;
+      Data_Queue    : aliased Work_Queues.Queue;
+      Stream_Buffer : access Ada.Streams.Stream_Element_Array;
+      Pool_Count    : Natural := 0;
+      Work_Pool     : Data_Work_Access_Array (1 .. Work_Count);
+      Work_Slots    : Data_Work_Array (1 .. Work_Count);
+   end record;
+
+   function Get_Work (Worker : in out Wallet_Worker) return Data_Work_Access;
+
+   procedure Put_Work (Worker : in out Wallet_Worker;
+                       Work   : in Data_Work_Access);
+
+   procedure Wait_Workers (Worker : in out Wallet_Worker);
 
 end Keystore.Repository.Data;
