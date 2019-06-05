@@ -15,6 +15,7 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
+with System.Multiprocessors;
 with Ada.Command_Line;
 with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
@@ -69,11 +70,19 @@ package body AKT.Commands is
 
    --  ------------------------------
    --  Open the keystore file using the password password.
+   --  When `Use_Worker` is set, a workers of N tasks is created and assigned to the keystore
+   --  for the decryption and encryption process.
    --  ------------------------------
-   procedure Open_Keystore (Context  : in out Context_Type) is
+   procedure Open_Keystore (Context    : in out Context_Type;
+                            Use_Worker : in Boolean := False) is
    begin
       Context.Wallet.Open (Password => Context.Provider.Get_Password,
                            Path     => Context.Wallet_File.all);
+      if Use_Worker then
+         Context.Workers := new Keystore.Workers.Work_Manager (Context.Worker_Count);
+         Keystore.Workers.Executors.Start (Context.Workers.all'Access);
+         Context.Wallet.Set_Work_Manager (Context.Workers);
+      end if;
    end Open_Keystore;
 
    --  ------------------------------
@@ -103,6 +112,8 @@ package body AKT.Commands is
    overriding
    procedure Initialize (Context : in out Context_Type) is
    begin
+      Context.Worker_Count := Positive (System.Multiprocessors.Number_Of_CPUs);
+
       GC.Set_Usage (Config => Context.Command_Config,
                     Usage  => "[switchs] command [arguments]",
                     Help   => "akt - tool to store and protect your sensitive data");
@@ -120,14 +131,17 @@ package body AKT.Commands is
                         Output => Context.Wallet_File'Access,
                         Switch => "-f:",
                         Long_Switch => "--file=",
+                        Argument => "PATH",
                         Help   => "Defines the path for the wallet file");
       GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Password_File'Access,
                         Long_Switch => "--passfile=",
+                        Argument => "PATH",
                         Help   => "Read the file that contains the password");
       GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Unsafe_Password'Access,
                         Long_Switch => "--passfd=",
+                        Argument => "NUM",
                         Help   => "Read the password from the pipe with"
                           & " the given file descriptor");
       GC.Define_Switch (Config => Context.Command_Config,
@@ -137,6 +151,7 @@ package body AKT.Commands is
       GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Password_Env'Access,
                         Long_Switch => "--passenv=",
+                        Argument => "NAME",
                         Help   => "Read the environment variable that contains"
                         & " the password (not safe)");
       GC.Define_Switch (Config => Context.Command_Config,
@@ -144,6 +159,12 @@ package body AKT.Commands is
                         Switch => "-p:",
                         Long_Switch => "--password=",
                         Help   => "The password is passed within the command line (not safe)");
+      GC.Define_Switch (Config => Context.Command_Config,
+                        Output => Context.Worker_Count'Access,
+                        Switch => "-t:",
+                        Long_Switch => "--thread=",
+                        Argument => "COUNT",
+                        Help   => "Number of threads for the encryption/decryption process");
       GC.Initialize_Option_Scan (Stop_At_First_Non_Switch => True);
 
       Driver.Set_Description ("akt - tool to store and protect your sensitive data");
@@ -203,9 +224,13 @@ package body AKT.Commands is
       procedure Free is
         new Ada.Unchecked_Deallocation (Object => AKT.Passwords.Provider'Class,
                                         Name   => AKT.Passwords.Provider_Access);
+     procedure Free is
+        new Ada.Unchecked_Deallocation (Object => Keystore.Workers.Work_Manager'Class,
+                                        Name   => Keystore.Workers.Work_Manager_Access);
    begin
       GC.Free (Context.Command_Config);
       Free (Context.Provider);
+      Free (Context.Workers);
    end Finalize;
 
 end AKT.Commands;
