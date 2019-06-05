@@ -19,6 +19,7 @@ with AKT.Passwords;
 with Util.Commands;
 private with Util.Log.Loggers;
 private with Keystore.Files;
+private with Keystore.Workers;
 private with Ada.Finalization;
 private with GNAT.Command_Line;
 private with GNAT.Strings;
@@ -42,7 +43,10 @@ package AKT.Commands is
                                     Provider : in AKT.Passwords.Provider_Access);
 
    --  Open the keystore file using the password password.
-   procedure Open_Keystore (Context  : in out Context_Type);
+   --  When `Use_Worker` is set, a workers of N tasks is created and assigned to the keystore
+   --  for the decryption and encryption process.
+   procedure Open_Keystore (Context    : in out Context_Type;
+                            Use_Worker : in Boolean := False);
 
    --  Execute the command with its arguments.
    procedure Execute (Name    : in String;
@@ -60,7 +64,9 @@ private
 
    type Context_Type is limited new Ada.Finalization.Limited_Controlled with record
       Wallet            : Keystore.Files.Wallet_File;
+      Workers           : Keystore.Workers.Work_Manager_Access;
       Provider          : AKT.Passwords.Provider_Access;
+      Worker_Count      : aliased Integer := 1;
       Version           : aliased Boolean := False;
       Debug             : aliased Boolean := False;
       Wallet_File       : aliased GNAT.Strings.String_Access;
