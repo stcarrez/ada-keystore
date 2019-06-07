@@ -27,7 +27,6 @@ with Interfaces;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Hash;
-with Keystore.Workers;
 
 private with Util.Refs;
 private with Keystore.Random;
@@ -124,7 +123,7 @@ private package Keystore.Repository is
                    Stream     : in out IO.Wallet_Stream'Class);
 
    procedure Set_Work_Manager (Repository : in out Wallet_Repository;
-                               Workers    : in Keystore.Workers.Work_Manager_Access);
+                               Workers    : in Keystore.Task_Manager_Access);
 
    procedure Close (Repository : in out Wallet_Repository);
 
@@ -341,7 +340,7 @@ private
       procedure List (Content    : out Entry_Map;
                       Stream     : in out IO.Wallet_Stream'Class);
 
-      procedure Set_Work_Manager (Workers : in Keystore.Workers.Work_Manager_Access);
+      procedure Set_Work_Manager (Workers : in Keystore.Task_Manager_Access);
 
       procedure Release;
 
