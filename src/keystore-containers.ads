@@ -20,7 +20,6 @@ with Ada.Streams;
 with Keystore.IO.Refs;
 with Keystore.Keys;
 with Keystore.Repository;
-with Keystore.Workers;
 
 private package Keystore.Containers is
 
@@ -74,7 +73,7 @@ private package Keystore.Containers is
 
       procedure Close;
 
-      procedure Set_Work_Manager (Workers   : in Keystore.Workers.Work_Manager_Access);
+      procedure Set_Work_Manager (Workers   : in Keystore.Task_Manager_Access);
 
    private
       Stream     : Keystore.IO.Refs.Stream_Ref;
