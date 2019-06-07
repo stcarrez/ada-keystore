@@ -242,6 +242,12 @@ package body Keystore.Files is
       return Container.Container.Find (Name);
    end Find;
 
+   procedure Set_Work_Manager (Container : in out Wallet_File;
+                               Workers   : in Keystore.Task_Manager_Access) is
+   begin
+      Container.Container.Set_Work_Manager (Workers);
+   end Set_Work_Manager;
+
    overriding
    procedure Initialize (Wallet : in out Wallet_File) is
    begin
