@@ -36,4 +36,18 @@ If you want to retrieve a value, you can use one of:
    akt -f secure.akt get -n my-contract > file.doc
 ```
 
+You can also use the `akt` command together with the `tar` command
+to create secure backups.  You can create the compressed tar file,
+pipe the result to the `akt` command to store the content in the wallet.
+
+```
+   tar czf - dir-to-backup | akt -f secure.akt store backup.tar.gz
+```
+
+To extract the backup you can use the `extract` command and feed the
+result to the `tar` command as follows:
+
+```
+   akt -f secure.akt extract backup.tar.gz | tar xzf -
+```
 
