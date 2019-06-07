@@ -1,6 +1,6 @@
 .\"
 .\"
-.TH AKT 1 "May 1, 2019" "Ada Keystore Tool"
+.TH AKT 1 "Jun 7, 2019" "Ada Keystore Tool"
 .SH NAME
 akt - Ada Keystore Tool
 .SH SYNOPSIS
@@ -145,6 +145,18 @@ command is used to store a content in the wallet.  The content is either
 passed as argument or it can be read from a file by using the
 .I -f
 option.
+.\"
+.\"
+.SS The store command
+.RS 0
+akt \fBstore \fIname\fR\fR
+.RE
+.PP
+The
+.I store
+command is intended to be used as a target for a pipe command.
+It reads the standard input and stores the content which is read
+in the wallet.
 .\"
 .SS The remove command
 .RS 0
