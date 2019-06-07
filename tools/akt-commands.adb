@@ -79,8 +79,8 @@ package body AKT.Commands is
       Context.Wallet.Open (Password => Context.Provider.Get_Password,
                            Path     => Context.Wallet_File.all);
       if Use_Worker then
-         Context.Workers := new Keystore.Workers.Work_Manager (Context.Worker_Count);
-         Keystore.Workers.Executors.Start (Context.Workers.all'Access);
+         Context.Workers := new Keystore.Task_Manager (Context.Worker_Count);
+         Keystore.Start (Context.Workers);
          Context.Wallet.Set_Work_Manager (Context.Workers);
       end if;
    end Open_Keystore;
@@ -221,16 +221,20 @@ package body AKT.Commands is
 
    overriding
    procedure Finalize (Context : in out Context_Type) is
+      use type Keystore.Task_Manager_Access;
       procedure Free is
         new Ada.Unchecked_Deallocation (Object => AKT.Passwords.Provider'Class,
                                         Name   => AKT.Passwords.Provider_Access);
-     procedure Free is
-        new Ada.Unchecked_Deallocation (Object => Keystore.Workers.Work_Manager'Class,
-                                        Name   => Keystore.Workers.Work_Manager_Access);
+      procedure Free is
+        new Ada.Unchecked_Deallocation (Object => Keystore.Task_Manager,
+                                        Name   => Keystore.Task_Manager_Access);
    begin
+      if Context.Workers /= null then
+         Keystore.Stop (Context.Workers);
+         Free (Context.Workers);
+      end if;
       GC.Free (Context.Command_Config);
       Free (Context.Provider);
-      Free (Context.Workers);
    end Finalize;
 
 end AKT.Commands;
