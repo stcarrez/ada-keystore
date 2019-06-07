@@ -92,8 +92,6 @@ package body Keystore.Repository.Data is
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Metadata");
 
-   use type Keystore.Workers.Work_Manager_Access;
-
    procedure Free is
      new Ada.Unchecked_Deallocation (Object => Wallet_Block_Entry,
                                      Name   => Wallet_Block_Entry_Access);
@@ -1020,7 +1018,7 @@ package body Keystore.Repository.Data is
    --  Create the wallet encryption and decryption work manager.
    --  ------------------------------
    function Create (Manager      : access Wallet_Manager;
-                    Work_Manager : in Keystore.Workers.Work_Manager_Access;
+                    Work_Manager : in Keystore.Task_Manager_Access;
                     Count        : in Positive) return access Wallet_Worker is
       Result : access Wallet_Worker := new Wallet_Worker (Count);
       Size   : constant Stream_Element_Offset := Stream_Element_Offset (Count) * DATA_MAX_SIZE;
