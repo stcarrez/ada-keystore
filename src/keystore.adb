@@ -16,7 +16,10 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 
+with Util.Log.Loggers;
 package body Keystore is
+
+   Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore");
 
    --  ------------------------------
    --  Add in the wallet the named entry and associate it the content.
@@ -83,5 +86,38 @@ package body Keystore is
       Wallet'Class (Container).Get (Name, Info, Buffer);
       return Result;
    end Get;
+
+   --  ------------------------------
+   --  Start the tasks of the task manager.
+   --  ------------------------------
+   procedure Start (Manager : in Task_Manager_Access) is
+   begin
+      Executors.Start (Manager.all'Access);
+   end Start;
+
+   --  ------------------------------
+   --  Stop the tasks.
+   --  ------------------------------
+   procedure Stop (Manager : in Task_Manager_Access) is
+   begin
+      Manager.Stop;
+   end Stop;
+
+   procedure Execute (Manager : in out Task_Manager;
+                      Work    : in Work_Type_Access) is
+   begin
+      Executors.Execute (Executors.Executor_Manager (Manager), Work);
+   end Execute;
+
+   procedure Execute (Work : in out Work_Type_Access) is
+   begin
+      Work.Execute;
+   end Execute;
+
+   procedure Error (Work : in out Work_Type_Access;
+                    Ex   : in Ada.Exceptions.Exception_Occurrence) is
+   begin
+      Log.Error ("Work error", Ex);
+   end Error;
 
 end Keystore;
