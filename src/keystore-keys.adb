@@ -46,29 +46,45 @@ with Keystore.Logs;
 --  | Key size         | 4b
 --  | Key counter      | 4b
 --  | PAD 0            | 4b
---  | Wallet key # 1   | 32b
---  | Wallet iv # 1    | 32b
+--  | Directory key # 1| 32b
+--  | Directory iv # 1 | 32b
+--  | Entry key # 1    | 32b
+--  | Entry iv # 1     | 32b
+--  | Data key # 1     | 32b
+--  | Data iv # 1      | 32b
 --  +------------------+
 --  | Key type         | 4b
 --  | Key size         | 4b
 --  | Key counter      | 4b
 --  | PAD 0            | 4b
---  | Wallet key # 2   | 32b
---  | Wallet iv # 2    | 32b
+--  | Directory key # 2| 32b
+--  | Directory iv # 2 | 32b
+--  | Entry key # 2    | 32b
+--  | Entry iv # 2     | 32b
+--  | Data key # 2     | 32b
+--  | Data iv # 2      | 32b
 --  +------------------+
 --  | Key type         | 4b
 --  | Key size         | 4b
 --  | Key counter      | 4b
 --  | PAD 0            | 4b
---  | Wallet key # 3   | 32b
---  | Wallet iv # 3    | 32b
+--  | Directory key # 3| 32b
+--  | Directory iv # 3 | 32b
+--  | Entry key # 3    | 32b
+--  | Entry iv # 3     | 32b
+--  | Data key # 3     | 32b
+--  | Data iv # 3      | 32b
 --  +------------------+
 --  | Key type         | 4b
 --  | Key size         | 4b
 --  | Key counter      | 4b
 --  | PAD 0            | 4b
---  | Wallet key # 4   | 32b
---  | Wallet iv # 4    | 32b
+--  | Directory key # 4| 32b
+--  | Directory iv # 4 | 32b
+--  | Entry key # 4    | 32b
+--  | Entry iv # 4     | 32b
+--  | Data key # 4     | 32b
+--  | Data iv # 4      | 32b
 --  +------------------+
 
 package body Keystore.Keys is
@@ -251,7 +267,6 @@ package body Keystore.Keys is
          Tmp_Rand : Ada.Streams.Stream_Element_Array (1 .. 32);
          Salt     : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
          Counter  : Positive;
-         Pos      : Ada.Streams.Stream_Element_Offset;
       begin
          Header_Block := Block;
          Random.Generate (Tmp_Rand);
@@ -296,15 +311,7 @@ package body Keystore.Keys is
                              Counter  => 3,
                              Result   => Protect_Key);
 
-         Random.Generate (Tmp_Rand);
-         Pos := 1;
-         for I in IV'Range loop
-            IV (I) := Shift_Left (Unsigned_32 (Tmp_Rand (Pos)), 24) or
-              Shift_Left (Unsigned_32 (Tmp_Rand (Pos + 1)), 16) or
-              Shift_Left (Unsigned_32 (Tmp_Rand (Pos + 2)), 8) or
-              Unsigned_32 (Tmp_Rand (Pos + 3));
-            Pos := Pos + 4;
-         end loop;
+         Random.Generate (IV);
          Save_Key (Password, Slot, Salt, IV, Stream);
       end Create;
 
