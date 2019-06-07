@@ -40,7 +40,7 @@ package body AKT.Commands.Get is
       if Args.Get_Count = 0 then
          AKT.Commands.Usage (Args, Context, Name);
       else
-         Context.Open_Keystore;
+         Context.Open_Keystore (Use_Worker => True);
          Output.Initialize (File => Util.Systems.Os.STDOUT_FILENO);
          for I in 1 .. Args.Get_Count loop
             declare
