@@ -218,7 +218,7 @@ package body Keystore.Repository is
    end Close;
 
    procedure Set_Work_Manager (Repository : in out Wallet_Repository;
-                               Workers    : in Keystore.Workers.Work_Manager_Access) is
+                               Workers    : in Keystore.Task_Manager_Access) is
    begin
       Repository.Value.Set_Work_Manager (Workers);
    end Set_Work_Manager;
@@ -680,7 +680,7 @@ package body Keystore.Repository is
          end loop;
       end List;
 
-      procedure Set_Work_Manager (Workers    : in Keystore.Workers.Work_Manager_Access) is
+      procedure Set_Work_Manager (Workers    : in Keystore.Task_Manager_Access) is
       begin
          Free (Manager.Workers);
          Manager.Workers := Data.Create (Manager'Access, Workers, Workers.Count);
