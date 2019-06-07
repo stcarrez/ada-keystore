@@ -21,7 +21,9 @@ with Ada.Streams;
 with Ada.Calendar;
 with Ada.Strings.Hash;
 with Ada.Containers.Indefinite_Hashed_Maps;
+private with Ada.Exceptions;
 private with Ada.Finalization;
+private with Util.Executors;
 
 --  == Keystore ==
 --  The `Keystore` package provides operations to store information in secure wallets and
@@ -112,6 +114,18 @@ package Keystore is
    --  Defines the key slot number.
    type Key_Slot is new Positive range 1 .. 8;
 
+   --  Task manager to run encryption and decryption work.
+   type Task_Manager (Count : Positive) is limited private;
+
+   type Task_Manager_Access is access all Task_Manager;
+
+   --  Start the tasks of the task manager.
+   procedure Start (Manager : in Task_Manager_Access);
+
+   --  Stop the tasks.
+   procedure Stop (Manager : in Task_Manager_Access);
+
+   --  The wallet base type.
    type Wallet is abstract tagged limited private;
 
    --  Return True if the container was configured.
@@ -232,5 +246,26 @@ private
    type Wallet_Identifier is new Positive;
 
    type Wallet is abstract limited new Ada.Finalization.Limited_Controlled with null record;
+
+   type Work_Type is limited interface;
+   type Work_Type_Access is access all Work_Type'Class;
+
+   procedure Execute (Work : in out Work_Type) is abstract;
+
+   procedure Execute (Work : in out Work_Type_Access);
+
+   procedure Error (Work : in out Work_Type_Access;
+                    Ex   : in Ada.Exceptions.Exception_Occurrence);
+
+   package Executors is
+     new Util.Executors (Work_Type => Work_Type_Access,
+                         Execute   => Execute,
+                         Error     => Error);
+
+   type Task_Manager (Count : Positive) is limited
+   new Executors.Executor_Manager (Count) with null record;
+
+   procedure Execute (Manager : in out Task_Manager;
+                      Work    : in Work_Type_Access);
 
 end Keystore;
