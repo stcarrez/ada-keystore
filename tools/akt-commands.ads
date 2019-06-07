@@ -19,7 +19,6 @@ with AKT.Passwords;
 with Util.Commands;
 private with Util.Log.Loggers;
 private with Keystore.Files;
-private with Keystore.Workers;
 private with Ada.Finalization;
 private with GNAT.Command_Line;
 private with GNAT.Strings;
@@ -64,7 +63,7 @@ private
 
    type Context_Type is limited new Ada.Finalization.Limited_Controlled with record
       Wallet            : Keystore.Files.Wallet_File;
-      Workers           : Keystore.Workers.Work_Manager_Access;
+      Workers           : Keystore.Task_Manager_Access;
       Provider          : AKT.Passwords.Provider_Access;
       Worker_Count      : aliased Integer := 1;
       Version           : aliased Boolean := False;
