@@ -154,6 +154,9 @@ package Keystore.Files is
    function Find (Container : in Wallet_File;
                   Name      : in String) return Entry_Info;
 
+   procedure Set_Work_Manager (Container : in out Wallet_File;
+                               Workers   : in Keystore.Task_Manager_Access);
+
 private
 
    type Wallet_File_Stream_Access is access all Keystore.IO.Files.Wallet_File_Stream;
