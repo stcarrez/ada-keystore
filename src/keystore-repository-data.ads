@@ -20,7 +20,6 @@ with Keystore.IO;
 with Ada.Streams;
 with Util.Streams;
 
-with Keystore.Workers;
 private with Util.Concurrent.Sequence_Queues;
 private package Keystore.Repository.Data is
 
@@ -28,7 +27,7 @@ private package Keystore.Repository.Data is
 
    --  Create the wallet encryption and decryption work manager.
    function Create (Manager      : access Wallet_Manager;
-                    Work_Manager : in Keystore.Workers.Work_Manager_Access;
+                    Work_Manager : in Keystore.Task_Manager_Access;
                     Count        : in Positive) return access Wallet_Worker;
 
    --  Find the data block instance with the given block number.
@@ -161,10 +160,10 @@ private
                                           Default_Size     => 32,
                                           Clear_On_Dequeue => False);
 
-   type Work_Type is (DATA_ENCRYPT, DATA_DECRYPT);
+   type Data_Work_Type is (DATA_ENCRYPT, DATA_DECRYPT);
 
-   type Data_Work is limited new Workers.Work_Type with record
-      Kind       : Work_Type := DATA_DECRYPT;
+   type Data_Work is limited new Work_Type with record
+      Kind       : Data_Work_Type := DATA_DECRYPT;
       Block      : IO.Marshaller;
       Sequence   : Natural;
       Start_Data : Stream_Element_Offset;
@@ -187,7 +186,7 @@ private
    procedure Decipher (Work : in out Data_Work);
 
    type Wallet_Worker (Work_Count : Natural) is limited record
-      Work_Manager  : Keystore.Workers.Work_Manager_Access;
+      Work_Manager  : Keystore.Task_Manager_Access;
       Data_Queue    : aliased Work_Queues.Queue;
       Stream_Buffer : access Ada.Streams.Stream_Element_Array;
       Pool_Count    : Natural := 0;
