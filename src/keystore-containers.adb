@@ -129,7 +129,7 @@ package body Keystore.Containers is
          State := S_CLOSED;
       end Close;
 
-      procedure Set_Work_Manager (Workers   : in Keystore.Workers.Work_Manager_Access) is
+      procedure Set_Work_Manager (Workers   : in Keystore.Task_Manager_Access) is
       begin
          Keystore.Repository.Set_Work_Manager (Repository, Workers);
       end Set_Work_Manager;
