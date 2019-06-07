@@ -28,6 +28,7 @@ with AKT.Commands.Create;
 with AKT.Commands.List;
 with AKT.Commands.Remove;
 with AKT.Commands.Edit;
+with AKT.Commands.Store;
 with AKT.Passwords.Input;
 with AKT.Passwords.Files;
 with AKT.Passwords.Unsafe;
@@ -35,7 +36,9 @@ package body AKT.Commands is
 
    Help_Command     : aliased AKT.Commands.Drivers.Help_Command_Type;
    Set_Command      : aliased AKT.Commands.Set.Command_Type;
+   Store_Command    : aliased AKT.Commands.Store.Command_Type;
    Get_Command      : aliased AKT.Commands.Get.Command_Type;
+   Extract_Command  : aliased AKT.Commands.Get.Command_Type;
    Create_Command   : aliased AKT.Commands.Create.Command_Type;
    List_Command     : aliased AKT.Commands.List.Command_Type;
    Remove_Command   : aliased AKT.Commands.Remove.Command_Type;
@@ -163,6 +166,7 @@ package body AKT.Commands is
                         Output => Context.Worker_Count'Access,
                         Switch => "-t:",
                         Long_Switch => "--thread=",
+                        Initial  => Context.Worker_Count,
                         Argument => "COUNT",
                         Help   => "Number of threads for the encryption/decryption process");
       GC.Initialize_Option_Scan (Stop_At_First_Non_Switch => True);
@@ -175,7 +179,10 @@ package body AKT.Commands is
                           "  -f keystore  The keystore file to use");
       Driver.Add_Command ("help", "print some help", Help_Command'Access);
       Driver.Add_Command ("set", "insert or update a value in the keystore", Set_Command'Access);
+      Driver.Add_Command ("store", "read the standard input and insert or update the"
+                          & " content in the keystore", Store_Command'Access);
       Driver.Add_Command ("get", "get a value from the keystore", Get_Command'Access);
+      Driver.Add_Command ("extract", "get a value from the keystore", Extract_Command'Access);
       Driver.Add_Command ("create", "create the keystore", Create_Command'Access);
       Driver.Add_Command ("list", "list values of the keystore", List_Command'Access);
       Driver.Add_Command ("remove", "remove values from the keystore", Remove_Command'Access);
