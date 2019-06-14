@@ -24,11 +24,12 @@ private with Util.Concurrent.Sequence_Queues;
 private package Keystore.Repository.Data is
 
    type Wallet_Worker (Work_Count : Natural) is limited private;
+   type Wallet_Worker_Access is access all Wallet_Worker;
 
    --  Create the wallet encryption and decryption work manager.
    function Create (Manager      : access Wallet_Manager;
                     Work_Manager : in Keystore.Task_Manager_Access;
-                    Count        : in Positive) return access Wallet_Worker;
+                    Count        : in Positive) return Wallet_Worker_Access;
 
    --  Find the data block instance with the given block number.
    procedure Find_Data_Block (Manager    : in out Wallet_Manager;
@@ -45,19 +46,6 @@ private package Keystore.Repository.Data is
                                   Stream     : in out IO.Wallet_Stream'Class) with
      Post => Data_Block.Available = AES_Align (Data_Block.Available);
 
-   --  Release the data block to the stream.
-   procedure Release_Data_Block (Manager    : in out Wallet_Manager;
-                                 Data_Block : in out Wallet_Block_Entry_Access;
-                                 Stream     : in out IO.Wallet_Stream'Class);
-
-   --  Initialize the data block with an empty content.
-   procedure Init_Data_Block (Manager    : in out Wallet_Manager);
-
-   --  Get the fragment position of the item within the data block.
-   --  Returns 0 if the data item was not found.
-   function Get_Fragment_Position (Data_Block : in Wallet_Block_Entry;
-                                   Item       : in Wallet_Entry_Access) return Fragment_Count;
-
    --  Load the data block in the wallet manager buffer.  Extract the data descriptors
    --  the first time the data block is read.
    procedure Load_Data (Manager    : in out Wallet_Manager;
@@ -68,28 +56,9 @@ private package Keystore.Repository.Data is
 
    --  Save the data block.
    procedure Save_Data (Manager    : in out Wallet_Manager;
-                        Data_Block : in out Wallet_Block_Entry;
+                        Data_Block : in Wallet_Block_Entry;
+                        Buffer     : in out IO.Marshaller;
                         Stream     : in out IO.Wallet_Stream'Class);
-
-   --  Get the data fragment and write it to the output buffer.
-   procedure Get_Fragment (Manager  : in out Wallet_Manager;
-                           Position : in Fragment_Index;
-                           Fragment : in Wallet_Block_Fragment;
-                           Output   : out Ada.Streams.Stream_Element_Array);
-   procedure Get_Fragment (Manager  : in out Wallet_Manager;
-                           Position : in Fragment_Index;
-                           Fragment : in Wallet_Block_Fragment;
-                           Output   : in out Util.Streams.Output_Stream'Class);
-
-   --  Add in the data block the wallet data entry with its content.
-   --  The data block must have been loaded and is not saved.
-   procedure Add_Fragment (Manager     : in out Wallet_Manager;
-                           Data_Block  : in Wallet_Block_Entry_Access;
-                           Item        : in Wallet_Entry_Access;
-                           Data_Offset : in Ada.Streams.Stream_Element_Offset;
-                           Next_Block  : in Wallet_Block_Entry_Access;
-                           Content     : in Ada.Streams.Stream_Element_Array) with
-     Pre => DATA_ENTRY_SIZE + AES_Align (Content'Length) <= Data_Block.Available;
 
    procedure Update_Fragment (Manager     : in out Wallet_Manager;
                               Data_Block  : in Wallet_Block_Entry_Access;
@@ -151,6 +120,26 @@ private package Keystore.Repository.Data is
 
 private
 
+   --  Initialize the data block with an empty content.
+   procedure Init_Data_Block (Manager    : in Wallet_Manager;
+                              Buffer     : in out IO.Marshaller);
+
+   --  Release the data block to the stream.
+   procedure Release_Data_Block (Manager    : in out Wallet_Manager;
+                                 Data_Block : in out Wallet_Block_Entry_Access;
+                                 Stream     : in out IO.Wallet_Stream'Class);
+
+   --  Get the fragment position of the item within the data block.
+   --  Returns 0 if the data item was not found.
+   function Get_Fragment_Position (Data_Block : in Wallet_Block_Entry;
+                                   Item       : in Wallet_Entry_Access) return Fragment_Count;
+
+   --  Get the data fragment and write it to the output buffer.
+   procedure Get_Fragment (Manager  : in out Wallet_Manager;
+                           Position : in Fragment_Index;
+                           Fragment : in Wallet_Block_Fragment;
+                           Output   : out Ada.Streams.Stream_Element_Array);
+
    type Data_Work;
    type Data_Work_Access is access all Data_Work;
 
@@ -165,6 +154,7 @@ private
    type Data_Work is limited new Work_Type with record
       Kind       : Data_Work_Type := DATA_DECRYPT;
       Block      : IO.Marshaller;
+      Data_Block : Wallet_Block_Entry_Access;
       Sequence   : Natural;
       Start_Data : Stream_Element_Offset;
       End_Data   : Stream_Element_Offset;
@@ -185,10 +175,11 @@ private
 
    procedure Decipher (Work : in out Data_Work);
 
+   procedure Cipher (Work : in out Data_Work);
+
    type Wallet_Worker (Work_Count : Natural) is limited record
       Work_Manager  : Keystore.Task_Manager_Access;
       Data_Queue    : aliased Work_Queues.Queue;
-      Stream_Buffer : access Ada.Streams.Stream_Element_Array;
       Pool_Count    : Natural := 0;
       Work_Pool     : Data_Work_Access_Array (1 .. Work_Count);
       Work_Slots    : Data_Work_Array (1 .. Work_Count);
@@ -200,5 +191,15 @@ private
                        Work   : in Data_Work_Access);
 
    procedure Wait_Workers (Worker : in out Wallet_Worker);
+
+   --  Add in the data block the wallet data entry with its content.
+   --  The data block must have been loaded and is not saved.
+   procedure Add_Fragment (Manager     : in out Wallet_Manager;
+                           Work        : in Data_Work_Access;
+                           Item        : in Wallet_Entry_Access;
+                           Data_Offset : in Ada.Streams.Stream_Element_Offset;
+                           Next_Block  : in Wallet_Block_Entry_Access;
+                           Content     : in Ada.Streams.Stream_Element_Array) with
+     Pre => DATA_ENTRY_SIZE + AES_Align (Content'Length) <= Work.Data_Block.Available;
 
 end Keystore.Repository.Data;
