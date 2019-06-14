@@ -131,6 +131,11 @@ package body AKT.Commands is
                         Long_Switch => "--debug",
                         Help   => "Enable debug execution");
       GC.Define_Switch (Config => Context.Command_Config,
+                        Output => Context.Debug'Access,
+                        Switch => "-z",
+                        Long_Switch => "--zero",
+                        Help   => "Erase and fill with zeros instead of random values");
+      GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Wallet_File'Access,
                         Switch => "-f:",
                         Long_Switch => "--file=",
