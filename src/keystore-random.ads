@@ -46,6 +46,9 @@ package Keystore.Random is
    procedure Generate (Gen  : in out Generator;
                        Into : out Util.Encoders.AES.Word_Block_Type);
 
+   procedure Generate (Gen  : in out Generator;
+                       Into : out Secret_Key);
+
    --  Generate a random sequence of bits and convert the result
    --  into a string in base64url.
    function Generate (Gen  : in out Generator'Class;
