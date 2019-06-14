@@ -453,7 +453,7 @@ package body Keystore.Repository is
                       Stream       : in out IO.Wallet_Stream'Class) is
       begin
          Manager.Id := Ident;
-         Manager.Workers := Data.Create (Manager'Access, null, 1);
+         Manager.Workers := Data.Create (Manager'Unchecked_Access, null, 1).all'Access;
          Keys.Open (Password, Ident, Block, Manager.Root, Manager.Protect_Key,
                     Manager.IV, Manager.Cipher, Manager.Decipher, Stream);
 
@@ -470,7 +470,7 @@ package body Keystore.Repository is
          Stream.Allocate (Manager.Root);
          Manager.Id := Ident;
          Manager.Next_Id := 1;
-         Manager.Workers := Data.Create (Manager'Access, null, 1);
+         Manager.Workers := Data.Create (Manager'Unchecked_Access, null, 1).all'Access;
          Keys.Create (Password, 1, Ident, Block, Manager.Root, Manager.Protect_Key,
                       Manager.IV, Manager.Cipher, Manager.Decipher, Stream);
 
@@ -683,7 +683,7 @@ package body Keystore.Repository is
       procedure Set_Work_Manager (Workers    : in Keystore.Task_Manager_Access) is
       begin
          Free (Manager.Workers);
-         Manager.Workers := Data.Create (Manager'Access, Workers, Workers.Count);
+         Manager.Workers := Data.Create (Manager'Unchecked_Access, Workers, Workers.Count).all'Access;
       end Set_Work_Manager;
 
       procedure Release is
