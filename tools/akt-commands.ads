@@ -68,6 +68,7 @@ private
       Worker_Count      : aliased Integer := 1;
       Version           : aliased Boolean := False;
       Debug             : aliased Boolean := False;
+      Zero              : aliased Boolean := False;
       Wallet_File       : aliased GNAT.Strings.String_Access;
       Password_File     : aliased GNAT.Strings.String_Access;
       Password_Env      : aliased GNAT.Strings.String_Access;
