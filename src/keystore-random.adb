@@ -53,6 +53,14 @@ package body Keystore.Random is
       Gen.Rand.Generate (Block);
    end Generate;
 
+   procedure Generate (Gen  : in out Generator;
+                       Into : out Secret_Key) is
+      Block : Ada.Streams.Stream_Element_Array (1 .. Into.Length);
+   begin
+      Gen.Rand.Generate (Block);
+      Util.Encoders.Create (Block, Into);
+   end Generate;
+
    --  ------------------------------
    --  Generate a random sequence of bits and convert the result
    --  into a string in base64url.
