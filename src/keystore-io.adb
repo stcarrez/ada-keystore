@@ -89,7 +89,7 @@ package body Keystore.IO is
    procedure Read (Stream       : in out Wallet_Stream'Class;
                    Block        : in Block_Number;
                    Decipher     : in out Util.Encoders.AES.Decoder;
-                   Sign         : in Stream_Element_Array;
+                   Sign         : in Secret_Key;
                    Decrypt_Size : out Block_Index;
                    Into         : in out Marshaller) is
 
@@ -171,7 +171,7 @@ package body Keystore.IO is
                     Block        : in Block_Number;
                     Encrypt_Size : in Block_Index := BT_DATA_LENGTH;
                     Cipher       : in out Util.Encoders.AES.Encoder;
-                    Sign         : in Stream_Element_Array;
+                    Sign         : in Secret_Key;
                     From         : in out Marshaller) is
 
       procedure Write (Data : out Block_Type);
@@ -312,11 +312,15 @@ package body Keystore.IO is
 
    procedure Put_Secret (Into        : in out Marshaller;
                          Value       : in Secret_Key;
-                         Protect_Key : in Secret_Key) is
+                         Protect_Key : in Secret_Key;
+                         Protect_IV  : in Secret_Key) is
       Cipher_Key  : Util.Encoders.AES.Encoder;
       Last        : Stream_Element_Offset;
+      IV            : constant Util.Encoders.AES.Word_Block_Type
+        := (others => Interfaces.Unsigned_32 (Into.Block));
    begin
       Cipher_Key.Set_Key (Protect_Key, Util.Encoders.AES.CBC);
+      Cipher_Key.Set_IV (Protect_IV, IV);
       Cipher_Key.Set_Padding (Util.Encoders.AES.NO_PADDING);
 
       --  Encrypt the key into the key-slot using the PBKDF2 protection key.
@@ -335,7 +339,7 @@ package body Keystore.IO is
    end Put_Data;
 
    procedure Put_HMAC_SHA256 (Into    : in out Marshaller;
-                              Key     : in Ada.Streams.Stream_Element_Array;
+                              Key     : in Secret_Key;
                               Content : in Ada.Streams.Stream_Element_Array) is
       Pos : constant Block_Index := Into.Pos;
    begin
@@ -421,11 +425,15 @@ package body Keystore.IO is
 
    procedure Get_Secret (From        : in out Marshaller;
                          Secret      : out Secret_Key;
-                         Protect_Key : in Secret_Key) is
+                         Protect_Key : in Secret_Key;
+                         Protect_IV  : in Secret_Key) is
       Decipher_Key  : Util.Encoders.AES.Decoder;
       Last          : Stream_Element_Offset;
+      IV            : constant Util.Encoders.AES.Word_Block_Type
+        := (others => Interfaces.Unsigned_32 (From.Block));
    begin
       Decipher_Key.Set_Key (Protect_Key, Util.Encoders.AES.CBC);
+      Decipher_Key.Set_IV (Protect_IV, IV);
       Decipher_Key.Set_Padding (Util.Encoders.AES.NO_PADDING);
 
       Last := From.Pos + IO.Block_Index (Secret.Length) - 1;
