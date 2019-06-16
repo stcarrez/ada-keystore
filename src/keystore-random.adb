@@ -125,6 +125,13 @@ package body Keystore.Random is
       end loop;
    end Generate;
 
+   function Generate (Gen : in out Generator'Class) return Interfaces.Unsigned_32 is
+      Result : Interfaces.Unsigned_32;
+   begin
+      Gen.Rand.Generate (Result);
+      return Result;
+   end Generate;
+
    --  Protected type to allow using the random generator by several tasks.
    protected body Raw_Generator is
 
@@ -152,6 +159,11 @@ package body Keystore.Random is
                Value := Shift_Right (Value, 8);
             end loop;
          end if;
+      end Generate;
+
+      procedure Generate (Value : out Unsigned_32) is
+      begin
+         Value := Id_Random.Random (Rand);
       end Generate;
 
       procedure Reset is
