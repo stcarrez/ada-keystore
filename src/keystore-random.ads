@@ -18,9 +18,9 @@
 with Ada.Streams;
 with Ada.Finalization;
 with Ada.Strings.Unbounded;
+with Interfaces;
 with Util.Encoders.AES;
 private with Ada.Numerics.Discrete_Random;
-private with Interfaces;
 
 --  == Random Generator ==
 --  The <tt>Security.Random</tt> package defines the <tt>Generator</tt> tagged type
@@ -54,6 +54,8 @@ package Keystore.Random is
    function Generate (Gen  : in out Generator'Class;
                       Bits : in Positive) return String;
 
+   function Generate (Gen : in out Generator'Class) return Interfaces.Unsigned_32;
+
    --  Generate a random sequence of bits, convert the result
    --  into a string in base64url and append it to the buffer.
    procedure Generate (Gen  : in out Generator'Class;
@@ -68,6 +70,8 @@ private
    protected type Raw_Generator is
 
       procedure Generate (Into : out Ada.Streams.Stream_Element_Array);
+
+      procedure Generate (Value : out Interfaces.Unsigned_32);
 
       procedure Reset;
    private
