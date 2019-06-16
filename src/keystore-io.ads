@@ -96,7 +96,7 @@ private package Keystore.IO is
    procedure Read (Stream       : in out Wallet_Stream'Class;
                    Block        : in Block_Number;
                    Decipher     : in out Util.Encoders.AES.Decoder;
-                   Sign         : in Stream_Element_Array;
+                   Sign         : in Secret_Key;
                    Decrypt_Size : out Block_Index;
                    Into         : in out Marshaller);
 
@@ -107,7 +107,7 @@ private package Keystore.IO is
                     Block        : in Block_Number;
                     Encrypt_Size : in Block_Index := BT_DATA_LENGTH;
                     Cipher       : in out Util.Encoders.AES.Encoder;
-                    Sign         : in Stream_Element_Array;
+                    Sign         : in Secret_Key;
                     From         : in out Marshaller) with
      Pre => Encrypt_Size mod 16 = 0 and Encrypt_Size <= BT_DATA_LENGTH;
 
@@ -153,7 +153,8 @@ private package Keystore.IO is
 
    procedure Put_Secret (Into        : in out Marshaller;
                          Value       : in Secret_Key;
-                         Protect_Key : in Secret_Key) with
+                         Protect_Key : in Secret_Key;
+                         Protect_IV  : in Secret_Key) with
      Pre => Into.Pos < Block_Type'Last - Value.Length;
 
    procedure Put_Data (Into  : in out Marshaller;
@@ -161,7 +162,7 @@ private package Keystore.IO is
      Pre => Into.Pos < Block_Type'Last - 16;
 
    procedure Put_HMAC_SHA256 (Into    : in out Marshaller;
-                              Key     : in Ada.Streams.Stream_Element_Array;
+                              Key     : in Secret_Key;
                               Content : in Ada.Streams.Stream_Element_Array) with
      Pre => Into.Pos < Block_Type'Last - BT_HMAC_HEADER_SIZE;
 
@@ -193,7 +194,8 @@ private package Keystore.IO is
 
    procedure Get_Secret (From        : in out Marshaller;
                          Secret      : out Secret_Key;
-                         Protect_Key : in Secret_Key) with
+                         Protect_Key : in Secret_Key;
+                         Protect_IV  : in Secret_Key) with
      Pre => From.Pos < Block_Type'Last - IO.Block_Index (Secret.Length);
 
    procedure Get_Data (From  : in out Marshaller;
