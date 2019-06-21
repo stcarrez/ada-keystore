@@ -19,7 +19,6 @@
 with Util.Test_Caller;
 with Util.Measures;
 with Util.Encoders.AES;
-with Util.Encoders.SHA256;
 with Keystore.IO.Files;
 package body Keystore.IO.Tests is
 
@@ -38,7 +37,7 @@ package body Keystore.IO.Tests is
       Secret   : Secret_Key := Util.Encoders.Create ("0123456789abcdef");
       Secret2  : Secret_Key := Util.Encoders.Create ("0123456789abcdef0123456789abcdef");
       Block    : Block_Number;
-      Sign     : constant Util.Encoders.SHA256.Hash_Array := (others => 23);
+      Sign     : constant Secret_Key := Util.Encoders.Create ("0123456789abcdef0123456789abcdef");
    begin
       --  Make a file with a zero-ed block.
       declare
@@ -128,7 +127,7 @@ package body Keystore.IO.Tests is
       Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-io-perf.ks");
       Secret   : Secret_Key := Util.Encoders.Create ("0123456789abcdef");
       Block    : Block_Number;
-      Sign     : constant Util.Encoders.SHA256.Hash_Array := (others => 7);
+      Sign     : constant Secret_Key := Util.Encoders.Create ("123456789abcdef0");
    begin
       --  Make a file with filled blocks.
       declare
