@@ -205,10 +205,10 @@ package body Keystore.Repository.Data is
       Logs.Debug (Log, "Load data block{0}", Data_Block.Block);
 
       --  Read wallet data block.
-      Set_IV (Manager, Data_Block.Block);
+      Keys.Set_IV (Manager.Config.Data, Data_Block.Block);
       Stream.Read (Block        => Data_Block.Block,
-                   Decipher     => Manager.Decipher,
-                   Sign         => Manager.Sign,
+                   Decipher     => Manager.Config.Data.Decipher,
+                   Sign         => Manager.Config.Data.Sign,
                    Decrypt_Size => Size,
                    Into         => Buffer);
 
@@ -323,12 +323,12 @@ package body Keystore.Repository.Data is
 
       Keystore.Logs.Debug (Log, "Save data block{0} encrypt{1}", Data_Block.Block, Encrypt_Size);
 
-      Set_IV (Manager, Data_Block.Block);
+      Keys.Set_IV (Manager.Config.Data, Data_Block.Block);
       Stream.Write (Block        => Data_Block.Block,
                     From         => Buffer,
                     Encrypt_Size => Encrypt_Size,
-                    Cipher       => Manager.Cipher,
-                    Sign         => Manager.Sign);
+                    Cipher       => Manager.Config.Data.Cipher,
+                    Sign         => Manager.Config.Data.Sign);
    end Save_Data;
 
    --  ------------------------------
@@ -420,7 +420,7 @@ package body Keystore.Repository.Data is
       Old_Size      : constant IO.Block_Index := Fragment.Size;
       Offset        : constant Stream_Element_Offset := AES_Align (Old_Size) - Data_Size;
       Cipher_Data   : Util.Encoders.AES.Encoder;
-      IV            : Util.Encoders.AES.Word_Block_Type;
+      IV            : Keystore.Secret_Key (Length => 16);
       Secret        : Keystore.Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
       Start_Data    : IO.Block_Index;
       End_Data      : IO.Block_Index;
@@ -448,14 +448,11 @@ package body Keystore.Repository.Data is
          IO.Put_Unsigned_32 (Manager.Buffer, Interfaces.Unsigned_32 (Data_Offset));
       end if;
 
-      IO.Get_Data (Manager.Buffer, IV);
-      IO.Get_Secret (Manager.Buffer, Secret, Manager.Protect_Key);
-
-      --  IO.Put_Data (Manager.Buffer, IV);
-      --  IO.Put_Secret (Manager.Buffer, Secret, Manager.Protect_Key);
+      IO.Get_Secret (Manager.Buffer, IV, Manager.Config.Data.Key, Manager.Config.Data.IV);
+      IO.Get_Secret (Manager.Buffer, Secret, Manager.Config.Data.Key, Manager.Config.Data.IV);
 
       --  Make HMAC-SHA256 signature of the data content before encryption.
-      IO.Put_HMAC_SHA256 (Manager.Buffer, Manager.Sign, Content);
+      IO.Put_HMAC_SHA256 (Manager.Buffer, Manager.Config.Data.Sign, Content);
 
       Data_Block.Fragments (Position).Size := Content'Length;
       Data_Block.Fragments (Position).Next_Fragment := Next_Block;
@@ -493,7 +490,7 @@ package body Keystore.Repository.Data is
       end if;
 
       --  Encrypt the data content using the item encryption key and IV.
-      Cipher_Data.Set_IV (IV);
+      --  Cipher_Data.Set_IV (IV, (others => 0));
       Cipher_Data.Set_Key (Secret, Util.Encoders.AES.CBC);
       Cipher_Data.Set_Padding (Util.Encoders.AES.ZERO_PADDING);
 
@@ -523,15 +520,15 @@ package body Keystore.Repository.Data is
       Encoded    : Stream_Element_Offset;
       Decipher   : Util.Encoders.AES.Decoder;
       Secret     : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
-      IV         : Util.Encoders.AES.Word_Block_Type;
+      IV         : Secret_Key (Length => 16);
    begin
       Logs.Debug (Log, "Get fragment from{0} at{1}", Manager.Buffer.Block, Start_Data);
 
       Manager.Buffer.Pos := Data_Entry_Offset (Position) + DATA_IV_OFFSET;
-      IO.Get_Data (Manager.Buffer, IV);
-      IO.Get_Secret (Manager.Buffer, Secret, Manager.Protect_Key);
+      IO.Get_Secret (Manager.Buffer, IV, Manager.Config.Data.Key, Manager.Config.Data.IV);
+      IO.Get_Secret (Manager.Buffer, Secret, Manager.Config.Data.Key, Manager.Config.Data.IV);
 
-      Decipher.Set_IV (IV);
+      --  Decipher.Set_IV (IV, (others => 0));
       Decipher.Set_Key (Secret, Util.Encoders.AES.CBC);
       Decipher.Set_Padding (Util.Encoders.AES.ZERO_PADDING);
       Decipher.Transform (Data    => Manager.Buffer.Data (Start_Data .. End_Data),
@@ -710,6 +707,7 @@ package body Keystore.Repository.Data is
             Load_Data (Manager, Block, Work.Block, Stream);
          else
             Init_Data_Block (Manager, Work.Block);
+            Work.Block.Block := Block.Block;
          end if;
          Add_Fragment (Manager, Work, Item, Data_Offset, Next_Block, Content (Start .. Last));
 
@@ -946,18 +944,22 @@ package body Keystore.Repository.Data is
       Start_Pos : constant Stream_Element_Offset := Work.Buffer_Pos;
       Last_Pos  : constant Stream_Element_Offset := Work.Last_Pos;
       Secret    : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
-      IV        : Util.Encoders.AES.Word_Block_Type;
+      IV        : Secret_Key (Length => 16);
       Decipher  : Util.Encoders.AES.Decoder;
    begin
       Logs.Debug (Log, "Decipher from{0}", Work.Block.Block);
 
-      IO.Get_Data (Work.Block, IV);
-      IO.Get_Secret (Work.Block, Secret, Work.Manager.Protect_Key);
+      IO.Get_Secret (Work.Block, IV, Work.Manager.Config.Data.Key,
+                     Work.Manager.Config.Data.IV);
+      IO.Get_Secret (Work.Block, Secret, Work.Manager.Config.Data.Key,
+                     Work.Manager.Config.Data.IV);
 
-      Decipher.Set_IV (IV);
+      --  Decipher.Set_IV (IV, (others => 0));
       Decipher.Set_Key (Secret, Util.Encoders.AES.CBC);
       Decipher.Set_Padding (Util.Encoders.AES.ZERO_PADDING);
 
+      Log.Debug ("Dump encrypted data:");
+      Logs.Dump (Log, Work.Block.Data (Work.Start_Data .. Work.End_Data));
       Decipher.Transform
         (Data    => Work.Block.Data (Work.Start_Data .. Work.End_Data),
          Into    => Work.Data (Start_Pos .. Last_Pos),
@@ -966,6 +968,9 @@ package body Keystore.Repository.Data is
 
       Decipher.Finish (Into => Work.Data (Last + 1 .. Last_Pos),
                        Last => Last);
+      Log.Debug ("Dump data:");
+      Logs.Dump (Log, Work.Data (Start_Pos .. Last_Pos));
+
    end Decipher;
 
    procedure Cipher (Work : in out Data_Work) is
@@ -973,25 +978,30 @@ package body Keystore.Repository.Data is
       Start_Pos : constant Stream_Element_Offset := Work.Buffer_Pos;
       Last_Pos  : Stream_Element_Offset := Work.Last_Pos;
       Secret    : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
-      IV        : Util.Encoders.AES.Word_Block_Type;
+      IV        : Secret_Key (Length => 16);
       Cipher    : Util.Encoders.AES.Encoder;
    begin
       --  Generate a new IV and key.
       Work.Manager.Random.Generate (IV);
       Work.Manager.Random.Generate (Secret);
-      IO.Put_Data (Work.Block, IV);
-      IO.Put_Secret (Work.Block, Secret, Work.Manager.Protect_Key);
+
+      IO.Put_Secret (Work.Block, IV, Work.Manager.Config.Data.Key,
+                     Work.Manager.Config.Data.IV);
+      IO.Put_Secret (Work.Block, Secret, Work.Manager.Config.Data.Key,
+                     Work.Manager.Config.Data.IV);
 
       --  Make HMAC-SHA256 signature of the data content before encryption.
       IO.Put_HMAC_SHA256 (Into    => Work.Block,
-                          Key     => Work.Manager.Sign,
+                          Key     => Work.Manager.Config.Data.Sign,
                           Content => Work.Data (Start_Pos .. Last_Pos));
 
       --  Encrypt the data content using the item encryption key and IV.
-      Cipher.Set_IV (IV);
+      --  Cipher.Set_IV (IV, (others => 0));
       Cipher.Set_Key (Secret, Util.Encoders.AES.CBC);
       Cipher.Set_Padding (Util.Encoders.AES.ZERO_PADDING);
 
+      Log.Debug ("Dump clear data:");
+      Logs.Dump (Log, Work.Data (Start_Pos .. Last_Pos));
       Cipher.Transform (Data    => Work.Data (Start_Pos .. Last_Pos),
                         Into    => Work.Block.Data (Work.Start_Data .. Work.End_Data),
                         Last    => Last_Pos,
@@ -1000,6 +1010,8 @@ package body Keystore.Repository.Data is
          Cipher.Finish (Into => Work.Block.Data (Last_Pos + 1 .. Work.End_Data),
                         Last => Last_Pos);
       end if;
+      Log.Debug ("Dump encrypted data:");
+      Logs.Dump (Log, Work.Block.Data (Work.Start_Data .. Work.End_Data));
    end Cipher;
 
    overriding
