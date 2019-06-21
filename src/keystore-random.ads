@@ -42,10 +42,7 @@ package Keystore.Random is
    procedure Generate (Gen  : in out Generator;
                        Into : out Ada.Streams.Stream_Element_Array);
 
-   --  Fill the array with pseudo-random numbers.
-   procedure Generate (Gen  : in out Generator;
-                       Into : out Util.Encoders.AES.Word_Block_Type);
-
+   --  Fill the secret with pseudo-random numbers.
    procedure Generate (Gen  : in out Generator;
                        Into : out Secret_Key);
 
@@ -55,12 +52,6 @@ package Keystore.Random is
                       Bits : in Positive) return String;
 
    function Generate (Gen : in out Generator'Class) return Interfaces.Unsigned_32;
-
-   --  Generate a random sequence of bits, convert the result
-   --  into a string in base64url and append it to the buffer.
-   procedure Generate (Gen  : in out Generator'Class;
-                       Bits : in Positive;
-                       Into : in out Ada.Strings.Unbounded.Unbounded_String);
 
 private
 
