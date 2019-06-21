@@ -43,16 +43,8 @@ package body Keystore.Random is
    end Generate;
 
    --  ------------------------------
-   --  Fill the array with pseudo-random numbers.
+   --  Fill the secret with pseudo-random numbers.
    --  ------------------------------
-   procedure Generate (Gen  : in out Generator;
-                       Into : out Util.Encoders.AES.Word_Block_Type) is
-      Block : Ada.Streams.Stream_Element_Array (1 .. 16);
-      for Block'Address use Into'Address;
-   begin
-      Gen.Rand.Generate (Block);
-   end Generate;
-
    procedure Generate (Gen  : in out Generator;
                        Into : out Secret_Key) is
       Block : Ada.Streams.Stream_Element_Array (1 .. Into.Length);
@@ -93,36 +85,6 @@ package body Keystore.Random is
          end loop;
          return Result;
       end;
-   end Generate;
-
-   --  ------------------------------
-   --  Generate a random sequence of bits, convert the result
-   --  into a string in base64url and append it to the buffer.
-   --  ------------------------------
-   procedure Generate (Gen  : in out Generator'Class;
-                       Bits : in Positive;
-                       Into : in out Ada.Strings.Unbounded.Unbounded_String) is
-      use type Ada.Streams.Stream_Element_Offset;
-
-      Rand_Count : constant Ada.Streams.Stream_Element_Offset
-        := Ada.Streams.Stream_Element_Offset (4 * ((Bits + 31) / 32));
-
-      Rand    : Ada.Streams.Stream_Element_Array (0 .. Rand_Count - 1);
-      Buffer  : Ada.Streams.Stream_Element_Array (0 .. Rand_Count * 3);
-      Encoder : Util.Encoders.Base64.Encoder;
-      Last    : Ada.Streams.Stream_Element_Offset;
-      Encoded : Ada.Streams.Stream_Element_Offset;
-   begin
-      --  Generate the random sequence.
-      Gen.Generate (Rand);
-
-      --  Encode the random stream in base64url and save it into the result string.
-      Encoder.Set_URL_Mode (True);
-      Encoder.Transform (Data => Rand, Into => Buffer,
-                         Last => Last, Encoded => Encoded);
-      for I in 0 .. Encoded loop
-         Ada.Strings.Unbounded.Append (Into, Character'Val (Buffer (I)));
-      end loop;
    end Generate;
 
    function Generate (Gen : in out Generator'Class) return Interfaces.Unsigned_32 is
