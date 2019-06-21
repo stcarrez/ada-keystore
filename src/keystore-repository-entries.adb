@@ -73,10 +73,10 @@ package body Keystore.Repository.Entries is
       Keystore.Logs.Debug (Log, "Load directory block{0}", Dir_Block.Block);
 
       --  Read wallet meta data block.
-      Set_IV (Manager, Dir_Block.Block);
+      Keys.Set_IV (Manager.Config.Dir, Dir_Block.Block);
       Stream.Read (Block        => Dir_Block.Block,
-                   Decipher     => Manager.Decipher,
-                   Sign         => Manager.Sign,
+                   Decipher     => Manager.Config.Dir.Decipher,
+                   Sign         => Manager.Config.Dir.Sign,
                    Decrypt_Size => Size,
                    Into         => Manager.Buffer);
 
@@ -221,11 +221,11 @@ package body Keystore.Repository.Entries is
       Manager.Buffer.Pos := IO.BT_DATA_START;
       IO.Put_Block_Number (Manager.Buffer, Entry_Block.Block);
 
-      Set_IV (Manager, Last_Block.Block);
+      Keys.Set_IV (Manager.Config.Dir, Last_Block.Block);
       Stream.Write (Block  => Last_Block.Block,
                     From   => Manager.Buffer,
-                    Cipher => Manager.Cipher,
-                    Sign   => Manager.Sign);
+                    Cipher => Manager.Config.Dir.Cipher,
+                    Sign   => Manager.Config.Dir.Sign);
    end Find_Directory_Block;
 
    --  ------------------------------
@@ -325,11 +325,11 @@ package body Keystore.Repository.Entries is
 
       pragma Assert (Check => Manager.Buffer.Pos = Item.Entry_Offset + Entry_Size (Item));
 
-      Set_IV (Manager, Item.Header.Block);
+      Keys.Set_IV (Manager.Config.Dir, Item.Header.Block);
       Stream.Write (Block  => Item.Header.Block,
                     From   => Manager.Buffer,
-                    Cipher => Manager.Cipher,
-                    Sign   => Manager.Sign);
+                    Cipher => Manager.Config.Dir.Cipher,
+                    Sign   => Manager.Config.Dir.Sign);
    end Update_Entry;
 
    --  ------------------------------
@@ -376,19 +376,21 @@ package body Keystore.Repository.Entries is
       end if;
       if Manager.Randomize then
          --  When strong security is necessary, fill with random values.
+         Manager.Buffer.Data (Dir_Block.Last_Pos - Size .. Dir_Block.Last_Pos - Size + 3)
+           := (others => 0);
          Manager.Random.Generate
-           (Manager.Buffer.Data (Dir_Block.Last_Pos - Size .. Dir_Block.Last_Pos));
-         else
+           (Manager.Buffer.Data (Dir_Block.Last_Pos - Size + 4 .. Dir_Block.Last_Pos));
+      else
          Manager.Buffer.Data (Dir_Block.Last_Pos - Size .. Dir_Block.Last_Pos) := (others => 0);
       end if;
 
       Dir_Block.Last_Pos := Dir_Block.Last_Pos - Size;
 
-      Set_IV (Manager, Dir_Block.Block);
+      Keys.Set_IV (Manager.Config.Dir, Dir_Block.Block);
       Stream.Write (Block        => Dir_Block.Block,
                     From         => Manager.Buffer,
-                    Cipher       => Manager.Cipher,
-                    Sign         => Manager.Sign);
+                    Cipher       => Manager.Config.Dir.Cipher,
+                    Sign         => Manager.Config.Dir.Sign);
    end Delete_Entry;
 
 end Keystore.Repository.Entries;
