@@ -155,7 +155,7 @@ private package Keystore.IO is
                          Value       : in Secret_Key;
                          Protect_Key : in Secret_Key;
                          Protect_IV  : in Secret_Key) with
-     Pre => Into.Pos < Block_Type'Last - Value.Length;
+     Pre => Into.Pos < Block_Type'Last - Value.Length and Into.Block > 0;
 
    procedure Put_Data (Into  : in out Marshaller;
                        Value : in Util.Encoders.AES.Word_Block_Type) with
@@ -196,7 +196,8 @@ private package Keystore.IO is
                          Secret      : out Secret_Key;
                          Protect_Key : in Secret_Key;
                          Protect_IV  : in Secret_Key) with
-     Pre => From.Pos < Block_Type'Last - IO.Block_Index (Secret.Length);
+     Pre => From.Pos < Block_Type'Last - IO.Block_Index (Secret.Length)
+     and From.Block > 0;
 
    procedure Get_Data (From  : in out Marshaller;
                        Value : out Ada.Streams.Stream_Element_Array) with
