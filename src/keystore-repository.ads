@@ -17,7 +17,6 @@
 -----------------------------------------------------------------------
 with Ada.Calendar;
 with Util.Encoders.AES;
-with Util.Encoders.SHA256;
 with Keystore.IO;
 with Ada.Streams;
 with Keystore.Keys;
@@ -28,13 +27,13 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Hash;
 
-private with Util.Refs;
 private with Keystore.Random;
 private with Ada.Containers.Ordered_Maps;
+private with Ada.Finalization;
 limited private with Keystore.Repository.Data;
 private package Keystore.Repository is
 
-   type Wallet_Repository is tagged private;
+   type Wallet_Repository is tagged limited private;
 
    --  Set the key to encrypt and decrypt the container meta data.
    procedure Set_Key (Repository : in out Wallet_Repository;
@@ -58,6 +57,7 @@ private package Keystore.Repository is
 
    procedure Create (Repository : in out Wallet_Repository;
                      Password   : in Secret_Key;
+                     Config     : in Wallet_Config;
                      Block      : in IO.Block_Number;
                      Ident      : in Wallet_Identifier;
                      Keys       : in out Keystore.Keys.Key_Manager;
@@ -93,6 +93,12 @@ private package Keystore.Repository is
                      Content    : in Ada.Streams.Stream_Element_Array;
                      Stream     : in out IO.Wallet_Stream'Class);
 
+   procedure Update (Manager    : in out Wallet_Repository;
+                     Name       : in String;
+                     Kind       : in Entry_Type;
+                     Input      : in out Util.Streams.Input_Stream'Class;
+                     Stream     : in out IO.Wallet_Stream'Class);
+
    procedure Delete (Repository : in out Wallet_Repository;
                      Name       : in String;
                      Stream     : in out IO.Wallet_Stream'Class);
@@ -100,7 +106,7 @@ private package Keystore.Repository is
    function Contains (Repository : in Wallet_Repository;
                       Name       : in String) return Boolean;
 
-   procedure Find (Repository : in Wallet_Repository;
+   procedure Find (Repository : in out Wallet_Repository;
                    Name       : in String;
                    Result     : out Entry_Info;
                    Stream     : in out IO.Wallet_Stream'Class);
@@ -194,9 +200,6 @@ private
       Ready      : Boolean := False;
    end record;
 
-   type Safe_Wallet_Repository;
-   type Safe_Wallet_Repository_Access is access all Safe_Wallet_Repository;
-
    type Wallet_Entry (Length : Natural) is limited record
       --  The block header that contains this entry.
       Header       : Wallet_Directory_Entry_Access;
@@ -212,7 +215,6 @@ private
       Create_Date  : Ada.Calendar.Time;
       Update_Date  : Ada.Calendar.Time;
       Access_Date  : Ada.Calendar.Time;
-      Wallet       : Safe_Wallet_Repository_Access;
       Block        : IO.Block_Count := 0;
       Name         : aliased String (1 .. Length);
    end record;
@@ -242,117 +244,29 @@ private
 
    type Wallet_Worker_Access is access all Keystore.Repository.Data.Wallet_Worker;
 
-   type Wallet_Manager is limited record
-      Id            : Wallet_Identifier;
-      Next_Id       : Wallet_Entry_Index;
-      Data_List     : Wallet_Block_Maps.Map;
-      Entry_List    : Wallet_Directory_List.List;
-      Randomize     : Boolean := True;
-      Root          : IO.Block_Number;
-      IV            : Util.Encoders.AES.Word_Block_Type;
-      Decipher      : Util.Encoders.AES.Decoder;
-      Cipher        : Util.Encoders.AES.Encoder;
-      Map           : Wallet_Maps.Map;
-      Entry_Indexes : Wallet_Indexs.Map;
-      Sign          : Util.Encoders.SHA256.Hash_Array := (others => 0);
-      Protect_Key   : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
-      Random        : Keystore.Random.Generator;
-      Buffer        : IO.Marshaller;
-      Workers       : Wallet_Worker_Access;
+   type Wallet_Repository is limited new Ada.Finalization.Limited_Controlled with record
+      Id             : Wallet_Identifier;
+      Next_Id        : Wallet_Entry_Index;
+      Data_List      : Wallet_Block_Maps.Map;
+      Entry_List     : Wallet_Directory_List.List;
+      Randomize      : Boolean := False;
+      Root           : IO.Block_Number;
+      IV             : Util.Encoders.AES.Word_Block_Type;
+      Config         : Keystore.Keys.Wallet_Config;
+      Map            : Wallet_Maps.Map;
+      Entry_Indexes  : Wallet_Indexs.Map;
+      Random         : Keystore.Random.Generator;
+      Buffer         : IO.Marshaller;
+      Workers        : Wallet_Worker_Access;
    end record;
-
-   --  Set the IV vector to be used for the encryption of the given block number.
-   procedure Set_IV (Manager : in out Wallet_Manager;
-                     Block   : in IO.Block_Number);
 
    --  Delete the value associated with the given name.
    --  Raises the Not_Found exception if the name was not found.
-   procedure Delete (Manager    : in out Wallet_Manager;
-                     Name       : in String;
-                     Stream     : in out IO.Wallet_Stream'Class);
+--   procedure Delete (Manager    : in out Wallet_Repository;
+--                     Name       : in String;
+--                     Stream     : in out IO.Wallet_Stream'Class);
 
-   procedure Release (Manager    : in out Wallet_Manager);
-
-   protected type Safe_Wallet_Repository is
-
-      procedure Set_Key (Secret     : in Secret_Key);
-
-      procedure Open (Password   : in Secret_Key;
-                      Ident      : in Wallet_Identifier;
-                      Block      : in Keystore.IO.Block_Number;
-                      Keys       : in out Keystore.Keys.Key_Manager;
-                      Stream     : in out IO.Wallet_Stream'Class);
-
-      procedure Create (Password : in Secret_Key;
-                        Ident    : in Wallet_Identifier;
-                        Block    : in IO.Block_Number;
-                        Keys     : in out Keystore.Keys.Key_Manager;
-                        Stream   : in out IO.Wallet_Stream'Class);
-
-      procedure Add (Name     : in String;
-                     Password : in Secret_Key;
-                     Wallet   : out Wallet_Repository'Class;
-                     Stream   : in out IO.Wallet_Stream'Class);
-
-      procedure Add (Name       : in String;
-                     Kind       : in Entry_Type;
-                     Content    : in Ada.Streams.Stream_Element_Array;
-                     Stream     : in out IO.Wallet_Stream'Class);
-
-      procedure Set (Name       : in String;
-                     Kind       : in Entry_Type;
-                     Content    : in Ada.Streams.Stream_Element_Array;
-                     Stream     : in out IO.Wallet_Stream'Class);
-
-      procedure Set (Name       : in String;
-                     Kind       : in Entry_Type;
-                     Input      : in out Util.Streams.Input_Stream'Class;
-                     Stream     : in out IO.Wallet_Stream'Class);
-
-      procedure Update (Name       : in String;
-                        Kind       : in Entry_Type;
-                        Content    : in Ada.Streams.Stream_Element_Array;
-                        Stream     : in out IO.Wallet_Stream'Class);
-
-      procedure Update (Name       : in String;
-                        Kind       : in Entry_Type;
-                        Input      : in out Util.Streams.Input_Stream'Class;
-                        Stream     : in out IO.Wallet_Stream'Class);
-
-      procedure Delete (Name       : in String;
-                        Stream     : in out IO.Wallet_Stream'Class);
-
-      procedure Find (Name       : in String;
-                      Result     : out Entry_Info;
-                      Stream     : in out IO.Wallet_Stream'Class);
-
-      procedure Get_Data (Name       : in String;
-                          Result     : out Entry_Info;
-                          Output     : out Ada.Streams.Stream_Element_Array;
-                          Stream     : in out IO.Wallet_Stream'Class);
-
-      procedure Write (Name       : in String;
-                       Output     : in out Util.Streams.Output_Stream'Class;
-                       Stream     : in out IO.Wallet_Stream'Class);
-
-      function Contains (Name : in String) return Boolean;
-
-      procedure List (Content    : out Entry_Map;
-                      Stream     : in out IO.Wallet_Stream'Class);
-
-      procedure Set_Work_Manager (Workers : in Keystore.Task_Manager_Access);
-
-      procedure Release;
-
-   private
-      Manager       : aliased Wallet_Manager;
-      Parent        : Safe_Wallet_Repository_Access;
-      Self          : Safe_Wallet_Repository_Access;
-   end Safe_Wallet_Repository;
-
-   package Refs is
-     new Util.Refs.General_References (Element_Type   => Safe_Wallet_Repository);
-
-   type Wallet_Repository is new Refs.Ref with null record;
+   overriding
+   procedure Finalize (Manager    : in out Wallet_Repository);
 
 end Keystore.Repository;
