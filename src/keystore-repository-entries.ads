@@ -18,6 +18,8 @@
 
 private package Keystore.Repository.Entries is
 
+   subtype Wallet_Manager is Wallet_Repository;
+
    --  Load the wallet directory block in the wallet manager buffer.
    --  Extract the directory if this is the first time the data block is read.
    procedure Load_Directory (Manager   : in out Wallet_Manager;
