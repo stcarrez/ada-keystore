@@ -23,6 +23,8 @@ with Util.Streams;
 private with Util.Concurrent.Sequence_Queues;
 private package Keystore.Repository.Data is
 
+   subtype Wallet_Manager is Wallet_Repository;
+
    type Wallet_Worker (Work_Count : Natural) is limited private;
    type Wallet_Worker_Access is access all Wallet_Worker;
 
@@ -162,7 +164,7 @@ private
       Last_Pos   : Stream_Element_Offset;
       Buffer     : access Ada.Streams.Stream_Element_Array;
       Queue      : access Work_Queues.Queue;
-      Manager    : access Keystore.Repository.Wallet_Manager;
+      Manager    : access Keystore.Repository.Wallet_Repository;
       Data       : aliased Ada.Streams.Stream_Element_Array (1 .. DATA_MAX_SIZE);
    end record;
 
