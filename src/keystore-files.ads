@@ -33,7 +33,8 @@ package Keystore.Files is
    --  The key slot #1 is used.
    procedure Create (Container : in out Wallet_File;
                      Password  : in Secret_Key;
-                     Path      : in String) with
+                     Path      : in String;
+                     Config    : in Wallet_Config := Secure_Config) with
      Pre  => not Container.Is_Open,
      Post => Container.Is_Open;
 
@@ -151,7 +152,7 @@ package Keystore.Files is
      Pre => Container.Is_Open;
 
    overriding
-   function Find (Container : in Wallet_File;
+   function Find (Container : in out Wallet_File;
                   Name      : in String) return Entry_Info;
 
    procedure Set_Work_Manager (Container : in out Wallet_File;
