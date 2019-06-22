@@ -48,7 +48,8 @@ package body Keystore.Files is
    --  ------------------------------
    procedure Create (Container : in out Wallet_File;
                      Password  : in Secret_Key;
-                     Path      : in String) is
+                     Path      : in String;
+                     Config    : in Wallet_Config := Secure_Config) is
       Block         : IO.Block_Number;
       Wallet_Stream : IO.Files.Wallet_File_Stream_Access;
       Stream        : IO.Refs.Stream_Ref;
@@ -60,7 +61,7 @@ package body Keystore.Files is
 
       Wallet_Stream.Create (Path);
       Wallet_Stream.Allocate (Block);
-      Container.Container.Create (Password, Block, 1, Stream);
+      Container.Container.Create (Password, Config, Block, 1, Stream);
    end Create;
 
    --  ------------------------------
@@ -236,10 +237,12 @@ package body Keystore.Files is
    end List;
 
    overriding
-   function Find (Container : in Wallet_File;
+   function Find (Container : in out Wallet_File;
                   Name      : in String) return Entry_Info is
+      Result : Entry_Info;
    begin
-      return Container.Container.Find (Name);
+      Container.Container.Find (Name, Result);
+      return Result;
    end Find;
 
    procedure Set_Work_Manager (Container : in out Wallet_File;
