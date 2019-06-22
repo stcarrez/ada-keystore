@@ -18,7 +18,6 @@
 with Util.Streams;
 with Ada.Streams;
 with Keystore.IO.Refs;
-with Keystore.Keys;
 with Keystore.Repository;
 
 private package Keystore.Containers is
@@ -32,6 +31,7 @@ private package Keystore.Containers is
                       Wallet_Stream : in out Keystore.IO.Refs.Stream_Ref);
 
       procedure Create (Password      : in Secret_Key;
+                        Config        : in Wallet_Config;
                         Block         : in IO.Block_Number;
                         Ident         : in Wallet_Identifier;
                         Wallet_Stream : in out IO.Refs.Stream_Ref);
@@ -58,7 +58,8 @@ private package Keystore.Containers is
                         Kind    : in Entry_Type;
                         Content : in Ada.Streams.Stream_Element_Array);
 
-      function Find (Name   : in String) return Entry_Info;
+      procedure Find (Name    : in String;
+                      Result  : out Entry_Info);
 
       procedure Get_Data (Name       : in String;
                           Result     : out Entry_Info;
