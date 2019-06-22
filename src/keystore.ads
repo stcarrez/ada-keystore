@@ -112,7 +112,7 @@ package Keystore is
    subtype Entry_Cursor is Entry_Maps.Cursor;
 
    --  Defines the key slot number.
-   type Key_Slot is new Positive range 1 .. 8;
+   type Key_Slot is new Positive range 1 .. 7;
 
    --  Task manager to run encryption and decryption work.
    type Task_Manager (Count : Positive) is limited private;
@@ -124,6 +124,20 @@ package Keystore is
 
    --  Stop the tasks.
    procedure Stop (Manager : in Task_Manager_Access);
+
+   type Wallet_Config is limited record
+      Randomize   : Boolean := True;
+      Max_Counter : Positive := 300_000;
+      Min_Counter : Positive := 100_000;
+   end record;
+
+   --  Fast configuration but less secure.
+   Unsecure_Config : constant Wallet_Config
+     := (Randomize => False, Min_Counter => 10_000, Max_Counter => 100_000);
+
+   --  Slow configuration but more secure.
+   Secure_Config : constant Wallet_Config
+     := (Randomize => True, Min_Counter => 500_000, Max_Counter => 1_000_000);
 
    --  The wallet base type.
    type Wallet is abstract tagged limited private;
@@ -237,7 +251,7 @@ package Keystore is
                    Content   : out Entry_Map) is abstract with
      Pre'Class => Container.Is_Open;
 
-   function Find (Container : in Wallet;
+   function Find (Container : in out Wallet;
                   Name      : in String) return Entry_Info is abstract with
      Pre'Class => Container.Is_Open;
 
