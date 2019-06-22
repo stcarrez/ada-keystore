@@ -70,7 +70,7 @@ package body Keystore.Files.Tests is
       declare
          W        : Keystore.Files.Wallet_File;
       begin
-         W.Create (Path => Path, Password => Password);
+         W.Create (Path => Path, Password => Password, Config => Unsecure_Config);
       end;
       declare
          Wread    : Keystore.Files.Wallet_File;
@@ -185,7 +185,7 @@ package body Keystore.Files.Tests is
       declare
          W        : Keystore.Files.Wallet_File;
       begin
-         W.Create (Path => Path, Password => Password);
+         W.Create (Path => Path, Password => Password, Config => Unsecure_Config);
       end;
       declare
          W        : Keystore.Files.Wallet_File;
@@ -220,7 +220,7 @@ package body Keystore.Files.Tests is
       declare
          W        : Keystore.Files.Wallet_File;
       begin
-         W.Create (Path => Path, Password => Password);
+         W.Create (Path => Path, Password => Password, Config => Unsecure_Config);
       end;
 
       for Pass in 1 .. 10 loop
@@ -254,7 +254,7 @@ package body Keystore.Files.Tests is
       declare
          W        : Keystore.Files.Wallet_File;
       begin
-         W.Create (Path => Path, Password => Password);
+         W.Create (Path => Path, Password => Password, Config => Unsecure_Config);
          W.Add ("my-secret-1", "the secret 1");
          W.Add ("my-secret-2", "the secret 2");
          W.Add ("my-secret-3", "the secret 3");
@@ -324,7 +324,7 @@ package body Keystore.Files.Tests is
       declare
          W        : Keystore.Files.Wallet_File;
       begin
-         W.Create (Path => Path, Password => Password);
+         W.Create (Path => Path, Password => Password, Config => Unsecure_Config);
          for I in 1 .. Count loop
             W.Add (Name    => "test-update" & Natural'Image (I),
                    Content => "Value before update" & Natural'Image (I));
@@ -408,7 +408,7 @@ package body Keystore.Files.Tests is
       declare
          W        : Keystore.Files.Wallet_File;
       begin
-         W.Create (Path => Path, Password => Password);
+         W.Create (Path => Path, Password => Password, Config => Unsecure_Config);
          W.Add ("a", "b");
          W.Add ("c", "d");
          W.Add ("e", "f");
@@ -587,7 +587,7 @@ package body Keystore.Files.Tests is
    begin
       File.Open (Mode => Ada.Streams.Stream_IO.In_File,
                  Name => Input);
-      W.Create (Path => Path, Password => Password);
+      W.Create (Path => Path, Password => Password, Config => Unsecure_Config);
       W.Set (Name => Name, Kind => Keystore.T_STRING, Input => File);
       File.Close;
       W.Close;
@@ -628,7 +628,7 @@ package body Keystore.Files.Tests is
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       W        : Keystore.Files.Wallet_File;
    begin
-      W.Create (Path => Path, Password => Password);
+      W.Create (Path => Path, Password => Password, Config => Unsecure_Config);
       declare
          S        : Util.Measures.Stamp;
          Data  : String (1 .. 80);
