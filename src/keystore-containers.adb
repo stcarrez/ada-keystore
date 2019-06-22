@@ -16,6 +16,7 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Keystore.IO;
+with Keystore.Keys;
 with Util.Encoders;
 package body Keystore.Containers is
 
@@ -31,20 +32,21 @@ package body Keystore.Containers is
          Master : Keystore.Keys.Key_Manager;
       begin
          Stream := Wallet_Stream;
-         Master.Set_Header_Key (Header_Key);
+         Keys.Set_Header_Key (Master, Header_Key);
          Keystore.Repository.Open (Repository, Password, Ident, Block, Master, Stream.Value.all);
          State := S_OPEN;
       end Open;
 
       procedure Create (Password      : in Secret_Key;
+                        Config        : in Wallet_Config;
                         Block         : in IO.Block_Number;
                         Ident         : in Wallet_Identifier;
                         Wallet_Stream : in out IO.Refs.Stream_Ref) is
          Master : Keystore.Keys.Key_Manager;
       begin
          Stream := Wallet_Stream;
-         Master.Set_Header_Key (Header_Key);
-         Keystore.Repository.Create (Repository, Password, Block, Ident,
+         Keys.Set_Header_Key (Master, Header_Key);
+         Keystore.Repository.Create (Repository, Password, Config, Block, Ident,
                                      Master, Stream.Value.all);
          State := S_OPEN;
       end Create;
@@ -97,11 +99,10 @@ package body Keystore.Containers is
          Keystore.Repository.Delete (Repository, Name, Stream.Value.all);
       end Delete;
 
-      function Find (Name   : in String) return Entry_Info is
-         Result : Entry_Info;
+      procedure Find (Name   : in String;
+                      Result : out Entry_Info) is
       begin
          Keystore.Repository.Find (Repository, Name, Result, Stream.Value.all);
-         return Result;
       end Find;
 
       procedure Get_Data (Name       : in String;
