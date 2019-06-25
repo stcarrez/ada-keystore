@@ -82,6 +82,22 @@ package body Keystore.Keys is
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Keys");
 
+   procedure Save_Key (Manager  : in out Key_Manager;
+                       Buffer   : in out IO.Marshaller;
+                       Password : in Secret_Key;
+                       Slot     : in Key_Slot;
+                       Config   : in Wallet_Config;
+                       Stream   : in out IO.Wallet_Stream'Class);
+
+   procedure Extract (Buffer   : in out IO.Marshaller;
+                      Lock_Key : in Secret_Key;
+                      Lock_IV  : in Secret_Key;
+                      Crypt    : in out Cryptor;
+                      Hmac     : in out Util.Encoders.HMAC.SHA256.Context);
+
+   procedure Generate (Manager : in out Key_Manager;
+                       Crypt   : in out Cryptor);
+
    --  ------------------------------
    --  Set the IV vector to be used for the encryption and decruption of the given block number.
    --  ------------------------------
@@ -94,6 +110,10 @@ package body Keystore.Keys is
       Into.Cipher.Set_IV (Into.IV, Block_IV);
    end Set_IV;
 
+   --  ------------------------------
+   --  Extract the AES encryption key, the AES IV and the signature key.
+   --  Update the HMAC with the extracted encryption keys for global verification.
+   --  ------------------------------
    procedure Extract (Buffer   : in out IO.Marshaller;
                       Lock_Key : in Secret_Key;
                       Lock_IV  : in Secret_Key;
@@ -120,9 +140,6 @@ package body Keystore.Keys is
       Manager.Random.Generate (Crypt.Key);
       Manager.Random.Generate (Crypt.IV);
 
-      Util.Encoders.Create ("0123456789abcdef0123456789abcdef", Crypt.Key);
-      Util.Encoders.Create ("0123456789abcdef0123456789abcdef", Crypt.Sign);
-      Util.Encoders.Create ("0123456789abcdef", Crypt.IV);
       Crypt.Cipher.Set_Key (Crypt.Key, Util.Encoders.AES.CBC);
       Crypt.Cipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
       Crypt.Decipher.Set_Key (Crypt.Key, Util.Encoders.AES.CBC);
@@ -170,14 +187,14 @@ package body Keystore.Keys is
 
       --  Generate a derived key from the password, salt, counter.
       PBKDF2_HMAC_SHA256 (Password => Password,
-                          Salt     => Salt_Key,
-                          Counter  => Positive (Counter_Key),
-                          Result   => Lock_Key);
-
-      PBKDF2_HMAC_SHA256 (Password => Password,
                           Salt     => Salt_IV,
                           Counter  => Positive (Counter_IV),
                           Result   => Lock_IV);
+
+      PBKDF2_HMAC_SHA256 (Password => Lock_IV,
+                          Salt     => Salt_Key,
+                          Counter  => Positive (Counter_Key),
+                          Result   => Lock_Key);
 
       --  Build a signature from the master key and the wallet salt.
       Util.Encoders.HMAC.SHA256.Set_Key (Hmac, Sign);
@@ -192,13 +209,18 @@ package body Keystore.Keys is
       return Result = Buffer.Data (Buffer.Pos .. Buffer.Pos + Result'Length - 1);
    end Verify;
 
+   --  ------------------------------
+   --  Save the wallet config encryption keys in the key slot and protect that
+   --  key using the user's password.  New salts and counters are generated and
+   --  the user's password is passed through PBKDF2 to get the encryption key
+   --  that protects the key slot.
+   --  ------------------------------
    procedure Save_Key (Manager  : in out Key_Manager;
                        Buffer   : in out IO.Marshaller;
                        Password : in Secret_Key;
                        Slot     : in Key_Slot;
                        Config   : in Wallet_Config;
                        Stream   : in out IO.Wallet_Stream'Class) is
-      use type Interfaces.Unsigned_32;
 
       Salt_Key    : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
       Salt_IV     : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
@@ -225,9 +247,7 @@ package body Keystore.Keys is
       Manager.Random.Generate (Salt_Key);
       Manager.Random.Generate (Salt_IV);
       Manager.Random.Generate (Sign);
-      Util.Encoders.Create ("0123456789abcdef0123456789abcdef", Salt_Key);
-      Util.Encoders.Create ("0123456789abcdef0123456789abcdef", Salt_IV);
-      Util.Encoders.Create ("0123456789abcdef0123456789abcdef", Sign);
+
       Buffer.Pos := WH_KEY_LIST_START + IO.Block_Index (Slot) * WH_SLOT_SIZE - WH_SLOT_SIZE;
       Buffer.Data (Buffer.Pos .. Buffer.Pos + WH_KEY_SIZE - 1) := (others => 0);
       IO.Put_Unsigned_32 (Buffer, WH_KEY_PBKDF2);
@@ -240,13 +260,14 @@ package body Keystore.Keys is
 
       --  Generate a derived key from the password, salt, counter.
       PBKDF2_HMAC_SHA256 (Password => Password,
-                          Salt     => Salt_Key,
-                          Counter  => Counter_Key,
-                          Result   => Lock_Key);
-      PBKDF2_HMAC_SHA256 (Password => Password,
                           Salt     => Salt_IV,
                           Counter  => Counter_IV,
                           Result   => Lock_IV);
+
+      PBKDF2_HMAC_SHA256 (Password => Lock_IV,
+                          Salt     => Salt_Key,
+                          Counter  => Counter_Key,
+                          Result   => Lock_Key);
 
       --  Build a signature from the lock key.
       Util.Encoders.HMAC.SHA256.Set_Key (Hmac, Sign);
