@@ -24,6 +24,59 @@ private package Keystore.Keys is
 
    use type IO.Block_Index;
 
+   type Cryptor is limited record
+      Cipher    : Util.Encoders.AES.Encoder;
+      Decipher  : Util.Encoders.AES.Decoder;
+      Key       : Secret_Key (Length => 32);
+      IV        : Secret_Key (Length => 16);
+      Sign      : Secret_Key (Length => 32);
+   end record;
+
+   --  Set the IV vector to be used for the encryption and decruption of the given block number.
+   procedure Set_IV (Into  : in out Cryptor;
+                     Block : in IO.Block_Number);
+
+   type Wallet_Config is limited record
+      Data        : Cryptor;
+      Dir         : Cryptor;
+      Key         : Cryptor;
+      Max_Counter : Interfaces.Unsigned_32 := 300_000;
+      Min_Counter : Interfaces.Unsigned_32 := 100_000;
+   end record;
+
+   type Key_Manager is limited private;
+
+   --  Open the key manager and read the wallet header block.  Use the secret key
+   --  to decrypt/encrypt the wallet header block.
+   procedure Open (Manager  : in out Key_Manager;
+                   Password : in Secret_Key;
+                   Ident    : in Wallet_Identifier;
+                   Block    : in Keystore.IO.Block_Number;
+                   Root     : out Keystore.IO.Block_Number;
+                   Config   : in out Wallet_Config;
+                   Stream   : in out IO.Wallet_Stream'Class);
+
+   --  Open the key manager and read the wallet header block.  Use the secret key
+   --  to decrypt/encrypt the wallet header block.
+   procedure Create (Manager  : in out Key_Manager;
+                     Password : in Secret_Key;
+                     Slot     : in Key_Slot;
+                     Ident    : in Wallet_Identifier;
+                     Block    : in Keystore.IO.Block_Number;
+                     Root     : in Keystore.IO.Block_Number;
+                     Config   : in out Wallet_Config;
+                     Stream   : in out IO.Wallet_Stream'Class);
+
+   procedure Set_Header_Key (Manager  : in out Key_Manager;
+                             Key      : in Secret_Key);
+
+   procedure Set_Key (Manager  : in out Key_Manager;
+                      Password : in Secret_Key;
+                      Slot     : in Key_Slot;
+                      Stream   : in out IO.Wallet_Stream'Class);
+
+private
+
    --  Size of a key slot.
    WH_SLOT_SIZE     : constant := 512;
 
@@ -42,59 +95,6 @@ private package Keystore.Keys is
 
    --  Key slot type is using PBKDF2-HMAC-256.
    WH_KEY_PBKDF2     : constant := 16#0001#;
-
-   type Cryptor is limited record
-      Cipher    : Util.Encoders.AES.Encoder;
-      Decipher  : Util.Encoders.AES.Decoder;
-      Key       : Secret_Key (Length => 32);
-      IV        : Secret_Key (Length => 16);
-      Sign      : Secret_Key (Length => 32);
-   end record;
-
-   type Wallet_Config is limited record
-      Data        : Cryptor;
-      Dir         : Cryptor;
-      Key         : Cryptor;
-      Max_Counter : Interfaces.Unsigned_32 := 300_000;
-      Min_Counter : Interfaces.Unsigned_32 := 100_000;
-   end record;
-
-   --  Set the IV vector to be used for the encryption and decruption of the given block number.
-   procedure Set_IV (Into  : in out Cryptor;
-                     Block : in IO.Block_Number);
-
-   type Key_Manager is limited private;
-
-   --  Open the key manager and read the wallet header block.  Use the secret key
-   --  to decrypt/encrypt the wallet header block.
-   procedure Open (Manager  : in out Key_Manager;
-                   Password : in Secret_Key;
-                   Ident    : in Wallet_Identifier;
-                   Block    : in Keystore.IO.Block_Number;
-                   Root     : out Keystore.IO.Block_Number;
-                   Config   : in out Wallet_Config;
-                   Stream   : in out IO.Wallet_Stream'Class);
-
-   procedure Set_Header_Key (Manager  : in out Key_Manager;
-                             Key      : in Secret_Key);
-
-   procedure Set_Key (Manager  : in out Key_Manager;
-                      Password : in Secret_Key;
-                      Slot     : in Key_Slot;
-                      Stream   : in out IO.Wallet_Stream'Class);
-
-   --  Open the key manager and read the wallet header block.  Use the secret key
-   --  to decrypt/encrypt the wallet header block.
-   procedure Create (Manager  : in out Key_Manager;
-                     Password : in Secret_Key;
-                     Slot     : in Key_Slot;
-                     Ident    : in Wallet_Identifier;
-                     Block    : in Keystore.IO.Block_Number;
-                     Root     : in Keystore.IO.Block_Number;
-                     Config   : in out Wallet_Config;
-                     Stream   : in out IO.Wallet_Stream'Class);
-
-private
 
    type Key_Manager is limited record
       Id                : Wallet_Identifier;
