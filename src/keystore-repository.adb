@@ -17,7 +17,6 @@
 -----------------------------------------------------------------------
 with Util.Log.Loggers;
 with Ada.Unchecked_Deallocation;
-with Keystore.Logs;
 with Keystore.Repository.Data;
 with Keystore.Repository.Entries;
 
@@ -88,7 +87,8 @@ package body Keystore.Repository is
    begin
       Repository.Id := Ident;
       Repository.Workers := Data.Create (Repository'Unchecked_Access, null, 1).all'Access;
-      Keystore.Keys.Open (Keys, Password, Ident, Block, Repository.Root, Repository.Config, Stream);
+      Keystore.Keys.Open (Keys, Password, Ident, Block,
+                          Repository.Root, Repository.Config, Stream);
 
       Entries.Load_Complete_Directory (Repository, Repository.Root, Stream);
    end Open;
