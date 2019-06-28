@@ -125,7 +125,7 @@ package Keystore is
    --  Stop the tasks.
    procedure Stop (Manager : in Task_Manager_Access);
 
-   type Wallet_Config is limited record
+   type Wallet_Config is record
       Randomize   : Boolean := True;
       Max_Counter : Positive := 300_000;
       Min_Counter : Positive := 100_000;
