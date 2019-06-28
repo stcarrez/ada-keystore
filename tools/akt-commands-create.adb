@@ -16,7 +16,51 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Ada.Text_IO;
+with Util.Strings;
 package body AKT.Commands.Create is
+
+   use GNAT.Strings;
+
+   procedure Parse_Range (Value  : in String;
+                          Config : in out Keystore.Wallet_Config);
+
+   procedure Parse_Range (Value  : in String;
+                          Config : in out Keystore.Wallet_Config) is
+      Pos  : constant Natural := Util.Strings.Index (Value, ':');
+      Low  : Integer := Config.Min_Counter;
+      High : Integer := Config.Max_Counter;
+   begin
+      if Pos > 0 then
+         Low  := Integer'Value (Value (Value'First .. Pos - 1));
+         High := Integer'Value (Value (Pos + 1 .. Value'Last));
+      else
+         High := Integer'Value (Value);
+         if Low > High then
+            Low := High;
+         end if;
+      end if;
+      if not (Low in Positive'Range) or not (High in Positive'Range) then
+         AKT.Commands.Log.Error ("Value is out of range");
+         raise Error;
+      end if;
+      if Low > High then
+         AKT.Commands.Log.Error ("The min counter is greater than max counter");
+         raise Error;
+      end if;
+      Config.Min_Counter := Positive (Low);
+      Config.Max_Counter := Positive (High);
+
+   exception
+      when Error =>
+         raise;
+
+      when others =>
+         AKT.Commands.Log.Error ("Invalid counter range: " & Value);
+         AKT.Commands.Log.Error ("Valid format are 'MAX_COUNTER' or 'MIN_COUNTER:MAX_COUNTER'");
+         AKT.Commands.Log.Error ("Counters must be positive integers.");
+         raise Error;
+
+   end Parse_Range;
 
    --  ------------------------------
    --  Create the keystore file.
@@ -26,12 +70,36 @@ package body AKT.Commands.Create is
                       Name      : in String;
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
-      pragma Unreferenced (Command, Name, Args);
+      pragma Unreferenced (Name, Args);
+
+      Config : Keystore.Wallet_Config := Keystore.Secure_Config;
    begin
+      if Command.Counter_Range /= null and then Command.Counter_Range'Length > 0 then
+         Parse_Range (Command.Counter_Range.all, Config);
+      end if;
       Keystore.Files.Create (Container => Context.Wallet,
                              Password  => Context.Provider.Get_Password,
-                             Path      => Context.Wallet_File.all);
+                             Path      => Context.Wallet_File.all,
+                             Config    => Config);
    end Execute;
+
+   --  ------------------------------
+   --  Setup the command before parsing the arguments and executing it.
+   --  ------------------------------
+   procedure Setup (Command : in out Command_Type;
+                    Config  : in out GNAT.Command_Line.Command_Line_Configuration;
+                    Context : in out Context_Type) is
+      pragma Unreferenced (Context);
+
+      package GC renames GNAT.Command_Line;
+   begin
+      GC.Define_Switch (Config => Config,
+                        Output => Command.Counter_Range'Access,
+                        Switch => "-c:",
+                        Long_Switch => "--counter-range:",
+                        Argument => "RANGE",
+                        Help => "Set the range for the PBKDF2 counter");
+   end Setup;
 
    --  ------------------------------
    --  Write the help associated with the command.
@@ -43,9 +111,14 @@ package body AKT.Commands.Create is
    begin
       Ada.Text_IO.Put_Line ("akt create: create the keystore");
       Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: akt create");
+      Ada.Text_IO.Put_Line ("Usage: akt create [--counter-range min:max]");
       Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("  The create command is used to create the new keystore file.");
+      Ada.Text_IO.Put_Line ("  By default the PBKDF2 iteration counter is in range"
+                            & " 500000..1000000");
+      Ada.Text_IO.Put_Line ("  You can change this range by using the `--counter-range` option.");
+      Ada.Text_IO.Put_Line ("  High values provide best password protection at the expense"
+                              & " of speed.");
    end Help;
 
 end AKT.Commands.Create;
