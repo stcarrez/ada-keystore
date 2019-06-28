@@ -239,7 +239,7 @@ package body Keystore.Keys is
       end if;
 
       --  Make a second random counter in range 100_000 .. 372_140.
-      Counter_IV := Natural (Manager.Random.Generate and Config.Max_Counter);
+      Counter_IV := Natural (Manager.Random.Generate mod Config.Max_Counter);
       if Counter_IV < Positive (Config.Min_Counter) then
          Counter_IV := Positive (Config.Min_Counter);
       end if;
