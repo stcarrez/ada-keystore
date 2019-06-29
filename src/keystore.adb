@@ -92,7 +92,7 @@ package body Keystore is
    --  ------------------------------
    procedure Start (Manager : in Task_Manager_Access) is
    begin
-      Executors.Start (Manager.all'Access);
+      Manager.Start;
    end Start;
 
    --  ------------------------------
