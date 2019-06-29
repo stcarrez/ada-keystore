@@ -16,7 +16,6 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Ada.Streams;
-with Interfaces;
 with Util.Log.Loggers;
 with Util.Encoders.HMAC.SHA256;
 with Util.Encoders.KDF.PBKDF2_HMAC_SHA256;
@@ -95,8 +94,20 @@ package body Keystore.Keys is
                       Crypt    : in out Cryptor;
                       Hmac     : in out Util.Encoders.HMAC.SHA256.Context);
 
+   function Verify (Manager  : in Key_Manager;
+                    Buffer   : in out IO.Marshaller;
+                    Password : in Secret_Key;
+                    Size     : in Positive;
+                    Config   : in out Wallet_Config) return Boolean;
+
    procedure Generate (Manager : in out Key_Manager;
                        Crypt   : in out Cryptor);
+
+   procedure Save (Buffer   : in out IO.Marshaller;
+                   Lock_Key : in Secret_Key;
+                   Lock_IV  : in Secret_Key;
+                   Crypt    : in Cryptor;
+                   Hmac     : in out Util.Encoders.HMAC.SHA256.Context);
 
    --  ------------------------------
    --  Set the IV vector to be used for the encryption and decruption of the given block number.
