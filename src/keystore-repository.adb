@@ -171,11 +171,11 @@ package body Keystore.Repository is
       Data.Add_Data (Repository, Item, Item.Data, Input, Data_Offset, Stream);
    end Add;
 
-   procedure Add (Repository : in out Wallet_Repository;
-                  Name       : in String;
-                  Password   : in Secret_Key;
-                  Wallet     : out Wallet_Repository'Class;
-                  Stream     : in out IO.Wallet_Stream'Class) is
+   procedure Add_Wallet (Repository : in out Wallet_Repository;
+                         Name       : in String;
+                         Password   : in Secret_Key;
+                         Wallet     : out Wallet_Repository'Class;
+                         Stream     : in out IO.Wallet_Stream'Class) is
       Item      : Wallet_Entry_Access;
       --  Keys      : Keystore.Keys.Key_Manager;
    begin
@@ -187,7 +187,7 @@ package body Keystore.Repository is
       --  Repo.Create (Password, 1, IO.Block_Number (Item.Block), Keys, Stream);
 
       --  Repository.Value.Add (Name, Password, Wallet, Stream);
-   end Add;
+   end Add_Wallet;
 
    procedure Set (Repository : in out Wallet_Repository;
                   Name       : in String;

@@ -65,15 +65,15 @@ private package Keystore.Repository is
 
    procedure Add (Repository : in out Wallet_Repository;
                   Name       : in String;
-                  Password   : in Secret_Key;
-                  Wallet     : out Wallet_Repository'Class;
-                  Stream     : in out IO.Wallet_Stream'Class);
-
-   procedure Add (Repository : in out Wallet_Repository;
-                  Name       : in String;
                   Kind       : in Entry_Type;
                   Content    : in Ada.Streams.Stream_Element_Array;
                   Stream     : in out IO.Wallet_Stream'Class);
+
+   procedure Add_Wallet (Repository : in out Wallet_Repository;
+                         Name       : in String;
+                         Password   : in Secret_Key;
+                         Wallet     : out Wallet_Repository'Class;
+                         Stream     : in out IO.Wallet_Stream'Class);
 
    procedure Set (Repository : in out Wallet_Repository;
                   Name       : in String;
