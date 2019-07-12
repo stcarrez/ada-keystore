@@ -1,5 +1,8 @@
 akt create: create the keystore
 
-Usage: akt create
+Usage: akt create [--counter-range min:max]
 
   The create command is used to create the new keystore file.
+  By default the PBKDF2 iteration counter is in range 500000..1000000
+  You can change this range by using the `--counter-range` option.
+  High values provide best password protection at the expense of speed.
