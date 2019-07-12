@@ -356,8 +356,8 @@ package body Keystore.Repository.Data is
                            Item        : in Wallet_Entry_Access;
                            Data_Offset : in Ada.Streams.Stream_Element_Offset;
                            Next_Block  : in Wallet_Block_Entry_Access;
-                           Content     : in Ada.Streams.Stream_Element_Array) is
-      Data_Size     : constant IO.Block_Index := AES_Align (Content'Length);
+                           Size        : in Ada.Streams.Stream_Element_Offset) is
+      Data_Size     : constant IO.Block_Index := AES_Align (Size);
       Data_Block    : constant Wallet_Block_Entry_Access := Work.Data_Block;
    begin
       Logs.Debug (Log, "Add fragment block{0} at{1}", Data_Block.Block, Data_Block.Last_Pos);
@@ -368,9 +368,9 @@ package body Keystore.Repository.Data is
       Work.Block.Pos := Data_Entry_Offset (Data_Block.Count);
       IO.Put_Unsigned_32 (Work.Block, Interfaces.Unsigned_32 (Item.Id));
       IO.Put_Kind (Work.Block, Item.Kind);
-      IO.Put_Unsigned_16 (Work.Block, Content'Length);
+      IO.Put_Unsigned_16 (Work.Block, Interfaces.Unsigned_16 (Size));
       IO.Put_Unsigned_64 (Work.Block, Item.Size);
-      if Item.Size = Content'Length then
+      if Item.Size = Interfaces.Unsigned_64 (Size) then
          IO.Put_Date (Work.Block, Item.Update_Date);
          IO.Put_Date (Work.Block, Item.Access_Date);
       else
@@ -389,7 +389,7 @@ package body Keystore.Repository.Data is
       --  Record the fragment in the data block.
       Data_Block.Fragments (Data_Block.Count).Item := Item;
       Data_Block.Fragments (Data_Block.Count).Data_Offset := Data_Offset;
-      Data_Block.Fragments (Data_Block.Count).Size := Content'Length;
+      Data_Block.Fragments (Data_Block.Count).Size := Size;
       Data_Block.Fragments (Data_Block.Count).Next_Fragment := Next_Block;
       Data_Block.Fragments (Data_Block.Count).Block_Offset := Data_Block.Last_Pos;
       if Item.Data = null then
@@ -398,9 +398,9 @@ package body Keystore.Repository.Data is
 
       Work.Start_Data := Data_Block.Last_Pos;
       Work.End_Data := Work.Start_Data + Data_Size - 1;
-      Work.Buffer_Pos := 1;
-      Work.Last_Pos := Content'Length;
-      Work.Data (1 .. Content'Length) := Content;
+      --  Work.Buffer_Pos := 1;
+      --  Work.Last_Pos := Content'Length;
+      --  Work.Data (1 .. Content'Length) := Content;
 
    end Add_Fragment;
 
@@ -520,7 +520,7 @@ package body Keystore.Repository.Data is
       Encoded    : Stream_Element_Offset;
       Decipher   : Util.Encoders.AES.Decoder;
       Secret     : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
-      IV         : Secret_Key (Length => 16);
+      IV         : Secret_Key (Length => IO.SIZE_IV);
    begin
       Logs.Debug (Log, "Get fragment from{0} at{1}", Manager.Buffer.Block, Start_Data);
 
@@ -620,16 +620,33 @@ package body Keystore.Repository.Data is
    end Delete_Fragment;
 
    procedure Fill (Work  : in out Data_Work;
-                   Input : in out Util.Streams.Input_Stream'Class) is
-      Pos  : Stream_Element_Offset := Work.Data'First;
-      Last : Stream_Element_Offset;
+                   Input : in out Util.Streams.Input_Stream'Class;
+                   Space : in Buffer_Offset;
+                   Last  : out Buffer_Size) is
+      Pos   : Buffer_Offset := Work.Data'First;
+      Limit : constant Buffer_Offset := Pos + Space - 1;
    begin
-      while Pos < Work.Data'Last loop
-         Input.Read (Work.Data (Pos .. Work.Data'Last), Last);
-         exit when Last < Pos;
+      Work.Buffer_Pos := 1;
+      loop
+         Input.Read (Work.Data (Pos .. Limit), Last);
+
+         --  Reached end of buffer.
+         if Last >= Limit then
+            Work.Last_Pos := Limit;
+            return;
+         end if;
+
+         --  Reached end of stream.
+         if Last < Pos then
+            if Last >= Work.Data'First then
+               Work.Last_Pos := Pos;
+            else
+               Last := 0;
+            end if;
+            return;
+         end if;
          Pos := Last + 1;
       end loop;
-      Work.Last_Pos := Pos;
    end Fill;
 
    procedure Flush_Queue (Manager : in out Wallet_Manager;
@@ -667,7 +684,6 @@ package body Keystore.Repository.Data is
                        Data_Block  : in out Wallet_Block_Entry_Access;
                        Content     : in Ada.Streams.Stream_Element_Array;
                        Offset      : in out Ada.Streams.Stream_Element_Offset;
-                       Full_Block  : in Boolean;
                        Stream      : in out IO.Wallet_Stream'Class) is
       Space       : Stream_Element_Offset;
       Last        : Stream_Element_Offset;
@@ -687,10 +703,10 @@ package body Keystore.Repository.Data is
             Block.Available := Block.Available - Space;
             Allocate_Data_Block (Manager, DATA_MAX_SIZE, Next_Block, Stream);
             Block.Available := Block.Available + Space;
-         elsif Full_Block then
-            Data_Block := Block;
-            Offset := Data_Offset;
-            return;
+--         elsif Full_Block then
+--            Data_Block := Block;
+--            Offset := Data_Offset;
+--            return;
          else
             Last := Content'Last;
             Next_Block := null;
@@ -709,7 +725,10 @@ package body Keystore.Repository.Data is
             Init_Data_Block (Manager, Work.Block);
             Work.Block.Block := Block.Block;
          end if;
-         Add_Fragment (Manager, Work, Item, Data_Offset, Next_Block, Content (Start .. Last));
+         Work.Buffer_Pos := 1;
+         Work.Last_Pos := Last - Start + 1;
+         Work.Data (1 .. Work.Last_Pos) := Content (Start .. Last);
+         Add_Fragment (Manager, Work, Item, Data_Offset, Next_Block, Last - Start + 1);
 
          if Manager.Workers.Work_Manager /= null then
             Manager.Workers.Work_Manager.Execute (Work.all'Access);
@@ -723,6 +742,75 @@ package body Keystore.Repository.Data is
          --  Move on to what remains.
          Data_Offset := Data_Offset + Last - Start + 1;
          Start := Last + 1;
+         Block := Next_Block;
+      end loop;
+      Offset := Data_Offset;
+      Flush_Queue (Manager, Manager.Workers.all, Stream);
+   end Add_Data;
+
+   --  ------------------------------
+   --  Write the data in one or several blocks.
+   --  ------------------------------
+   procedure Add_Data (Manager     : in out Wallet_Manager;
+                       Item        : in Wallet_Entry_Access;
+                       Data_Block  : in out Wallet_Block_Entry_Access;
+                       Content     : in out Util.Streams.Input_Stream'Class;
+                       Offset      : in out Ada.Streams.Stream_Element_Offset;
+                       Stream      : in out IO.Wallet_Stream'Class) is
+      Space       : Buffer_Offset;
+      Last        : Buffer_Size;
+      Next_Block  : Wallet_Block_Entry_Access;
+      Data_Offset : Stream_Element_Offset := Offset;
+      Block       : Wallet_Block_Entry_Access := Data_Block;
+      Sequence    : Natural := 0;
+      Work        : Data_Work_Access;
+   begin
+      Manager.Workers.Data_Queue.Reset_Sequence;
+      while Block /= null loop
+         --  Check if the current block has enough space or we need another block.
+         Space := Block.Available - DATA_ENTRY_SIZE;
+
+         --  Get a data work instance or flush pending works to make one available.
+         Allocate_Work (Manager, Work, Stream);
+         Work.Sequence := Sequence;
+         Work.Data_Block := Block;
+         Sequence := Sequence + 1;
+
+         --  Fill the work buffer by reading the stream.
+         Fill (Work.all, Content, Space, Last);
+         if Last = 0 then
+            Put_Work (Manager.Workers.all, Work);
+            exit;
+         end if;
+
+         if Space = Last then
+            Block.Available := Block.Available - Space;
+            Allocate_Data_Block (Manager, DATA_MAX_SIZE, Next_Block, Stream);
+            Block.Available := Block.Available + Space;
+         else
+            Next_Block := null;
+         end if;
+
+         --  Get the current block if it has some content or fill an empty new one.
+         if Block.Count > 0 then
+            Load_Data (Manager, Block, Work.Block, Stream);
+         else
+            Init_Data_Block (Manager, Work.Block);
+            Work.Block.Block := Block.Block;
+         end if;
+         Add_Fragment (Manager, Work, Item, Data_Offset, Next_Block, Last);
+
+         if Manager.Workers.Work_Manager /= null then
+            Manager.Workers.Work_Manager.Execute (Work.all'Access);
+         else
+            Work.Cipher;
+            Put_Work (Manager.Workers.all, Work);
+            Flush_Queue (Manager, Manager.Workers.all, Stream);
+            Save_Data (Manager, Work.Data_Block.all, Work.Block, Stream);
+         end if;
+
+         --  Move on to what remains.
+         Data_Offset := Data_Offset + Last;
          Block := Next_Block;
       end loop;
       Offset := Data_Offset;
@@ -944,7 +1032,7 @@ package body Keystore.Repository.Data is
       Start_Pos : constant Stream_Element_Offset := Work.Buffer_Pos;
       Last_Pos  : constant Stream_Element_Offset := Work.Last_Pos;
       Secret    : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
-      IV        : Secret_Key (Length => 16);
+      IV        : Secret_Key (Length => IO.SIZE_IV);
       Decipher  : Util.Encoders.AES.Decoder;
    begin
       Logs.Debug (Log, "Decipher from{0}", Work.Block.Block);
