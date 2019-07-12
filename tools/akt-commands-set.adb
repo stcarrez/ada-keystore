@@ -40,7 +40,8 @@ package body AKT.Commands.Set is
             begin
                File.Open (Mode => Ada.Streams.Stream_IO.In_File,
                           Name => Command.File.all);
-               Context.Open_Keystore;
+               --  Open keystore with workers because we expect possibly big data.
+               Context.Open_Keystore (Use_Worker => True);
                Context.Wallet.Set (Name  => Args.Get_Argument (1),
                                    Kind  => Keystore.T_STRING,
                                    Input => File);
@@ -52,7 +53,8 @@ package body AKT.Commands.Set is
          AKT.Commands.Usage (Args, Context, Name);
 
       else
-         Context.Open_Keystore;
+         --  Open keystore without use workers because we expect small data.
+         Context.Open_Keystore (Use_Worker => False);
          Context.Wallet.Set (Name    => Args.Get_Argument (1),
                              Content => Args.Get_Argument (2));
       end if;
