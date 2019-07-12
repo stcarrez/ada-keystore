@@ -56,31 +56,6 @@ private package Keystore.Repository.Data is
                         Stream     : in out IO.Wallet_Stream'Class) with
      Pre => Data_Block.Count > 0;
 
-   --  Save the data block.
-   procedure Save_Data (Manager    : in out Wallet_Manager;
-                        Data_Block : in Wallet_Block_Entry;
-                        Buffer     : in out IO.Marshaller;
-                        Stream     : in out IO.Wallet_Stream'Class);
-
-   procedure Update_Fragment (Manager     : in out Wallet_Manager;
-                              Data_Block  : in Wallet_Block_Entry_Access;
-                              Item        : in Wallet_Entry_Access;
-                              Data_Offset : in Ada.Streams.Stream_Element_Offset;
-                              Position    : in Fragment_Index;
-                              Fragment    : in Wallet_Block_Fragment;
-                              Next_Block  : in Wallet_Block_Entry_Access;
-                              Content     : in Ada.Streams.Stream_Element_Array) with
-     Pre => Position <= Data_Block.Count and
-     AES_Align (Content'Length) <= Data_Block.Available
-     + AES_Align (Data_Block.Fragments (Position).Size);
-
-   --  Delete the data from the data block.
-   --  The data block must have been loaded and is not saved.
-   procedure Delete_Fragment (Manager    : in out Wallet_Manager;
-                              Data_Block : in out Wallet_Block_Entry;
-                              Next_Block : out Wallet_Block_Entry_Access;
-                              Item       : in Wallet_Entry_Access);
-
    --  Get the data associated with the named entry.
    procedure Get_Data (Manager    : in out Wallet_Manager;
                        Name       : in String;
@@ -117,7 +92,13 @@ private package Keystore.Repository.Data is
                        Data_Block  : in out Wallet_Block_Entry_Access;
                        Content     : in Ada.Streams.Stream_Element_Array;
                        Offset      : in out Ada.Streams.Stream_Element_Offset;
-                       Full_Block  : in Boolean;
+                       Stream      : in out IO.Wallet_Stream'Class);
+
+   procedure Add_Data (Manager     : in out Wallet_Manager;
+                       Item        : in Wallet_Entry_Access;
+                       Data_Block  : in out Wallet_Block_Entry_Access;
+                       Content     : in out Util.Streams.Input_Stream'Class;
+                       Offset      : in out Ada.Streams.Stream_Element_Offset;
                        Stream      : in out IO.Wallet_Stream'Class);
 
 private
@@ -131,6 +112,12 @@ private
                                  Data_Block : in out Wallet_Block_Entry_Access;
                                  Stream     : in out IO.Wallet_Stream'Class);
 
+   --  Save the data block.
+   procedure Save_Data (Manager    : in out Wallet_Manager;
+                        Data_Block : in Wallet_Block_Entry;
+                        Buffer     : in out IO.Marshaller;
+                        Stream     : in out IO.Wallet_Stream'Class);
+
    --  Get the fragment position of the item within the data block.
    --  Returns 0 if the data item was not found.
    function Get_Fragment_Position (Data_Block : in Wallet_Block_Entry;
@@ -142,6 +129,25 @@ private
                            Fragment : in Wallet_Block_Fragment;
                            Output   : out Ada.Streams.Stream_Element_Array);
 
+   procedure Update_Fragment (Manager     : in out Wallet_Manager;
+                              Data_Block  : in Wallet_Block_Entry_Access;
+                              Item        : in Wallet_Entry_Access;
+                              Data_Offset : in Ada.Streams.Stream_Element_Offset;
+                              Position    : in Fragment_Index;
+                              Fragment    : in Wallet_Block_Fragment;
+                              Next_Block  : in Wallet_Block_Entry_Access;
+                              Content     : in Ada.Streams.Stream_Element_Array) with
+     Pre => Position <= Data_Block.Count and
+     AES_Align (Content'Length) <= Data_Block.Available
+     + AES_Align (Data_Block.Fragments (Position).Size);
+
+   --  Delete the data from the data block.
+   --  The data block must have been loaded and is not saved.
+   procedure Delete_Fragment (Manager    : in out Wallet_Manager;
+                              Data_Block : in out Wallet_Block_Entry;
+                              Next_Block : out Wallet_Block_Entry_Access;
+                              Item       : in Wallet_Entry_Access);
+
    type Data_Work;
    type Data_Work_Access is access all Data_Work;
 
@@ -150,6 +156,9 @@ private
                                           Sequence_Type    => Natural,
                                           Default_Size     => 32,
                                           Clear_On_Dequeue => False);
+
+   subtype Buffer_Size is Stream_Element_Offset range 0 .. DATA_MAX_SIZE;
+   subtype Buffer_Offset is Buffer_Size range 1 .. Buffer_Size'Last;
 
    type Data_Work_Type is (DATA_ENCRYPT, DATA_DECRYPT);
 
@@ -160,8 +169,8 @@ private
       Sequence   : Natural;
       Start_Data : Stream_Element_Offset;
       End_Data   : Stream_Element_Offset;
-      Buffer_Pos : Stream_Element_Offset;
-      Last_Pos   : Stream_Element_Offset;
+      Buffer_Pos : Buffer_Offset;
+      Last_Pos   : Buffer_Offset;
       Buffer     : access Ada.Streams.Stream_Element_Array;
       Queue      : access Work_Queues.Queue;
       Manager    : access Keystore.Repository.Wallet_Repository;
@@ -201,7 +210,7 @@ private
                            Item        : in Wallet_Entry_Access;
                            Data_Offset : in Ada.Streams.Stream_Element_Offset;
                            Next_Block  : in Wallet_Block_Entry_Access;
-                           Content     : in Ada.Streams.Stream_Element_Array) with
-     Pre => DATA_ENTRY_SIZE + AES_Align (Content'Length) <= Work.Data_Block.Available;
+                           Size        : in Ada.Streams.Stream_Element_Offset) with
+     Pre => DATA_ENTRY_SIZE + AES_Align (Size) <= Work.Data_Block.Available;
 
 end Keystore.Repository.Data;
