@@ -155,7 +155,7 @@ package body Keystore.Repository is
          return;
       end if;
 
-      Data.Add_Data (Repository, Item, Item.Data, Content, Data_Offset, False, Stream);
+      Data.Add_Data (Repository, Item, Item.Data, Content, Data_Offset, Stream);
    end Add;
 
    procedure Add (Repository : in out Wallet_Repository;
@@ -164,45 +164,11 @@ package body Keystore.Repository is
                   Input      : in out Util.Streams.Input_Stream'Class;
                   Stream     : in out IO.Wallet_Stream'Class) is
       Item        : Wallet_Entry_Access;
-      Content     : Ada.Streams.Stream_Element_Array (1 .. 4 * 4096);
-      Last        : Stream_Element_Offset;
       Data_Offset : Stream_Element_Offset := 0;
-      Old_Offset  : Stream_Element_Offset;
-      Pos         : Stream_Element_Offset;
-      Remain      : Stream_Element_Offset;
-      Block       : Wallet_Block_Entry_Access;
    begin
-      Pos := Content'First;
-      loop
-         while Pos < Content'Last loop
-            Input.Read (Content (Pos .. Content'Last), Last);
-            exit when Last < Pos;
-            Pos := Last + 1;
-         end loop;
+      Entries.Add_Entry (Repository, Name, Kind, 1, Item, Stream);
 
-         if Item = null then
-            Entries.Add_Entry (Repository, Name, Kind,
-                               Interfaces.Unsigned_64 (Last - Content'First + 1),
-                               Item, Stream);
-
-            Block := Item.Data;
-         end if;
-
-         if Last < Content'Last then
-            Data.Add_Data (Repository, Item, Block, Content (Content'First .. Last),
-                           Data_Offset, False, Stream);
-            return;
-         else
-            Old_Offset := Data_Offset;
-            Data.Add_Data (Repository, Item, Block, Content, Data_Offset, True, Stream);
-            Remain := Content'Length - (Data_Offset - Old_Offset);
-            Pos := Content'First + Remain;
-            if Remain > 0 then
-               Content (Content'First .. Content'First + Remain - 1)
-                 := Content (Content'Last - Remain + 1 .. Content'Last);
-            end if;
-         end if;
-      end loop;
+      Data.Add_Data (Repository, Item, Item.Data, Input, Data_Offset, Stream);
    end Add;
 
    procedure Add (Repository : in out Wallet_Repository;
@@ -282,7 +248,7 @@ package body Keystore.Repository is
       if New_Block /= null then
          Start := Content'First + Data_Offset;
          Data.Add_Data (Repository, Item, New_Block, Content (Start .. Content'Last),
-                        Data_Offset, False, Stream);
+                        Data_Offset, Stream);
       end if;
 
       if Delete_Block /= null then
@@ -343,12 +309,12 @@ package body Keystore.Repository is
          else
             if Last < Content'Last then
                Data.Add_Data (Manager, Item, New_Block, Content (Content'First .. Last),
-                              Data_Offset, False, Stream);
+                              Data_Offset, Stream);
                exit;
             else
                --  Write the data in one or several blocks.
                Data.Add_Data (Manager, Item, New_Block, Content,
-                              Data_Offset, True, Stream);
+                              Data_Offset, Stream);
             end if;
          end if;
          Remain := (Last - Content'First + 1) - (Data_Offset - Old_Offset);
