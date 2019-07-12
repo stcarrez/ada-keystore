@@ -22,11 +22,12 @@ with Keystore.Logs;
 with Keystore.Repository.Data;
 
 --
---  Wallet repository encrypted with Wallet id AES-CTR key
+--  Wallet repository encrypted with Wallet directory key
 --  +------------------+
 --  | Block HMAC-256   | 32b
 --  +------------------+
---  | 02 02 02 02      | 4b
+--  | 02 02            | 2b
+--  | Encrypt size     | 2b
 --  | Wallet id        | 4b
 --  | PAD 0            | 4b
 --  | PAD 0            | 4b
@@ -375,7 +376,8 @@ package body Keystore.Repository.Entries is
            := Manager.Buffer.Data (End_Entry .. Dir_Block.Last_Pos - 1);
       end if;
       if Manager.Randomize then
-         --  When strong security is necessary, fill with random values.
+         --  When strong security is necessary, fill with random values
+         --  (except the first 4 bytes).
          Manager.Buffer.Data (Dir_Block.Last_Pos - Size .. Dir_Block.Last_Pos - Size + 3)
            := (others => 0);
          Manager.Random.Generate
