@@ -20,6 +20,7 @@ with Keystore.IO;
 with Ada.Streams;
 with Util.Streams;
 
+private with Keystore.Random;
 private with Util.Concurrent.Sequence_Queues;
 private package Keystore.Repository.Data is
 
@@ -171,6 +172,7 @@ private
       End_Data   : Stream_Element_Offset;
       Buffer_Pos : Buffer_Offset;
       Last_Pos   : Buffer_Offset;
+      Random     : Keystore.Random.Generator;
       Buffer     : access Ada.Streams.Stream_Element_Array;
       Queue      : access Work_Queues.Queue;
       Manager    : access Keystore.Repository.Wallet_Repository;
