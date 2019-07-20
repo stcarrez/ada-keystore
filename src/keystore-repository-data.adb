@@ -979,7 +979,10 @@ package body Keystore.Repository.Data is
             Sequence := Sequence + 1;
             Load_Data (Manager, Data_Block, Work.Block, Stream);
             Position := Get_Fragment_Position (Data_Block.all, Item);
-            exit when Position = 0;
+            if Position = 0 then
+               Put_Work (Manager.Workers.all, Work);
+               exit;
+            end if;
             Get_Fragment (Position, Data_Block.Fragments (Position), Work.all);
             Data_Block := Data_Block.Fragments (Position).Next_Fragment;
             if Manager.Workers.Work_Manager /= null then
