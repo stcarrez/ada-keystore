@@ -78,7 +78,7 @@ package Keystore.Files is
    procedure Set_Key (Container    : in out Wallet_File;
                       Password     : in Secret_Key;
                       New_Password : in Secret_Key;
-                      Slot         : in Key_Slot_Index := 0) with
+                      Mode         : in Mode_Type) with
      Pre => Container.Is_Open;
 
    --  Return True if the container contains the given named entry.
