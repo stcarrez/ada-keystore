@@ -58,6 +58,8 @@ package body Keystore.Files.Tests is
                        Test_Set_From_Stream'Access);
       Caller.Add_Test (Suite, "Test Keystore.Set (Input_Stream > 4K)",
                        Test_Set_From_Larger_Stream'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Set_Key",
+                       Test_Set_Key'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -550,6 +552,47 @@ package body Keystore.Files.Tests is
    end Test_Add_Error;
 
    --  ------------------------------
+   --  Test changing the wallet password.
+   --  ------------------------------
+   procedure Test_Set_Key (T : in out Test) is
+      Path         : constant String
+        := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.akt");
+      Test_Path    : constant String
+        := Util.Tests.Get_Test_Path ("regtests/result/test-set-key.akt");
+      Password     : Keystore.Secret_Key := Keystore.Create ("mypassword");
+      New_Password : Keystore.Secret_Key := Keystore.Create ("new-password");
+   begin
+      Ada.Directories.Copy_File (Source_Name => Path,
+                                 Target_Name => Test_Path);
+      declare
+         W            : Keystore.Files.Wallet_File;
+      begin
+         W.Open (Path => Test_Path, Password => Password);
+         W.Set_Key (Password, New_Password);
+      end;
+
+      declare
+         W            : Keystore.Files.Wallet_File;
+      begin
+         W.Open (Path => Test_Path, Password => Password);
+         T.Fail ("No exception raised by Open after Set_Key");
+
+      exception
+         when Keystore.Bad_Password =>
+            null;
+
+         when others =>
+            T.Fail ("Bad exception raised after Set_Key");
+      end;
+      declare
+         W            : Keystore.Files.Wallet_File;
+      begin
+         W.Open (Path => Test_Path, Password => New_Password);
+         W.Set_Key (New_Password, Password);
+      end;
+   end Test_Set_Key;
+
+   --  ------------------------------
    --  Test getting values through an Output_Stream.
    --  ------------------------------
    procedure Test_Get_Stream (T : in out Test) is
@@ -625,12 +668,13 @@ package body Keystore.Files.Tests is
    --  ------------------------------
    procedure Test_Perf_Add (T : in out Test) is
       Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-perf.akt");
-      Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
+      Password : constant Keystore.Secret_Key := Keystore.Create ("mypassword");
       W        : Keystore.Files.Wallet_File;
+      Items    : Keystore.Entry_Map;
    begin
       W.Create (Path => Path, Password => Password, Config => Unsecure_Config);
       declare
-         S        : Util.Measures.Stamp;
+         S     : Util.Measures.Stamp;
          Data  : String (1 .. 80);
       begin
          for I in 1 .. 10_000 loop
@@ -639,6 +683,9 @@ package body Keystore.Files.Tests is
          end loop;
          Util.Measures.Report (S, "Keystore.Add", 10_000);
       end;
+      W.List (Items);
+      Util.Tests.Assert_Equals (T, 10_000, Natural (Items.Length),
+                                "Invalid number of items in keystore");
    end Test_Perf_Add;
 
 end Keystore.Files.Tests;
