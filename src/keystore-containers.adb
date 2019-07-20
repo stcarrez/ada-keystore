@@ -32,6 +32,7 @@ package body Keystore.Containers is
          Master : Keystore.Keys.Key_Manager;
       begin
          Stream := Wallet_Stream;
+         Master_Block := Block;
          Keys.Set_Header_Key (Master, Header_Key);
          Keystore.Repository.Open (Repository, Password, Ident, Block, Master, Stream.Value.all);
          State := S_OPEN;
@@ -45,15 +46,21 @@ package body Keystore.Containers is
          Master : Keystore.Keys.Key_Manager;
       begin
          Stream := Wallet_Stream;
+         Master_Block := Block;
          Keys.Set_Header_Key (Master, Header_Key);
          Keystore.Repository.Create (Repository, Password, Config, Block, Ident,
                                      Master, Stream.Value.all);
          State := S_OPEN;
       end Create;
 
-      procedure Set_Key (Secret : in Secret_Key) is
+      procedure Set_Key (Password     : in Secret_Key;
+                         New_Password : in Secret_Key;
+                         Slot         : in Key_Slot_Index) is
+         Master : Keystore.Keys.Key_Manager;
       begin
-         State := S_CONFIGURED;
+         Keys.Set_Header_Key (Master, Header_Key);
+         Keystore.Keys.Set_Key (Master, Password, New_Password, Slot, Repository.Get_Identifier,
+                                Master_Block, Stream.Value.all);
       end Set_Key;
 
       function Get_State return State_Type is
