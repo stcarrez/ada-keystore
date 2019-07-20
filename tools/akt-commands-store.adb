@@ -30,13 +30,14 @@ package body AKT.Commands.Store is
                       Name      : in String;
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
+      pragma Unreferenced (Command);
    begin
       if Args.Get_Count /= 1 then
          AKT.Commands.Usage (Args, Context, Name);
 
       else
          Input.Initialize (File => Util.Systems.Os.STDIN_FILENO);
-         Context.Open_Keystore;
+         Context.Open_Keystore (Use_Worker => True);
          Context.Wallet.Set (Name  => Args.Get_Argument (1),
                              Kind  => Keystore.T_BINARY,
                              Input => Input);
