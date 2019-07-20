@@ -109,6 +109,13 @@ package body Keystore.Keys is
                    Crypt    : in Cryptor;
                    Hmac     : in out Util.Encoders.HMAC.SHA256.Context);
 
+   procedure Load (Manager  : in out Key_Manager;
+                   Block    : in Keystore.IO.Block_Number;
+                   Ident    : in Wallet_Identifier;
+                   Buffer   : in out IO.Marshaller;
+                   Root     : out Keystore.IO.Block_Number;
+                   Stream   : in out IO.Wallet_Stream'Class);
+
    --  ------------------------------
    --  Set the IV vector to be used for the encryption and decruption of the given block number.
    --  ------------------------------
@@ -296,19 +303,17 @@ package body Keystore.Keys is
                     From   => Buffer);
    end Save_Key;
 
-   --  Open the key manager and read the wallet header block.  Use the secret key
-   --  to decrypt/encrypt the wallet header block.
-   procedure Open (Manager  : in out Key_Manager;
-                   Password : in Secret_Key;
-                   Ident    : in Wallet_Identifier;
+   --  ------------------------------
+   --  Load the wallet header keys
+   --  ------------------------------
+   procedure Load (Manager  : in out Key_Manager;
                    Block    : in Keystore.IO.Block_Number;
+                   Ident    : in Wallet_Identifier;
+                   Buffer   : in out IO.Marshaller;
                    Root     : out Keystore.IO.Block_Number;
-                   Config   : in out Wallet_Config;
                    Stream   : in out IO.Wallet_Stream'Class) is
-
       Value   : Interfaces.Unsigned_32;
       Size    : IO.Block_Index;
-      Buffer  : IO.Marshaller;
    begin
       Manager.Header_Block := Block;
       Stream.Read (Block        => Manager.Header_Block,
@@ -349,6 +354,22 @@ package body Keystore.Keys is
          raise Invalid_Block;
       end if;
       Root := IO.Block_Number (Value);
+   end Load;
+
+   --  Open the key manager and read the wallet header block.  Use the secret key
+   --  to decrypt/encrypt the wallet header block.
+   procedure Open (Manager  : in out Key_Manager;
+                   Password : in Secret_Key;
+                   Ident    : in Wallet_Identifier;
+                   Block    : in Keystore.IO.Block_Number;
+                   Root     : out Keystore.IO.Block_Number;
+                   Config   : in out Wallet_Config;
+                   Stream   : in out IO.Wallet_Stream'Class) is
+
+      Value   : Interfaces.Unsigned_32;
+      Buffer  : IO.Marshaller;
+   begin
+      Load (Manager, Block, Ident, Buffer, Root, Stream);
 
       for Slot in 1 .. 7 loop
          Buffer.Pos := WH_KEY_LIST_START + IO.Block_Index (Slot) * WH_SLOT_SIZE - WH_SLOT_SIZE;
@@ -412,26 +433,40 @@ package body Keystore.Keys is
       Manager.Crypt.Cipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
    end Set_Header_Key;
 
-   procedure Set_Key (Manager  : in out Key_Manager;
-                      Password : in Secret_Key;
-                      Slot     : in Key_Slot;
-                      Stream   : in out IO.Wallet_Stream'Class) is
+   procedure Set_Key (Manager      : in out Key_Manager;
+                      Password     : in Secret_Key;
+                      New_Password : in Secret_Key;
+                      New_Slot     : in Key_Slot_Index;
+                      Ident        : in Wallet_Identifier;
+                      Block        : in Keystore.IO.Block_Number;
+                      Stream       : in out IO.Wallet_Stream'Class) is
       Size     : IO.Block_Index;
       Buffer   : IO.Marshaller;
       Config   : Wallet_Config;
+      Root     : Keystore.IO.Block_Number;
+      Value    : Interfaces.Unsigned_32;
    begin
-      Stream.Read (Block        => Manager.Header_Block,
-                   Decipher     => Manager.Crypt.Decipher,
-                   Sign         => Manager.Crypt.Sign,
-                   Decrypt_Size => Size,
-                   Into         => Buffer);
-      if IO.Get_Unsigned_32 (Buffer) /= IO.BT_WALLET_HEADER then
-         Log.Warn ("Invalid wallet block header BN{0}",
-                   IO.Block_Number'Image (Manager.Header_Block));
-         raise Invalid_Block;
-      end if;
+      Load (Manager, Block, Ident, Buffer, Root, Stream);
 
-      Save_Key (Manager, Buffer, Password, Slot, Config, Stream);
+      for Slot in Key_Slot'Range loop
+         Buffer.Pos := WH_KEY_LIST_START + IO.Block_Index (Slot) * WH_SLOT_SIZE - WH_SLOT_SIZE;
+         Value := IO.Get_Unsigned_32 (Buffer);
+         if Value = WH_KEY_PBKDF2 then
+            Value := IO.Get_Unsigned_32 (Buffer);
+            if Value > 0 and Value <= WH_KEY_SIZE then
+               if Verify (Manager, Buffer, Password, Positive (Value), Config) then
+                  if New_Slot = 0 then
+                     Save_Key (Manager, Buffer, New_Password, Slot, Config, Stream);
+                  else
+                     Save_Key (Manager, Buffer, New_Password, New_Slot, Config, Stream);
+                  end if;
+                  return;
+               end if;
+            end if;
+         end if;
+      end loop;
+      Keystore.Logs.Info (Log, "No password match for wallet block{0}", Manager.Header_Block);
+      raise Bad_Password;
    end Set_Key;
 
 end Keystore.Keys;
