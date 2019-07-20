@@ -39,6 +39,8 @@ private package Keystore.Repository is
    procedure Set_Key (Repository : in out Wallet_Repository;
                       Secret     : in Secret_Key);
 
+   function Get_Identifier (Repository : in Wallet_Repository) return Wallet_Identifier;
+
    --  Open the wallet repository by reading the meta data block header from the wallet
    --  IO stream.  The wallet meta data is decrypted using AES-CTR using the given secret
    --  key and initial vector.
