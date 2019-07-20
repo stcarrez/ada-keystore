@@ -351,8 +351,7 @@ package body Keystore.Repository.Data is
    --  Add in the data block the wallet data fragment with its content.
    --  The data block must have been loaded and is not saved.
    --  ------------------------------
-   procedure Add_Fragment (Manager     : in out Wallet_Manager;
-                           Work        : in Data_Work_Access;
+   procedure Add_Fragment (Work        : in Data_Work_Access;
                            Item        : in Wallet_Entry_Access;
                            Data_Offset : in Ada.Streams.Stream_Element_Offset;
                            Next_Block  : in Wallet_Block_Entry_Access;
@@ -399,10 +398,6 @@ package body Keystore.Repository.Data is
       Work.Kind := DATA_ENCRYPT;
       Work.Start_Data := Data_Block.Last_Pos;
       Work.End_Data := Work.Start_Data + Data_Size - 1;
-      --  Work.Buffer_Pos := 1;
-      --  Work.Last_Pos := Content'Length;
-      --  Work.Data (1 .. Content'Length) := Content;
-
    end Add_Fragment;
 
    --  ------------------------------
@@ -543,8 +538,7 @@ package body Keystore.Repository.Data is
    --  ------------------------------
    --  Get the data fragment and write it to the output buffer.
    --  ------------------------------
-   procedure Get_Fragment (Manager  : in out Wallet_Manager;
-                           Position : in Fragment_Index;
+   procedure Get_Fragment (Position : in Fragment_Index;
                            Fragment : in Wallet_Block_Fragment;
                            Work     : in out Data_Work) is
       Start_Data : constant IO.Block_Index := Fragment.Block_Offset;
@@ -729,7 +723,7 @@ package body Keystore.Repository.Data is
          Work.Buffer_Pos := 1;
          Work.Last_Pos := Last - Start + 1;
          Work.Data (1 .. Work.Last_Pos) := Content (Start .. Last);
-         Add_Fragment (Manager, Work, Item, Data_Offset, Next_Block, Last - Start + 1);
+         Add_Fragment (Work, Item, Data_Offset, Next_Block, Last - Start + 1);
 
          if Manager.Workers.Work_Manager /= null then
             Manager.Workers.Work_Manager.Execute (Work.all'Access);
@@ -799,7 +793,7 @@ package body Keystore.Repository.Data is
             Init_Data_Block (Manager, Work.Block);
             Work.Block.Block := Block.Block;
          end if;
-         Add_Fragment (Manager, Work, Item, Data_Offset, Next_Block, Last);
+         Add_Fragment (Work, Item, Data_Offset, Next_Block, Last);
 
          if Manager.Workers.Work_Manager /= null then
             Manager.Workers.Work_Manager.Execute (Work.all'Access);
@@ -824,7 +818,6 @@ package body Keystore.Repository.Data is
                           Data_Block   : in out Wallet_Block_Entry_Access;
                           Content      : in Ada.Streams.Stream_Element_Array;
                           Offset       : in out Ada.Streams.Stream_Element_Offset;
-                          Full_Block   : in Boolean;
                           New_Block    : out Wallet_Block_Entry_Access;
                           Delete_Block : out Wallet_Block_Entry_Access;
                           Stream       : in out IO.Wallet_Stream'Class) is
@@ -937,6 +930,8 @@ package body Keystore.Repository.Data is
                     Name       : in String;
                     Output     : in out Util.Streams.Output_Stream'Class;
                     Stream     : in out IO.Wallet_Stream'Class) is
+      procedure Flush_Queue (Worker : in out Wallet_Worker);
+
       Pos         : constant Wallet_Maps.Cursor := Manager.Map.Find (Name);
       Item        : Wallet_Entry_Access;
       Data_Block  : Wallet_Block_Entry_Access;
@@ -974,7 +969,7 @@ package body Keystore.Repository.Data is
             Load_Data (Manager, Data_Block, Work.Block, Stream);
             Position := Get_Fragment_Position (Data_Block.all, Item);
             exit when Position = 0;
-            Get_Fragment (Manager, Position, Data_Block.Fragments (Position), Work.all);
+            Get_Fragment (Position, Data_Block.Fragments (Position), Work.all);
             Data_Block := Data_Block.Fragments (Position).Next_Fragment;
             if Manager.Workers.Work_Manager /= null then
                Manager.Workers.Work_Manager.Execute (Work.all'Access);
