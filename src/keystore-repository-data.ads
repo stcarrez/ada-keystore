@@ -89,14 +89,14 @@ private package Keystore.Repository.Data is
    --  Write the data in one or several blocks.
    procedure Add_Data (Manager     : in out Wallet_Manager;
                        Item        : in Wallet_Entry_Access;
-                       Data_Block  : in out Wallet_Block_Entry_Access;
+                       Data_Block  : in Wallet_Block_Entry_Access;
                        Content     : in Ada.Streams.Stream_Element_Array;
                        Offset      : in out Ada.Streams.Stream_Element_Offset;
                        Stream      : in out IO.Wallet_Stream'Class);
 
    procedure Add_Data (Manager     : in out Wallet_Manager;
                        Item        : in Wallet_Entry_Access;
-                       Data_Block  : in out Wallet_Block_Entry_Access;
+                       Data_Block  : in Wallet_Block_Entry_Access;
                        Content     : in out Util.Streams.Input_Stream'Class;
                        Offset      : in out Ada.Streams.Stream_Element_Offset;
                        Stream      : in out IO.Wallet_Stream'Class);
