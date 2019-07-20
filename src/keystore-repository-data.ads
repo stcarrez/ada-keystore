@@ -70,7 +70,6 @@ private package Keystore.Repository.Data is
                           Data_Block   : in out Wallet_Block_Entry_Access;
                           Content      : in Ada.Streams.Stream_Element_Array;
                           Offset       : in out Ada.Streams.Stream_Element_Offset;
-                          Full_Block   : in Boolean;
                           New_Block    : out Wallet_Block_Entry_Access;
                           Delete_Block : out Wallet_Block_Entry_Access;
                           Stream       : in out IO.Wallet_Stream'Class);
@@ -207,8 +206,7 @@ private
 
    --  Add in the data block the wallet data entry with its content.
    --  The data block must have been loaded and is not saved.
-   procedure Add_Fragment (Manager     : in out Wallet_Manager;
-                           Work        : in Data_Work_Access;
+   procedure Add_Fragment (Work        : in Data_Work_Access;
                            Item        : in Wallet_Entry_Access;
                            Data_Offset : in Ada.Streams.Stream_Element_Offset;
                            Next_Block  : in Wallet_Block_Entry_Access;
