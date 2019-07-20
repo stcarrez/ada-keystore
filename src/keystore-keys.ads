@@ -70,10 +70,13 @@ private package Keystore.Keys is
    procedure Set_Header_Key (Manager  : in out Key_Manager;
                              Key      : in Secret_Key);
 
-   procedure Set_Key (Manager  : in out Key_Manager;
-                      Password : in Secret_Key;
-                      Slot     : in Key_Slot;
-                      Stream   : in out IO.Wallet_Stream'Class);
+   procedure Set_Key (Manager      : in out Key_Manager;
+                      Password     : in Secret_Key;
+                      New_Password : in Secret_Key;
+                      New_Slot     : in Key_Slot_Index;
+                      Ident        : in Wallet_Identifier;
+                      Block        : in Keystore.IO.Block_Number;
+                      Stream       : in out IO.Wallet_Stream'Class);
 
 private
 
