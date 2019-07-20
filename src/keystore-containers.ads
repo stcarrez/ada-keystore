@@ -40,7 +40,7 @@ private package Keystore.Containers is
 
       procedure Set_Key (Password     : in Secret_Key;
                          New_Password : in Secret_Key;
-                         Slot         : in Key_Slot_Index);
+                         Mode         : in Mode_Type);
 
       function Contains (Name   : in String) return Boolean;
 
