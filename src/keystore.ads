@@ -81,6 +81,9 @@ package Keystore is
    --  Exception raised when the wallet cannot be opened with the given password.
    Bad_Password  : exception;
 
+   --  Exception raised by Set_Key when there is no available free slot to add a new key.
+   No_Key_Slot   : exception;
+
    --  Exception raised when the wallet is corrupted.
    Corrupted     : exception;
 
@@ -92,6 +95,9 @@ package Keystore is
 
    --  Identifies the type of data stored for a named entry in the wallet.
    type Entry_Type is (T_INVALID, T_STRING, T_BINARY, T_WALLET);
+
+   --  Defines the key operation mode.
+   type Mode_Type is (KEY_ADD, KEY_REPLACE, KEY_REMOVE, KEY_REMOVE_LAST);
 
    --  Information about a keystore entry.
    type Entry_Info is record
@@ -112,8 +118,7 @@ package Keystore is
    subtype Entry_Cursor is Entry_Maps.Cursor;
 
    --  Defines the key slot number.
-   type Key_Slot_Index is new Natural range 0 .. 7;
-   subtype Key_Slot is Key_Slot_Index range 1 .. 7;
+   type Key_Slot is new Positive range 1 .. 7;
 
    --  Task manager to run encryption and decryption work.
    type Task_Manager (Count : Positive) is limited private;
@@ -156,7 +161,7 @@ package Keystore is
    procedure Set_Key (Container  : in out Wallet;
                       Secret     : in Secret_Key;
                       New_Secret : in Secret_Key;
-                      Slot       : in Key_Slot_Index := 0) is abstract with
+                      Mode       : in Mode_Type := KEY_REPLACE) is abstract with
      Pre'Class => Container.Is_Open;
 
    --  Return True if the container contains the given named entry.
