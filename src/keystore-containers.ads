@@ -38,7 +38,9 @@ private package Keystore.Containers is
 
       function Get_State return State_Type;
 
-      procedure Set_Key (Secret : in Secret_Key);
+      procedure Set_Key (Password     : in Secret_Key;
+                         New_Password : in Secret_Key;
+                         Slot         : in Key_Slot_Index);
 
       function Contains (Name   : in String) return Boolean;
 
@@ -77,9 +79,10 @@ private package Keystore.Containers is
       procedure Set_Work_Manager (Workers   : in Keystore.Task_Manager_Access);
 
    private
-      Stream     : Keystore.IO.Refs.Stream_Ref;
-      Repository : Keystore.Repository.Wallet_Repository;
-      State      : State_Type := S_INVALID;
+      Stream       : Keystore.IO.Refs.Stream_Ref;
+      Repository   : Keystore.Repository.Wallet_Repository;
+      State        : State_Type := S_INVALID;
+      Master_Block : Keystore.IO.Block_Number;
    end Wallet_Container;
 
 end Keystore.Containers;
