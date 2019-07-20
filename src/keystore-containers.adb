@@ -55,11 +55,11 @@ package body Keystore.Containers is
 
       procedure Set_Key (Password     : in Secret_Key;
                          New_Password : in Secret_Key;
-                         Slot         : in Key_Slot_Index) is
+                         Mode         : in Mode_Type) is
          Master : Keystore.Keys.Key_Manager;
       begin
          Keys.Set_Header_Key (Master, Header_Key);
-         Keystore.Keys.Set_Key (Master, Password, New_Password, Slot, Repository.Get_Identifier,
+         Keystore.Keys.Set_Key (Master, Password, New_Password, Mode, Repository.Get_Identifier,
                                 Master_Block, Stream.Value.all);
       end Set_Key;
 
