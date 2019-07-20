@@ -88,6 +88,8 @@ package body Keystore.Tests is
                        Test_Tool_Get_Error'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Get (interactive password)",
                        Test_Tool_Interactive_Password'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Store+Extract",
+                       Test_Tool_Store_Extract'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -157,7 +159,7 @@ package body Keystore.Tests is
       end if;
 
       --  Create keystore
-      T.Execute (Tool & " -f " & Path & " -p admin create", Result);
+      T.Execute (Tool & " -f " & Path & " -p admin create --counter-range 10:100", Result);
       Util.Tests.Assert_Equals (T, "", Result, "create command failed");
       T.Assert (Ada.Directories.Exists (Path),
                 "Keystore file does not exist");
@@ -199,7 +201,8 @@ package body Keystore.Tests is
       --  Create keystore
       --  file.key must have rw------- mode (600)
       --  regtests/files must have rwx------ (700)
-      T.Execute (Tool & " -f " & Path & " --passfile regtests/files/file.key create",
+      T.Execute (Tool & " -f " & Path & " --passfile regtests/files/file.key create "
+                 & "--counter-range 100:200",
                  Result, 0);
       Util.Tests.Assert_Equals (T, "", Result, "create command failed");
       T.Assert (Ada.Directories.Exists (Path),
@@ -379,6 +382,18 @@ package body Keystore.Tests is
                                  "Invalid value after edit");
 
    end Test_Tool_Edit;
+
+   --  ------------------------------
+   --  Test the akt store and akt extract commands.
+   --  ------------------------------
+   procedure Test_Tool_Store_Extract (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-tool.akt");
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " -f " & Path & " -p admin store store-extract < bin/akt", Result, 0);
+      T.Execute (Tool & " -f " & Path & " -p admin extract store-extract > regtests/result/akt",
+                 Result, 0);
+   end Test_Tool_Store_Extract;
 
    --  ------------------------------
    --  Test the akt with an interactive password.
