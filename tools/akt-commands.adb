@@ -29,6 +29,7 @@ with AKT.Commands.List;
 with AKT.Commands.Remove;
 with AKT.Commands.Edit;
 with AKT.Commands.Store;
+with AKT.Commands.Password;
 with AKT.Passwords.Input;
 with AKT.Passwords.Files;
 with AKT.Passwords.Unsafe;
@@ -43,6 +44,7 @@ package body AKT.Commands is
    List_Command     : aliased AKT.Commands.List.Command_Type;
    Remove_Command   : aliased AKT.Commands.Remove.Command_Type;
    Edit_Command     : aliased AKT.Commands.Edit.Command_Type;
+   Change_Password_Command : aliased AKT.Commands.Password.Command_Type;
 
    Driver           : Drivers.Driver_Type;
    Arguments        : Util.Commands.Dynamic_Argument_List;
@@ -87,6 +89,21 @@ package body AKT.Commands is
          Context.Wallet.Set_Work_Manager (Context.Workers);
       end if;
    end Open_Keystore;
+
+   --  ------------------------------
+   --  Open the keystore file and change the password.
+   --  ------------------------------
+   procedure Change_Password (Context      : in out Context_Type;
+                              New_Password : in Keystore.Secret_Key;
+                              Slot         : in Keystore.Key_Slot_Index) is
+      Password : constant Keystore.Secret_Key := Context.Provider.Get_Password;
+   begin
+      Context.Wallet.Open (Password => Password,
+                           Path     => Context.Wallet_File.all);
+      Context.Wallet.Set_Key (Password     => Password,
+                              New_Password => New_Password,
+                              Slot         => Slot);
+   end Change_Password;
 
    --  ------------------------------
    --  Set the password provider to get a password.
@@ -192,6 +209,8 @@ package body AKT.Commands is
       Driver.Add_Command ("list", "list values of the keystore", List_Command'Access);
       Driver.Add_Command ("remove", "remove values from the keystore", Remove_Command'Access);
       Driver.Add_Command ("edit", "edit the value with an external editor", Edit_Command'Access);
+      Driver.Add_Command ("change-password", "change the password", Change_Password_Command'Access);
+      Driver.Add_Command ("add-password", "add a password", Change_Password_Command'Access);
    end Initialize;
 
    procedure Parse (Context   : in out Context_Type;
