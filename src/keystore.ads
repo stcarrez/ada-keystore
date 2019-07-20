@@ -112,7 +112,8 @@ package Keystore is
    subtype Entry_Cursor is Entry_Maps.Cursor;
 
    --  Defines the key slot number.
-   type Key_Slot is new Positive range 1 .. 7;
+   type Key_Slot_Index is new Natural range 0 .. 7;
+   subtype Key_Slot is Key_Slot_Index range 1 .. 7;
 
    --  Task manager to run encryption and decryption work.
    type Task_Manager (Count : Positive) is limited private;
@@ -152,9 +153,11 @@ package Keystore is
    function State (Container : in Wallet) return State_Type is abstract;
 
    --  Set the key to encrypt and decrypt the container meta data.
-   procedure Set_Key (Container : in out Wallet;
-                      Secret    : in Secret_Key) is abstract with
-     Pre'Class => Container.State /= S_OPEN;
+   procedure Set_Key (Container  : in out Wallet;
+                      Secret     : in Secret_Key;
+                      New_Secret : in Secret_Key;
+                      Slot       : in Key_Slot_Index := 0) is abstract with
+     Pre'Class => Container.Is_Open;
 
    --  Return True if the container contains the given named entry.
    function Contains (Container : in Wallet;
