@@ -396,6 +396,7 @@ package body Keystore.Repository.Data is
          Item.Data := Data_Block;
       end if;
 
+      Work.Kind := DATA_ENCRYPT;
       Work.Start_Data := Data_Block.Last_Pos;
       Work.End_Data := Work.Start_Data + Data_Size - 1;
       --  Work.Buffer_Pos := 1;
@@ -1070,8 +1071,8 @@ package body Keystore.Repository.Data is
       Cipher    : Util.Encoders.AES.Encoder;
    begin
       --  Generate a new IV and key.
-      Work.Manager.Random.Generate (IV);
-      Work.Manager.Random.Generate (Secret);
+      Work.Random.Generate (IV);
+      Work.Random.Generate (Secret);
 
       IO.Put_Secret (Work.Block, IV, Work.Manager.Config.Data.Key,
                      Work.Manager.Config.Data.IV);
