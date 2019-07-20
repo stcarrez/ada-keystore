@@ -42,10 +42,12 @@ It provides the following commands:
 * `create`:   create the keystore
 * `edit`:     edit the value with an external editor
 * `get`:      get a value from the keystore
+* `extract`:  get a value from the keystore
 * `help`:     print some help
 * `list`:     list values of the keystore
 * `remove`:   remove values from the keystore
-* `set`:     insert or update a value in the keystore
+* `set`:      insert or update a value in the keystore
+* `store`:    insert or update a value in the keystore
 
 To create the secure file, use the following command and enter
 your secure password (it is recommended to use a long and complex password):
@@ -70,6 +72,22 @@ If you want to retrieve a value, you can use one of:
 ```
    akt -f secure.akt get bank.password
    akt -f secure.akt get -n my-contract > file.doc
+```
+
+The `store` and `extract` commands are intended to be used to store
+and extract files produces by other tools such at
+.IR tar (1).  For example, the output produced by
+.I tar
+can be stored using the following command:
+
+```
+   tar czf - . | akt -f secure.akt store backup.tar.gz
+```
+
+And it can be extracted by using the following command:
+
+```
+   akt -f secure.akt extract backup.tar.gz | tar xzf -
 ```
 
 # Building Ada Keystore
