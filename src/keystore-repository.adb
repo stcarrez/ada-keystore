@@ -66,15 +66,6 @@ package body Keystore.Repository is
       return Ada.Containers.Hash_Type (Value);
    end Hash;
 
-   --  ------------------------------
-   --  Set the key to encrypt and decrypt the container meta data.
-   --  ------------------------------
-   procedure Set_Key (Repository : in out Wallet_Repository;
-                      Secret     : in Secret_Key) is
-   begin
-      null;
-   end Set_Key;
-
    function Get_Identifier (Repository : in Wallet_Repository) return Wallet_Identifier is
    begin
       return Repository.Id;
@@ -247,7 +238,7 @@ package body Keystore.Repository is
 
       Item.Kind := Kind;
       Data.Update_Data (Repository, Item, Data_Block, Content,
-                        Data_Offset, True, New_Block, Delete_Block, Stream);
+                        Data_Offset, New_Block, Delete_Block, Stream);
 
       --  Write the data in one or several blocks.
       if New_Block /= null then
@@ -305,11 +296,11 @@ package body Keystore.Repository is
          if New_Block = null then
             if Last < Content'Last then
                Data.Update_Data (Manager, Item, Data_Block, Content (Content'First .. Last),
-                                 Data_Offset, False, New_Block, Delete_Block, Stream);
+                                 Data_Offset, New_Block, Delete_Block, Stream);
                exit when New_Block = null;
             else
                Data.Update_Data (Manager, Item, Data_Block, Content,
-                                 Data_Offset, True, New_Block, Delete_Block, Stream);
+                                 Data_Offset, New_Block, Delete_Block, Stream);
             end if;
          else
             if Last < Content'Last then
