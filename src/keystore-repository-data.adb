@@ -99,6 +99,23 @@ package body Keystore.Repository.Data is
    --  Start offset of the data entry descriptor in the data block.
    function Data_Entry_Offset (Index : in Fragment_Index) return IO.Block_Index;
 
+   procedure Get_Fragment (Position : in Fragment_Index;
+                           Fragment : in Wallet_Block_Fragment;
+                           Work     : in out Data_Work);
+
+   procedure Fill (Work  : in out Data_Work;
+                   Input : in out Util.Streams.Input_Stream'Class;
+                   Space : in Buffer_Offset;
+                   Last  : out Buffer_Size);
+
+   procedure Flush_Queue (Manager : in out Wallet_Manager;
+                          Worker  : in out Wallet_Worker;
+                          Stream  : in out IO.Wallet_Stream'Class);
+
+   procedure Allocate_Work (Manager : in out Wallet_Manager;
+                            Work    : out Data_Work_Access;
+                            Stream  : in out IO.Wallet_Stream'Class);
+
    --  ------------------------------
    --  Find the data block instance with the given block number.
    --  ------------------------------
@@ -391,9 +408,6 @@ package body Keystore.Repository.Data is
       Data_Block.Fragments (Data_Block.Count).Size := Size;
       Data_Block.Fragments (Data_Block.Count).Next_Fragment := Next_Block;
       Data_Block.Fragments (Data_Block.Count).Block_Offset := Data_Block.Last_Pos;
-      if Item.Data = null then
-         Item.Data := Data_Block;
-      end if;
 
       Work.Kind := DATA_ENCRYPT;
       Work.Start_Data := Data_Block.Last_Pos;
@@ -452,9 +466,6 @@ package body Keystore.Repository.Data is
 
       Data_Block.Fragments (Position).Size := Content'Length;
       Data_Block.Fragments (Position).Next_Fragment := Next_Block;
-      if Item.Data = null then
-         Item.Data := Data_Block;
-      end if;
 
       pragma Assert (Check => Manager.Buffer.Pos = Data_Entry_Offset (Position + 1));
 
@@ -676,7 +687,7 @@ package body Keystore.Repository.Data is
    --  ------------------------------
    procedure Add_Data (Manager     : in out Wallet_Manager;
                        Item        : in Wallet_Entry_Access;
-                       Data_Block  : in out Wallet_Block_Entry_Access;
+                       Data_Block  : in Wallet_Block_Entry_Access;
                        Content     : in Ada.Streams.Stream_Element_Array;
                        Offset      : in out Ada.Streams.Stream_Element_Offset;
                        Stream      : in out IO.Wallet_Stream'Class) is
@@ -748,7 +759,7 @@ package body Keystore.Repository.Data is
    --  ------------------------------
    procedure Add_Data (Manager     : in out Wallet_Manager;
                        Item        : in Wallet_Entry_Access;
-                       Data_Block  : in out Wallet_Block_Entry_Access;
+                       Data_Block  : in Wallet_Block_Entry_Access;
                        Content     : in out Util.Streams.Input_Stream'Class;
                        Offset      : in out Ada.Streams.Stream_Element_Offset;
                        Stream      : in out IO.Wallet_Stream'Class) is
