@@ -75,9 +75,11 @@ package Keystore.Files is
 
    --  Set the key to encrypt and decrypt the container meta data.
    overriding
-   procedure Set_Key (Container : in out Wallet_File;
-                      Secret    : in Secret_Key) with
-     Pre => Container.State /= S_OPEN;
+   procedure Set_Key (Container    : in out Wallet_File;
+                      Password     : in Secret_Key;
+                      New_Password : in Secret_Key;
+                      Slot         : in Key_Slot_Index := 0) with
+     Pre => Container.Is_Open;
 
    --  Return True if the container contains the given named entry.
    overriding
