@@ -88,6 +88,11 @@ package body Keystore.Keys is
                        Config   : in Wallet_Config;
                        Stream   : in out IO.Wallet_Stream'Class);
 
+   procedure Erase_Key (Manager  : in out Key_Manager;
+                        Buffer   : in out IO.Marshaller;
+                        Slot     : in Key_Slot;
+                        Stream   : in out IO.Wallet_Stream'Class);
+
    procedure Extract (Buffer   : in out IO.Marshaller;
                       Lock_Key : in Secret_Key;
                       Lock_IV  : in Secret_Key;
@@ -304,6 +309,23 @@ package body Keystore.Keys is
    end Save_Key;
 
    --  ------------------------------
+   --  Erase the walley key slot amd save the waller master block.
+   --  ------------------------------
+   procedure Erase_Key (Manager  : in out Key_Manager;
+                        Buffer   : in out IO.Marshaller;
+                        Slot     : in Key_Slot;
+                        Stream   : in out IO.Wallet_Stream'Class) is
+   begin
+      Buffer.Pos := WH_KEY_LIST_START + IO.Block_Index (Slot) * WH_SLOT_SIZE - WH_SLOT_SIZE;
+      Buffer.Data (Buffer.Pos .. Buffer.Pos + WH_KEY_SIZE - 1) := (others => 0);
+
+      Stream.Write (Block  => Manager.Header_Block,
+                    Cipher => Manager.Crypt.Cipher,
+                    Sign   => Manager.Crypt.Sign,
+                    From   => Buffer);
+   end Erase_Key;
+
+   --  ------------------------------
    --  Load the wallet header keys
    --  ------------------------------
    procedure Load (Manager  : in out Key_Manager;
@@ -436,14 +458,30 @@ package body Keystore.Keys is
    procedure Set_Key (Manager      : in out Key_Manager;
                       Password     : in Secret_Key;
                       New_Password : in Secret_Key;
-                      New_Slot     : in Key_Slot_Index;
+                      Mode         : in Mode_Type;
                       Ident        : in Wallet_Identifier;
                       Block        : in Keystore.IO.Block_Number;
                       Stream       : in out IO.Wallet_Stream'Class) is
+      function Find_Free_Slot return Key_Slot;
+
       Buffer   : IO.Marshaller;
       Config   : Wallet_Config;
       Root     : Keystore.IO.Block_Number;
       Value    : Interfaces.Unsigned_32;
+
+      function Find_Free_Slot return Key_Slot is
+      begin
+         for Slot in Key_Slot'Range loop
+            Buffer.Pos := WH_KEY_LIST_START + IO.Block_Index (Slot) * WH_SLOT_SIZE - WH_SLOT_SIZE;
+            Value := IO.Get_Unsigned_32 (Buffer);
+            if Value = 0 then
+               return Slot;
+            end if;
+         end loop;
+         Log.Info ("No available free slot to add a new key");
+         raise No_Key_Slot;
+      end Find_Free_Slot;
+
    begin
       Load (Manager, Block, Ident, Buffer, Root, Stream);
 
@@ -454,11 +492,20 @@ package body Keystore.Keys is
             Value := IO.Get_Unsigned_32 (Buffer);
             if Value > 0 and Value <= WH_KEY_SIZE then
                if Verify (Manager, Buffer, Password, Positive (Value), Config) then
-                  if New_Slot = 0 then
-                     Save_Key (Manager, Buffer, New_Password, Slot, Config, Stream);
-                  else
-                     Save_Key (Manager, Buffer, New_Password, New_Slot, Config, Stream);
-                  end if;
+                  case Mode is
+                     when KEY_ADD =>
+                        Save_Key (Manager, Buffer, New_Password, Find_Free_Slot, Config, Stream);
+
+                     when KEY_REPLACE =>
+                        Save_Key (Manager, Buffer, New_Password, Slot, Config, Stream);
+
+                     when KEY_REMOVE =>
+                        Erase_Key (Manager, Buffer, Slot, Stream);
+
+                     when KEY_REMOVE_LAST =>
+                        Erase_Key (Manager, Buffer, Slot, Stream);
+
+                  end case;
                   return;
                end if;
             end if;
