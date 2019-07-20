@@ -440,7 +440,6 @@ package body Keystore.Keys is
                       Ident        : in Wallet_Identifier;
                       Block        : in Keystore.IO.Block_Number;
                       Stream       : in out IO.Wallet_Stream'Class) is
-      Size     : IO.Block_Index;
       Buffer   : IO.Marshaller;
       Config   : Wallet_Config;
       Root     : Keystore.IO.Block_Number;
