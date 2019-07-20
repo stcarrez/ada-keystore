@@ -53,6 +53,9 @@ package Keystore.Files.Tests is
    --  Test adding values that already exist.
    procedure Test_Add_Error (T : in out Test);
 
+   --  Test changing the wallet password.
+   procedure Test_Set_Key (T : in out Test);
+
    --  Test getting values through an Output_Stream.
    procedure Test_Get_Stream (T : in out Test);
 
