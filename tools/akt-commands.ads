@@ -17,6 +17,7 @@
 -----------------------------------------------------------------------
 with AKT.Passwords;
 with Util.Commands;
+with Keystore;
 private with Util.Log.Loggers;
 private with Keystore.Files;
 private with Ada.Finalization;
@@ -46,6 +47,11 @@ package AKT.Commands is
    --  for the decryption and encryption process.
    procedure Open_Keystore (Context    : in out Context_Type;
                             Use_Worker : in Boolean := False);
+
+   --  Open the keystore file and change the password.
+   procedure Change_Password (Context      : in out Context_Type;
+                              New_Password : in Keystore.Secret_Key;
+                              Slot         : in Keystore.Key_Slot_Index);
 
    --  Execute the command with its arguments.
    procedure Execute (Name    : in String;
