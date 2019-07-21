@@ -67,9 +67,9 @@ package body AKT.Commands.Password.Remove is
                    Context   : in out Context_Type) is
       pragma Unreferenced (Command, Context);
    begin
-      Ada.Text_IO.Put_Line ("akt password-clear: remove the password from the wallet key slots");
+      Ada.Text_IO.Put_Line ("akt password-remove: remove the password from the wallet key slots");
       Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: akt password-clear [--force]");
+      Ada.Text_IO.Put_Line ("Usage: akt password-remove [--force]");
       Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("  Erase the password from the wallet master key slots.");
       Ada.Text_IO.Put_Line ("  Removing the last password makes the keystore unusable");
