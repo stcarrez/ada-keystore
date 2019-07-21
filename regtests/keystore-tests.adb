@@ -53,6 +53,8 @@ package body Keystore.Tests is
    procedure Test_Tool_Help_Set_Password is new Test_Help_Command ("password-set");
    procedure Test_Tool_Help_Add_Password is new Test_Help_Command ("password-add");
    procedure Test_Tool_Help_Remove_Password is new Test_Help_Command ("password-remove");
+   procedure Test_Tool_Help_Store is new Test_Help_Command ("store");
+   procedure Test_Tool_Help_Extract is new Test_Help_Command ("extract");
 
    procedure Add_Tests (Suite : in Util.Tests.Access_Test_Suite) is
    begin
@@ -88,6 +90,10 @@ package body Keystore.Tests is
                        Test_Tool_Help_Set_Password'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Password.Remove (help)",
                        Test_Tool_Help_Remove_Password'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Store (help)",
+                       Test_Tool_Help_Store'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Extract (help)",
+                             Test_Tool_Help_Extract'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Edit",
                        Test_Tool_Edit'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Get (error)",
