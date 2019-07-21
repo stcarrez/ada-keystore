@@ -41,10 +41,16 @@ package body AKT.Commands.Password.Set is
    begin
       Ada.Text_IO.Put_Line ("akt password-set: change the wallet password");
       Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: akt password-set [--passfile=PATH] [--password=ARG] "
-                           & "[--passenv=NAME]");
+      Ada.Text_IO.Put_Line ("Usage: akt password-set [--new-passfile=PATH] [--new-password=ARG] "
+                           & "[--new-passenv=NAME]");
+      Ada.Text_IO.Put_Line ("                        [--counter-range MIN:MAX]");
       Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("  Changes an existing password with a new password.");
+      Ada.Text_IO.Put_Line ("  By default the PBKDF2 iteration counter is in "
+                            & "range 500000..1000000.");
+      Ada.Text_IO.Put_Line ("  You can change this range by using the `--counter-range` option.");
+      Ada.Text_IO.Put_Line ("  High values provide best password protection at the expense"
+                              & " of speed.");
    end Help;
 
 end AKT.Commands.Password.Set;
