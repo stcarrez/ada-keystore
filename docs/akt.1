@@ -118,7 +118,7 @@ This method is safer.
 .\"
 .SS The create command
 .RS 0
-akt \fBcreate\fR [--passfile \fI{path}\fR] [--passenv \fI{name}\fR] [--counter-range \fImin\fR:\fImax\fR]
+akt \fBcreate\fR [--counter-range \fImin\fR:\fImax\fR]
 .RE
 .PP
 Create a new keystore and protect it with the password.
@@ -133,6 +133,12 @@ The password to protect the wallet is passed using one of the following options:
 ,
 .BR --passsocket .
 When none of these options are passed, the password is asked interactively.
+.PP
+The
+.B --counter-range
+option allows to control the range for the random counter used by PBKDF2
+to generate the encryption key derived from the specified password.  High values
+provide a strongest derived key at the expense of speed.
 .\"
 .SS The set command
 .RS 0
@@ -215,6 +221,20 @@ By default a newline is emitted after each value.
 The
 .I -n
 option prevents the output of the trailing newline.
+.\"
+.\"
+.SS The password-clear command
+.RS 0
+akt \fBpassword-clear [\fI--force]\fR\fR
+.RE
+.PP
+The
+.I password-clear
+command can be used to erase a password from the wallet master key slots.
+Removing the last password makes the keystore unusable and it is necessary
+to pass the
+.I --force
+option for that.
 .\"
 .SH SECURITY
 .\"
