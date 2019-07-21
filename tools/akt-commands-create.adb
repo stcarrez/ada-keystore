@@ -16,7 +16,6 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Ada.Text_IO;
-with Util.Strings;
 package body AKT.Commands.Create is
 
    use GNAT.Strings;
@@ -74,7 +73,7 @@ package body AKT.Commands.Create is
       Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("  The create command is used to create the new keystore file.");
       Ada.Text_IO.Put_Line ("  By default the PBKDF2 iteration counter is in range"
-                            & " 500000..1000000");
+                            & " 500000..1000000.");
       Ada.Text_IO.Put_Line ("  You can change this range by using the `--counter-range` option.");
       Ada.Text_IO.Put_Line ("  High values provide best password protection at the expense"
                               & " of speed.");
