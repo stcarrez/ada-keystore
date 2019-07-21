@@ -19,6 +19,7 @@ with System.Multiprocessors;
 with Ada.Command_Line;
 with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
+with Util.Strings;
 with Util.Commands.Parsers.GNAT_Parser;
 with AKT.Configs;
 with AKT.Commands.Drivers;
@@ -48,7 +49,7 @@ package body AKT.Commands is
    Edit_Command            : aliased AKT.Commands.Edit.Command_Type;
    Set_Password_Command    : aliased AKT.Commands.Password.Set.Command_Type;
    Add_Password_Command    : aliased AKT.Commands.Password.Add.Command_Type;
-   Del_Password_Command    : aliased AKT.Commands.Password.Remove.Command_Type;
+   Remove_Password_Command : aliased AKT.Commands.Password.Remove.Command_Type;
 
    Driver                  : Drivers.Driver_Type;
    Arguments               : Util.Commands.Dynamic_Argument_List;
@@ -99,6 +100,7 @@ package body AKT.Commands is
    --  ------------------------------
    procedure Change_Password (Context      : in out Context_Type;
                               New_Password : in Keystore.Secret_Key;
+                              Config       : in Keystore.Wallet_Config;
                               Mode         : in Keystore.Mode_Type) is
       Password : constant Keystore.Secret_Key := Context.Provider.Get_Password;
    begin
@@ -106,6 +108,7 @@ package body AKT.Commands is
                            Path     => Context.Wallet_File.all);
       Context.Wallet.Set_Key (Password     => Password,
                               New_Password => New_Password,
+                              Config       => Config,
                               Mode         => Mode);
    end Change_Password;
 
@@ -215,7 +218,7 @@ package body AKT.Commands is
       Driver.Add_Command ("edit", "edit the value with an external editor", Edit_Command'Access);
       Driver.Add_Command ("password-set", "change the password", Set_Password_Command'Access);
       Driver.Add_Command ("password-add", "add a password", Add_Password_Command'Access);
-      Driver.Add_Command ("password-clear", "remove a password", Del_Password_Command'Access);
+      Driver.Add_Command ("password-remove", "remove a password", Remove_Password_Command'Access);
    end Initialize;
 
    procedure Parse (Context   : in out Context_Type;
@@ -254,6 +257,44 @@ package body AKT.Commands is
       end;
 
    end Parse;
+
+   procedure Parse_Range (Value  : in String;
+                          Config : in out Keystore.Wallet_Config) is
+      Pos  : constant Natural := Util.Strings.Index (Value, ':');
+      Low  : Integer := Config.Min_Counter;
+      High : Integer := Config.Max_Counter;
+   begin
+      if Pos > 0 then
+         Low  := Integer'Value (Value (Value'First .. Pos - 1));
+         High := Integer'Value (Value (Pos + 1 .. Value'Last));
+      else
+         High := Integer'Value (Value);
+         if Low > High then
+            Low := High;
+         end if;
+      end if;
+      if not (Low in Positive'Range) or not (High in Positive'Range) then
+         AKT.Commands.Log.Error ("Value is out of range");
+         raise Error;
+      end if;
+      if Low > High then
+         AKT.Commands.Log.Error ("The min counter is greater than max counter");
+         raise Error;
+      end if;
+      Config.Min_Counter := Positive (Low);
+      Config.Max_Counter := Positive (High);
+
+   exception
+      when Error =>
+         raise;
+
+      when others =>
+         AKT.Commands.Log.Error ("Invalid counter range: " & Value);
+         AKT.Commands.Log.Error ("Valid format are 'MAX_COUNTER' or 'MIN_COUNTER:MAX_COUNTER'");
+         AKT.Commands.Log.Error ("Counters must be positive integers.");
+         raise Error;
+
+   end Parse_Range;
 
    overriding
    procedure Finalize (Context : in out Context_Type) is
