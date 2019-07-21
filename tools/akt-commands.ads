@@ -35,12 +35,6 @@ package AKT.Commands is
    procedure Usage (Args    : in Argument_List'Class;
                     Context : in out Context_Type;
                     Name    : in String := "");
-   procedure Usage (Context : in out Context_Type;
-                    Name    : in String := "");
-
-   --  Set the password provider to get a password.
-   procedure Set_Password_Provider (Context  : in out Context_Type;
-                                    Provider : in AKT.Passwords.Provider_Access);
 
    --  Open the keystore file using the password password.
    --  When `Use_Worker` is set, a workers of N tasks is created and assigned to the keystore

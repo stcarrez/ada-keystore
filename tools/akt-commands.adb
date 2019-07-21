@@ -51,9 +51,7 @@ package body AKT.Commands is
    Set_Password_Command    : aliased AKT.Commands.Password.Set.Command_Type;
    Add_Password_Command    : aliased AKT.Commands.Password.Add.Command_Type;
    Remove_Password_Command : aliased AKT.Commands.Password.Remove.Command_Type;
-
    Driver                  : Drivers.Driver_Type;
-   Arguments               : Util.Commands.Dynamic_Argument_List;
 
    --  ------------------------------
    --  Print the command usage.
@@ -65,16 +63,6 @@ package body AKT.Commands is
       GC.Display_Help (Context.Command_Config);
       if Name'Length > 0 then
          Driver.Usage (Args, Context, Name);
-      end if;
-      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
-   end Usage;
-
-   procedure Usage (Context : in out Context_Type;
-                    Name    : in String := "") is
-   begin
-      GC.Display_Help (Context.Command_Config);
-      if Name'Length > 0 then
-         Driver.Usage (Arguments, Context, Name);
       end if;
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
    end Usage;
@@ -112,15 +100,6 @@ package body AKT.Commands is
                               Config       => Config,
                               Mode         => Mode);
    end Change_Password;
-
-   --  ------------------------------
-   --  Set the password provider to get a password.
-   --  ------------------------------
-   procedure Set_Password_Provider (Context  : in out Context_Type;
-                                    Provider : in AKT.Passwords.Provider_Access) is
-   begin
-      Context.Provider := Provider;
-   end Set_Password_Provider;
 
    --  ------------------------------
    --  Execute the command with its arguments.
