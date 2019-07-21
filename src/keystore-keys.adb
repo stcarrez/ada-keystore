@@ -458,16 +458,17 @@ package body Keystore.Keys is
    procedure Set_Key (Manager      : in out Key_Manager;
                       Password     : in Secret_Key;
                       New_Password : in Secret_Key;
+                      Config       : in Keystore.Wallet_Config;
                       Mode         : in Mode_Type;
                       Ident        : in Wallet_Identifier;
                       Block        : in Keystore.IO.Block_Number;
                       Stream       : in out IO.Wallet_Stream'Class) is
       function Find_Free_Slot return Key_Slot;
 
-      Buffer   : IO.Marshaller;
-      Config   : Wallet_Config;
-      Root     : Keystore.IO.Block_Number;
-      Value    : Interfaces.Unsigned_32;
+      Buffer       : IO.Marshaller;
+      Local_Config : Wallet_Config;
+      Root         : Keystore.IO.Block_Number;
+      Value        : Interfaces.Unsigned_32;
 
       function Find_Free_Slot return Key_Slot is
       begin
@@ -491,13 +492,16 @@ package body Keystore.Keys is
          if Value = WH_KEY_PBKDF2 then
             Value := IO.Get_Unsigned_32 (Buffer);
             if Value > 0 and Value <= WH_KEY_SIZE then
-               if Verify (Manager, Buffer, Password, Positive (Value), Config) then
+               if Verify (Manager, Buffer, Password, Positive (Value), Local_Config) then
+                  Local_Config.Min_Counter := Unsigned_32 (Config.Min_Counter);
+                  Local_Config.Max_Counter := Unsigned_32 (Config.Max_Counter);
                   case Mode is
                      when KEY_ADD =>
-                        Save_Key (Manager, Buffer, New_Password, Find_Free_Slot, Config, Stream);
+                        Save_Key (Manager, Buffer, New_Password, Find_Free_Slot,
+                                  Local_Config, Stream);
 
                      when KEY_REPLACE =>
-                        Save_Key (Manager, Buffer, New_Password, Slot, Config, Stream);
+                        Save_Key (Manager, Buffer, New_Password, Slot, Local_Config, Stream);
 
                      when KEY_REMOVE =>
                         Erase_Key (Manager, Buffer, Slot, Stream);
