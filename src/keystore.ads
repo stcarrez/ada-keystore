@@ -161,6 +161,7 @@ package Keystore is
    procedure Set_Key (Container  : in out Wallet;
                       Secret     : in Secret_Key;
                       New_Secret : in Secret_Key;
+                      Config     : in Wallet_Config := Secure_Config;
                       Mode       : in Mode_Type := KEY_REPLACE) is abstract with
      Pre'Class => Container.Is_Open;
 
