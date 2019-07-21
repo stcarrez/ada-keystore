@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---  akt-commands-create -- Create a keystore
+--  akt-commands-password -- Add/Change/Remove the wallet password
 --  Copyright (C) 2019 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
@@ -44,7 +44,7 @@ package body AKT.Commands.Password is
       end if;
 
       Context.Change_Password (New_Password => New_Password_Provider.Get_Password,
-                               Slot         => 0);
+                               Mode         => Command.Mode);
    end Execute;
 
    --  ------------------------------
@@ -84,25 +84,5 @@ package body AKT.Commands.Password is
                         Long_Switch => "--password=",
                         Help   => "The password is passed within the command line (not safe)");
    end Setup;
-
-   --  ------------------------------
-   --  Write the help associated with the command.
-   --  ------------------------------
-   overriding
-   procedure Help (Command   : in out Command_Type;
-                   Context   : in out Context_Type) is
-      pragma Unreferenced (Command, Context);
-   begin
-      Ada.Text_IO.Put_Line ("akt change-password: change the wallet password");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: akt change-password [--counter-range min:max]");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("  Changes an existing password.");
-      Ada.Text_IO.Put_Line ("  By default the PBKDF2 iteration counter is in range"
-                            & " 500000..1000000");
-      Ada.Text_IO.Put_Line ("  You can change this range by using the `--counter-range` option.");
-      Ada.Text_IO.Put_Line ("  High values provide best password protection at the expense"
-                              & " of speed.");
-   end Help;
 
 end AKT.Commands.Password;
