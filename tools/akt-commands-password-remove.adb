@@ -19,7 +19,7 @@ with Ada.Text_IO;
 package body AKT.Commands.Password.Remove is
 
    --  ------------------------------
-   --  Create the keystore file.
+   --  Remove the wallet password.
    --  ------------------------------
    overriding
    procedure Execute (Command   : in out Command_Type;
@@ -37,6 +37,7 @@ package body AKT.Commands.Password.Remove is
          Context.Change_Password (New_Password => Empty,
                                   Mode         => Keystore.KEY_REMOVE);
       end if;
+      Ada.Text_IO.Put_Line ("The password was successfully removed.");
    end Execute;
 
    --  ------------------------------
