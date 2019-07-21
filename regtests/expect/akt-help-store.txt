@@ -1,0 +1,7 @@
+store: read standard input and store the content in the keystore
+
+Usage: akt store <name>
+
+  The store command is intended to be used as a target for a pipe
+  command.  It reads the standard input and stores the content
+  which is read in the keystore.

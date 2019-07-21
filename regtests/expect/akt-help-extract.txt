@@ -1,0 +1,7 @@
+akt extract: get a value from the keystore
+
+Usage: extract <name>
+
+  The extract command allows to retrieve the value associated with
+  a wallet entry. It only retrieves one value whose name is passed
+  to the command. This is a shortcut for the `get -n` command.
