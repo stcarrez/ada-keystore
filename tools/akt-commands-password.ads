@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---  akt-commands-password -- Change the wallet password
+--  akt-commands-password -- Add/Change/Remove the wallet password
 --  Copyright (C) 2019 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
@@ -16,11 +16,11 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with AKT.Commands.Drivers;
+with Keystore;
 private package AKT.Commands.Password is
 
-   type Command_Type is new AKT.Commands.Drivers.Command_Type with private;
+   type Command_Type is abstract new AKT.Commands.Drivers.Command_Type with private;
 
-   --  Change the wallet password.
    overriding
    procedure Execute (Command   : in out Command_Type;
                       Name      : in String;
@@ -33,14 +33,10 @@ private package AKT.Commands.Password is
                     Config  : in out GNAT.Command_Line.Command_Line_Configuration;
                     Context : in out Context_Type);
 
-   --  Write the help associated with the command.
-   overriding
-   procedure Help (Command   : in out Command_Type;
-                   Context   : in out Context_Type);
-
 private
 
-   type Command_Type is new AKT.Commands.Drivers.Command_Type with record
+   type Command_Type is abstract new AKT.Commands.Drivers.Command_Type with record
+      Mode              : Keystore.Mode_Type := Keystore.KEY_ADD;
       Password_File     : aliased GNAT.Strings.String_Access;
       Password_Env      : aliased GNAT.Strings.String_Access;
       Unsafe_Password   : aliased GNAT.Strings.String_Access;
