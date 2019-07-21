@@ -116,6 +116,7 @@ package body Keystore is
 
    procedure Error (Work : in out Work_Type_Access;
                     Ex   : in Ada.Exceptions.Exception_Occurrence) is
+      pragma Unreferenced (Work);
    begin
       Log.Error ("Work error", Ex);
    end Error;
