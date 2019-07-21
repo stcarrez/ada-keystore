@@ -29,6 +29,7 @@ with AKT.Commands.Create;
 with AKT.Commands.List;
 with AKT.Commands.Remove;
 with AKT.Commands.Edit;
+with AKT.Commands.Extract;
 with AKT.Commands.Store;
 with AKT.Commands.Password.Add;
 with AKT.Commands.Password.Set;
@@ -42,7 +43,7 @@ package body AKT.Commands is
    Set_Command             : aliased AKT.Commands.Set.Command_Type;
    Store_Command           : aliased AKT.Commands.Store.Command_Type;
    Get_Command             : aliased AKT.Commands.Get.Command_Type;
-   Extract_Command         : aliased AKT.Commands.Get.Command_Type;
+   Extract_Command         : aliased AKT.Commands.Extract.Command_Type;
    Create_Command          : aliased AKT.Commands.Create.Command_Type;
    List_Command            : aliased AKT.Commands.List.Command_Type;
    Remove_Command          : aliased AKT.Commands.Remove.Command_Type;
