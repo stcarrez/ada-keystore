@@ -31,6 +31,8 @@ package body Keystore.Tests is
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Tool");
 
+   TEST_TOOL_PATH : constant String := "regtests/result/test-tool.akt";
+
    function Tool return String;
 
    package Caller is new Util.Test_Caller (Test, "AKT");
@@ -102,6 +104,8 @@ package body Keystore.Tests is
                        Test_Tool_Interactive_Password'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Store+Extract",
                        Test_Tool_Store_Extract'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Password",
+                       Test_Tool_Password_Set'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -163,7 +167,7 @@ package body Keystore.Tests is
    --  Test the akt keystore creation.
    --  ------------------------------
    procedure Test_Tool_Create (T : in out Test) is
-      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-tool.akt");
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       if Ada.Directories.Exists (Path) then
@@ -203,7 +207,7 @@ package body Keystore.Tests is
    --  Test the akt keystore creation with password file.
    --  ------------------------------
    procedure Test_Tool_Create_Password_File (T : in out Test) is
-      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-tool.akt");
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       if Ada.Directories.Exists (Path) then
@@ -235,7 +239,7 @@ package body Keystore.Tests is
    --  Test the akt command adding and removing values.
    --  ------------------------------
    procedure Test_Tool_Set_Remove (T : in out Test) is
-      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-tool.akt");
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       Test_Tool_Create (T);
@@ -260,7 +264,7 @@ package body Keystore.Tests is
    --  Test the akt command setting a big file.
    --  ------------------------------
    procedure Test_Tool_Set_Big (T : in out Test) is
-      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-tool.akt");
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
       Path2  : constant String := Util.Tests.Get_Test_Path ("regtests/result/big-content.txt");
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
@@ -315,7 +319,7 @@ package body Keystore.Tests is
    --  Test the akt command with invalid parameters.
    --  ------------------------------
    procedure Test_Tool_Invalid (T : in out Test) is
-      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-tool.akt");
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " -f " & Path & " -p admin unkown-cmd", Result, 1);
@@ -371,7 +375,7 @@ package body Keystore.Tests is
    --  Test the akt edit command.
    --  ------------------------------
    procedure Test_Tool_Edit (T : in out Test) is
-      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-tool.akt");
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " -f " & Path & " -p admin edit -e bad-command testing", Result, 1);
@@ -399,7 +403,7 @@ package body Keystore.Tests is
    --  Test the akt store and akt extract commands.
    --  ------------------------------
    procedure Test_Tool_Store_Extract (T : in out Test) is
-      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-tool.akt");
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " -f " & Path & " -p admin store store-extract < bin/akt", Result, 0);
@@ -408,10 +412,45 @@ package body Keystore.Tests is
    end Test_Tool_Store_Extract;
 
    --  ------------------------------
+   --  Test the akt password-set command.
+   --  ------------------------------
+   procedure Test_Tool_Password_Set (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " -f " & Path & " -p admin password-set --new-password admin-second "
+                 & " --counter-range 10:100",
+                 Result, 0);
+      Util.Tests.Assert_Equals (T, "", Result,
+                                "Bad output for password-set command");
+
+      --  Check using old password.
+      T.Execute (Tool & " -f " & Path & " -p admin password-set --new-password admin-ko",
+                 Result, 1);
+      Util.Tests.Assert_Matches (T, "^ERROR: Invalid password to unlock the keystore file",
+                                 Result, "password-set command failed");
+
+      --  Add new password
+      T.Execute (Tool & " -f " & Path & " -p admin-second password-add --new-password admin "
+                 & " --counter-range 10:100",
+                 Result, 0);
+      Util.Tests.Assert_Equals (T, "", Result,
+                                "Bad output for password-set command");
+
+      --  Remove added password
+      T.Execute (Tool & " -f " & Path & " -p admin-second password-remove",
+                 Result, 0);
+
+      Util.Tests.Assert_Matches (T, "^The password was successfully removed.", Result,
+                                 "Bad output for password-remove command");
+
+   end Test_Tool_Password_Set;
+
+   --  ------------------------------
    --  Test the akt with an interactive password.
    --  ------------------------------
    procedure Test_Tool_Interactive_Password (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-tool.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
       P        : aliased Util.Streams.Pipes.Pipe_Stream;
       Buffer   : Util.Streams.Texts.Print_Stream;
    begin
