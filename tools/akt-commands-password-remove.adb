@@ -32,9 +32,11 @@ package body AKT.Commands.Password.Remove is
    begin
       if Command.Force then
          Context.Change_Password (New_Password => Empty,
+                                  Config       => Keystore.Secure_Config,
                                   Mode         => Keystore.KEY_REMOVE_LAST);
       else
          Context.Change_Password (New_Password => Empty,
+                                  Config       => Keystore.Secure_Config,
                                   Mode         => Keystore.KEY_REMOVE);
       end if;
       Ada.Text_IO.Put_Line ("The password was successfully removed.");
