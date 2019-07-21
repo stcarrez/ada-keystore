@@ -78,6 +78,7 @@ package Keystore.Files is
    procedure Set_Key (Container    : in out Wallet_File;
                       Password     : in Secret_Key;
                       New_Password : in Secret_Key;
+                      Config       : in Wallet_Config;
                       Mode         : in Mode_Type) with
      Pre => Container.Is_Open;
 

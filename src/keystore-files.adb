@@ -129,9 +129,10 @@ package body Keystore.Files is
    procedure Set_Key (Container    : in out Wallet_File;
                       Password     : in Secret_Key;
                       New_Password : in Secret_Key;
+                      Config       : in Wallet_Config;
                       Mode         : in Mode_Type) is
    begin
-      Container.Container.Set_Key (Password, New_Password, Mode);
+      Container.Container.Set_Key (Password, New_Password, Config, Mode);
    end Set_Key;
 
    --  ------------------------------
