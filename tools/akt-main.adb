@@ -44,6 +44,10 @@ exception
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
       Log.Error ("Invalid password to unlock the keystore file");
 
+   when Keystore.No_Key_Slot =>
+      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+      Log.Error ("There is no available key slot to add the password");
+
    when AKT.Commands.Error | Util.Commands.Not_Found =>
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
