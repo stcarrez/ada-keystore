@@ -24,16 +24,16 @@ bank accounts and even documents.
 
 Wallets are protected by a master key using AES-256 and the wallet
 master key is protected by a user password.
-The wallet defines up to 8 slots that identify
+The wallet defines up to 7 slots that identify
 a password key that is able to unlock the master key.  To open a wallet,
-it is necessary to unlock one of these 8 slots by providing the correct
+it is necessary to unlock one of these 7 slots by providing the correct
 password.  Wallet key slots are protected by the user's password
 and the PBKDF2-HMAC-256 algorithm, a random salt, a random counter
 and they are encrypted using AES-256.
 
 Values stored in the wallet are protected by their own encryption keys
 using AES-256.  A wallet can contain another wallet which is then
-protected by its own encryption keys and passwords (with 8 independent slots).
+protected by its own encryption keys and passwords (with 7 independent slots).
 Because the child wallet has its own master key, it is necessary to known
 the primary password and the child password to unlock the parent wallet
 first and then the child wallet.
@@ -104,7 +104,7 @@ This method is safer.
 
 ### The create command
 ```
-akt create [--passfile {path}] [--passenv {name}]
+akt create [--counter-range min:max]
 ```
 
 Create a new keystore and protect it with the password.
@@ -115,6 +115,11 @@ The password to protect the wallet is passed using one of the following options:
 *--password* ,
 *--passsocket*. When none of these options are passed, the password is asked interactively.
 
+The
+*--counter-range* option allows to control the range for the random counter used by PBKDF2
+to generate the encryption key derived from the specified password.  High values
+provide a strongest derived key at the expense of speed.
+
 ### The set command
 ```
 akt set name [value | -f file] 
@@ -124,6 +129,16 @@ The
 _set_ command is used to store a content in the wallet.  The content is either
 passed as argument or it can be read from a file by using the
 _-f_ option.
+
+### The store command
+```
+akt store name
+```
+
+The
+_store_ command is intended to be used as a target for a pipe command.
+It reads the standard input and stores the content which is read
+in the wallet.
 
 ### The remove command
 ```
@@ -172,6 +187,36 @@ By default a newline is emitted after each value.
 The
 _-n_ option prevents the output of the trailing newline.
 
+### The password-add command
+```
+akt password-add [--new-passfile file] [--new-password password] [--new-passenv name]
+```
+
+The
+_password-add_ command allows to add a new password in one of the wallet key slot.  Up to seven
+passwords can be defined to protect the wallet.  The overall security of the wallet
+is that of the weakest password.  To add a new password, one must know an existing
+password.
+
+### The password-remove command
+```
+akt password-remove [--force]
+```
+
+The
+_password-remove_ command can be used to erase a password from the wallet master key slots.
+Removing the last password makes the keystore unusable and it is necessary
+to pass the
+_--force_ option for that.
+
+### The password-set command
+```
+akt password-set [--new-passfile file] [--new-password password] [--new-passenv name]
+```
+
+The
+_password-set_ command allows to change the current wallet password.
+
 ## SECURITY
 
 Wallet master keys are protected by a derived key that is created from the user's
@@ -179,7 +224,7 @@ password using
 *PBKDF2* and
 *HMAC-512* as hashing operation.  When the wallet is first created, a random salt
 and counter are allocated which are then used by the
-*PBKDF2* generation.  The wallet can be protected by up to 8 different passwords.
+*PBKDF2* generation.  The wallet can be protected by up to 7 different passwords.
 Despite this, the security of the wallet master key still depends on the
 strength of the user's password.  For this matter, it is still critical
 for the security to use long passphrases.
