@@ -50,7 +50,9 @@ package body Keystore.Tests is
    procedure Test_Tool_Help_List is new Test_Help_Command ("list");
    procedure Test_Tool_Help_Remove is new Test_Help_Command ("remove");
    procedure Test_Tool_Help_Set is new Test_Help_Command ("set");
-   procedure Test_Tool_Help_Change_Password is new Test_Help_Command ("change-password");
+   procedure Test_Tool_Help_Set_Password is new Test_Help_Command ("password-set");
+   procedure Test_Tool_Help_Add_Password is new Test_Help_Command ("password-add");
+   procedure Test_Tool_Help_Remove_Password is new Test_Help_Command ("password-remove");
 
    procedure Add_Tests (Suite : in Util.Tests.Access_Test_Suite) is
    begin
@@ -80,8 +82,12 @@ package body Keystore.Tests is
                        Test_Tool_Help_Remove'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.List (help)",
                        Test_Tool_Help_List'Access);
-      Caller.Add_Test (Suite, "Test AKT.Commands.Password (help)",
-                       Test_Tool_Help_Change_Password'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Password.Add (help)",
+                       Test_Tool_Help_Add_Password'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Password.Set (help)",
+                       Test_Tool_Help_Set_Password'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Password.Remove (help)",
+                       Test_Tool_Help_Remove_Password'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Edit",
                        Test_Tool_Edit'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Get (error)",
