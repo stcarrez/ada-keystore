@@ -15,7 +15,6 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Ada.Text_IO;
 with AKT.Passwords.Files;
 with AKT.Passwords.Unsafe;
 with AKT.Passwords.Input;
