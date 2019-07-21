@@ -37,6 +37,7 @@ private
 
    type Command_Type is abstract new AKT.Commands.Drivers.Command_Type with record
       Mode              : Keystore.Mode_Type := Keystore.KEY_ADD;
+      Counter_Range     : aliased GNAT.Strings.String_Access;
       Password_File     : aliased GNAT.Strings.String_Access;
       Password_Env      : aliased GNAT.Strings.String_Access;
       Unsafe_Password   : aliased GNAT.Strings.String_Access;
