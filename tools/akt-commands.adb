@@ -29,28 +29,29 @@ with AKT.Commands.List;
 with AKT.Commands.Remove;
 with AKT.Commands.Edit;
 with AKT.Commands.Store;
-with AKT.Commands.Password;
+with AKT.Commands.Password.Add;
+with AKT.Commands.Password.Set;
 with AKT.Commands.Password.Remove;
 with AKT.Passwords.Input;
 with AKT.Passwords.Files;
 with AKT.Passwords.Unsafe;
 package body AKT.Commands is
 
-   Help_Command     : aliased AKT.Commands.Drivers.Help_Command_Type;
-   Set_Command      : aliased AKT.Commands.Set.Command_Type;
-   Store_Command    : aliased AKT.Commands.Store.Command_Type;
-   Get_Command      : aliased AKT.Commands.Get.Command_Type;
-   Extract_Command  : aliased AKT.Commands.Get.Command_Type;
-   Create_Command   : aliased AKT.Commands.Create.Command_Type;
-   List_Command     : aliased AKT.Commands.List.Command_Type;
-   Remove_Command   : aliased AKT.Commands.Remove.Command_Type;
-   Edit_Command     : aliased AKT.Commands.Edit.Command_Type;
-   Change_Password_Command : aliased AKT.Commands.Password.Command_Type;
-   Add_Password_Command    : aliased AKT.Commands.Password.Add_Command_Type;
+   Help_Command            : aliased AKT.Commands.Drivers.Help_Command_Type;
+   Set_Command             : aliased AKT.Commands.Set.Command_Type;
+   Store_Command           : aliased AKT.Commands.Store.Command_Type;
+   Get_Command             : aliased AKT.Commands.Get.Command_Type;
+   Extract_Command         : aliased AKT.Commands.Get.Command_Type;
+   Create_Command          : aliased AKT.Commands.Create.Command_Type;
+   List_Command            : aliased AKT.Commands.List.Command_Type;
+   Remove_Command          : aliased AKT.Commands.Remove.Command_Type;
+   Edit_Command            : aliased AKT.Commands.Edit.Command_Type;
+   Set_Password_Command    : aliased AKT.Commands.Password.Set.Command_Type;
+   Add_Password_Command    : aliased AKT.Commands.Password.Add.Command_Type;
    Del_Password_Command    : aliased AKT.Commands.Password.Remove.Command_Type;
 
-   Driver           : Drivers.Driver_Type;
-   Arguments        : Util.Commands.Dynamic_Argument_List;
+   Driver                  : Drivers.Driver_Type;
+   Arguments               : Util.Commands.Dynamic_Argument_List;
 
    --  ------------------------------
    --  Print the command usage.
@@ -212,7 +213,7 @@ package body AKT.Commands is
       Driver.Add_Command ("list", "list values of the keystore", List_Command'Access);
       Driver.Add_Command ("remove", "remove values from the keystore", Remove_Command'Access);
       Driver.Add_Command ("edit", "edit the value with an external editor", Edit_Command'Access);
-      Driver.Add_Command ("password-set", "change the password", Change_Password_Command'Access);
+      Driver.Add_Command ("password-set", "change the password", Set_Password_Command'Access);
       Driver.Add_Command ("password-add", "add a password", Add_Password_Command'Access);
       Driver.Add_Command ("password-clear", "remove a password", Del_Password_Command'Access);
    end Initialize;
