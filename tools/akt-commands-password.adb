@@ -33,8 +33,12 @@ package body AKT.Commands.Password is
                       Context   : in out Context_Type) is
       pragma Unreferenced (Name, Args);
 
+      Config : Keystore.Wallet_Config := Keystore.Secure_Config;
       New_Password_Provider : AKT.Passwords.Provider_Access;
    begin
+      if Command.Counter_Range /= null and then Command.Counter_Range'Length > 0 then
+         Parse_Range (Command.Counter_Range.all, Config);
+      end if;
       if Command.Password_File'Length > 0 then
          New_Password_Provider := Passwords.Files.Create (Command.Password_File.all);
       elsif Context.Unsafe_Password'Length > 0 then
@@ -44,6 +48,7 @@ package body AKT.Commands.Password is
       end if;
 
       Context.Change_Password (New_Password => New_Password_Provider.Get_Password,
+                               Config       => Config,
                                Mode         => Command.Mode);
    end Execute;
 
@@ -58,30 +63,36 @@ package body AKT.Commands.Password is
       package GC renames GNAT.Command_Line;
    begin
       GC.Define_Switch (Config => Config,
+                        Output => Command.Counter_Range'Access,
+                        Switch => "-c:",
+                        Long_Switch => "--counter-range:",
+                        Argument => "RANGE",
+                        Help => "Set the range for the PBKDF2 counter");
+      GC.Define_Switch (Config => Config,
                         Output => Command.Password_File'Access,
-                        Long_Switch => "--passfile=",
+                        Long_Switch => "--new-passfile=",
                         Argument => "PATH",
                         Help   => "Read the file that contains the password");
       GC.Define_Switch (Config => Config,
                         Output => Command.Unsafe_Password'Access,
-                        Long_Switch => "--passfd=",
+                        Long_Switch => "--new-passfd=",
                         Argument => "NUM",
                         Help   => "Read the password from the pipe with"
                           & " the given file descriptor");
       GC.Define_Switch (Config => Config,
                         Output => Command.Unsafe_Password'Access,
-                        Long_Switch => "--passsocket=",
+                        Long_Switch => "--new-passsocket=",
                         Help   => "The password is passed within the socket connection");
       GC.Define_Switch (Config => Config,
                         Output => Command.Password_Env'Access,
-                        Long_Switch => "--passenv=",
+                        Long_Switch => "--new-passenv=",
                         Argument => "NAME",
                         Help   => "Read the environment variable that contains"
                         & " the password (not safe)");
       GC.Define_Switch (Config => Config,
                         Output => Command.Unsafe_Password'Access,
                         Switch => "-p:",
-                        Long_Switch => "--password=",
+                        Long_Switch => "--new-password=",
                         Help   => "The password is passed within the command line (not safe)");
    end Setup;
 
