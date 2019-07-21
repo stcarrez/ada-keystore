@@ -568,7 +568,7 @@ package body Keystore.Files.Tests is
          W            : Keystore.Files.Wallet_File;
       begin
          W.Open (Path => Test_Path, Password => Password);
-         W.Set_Key (Password, New_Password, Keystore.KEY_REPLACE);
+         W.Set_Key (Password, New_Password, Keystore.Unsecure_Config, Keystore.KEY_REPLACE);
       end;
 
       declare
@@ -588,14 +588,14 @@ package body Keystore.Files.Tests is
          W            : Keystore.Files.Wallet_File;
       begin
          W.Open (Path => Test_Path, Password => New_Password);
-         W.Set_Key (New_Password, Password, Keystore.KEY_REPLACE);
+         W.Set_Key (New_Password, Password, Keystore.Unsecure_Config, Keystore.KEY_REPLACE);
       end;
       declare
          W            : Keystore.Files.Wallet_File;
       begin
          W.Open (Path => Test_Path, Password => Password);
          begin
-            W.Set_Key (New_Password, New_Password, Keystore.KEY_REPLACE);
+            W.Set_Key (New_Password, New_Password, Keystore.Unsecure_Config, Keystore.KEY_REPLACE);
             T.Fail ("No exception raised by Set_Key");
 
          exception
@@ -607,7 +607,7 @@ package body Keystore.Files.Tests is
          W            : Keystore.Files.Wallet_File;
       begin
          W.Open (Path => Test_Path, Password => Password);
-         W.Set_Key (Password, New_Password, Keystore.KEY_ADD);
+         W.Set_Key (Password, New_Password, Keystore.Unsecure_Config, Keystore.KEY_ADD);
       end;
 
       --  Open the wallet with a first password and then the second one.
@@ -627,7 +627,7 @@ package body Keystore.Files.Tests is
          W            : Keystore.Files.Wallet_File;
       begin
          W.Open (Path => Test_Path, Password => Password);
-         W.Set_Key (New_Password, New_Password, Keystore.KEY_REMOVE);
+         W.Set_Key (New_Password, New_Password, Keystore.Unsecure_Config, Keystore.KEY_REMOVE);
       end;
    end Test_Set_Key;
 
