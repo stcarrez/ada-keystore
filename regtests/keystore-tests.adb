@@ -409,6 +409,19 @@ package body Keystore.Tests is
       T.Execute (Tool & " -f " & Path & " -p admin store store-extract < bin/akt", Result, 0);
       T.Execute (Tool & " -f " & Path & " -p admin extract store-extract > regtests/result/akt",
                  Result, 0);
+
+      --  Check extract command with invalid value
+      T.Execute (Tool & " -f " & Path & " -p admin extract missing",
+                 Result, 1);
+      Util.Tests.Assert_Matches (T, "^ERROR: Value 'missing' not found", Result,
+                                 "Invalid value for extract command");
+
+      --  Check extract command with missing parameter
+      T.Execute (Tool & " -f " & Path & " -p admin extract",
+                 Result, 1);
+      Util.Tests.Assert_Matches (T, "Usage: akt extract", Result,
+                                 "Expecting usage print for extract command");
+
    end Test_Tool_Store_Extract;
 
    --  ------------------------------
