@@ -971,42 +971,45 @@ package body Keystore.Repository.Data is
       Item := Wallet_Maps.Element (Pos);
       Data_Block := Item.Data;
 
-      --  Load the data fragments.
-      while Data_Block /= null loop
-         Work := Get_Work (Manager.Workers.all);
-         if Work /= null then
-            Work.Sequence := Sequence;
-            Sequence := Sequence + 1;
-            Load_Data (Manager, Data_Block, Work.Block, Stream);
-            Position := Get_Fragment_Position (Data_Block.all, Item);
-            if Position = 0 then
-               Put_Work (Manager.Workers.all, Work);
-               exit;
-            end if;
-            Get_Fragment (Position, Data_Block.Fragments (Position), Work.all);
-            Data_Block := Data_Block.Fragments (Position).Next_Fragment;
-            if Manager.Workers.Work_Manager /= null then
-               Manager.Workers.Work_Manager.Execute (Work.all'Access);
+      --  We don't want to catch and handle the Not_Found exception raised above.
+      begin
+         --  Load the data fragments.
+         while Data_Block /= null loop
+            Work := Get_Work (Manager.Workers.all);
+            if Work /= null then
+               Work.Sequence := Sequence;
+               Sequence := Sequence + 1;
+               Load_Data (Manager, Data_Block, Work.Block, Stream);
+               Position := Get_Fragment_Position (Data_Block.all, Item);
+               if Position = 0 then
+                  Put_Work (Manager.Workers.all, Work);
+                  exit;
+               end if;
+               Get_Fragment (Position, Data_Block.Fragments (Position), Work.all);
+               Data_Block := Data_Block.Fragments (Position).Next_Fragment;
+               if Manager.Workers.Work_Manager /= null then
+                  Manager.Workers.Work_Manager.Execute (Work.all'Access);
+               else
+                  Work.Decipher;
+                  Put_Work (Manager.Workers.all, Work);
+                  Flush_Queue (Manager.Workers.all);
+                  Output.Write (Work.Data (Work.Buffer_Pos .. Work.Last_Pos));
+               end if;
             else
-               Work.Decipher;
-               Put_Work (Manager.Workers.all, Work);
-               Flush_Queue (Manager.Workers.all);
+               Manager.Workers.Data_Queue.Dequeue (Work, Seq);
                Output.Write (Work.Data (Work.Buffer_Pos .. Work.Last_Pos));
+               Put_Work (Manager.Workers.all, Work);
             end if;
-         else
-            Manager.Workers.Data_Queue.Dequeue (Work, Seq);
-            Output.Write (Work.Data (Work.Buffer_Pos .. Work.Last_Pos));
-            Put_Work (Manager.Workers.all, Work);
-         end if;
-      end loop;
-      Flush_Queue (Manager.Workers.all);
+         end loop;
+         Flush_Queue (Manager.Workers.all);
 
-   exception
-      when E : others =>
-         Log.Error ("Exception while decrypting data: {0}", E);
-         Wait_Workers (Manager.Workers.all);
-         raise;
+      exception
+         when E : others =>
+            Log.Error ("Exception while decrypting data: {0}", E);
+            Wait_Workers (Manager.Workers.all);
+            raise;
 
+      end;
    end Write;
 
    procedure Wait_Workers (Worker : in out Wallet_Worker) is
