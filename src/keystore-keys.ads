@@ -37,6 +37,7 @@ private package Keystore.Keys is
                      Block : in IO.Block_Number);
 
    type Wallet_Config is limited record
+      UUID        : UUID_Type;
       Data        : Cryptor;
       Dir         : Cryptor;
       Key         : Cryptor;
@@ -93,9 +94,8 @@ private
    WH_KEY_SIZE       : constant := Util.Encoders.AES.AES_256_Length;
 
    WH_HEADER_START   : constant IO.Block_Index := IO.BT_DATA_START;
-   WH_KEY_HASH_START : constant IO.Block_Index := WH_HEADER_START + WH_HEADER_SIZE;
-   WH_KEY_HASH_END   : constant IO.Block_Index := WH_KEY_HASH_START + WH_HASH_SIZE - 1;
-   WH_KEY_LIST_START : constant IO.Block_Index := WH_KEY_HASH_END + 8 + 1;
+   WH_HEADER_LENGTH  : constant := 16 + 16 + 8;
+   WH_KEY_LIST_START : constant IO.Block_Index := WH_HEADER_START + WH_HEADER_LENGTH + 1;
 
    --  Key slot type is using PBKDF2-HMAC-256.
    WH_KEY_PBKDF2     : constant := 16#0001#;
