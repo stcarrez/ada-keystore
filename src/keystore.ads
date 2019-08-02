@@ -21,6 +21,7 @@ with Ada.Streams;
 with Ada.Calendar;
 with Ada.Strings.Hash;
 with Ada.Containers.Indefinite_Hashed_Maps;
+private with Interfaces;
 private with Ada.Exceptions;
 private with Ada.Finalization;
 private with Util.Executors;
@@ -145,6 +146,10 @@ package Keystore is
    Secure_Config : constant Wallet_Config
      := (Randomize => True, Min_Counter => 500_000, Max_Counter => 1_000_000);
 
+   type UUID_Type is private;
+
+   function To_String (UUID : in UUID_Type) return String;
+
    --  The wallet base type.
    type Wallet is abstract tagged limited private;
 
@@ -265,6 +270,8 @@ package Keystore is
      Pre'Class => Container.Is_Open;
 
 private
+
+   type UUID_Type is array (1 .. 4) of Interfaces.Unsigned_32;
 
    type Wallet_Identifier is new Positive;
 
