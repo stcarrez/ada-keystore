@@ -78,6 +78,8 @@ private
       Password_Env      : aliased GNAT.Strings.String_Access;
       Unsafe_Password   : aliased GNAT.Strings.String_Access;
       Password_Socket   : aliased GNAT.Strings.String_Access;
+      Password_Command  : aliased GNAT.Strings.String_Access;
+      Password_Askpass  : aliased Boolean := False;
       Command_Config    : GC.Command_Line_Configuration;
    end record;
 
