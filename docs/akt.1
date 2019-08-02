@@ -1,6 +1,6 @@
 .\"
 .\"
-.TH AKT 1 "Jul 21, 2019" "Ada Keystore Tool"
+.TH AKT 1 "Aug 2, 2019" "Ada Keystore Tool"
 .SH NAME
 akt - Ada Keystore Tool
 .SH SYNOPSIS
@@ -17,6 +17,8 @@ akt - Ada Keystore Tool
 .I name
 ] [--passfd
 .I fd
+] [--passask] [--passcmd
+.I cmd
 ]
 .I command
 .br
@@ -69,6 +71,12 @@ by looking at an environment variable,
 .IP \(bu 4
 by using a command line argument,
 .IP \(bu 4
+by getting the password through the
+.IR ssh-askpass (1)
+external command,
+.IP \(bu 4
+by running an external command,
+.IP \(bu 4
 by asking interactively the user for the password,
 .IP \(bu 4
 by asking through a network socket for the password.
@@ -113,6 +121,25 @@ This method is safer.
 The keystore password is passed within a pipe whose file descriptor
 number is given.  The file descriptor is read to obtain the password.
 This method is safer.
+.TP 5
+--passask
+.br
+The keystore password is retrieved by the running the external tool
+.IR ssh-askpass (1)
+which will ask the password through either KDE, Gnome or another
+desktop interactive application.
+The password is retrieved through a pipe that
+.I akt
+sets while launching the command.
+.TP 5
+--passcmd cmd
+.br
+The keystore password is retrieved by the running the external command defined in
+.IR cmd .
+The command should print the password on its standard output without end of line.
+The password is retrieved through a pipe that
+.I akt
+sets while launching the command.
 .\"
 .SH COMMANDS
 .\"
@@ -286,7 +313,7 @@ Wallet data are encrypted using AES-256-CBC.  The wallet data entry key and IV
 vectors are protected by the wallet master key.
 .\"
 .SH SEE ALSO
-\fIeditor(1)\fR, \fIupdate-alternative(1)\fR
+\fIeditor(1)\fR, \fIupdate-alternative(1)\fR, \fIssh-askpass(1)\fR
 .\"
 .\"
 .SH AUTHOR
