@@ -33,8 +33,10 @@ with Keystore.Logs;
 --  +------------------+
 --  | Wallet magic     | 4b
 --  | Wallet version   | 4b
---  | Wallet id        | 4b
+--  | Wallet lid       | 4b
 --  | Wallet block ID  | 4b
+--  +------------------+
+--  | Wallet gid       | 16b
 --  +------------------+
 --  | Wallet key count | 4b
 --  | PAD 0            | 4b
@@ -255,6 +257,8 @@ package body Keystore.Keys is
       Hmac        : Util.Encoders.HMAC.SHA256.Context;
       Result      : Util.Encoders.SHA256.Hash_Array;
    begin
+      Log.Info ("Saving key for wallet {0}", To_String (Config.UUID));
+
       --  Make a first random counter in range 100_000 .. 1_148_575.
       Counter_Key := Natural (Manager.Random.Generate mod Config.Max_Counter);
       if Counter_Key < Positive (Config.Min_Counter) then
@@ -336,6 +340,7 @@ package body Keystore.Keys is
                    Stream   : in out IO.Wallet_Stream'Class) is
       Value   : Interfaces.Unsigned_32;
       Size    : IO.Block_Index;
+      UUID    : UUID_Type;
    begin
       Manager.Header_Block := Block;
       Stream.Read (Block        => Manager.Header_Block,
@@ -376,6 +381,11 @@ package body Keystore.Keys is
          raise Invalid_Block;
       end if;
       Root := IO.Block_Number (Value);
+
+      --  Extract wallet uuid.
+      for I in UUID'Range loop
+         UUID (I) := IO.Get_Unsigned_32 (Buffer);
+      end loop;
    end Load;
 
    --  Open the key manager and read the wallet header block.  Use the secret key
@@ -422,6 +432,7 @@ package body Keystore.Keys is
       Generate (Manager, Config.Data);
       Generate (Manager, Config.Dir);
       Generate (Manager, Config.Key);
+      Manager.Random.Generate (Config.UUID);
       Manager.Header_Block := Block;
 
       --  Build wallet header.
@@ -434,6 +445,11 @@ package body Keystore.Keys is
       IO.Put_Unsigned_32 (Buffer, 1);
       IO.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Ident));
       IO.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Root));
+
+      --  Write wallet uuid.
+      for I in Config.UUID'Range loop
+         IO.Put_Unsigned_32 (Buffer, Config.UUID (I));
+      end loop;
 
       Save_Key (Manager, Buffer, Password, Slot, Config, Stream);
    end Create;
