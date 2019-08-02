@@ -17,9 +17,24 @@
 -----------------------------------------------------------------------
 
 with Util.Log.Loggers;
+with Util.Encoders.Base16;
 package body Keystore is
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore");
+
+   function To_String (UUID : in UUID_Type) return String is
+      Encode : constant Util.Encoders.Encoder := Util.Encoders.Create ("hex");
+      U1     : constant String := Encode.Encode_Unsigned_32 (UUID (1));
+      U2     : constant String := Encode.Encode_Unsigned_32 (UUID (2));
+      U3     : constant String := Encode.Encode_Unsigned_32 (UUID (3));
+      U4     : constant String := Encode.Encode_Unsigned_32 (UUID (4));
+   begin
+      return U1 & "-"
+        & U2 (U2'First .. U2'First + 3) & "-"
+        & U2 (U2'First + 4 .. U2'Last) & "-"
+        & U3 (U3'First .. U3'First + 3) & "-"
+        & U3 (U3'First + 4 .. U3'Last) & U4;
+   end To_String;
 
    --  ------------------------------
    --  Add in the wallet the named entry and associate it the content.
