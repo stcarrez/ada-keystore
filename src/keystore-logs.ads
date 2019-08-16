@@ -24,23 +24,28 @@ private package Keystore.Logs is
 
    procedure Error (Log     : in Util.Log.Loggers.Logger;
                     Message : in String;
-                    Block   : in IO.Block_Number);
+                    Block   : in IO.Storage_Block);
 
    procedure Warn (Log     : in Util.Log.Loggers.Logger;
                    Message : in String;
-                   Block   : in IO.Block_Number);
+                   Block   : in IO.Storage_Block);
 
    procedure Info (Log     : in Util.Log.Loggers.Logger;
                    Message : in String;
-                   Block   : in IO.Block_Number);
+                   Block   : in IO.Storage_Block);
 
    procedure Debug (Log     : in Util.Log.Loggers.Logger;
                     Message : in String;
-                    Block   : in IO.Block_Number);
+                    Block   : in IO.Storage_Block);
 
    procedure Debug (Log     : in Util.Log.Loggers.Logger;
                     Message : in String;
-                    Block   : in IO.Block_Number;
+                    Block1  : in IO.Storage_Block;
+                    Block2  : in IO.Storage_Block);
+
+   procedure Debug (Log     : in Util.Log.Loggers.Logger;
+                    Message : in String;
+                    Block   : in IO.Storage_Block;
                     Size    : in IO.Block_Index);
 
 end Keystore.Logs;
