@@ -27,20 +27,20 @@ package body Keystore.Containers is
 
       procedure Open (Password      : in Secret_Key;
                       Ident         : in Wallet_Identifier;
-                      Block         : in Keystore.IO.Block_Number;
+                      Block         : in Keystore.IO.Storage_Block;
                       Wallet_Stream : in out Keystore.IO.Refs.Stream_Ref) is
          Master : Keystore.Keys.Key_Manager;
       begin
          Stream := Wallet_Stream;
          Master_Block := Block;
          Keys.Set_Header_Key (Master, Header_Key);
-         Keystore.Repository.Open (Repository, Password, Ident, Block, Master, Stream.Value.all);
+         Keystore.Repository.Open (Repository, Password, Ident, Block, Master, Stream.Value);
          State := S_OPEN;
       end Open;
 
       procedure Create (Password      : in Secret_Key;
                         Config        : in Wallet_Config;
-                        Block         : in IO.Block_Number;
+                        Block         : in IO.Storage_Block;
                         Ident         : in Wallet_Identifier;
                         Wallet_Stream : in out IO.Refs.Stream_Ref) is
          Master : Keystore.Keys.Key_Manager;
@@ -49,7 +49,7 @@ package body Keystore.Containers is
          Master_Block := Block;
          Keys.Set_Header_Key (Master, Header_Key);
          Keystore.Repository.Create (Repository, Password, Config, Block, Ident,
-                                     Master, Stream.Value.all);
+                                     Master, Stream.Value);
          State := S_OPEN;
       end Create;
 
@@ -78,57 +78,64 @@ package body Keystore.Containers is
                      Kind    : in Entry_Type;
                      Content : in Ada.Streams.Stream_Element_Array) is
       begin
-         Keystore.Repository.Add (Repository, Name, Kind, Content, Stream.Value.all);
+         Keystore.Repository.Add (Repository, Name, Kind, Content);
+      end Add;
+
+      procedure Add (Name    : in String;
+                     Kind    : in Entry_Type;
+                     Input   : in out Util.Streams.Input_Stream'Class) is
+      begin
+         Keystore.Repository.Add (Repository, Name, Kind, Input);
       end Add;
 
       procedure Set (Name    : in String;
                      Kind    : in Entry_Type;
                      Content : in Ada.Streams.Stream_Element_Array) is
       begin
-         Keystore.Repository.Set (Repository, Name, Kind, Content, Stream.Value.all);
+         Keystore.Repository.Set (Repository, Name, Kind, Content);
       end Set;
 
       procedure Set (Name    : in String;
                      Kind    : in Entry_Type;
                      Input   : in out Util.Streams.Input_Stream'Class) is
       begin
-         Keystore.Repository.Set (Repository, Name, Kind, Input, Stream.Value.all);
+         Keystore.Repository.Set (Repository, Name, Kind, Input);
       end Set;
 
       procedure Update (Name    : in String;
                         Kind    : in Entry_Type;
                         Content : in Ada.Streams.Stream_Element_Array) is
       begin
-         Keystore.Repository.Update (Repository, Name, Kind, Content, Stream.Value.all);
+         Keystore.Repository.Update (Repository, Name, Kind, Content);
       end Update;
 
       procedure Delete (Name : in String) is
       begin
-         Keystore.Repository.Delete (Repository, Name, Stream.Value.all);
+         Keystore.Repository.Delete (Repository, Name);
       end Delete;
 
       procedure Find (Name   : in String;
                       Result : out Entry_Info) is
       begin
-         Keystore.Repository.Find (Repository, Name, Result, Stream.Value.all);
+         Keystore.Repository.Find (Repository, Name, Result);
       end Find;
 
       procedure Get_Data (Name       : in String;
                           Result     : out Entry_Info;
                           Output     : out Ada.Streams.Stream_Element_Array) is
       begin
-         Keystore.Repository.Get_Data (Repository, Name, Result, Output, Stream.Value.all);
+         Keystore.Repository.Get_Data (Repository, Name, Result, Output);
       end Get_Data;
 
-      procedure Write (Name      : in String;
-                       Output    : in out Util.Streams.Output_Stream'Class) is
+      procedure Get_Data (Name      : in String;
+                          Output    : in out Util.Streams.Output_Stream'Class) is
       begin
-         Keystore.Repository.Write (Repository, Name, Output, Stream.Value.all);
-      end Write;
+         Keystore.Repository.Get_Data (Repository, Name, Output);
+      end Get_Data;
 
       procedure List (Content : out Entry_Map) is
       begin
-         Keystore.Repository.List (Repository, Content, Stream.Value.all);
+         Keystore.Repository.List (Repository, Content);
       end List;
 
       procedure Close is
