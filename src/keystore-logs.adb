@@ -16,6 +16,7 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Util.Encoders.Base16;
+with Keystore.Buffers;
 package body Keystore.Logs is
 
    procedure Dump (Log     : in Util.Log.Loggers.Logger;
@@ -42,47 +43,57 @@ package body Keystore.Logs is
 
    procedure Error (Log     : in Util.Log.Loggers.Logger;
                     Message : in String;
-                    Block   : in IO.Block_Number) is
+                    Block   : in IO.Storage_Block) is
    begin
       if Log.Get_Level >= Util.Log.ERROR_LEVEL then
-         Log.Error (Message, IO.Block_Number'Image (Block));
+         Log.Error (Message, Buffers.To_String (Block));
       end if;
    end Error;
 
    procedure Warn (Log     : in Util.Log.Loggers.Logger;
                    Message : in String;
-                   Block   : in IO.Block_Number) is
+                   Block   : in IO.Storage_Block) is
    begin
       if Log.Get_Level >= Util.Log.WARN_LEVEL then
-         Log.Warn (Message, IO.Block_Number'Image (Block));
+         Log.Warn (Message, Buffers.To_String (Block));
       end if;
    end Warn;
 
    procedure Info (Log     : in Util.Log.Loggers.Logger;
                    Message : in String;
-                   Block   : in IO.Block_Number) is
+                   Block   : in IO.Storage_Block) is
    begin
       if Log.Get_Level >= Util.Log.INFO_LEVEL then
-         Log.Info (Message, IO.Block_Number'Image (Block));
+         Log.Info (Message, Buffers.To_String (Block));
       end if;
    end Info;
 
    procedure Debug (Log     : in Util.Log.Loggers.Logger;
                     Message : in String;
-                    Block   : in IO.Block_Number) is
+                    Block   : in IO.Storage_Block) is
    begin
       if Log.Get_Level >= Util.Log.DEBUG_LEVEL then
-         Log.Debug (Message, IO.Block_Number'Image (Block));
+         Log.Debug (Message, Buffers.To_String (Block));
       end if;
    end Debug;
 
    procedure Debug (Log     : in Util.Log.Loggers.Logger;
                     Message : in String;
-                    Block   : in IO.Block_Number;
+                    Block1  : in IO.Storage_Block;
+                    Block2  : in IO.Storage_Block) is
+   begin
+      if Log.Get_Level >= Util.Log.DEBUG_LEVEL then
+         Log.Debug (Message, Buffers.To_String (Block1), Buffers.To_String (Block2));
+      end if;
+   end Debug;
+
+   procedure Debug (Log     : in Util.Log.Loggers.Logger;
+                    Message : in String;
+                    Block   : in IO.Storage_Block;
                     Size    : in IO.Block_Index) is
    begin
       if Log.Get_Level >= Util.Log.DEBUG_LEVEL then
-         Log.Debug (Message, IO.Block_Number'Image (Block), IO.Block_Index'Image (Size));
+         Log.Debug (Message, Buffers.To_String (Block), IO.Block_Index'Image (Size));
       end if;
    end Debug;
 
