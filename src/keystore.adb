@@ -17,7 +17,6 @@
 -----------------------------------------------------------------------
 
 with Util.Log.Loggers;
-with Util.Encoders.Base16;
 package body Keystore is
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore");
