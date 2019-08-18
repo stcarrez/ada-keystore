@@ -36,6 +36,9 @@ private package Keystore.Keys is
    procedure Set_IV (Into  : in out Cryptor;
                      Block : in IO.Block_Number);
 
+   procedure Set_Key (Into : in out Cryptor;
+                      From : in Cryptor);
+
    type Wallet_Config is limited record
       UUID        : UUID_Type;
       Data        : Cryptor;
@@ -52,8 +55,8 @@ private package Keystore.Keys is
    procedure Open (Manager  : in out Key_Manager;
                    Password : in Secret_Key;
                    Ident    : in Wallet_Identifier;
-                   Block    : in Keystore.IO.Block_Number;
-                   Root     : out Keystore.IO.Block_Number;
+                   Block    : in Keystore.IO.Storage_Block;
+                   Root     : out Keystore.IO.Storage_Block;
                    Config   : in out Wallet_Config;
                    Stream   : in out IO.Wallet_Stream'Class);
 
@@ -63,8 +66,8 @@ private package Keystore.Keys is
                      Password : in Secret_Key;
                      Slot     : in Key_Slot;
                      Ident    : in Wallet_Identifier;
-                     Block    : in Keystore.IO.Block_Number;
-                     Root     : in Keystore.IO.Block_Number;
+                     Block    : in Keystore.IO.Storage_Block;
+                     Root     : in Keystore.IO.Storage_Block;
                      Config   : in out Wallet_Config;
                      Stream   : in out IO.Wallet_Stream'Class);
 
@@ -77,7 +80,7 @@ private package Keystore.Keys is
                       Config       : in Keystore.Wallet_Config;
                       Mode         : in Mode_Type;
                       Ident        : in Wallet_Identifier;
-                      Block        : in Keystore.IO.Block_Number;
+                      Block        : in Keystore.IO.Storage_Block;
                       Stream       : in out IO.Wallet_Stream'Class);
 
 private
@@ -103,7 +106,7 @@ private
    type Key_Manager is limited record
       Id                : Wallet_Identifier;
       Parent_Id         : Wallet_Identifier;
-      Header_Block      : Keystore.IO.Block_Number;
+      Header_Block      : Keystore.IO.Storage_Block;
       Random            : Keystore.Random.Generator;
       Crypt             : Cryptor;
    end record;
