@@ -17,7 +17,6 @@
 -----------------------------------------------------------------------
 with Ada.Streams;
 with Ada.Finalization;
-with Ada.Strings.Unbounded;
 with Interfaces;
 with Util.Encoders.AES;
 private with Ada.Numerics.Discrete_Random;
