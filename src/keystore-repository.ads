@@ -27,10 +27,11 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Hash;
 
+with Keystore.Buffers;
 private with Keystore.Random;
 private with Ada.Containers.Ordered_Maps;
 private with Ada.Finalization;
-limited private with Keystore.Repository.Data;
+limited private with Keystore.Repository.Workers;
 private package Keystore.Repository is
 
    type Wallet_Repository is tagged limited private;
@@ -43,88 +44,82 @@ private package Keystore.Repository is
    procedure Open (Repository : in out Wallet_Repository;
                    Password   : in Secret_Key;
                    Ident      : in Wallet_Identifier;
-                   Block      : in Keystore.IO.Block_Number;
+                   Block      : in Keystore.IO.Storage_Block;
                    Keys       : in out Keystore.Keys.Key_Manager;
-                   Stream     : in out IO.Wallet_Stream'Class);
+                   Stream     : in IO.Wallet_Stream_Access);
 
    procedure Open (Repository : in out Wallet_Repository;
                    Name       : in String;
                    Password   : in Secret_Key;
                    Wallet     : in out Wallet_Repository;
-                   Stream     : in out IO.Wallet_Stream'Class);
+                   Stream     : in IO.Wallet_Stream_Access);
 
    procedure Create (Repository : in out Wallet_Repository;
                      Password   : in Secret_Key;
                      Config     : in Wallet_Config;
-                     Block      : in IO.Block_Number;
+                     Block      : in IO.Storage_Block;
                      Ident      : in Wallet_Identifier;
                      Keys       : in out Keystore.Keys.Key_Manager;
-                     Stream     : in out IO.Wallet_Stream'Class);
+                     Stream     : in IO.Wallet_Stream_Access);
 
    procedure Add (Repository : in out Wallet_Repository;
                   Name       : in String;
                   Kind       : in Entry_Type;
-                  Content    : in Ada.Streams.Stream_Element_Array;
-                  Stream     : in out IO.Wallet_Stream'Class);
+                  Content    : in Ada.Streams.Stream_Element_Array);
+
+   procedure Add (Repository : in out Wallet_Repository;
+                  Name       : in String;
+                  Kind       : in Entry_Type;
+                  Input      : in out Util.Streams.Input_Stream'Class);
 
    procedure Add_Wallet (Repository : in out Wallet_Repository;
                          Name       : in String;
                          Password   : in Secret_Key;
-                         Wallet     : out Wallet_Repository'Class;
-                         Stream     : in out IO.Wallet_Stream'Class);
+                         Wallet     : out Wallet_Repository'Class);
 
    procedure Set (Repository : in out Wallet_Repository;
                   Name       : in String;
                   Kind       : in Entry_Type;
-                  Content    : in Ada.Streams.Stream_Element_Array;
-                  Stream     : in out IO.Wallet_Stream'Class);
+                  Content    : in Ada.Streams.Stream_Element_Array);
 
    procedure Set (Repository : in out Wallet_Repository;
                   Name       : in String;
                   Kind       : in Entry_Type;
-                  Input      : in out Util.Streams.Input_Stream'Class;
-                  Stream     : in out IO.Wallet_Stream'Class);
+                  Input      : in out Util.Streams.Input_Stream'Class);
 
    procedure Update (Repository : in out Wallet_Repository;
                      Name       : in String;
                      Kind       : in Entry_Type;
-                     Content    : in Ada.Streams.Stream_Element_Array;
-                     Stream     : in out IO.Wallet_Stream'Class);
+                     Content    : in Ada.Streams.Stream_Element_Array);
 
-   procedure Update (Manager    : in out Wallet_Repository;
+   procedure Update (Repository : in out Wallet_Repository;
                      Name       : in String;
                      Kind       : in Entry_Type;
-                     Input      : in out Util.Streams.Input_Stream'Class;
-                     Stream     : in out IO.Wallet_Stream'Class);
+                     Input      : in out Util.Streams.Input_Stream'Class);
 
    procedure Delete (Repository : in out Wallet_Repository;
-                     Name       : in String;
-                     Stream     : in out IO.Wallet_Stream'Class);
+                     Name       : in String);
 
    function Contains (Repository : in Wallet_Repository;
                       Name       : in String) return Boolean;
 
    procedure Find (Repository : in out Wallet_Repository;
                    Name       : in String;
-                   Result     : out Entry_Info;
-                   Stream     : in out IO.Wallet_Stream'Class);
+                   Result     : out Entry_Info);
 
    procedure Get_Data (Repository : in out Wallet_Repository;
                        Name       : in String;
                        Result     : out Entry_Info;
-                       Output     : out Ada.Streams.Stream_Element_Array;
-                       Stream     : in out IO.Wallet_Stream'Class);
+                       Output     : out Ada.Streams.Stream_Element_Array);
 
    --  Write in the output stream the named entry value from the wallet.
-   procedure Write (Repository : in out Wallet_Repository;
-                    Name       : in String;
-                    Output     : in out Util.Streams.Output_Stream'Class;
-                    Stream     : in out IO.Wallet_Stream'Class);
+   procedure Get_Data (Repository : in out Wallet_Repository;
+                       Name       : in String;
+                       Output     : in out Util.Streams.Output_Stream'Class);
 
    --  Get the list of entries contained in the wallet.
    procedure List (Repository : in out Wallet_Repository;
-                   Content    : out Entry_Map;
-                   Stream     : in out IO.Wallet_Stream'Class);
+                   Content    : out Entry_Map);
 
    procedure Set_Work_Manager (Repository : in out Wallet_Repository;
                                Workers    : in Keystore.Task_Manager_Access);
@@ -142,15 +137,15 @@ private
    ET_STRING_ENTRY      : constant := 16#0010#;
    ET_BINARY_ENTRY      : constant := 16#0200#;
 
-   WH_KEY_SIZE          : constant := 256;
    WALLET_ENTRY_SIZE    : constant := 4 + 2 + 8 + 32 + 16 + 4;
 
+   DATA_NAME_ENTRY_SIZE : constant := 4 + 2 + 2 + 8 + 8 + 8;
+   DATA_KEY_HEADER_SIZE : constant := 4 + 2 + 4;
+   DATA_KEY_ENTRY_SIZE  : constant := 4 + 4 + 2 + 16 + 32;
    DATA_IV_OFFSET       : constant := 32;
-   DATA_ENTRY_SIZE      : constant := 112;
+   DATA_ENTRY_SIZE      : constant := 4 + 2 + 2 + 8 + 32;
    DATA_MAX_SIZE        : constant := IO.Block_Size - IO.BT_HMAC_HEADER_SIZE
      - IO.BT_TYPE_HEADER_SIZE - DATA_ENTRY_SIZE;
-
-   type Wallet_Entry_Index is new Positive;
 
    function Hash (Value : in Wallet_Entry_Index) return Ada.Containers.Hash_Type;
 
@@ -163,35 +158,29 @@ private
    type Wallet_Block_Entry;
    type Wallet_Block_Entry_Access is access Wallet_Block_Entry;
 
-   --  Describe a fragment of data stored in a data block.
-   type Wallet_Block_Fragment is record
-      Next_Fragment : Wallet_Block_Entry_Access;
-      Item          : Wallet_Entry_Access;
-      Block_Offset  : IO.Block_Index := IO.Block_Index'First;
-      Size          : IO.Block_Index := IO.Block_Index'First;
-      Data_Offset   : Stream_Element_Offset := 0;
+   type Wallet_Data_Key_Entry is record
+      Directory : Wallet_Directory_Entry_Access;
+      Size      : Stream_Element_Offset;
    end record;
 
-   type Fragment_Count is new Natural range 0 .. 16;
-
-   subtype Fragment_Index is Fragment_Count range 1 .. 16;
-
-   type Fragment_Array is array (Fragment_Index) of Wallet_Block_Fragment;
+   package Wallet_Data_Key_List is
+     new Ada.Containers.Doubly_Linked_Lists (Element_Type => Wallet_Data_Key_Entry,
+                                             "="          => "=");
 
    type Wallet_Block_Entry is record
+      Storage    : Keystore.IO.Storage_Identifier;
       Block      : Keystore.IO.Block_Number;
       Available  : Stream_Element_Offset := IO.Block_Index'Last - IO.BT_DATA_START - 4;
       Last_Pos   : IO.Block_Index := IO.BT_DATA_START + 4;
       Data_Start : IO.Block_Index := IO.Block_Index'Last;
-      Count      : Fragment_Count := 0;
       Ready      : Boolean := False;
-      Fragments  : Fragment_Array;
    end record;
 
    type Wallet_Directory_Entry is record
-      Block      : Keystore.IO.Block_Number;
-      Available  : Stream_Element_Offset := IO.Block_Index'Last - IO.BT_DATA_START - 4;
-      Last_Pos   : IO.Block_Index := IO.BT_DATA_START + 4;
+      Block      : Keystore.IO.Storage_Block;
+      Available  : IO.Buffer_Size := IO.Block_Index'Last - IO.BT_DATA_START - 4 - 2;
+      Last_Pos   : IO.Block_Index := IO.BT_DATA_START + 4 + 2;
+      Key_Pos    : IO.Block_Index := IO.Block_Index'Last;
       First      : Wallet_Entry_Access;
       Next_Block : Interfaces.Unsigned_32 := 0;
       Count      : Natural := 0;
@@ -204,8 +193,8 @@ private
       Next_Entry   : Wallet_Entry_Access;
       Entry_Offset : IO.Block_Index := IO.Block_Index'First;
 
-      --  The block data that contains the entry content.
-      Data         : Wallet_Block_Entry_Access;
+      --  List of data key blocks.
+      Data_Blocks  : Wallet_Data_Key_List.List;
 
       Id           : Wallet_Entry_Index;
       Size         : Interfaces.Unsigned_64 := 0;
@@ -213,7 +202,6 @@ private
       Create_Date  : Ada.Calendar.Time;
       Update_Date  : Ada.Calendar.Time;
       Access_Date  : Ada.Calendar.Time;
-      Block        : IO.Block_Count := 0;
       Name         : aliased String (1 .. Length);
    end record;
 
@@ -221,10 +209,12 @@ private
      new Ada.Containers.Doubly_Linked_Lists (Element_Type => Wallet_Directory_Entry_Access,
                                              "="          => "=");
 
+   use type IO.Block_Count;
+
    package Wallet_Block_Maps is
      new Ada.Containers.Ordered_Maps (Key_Type      => IO.Block_Number,
                                       Element_Type  => Wallet_Block_Entry_Access,
-                                      "<" => IO."<");
+                                      "<" => Buffers."<");
 
    package Wallet_Maps is
      new Ada.Containers.Indefinite_Hashed_Maps (Key_Type        => String,
@@ -240,29 +230,26 @@ private
                                                 Equivalent_Keys => "=",
                                                 "="             => "=");
 
-   type Wallet_Worker_Access is access all Keystore.Repository.Data.Wallet_Worker;
+   type Wallet_Worker_Access is access all Keystore.Repository.Workers.Wallet_Worker;
 
    type Wallet_Repository is limited new Ada.Finalization.Limited_Controlled with record
       Id             : Wallet_Identifier;
       Next_Id        : Wallet_Entry_Index;
       Data_List      : Wallet_Block_Maps.Map;
-      Entry_List     : Wallet_Directory_List.List;
+      Directory_List : Wallet_Directory_List.List;
       Randomize      : Boolean := False;
-      Root           : IO.Block_Number;
+      Root           : IO.Storage_Block;
       IV             : Util.Encoders.AES.Word_Block_Type;
       Config         : Keystore.Keys.Wallet_Config;
       Map            : Wallet_Maps.Map;
       Entry_Indexes  : Wallet_Indexs.Map;
       Random         : Keystore.Random.Generator;
-      Buffer         : IO.Marshaller;
+      Current        : IO.Marshaller;
       Workers        : Wallet_Worker_Access;
+      Cache          : Buffers.Buffer_Map;
+      Modified       : Buffers.Buffer_Map;
+      Stream         : Keystore.IO.Wallet_Stream_Access;
    end record;
-
-   --  Delete the value associated with the given name.
-   --  Raises the Not_Found exception if the name was not found.
---   procedure Delete (Manager    : in out Wallet_Repository;
---                     Name       : in String;
---                     Stream     : in out IO.Wallet_Stream'Class);
 
    overriding
    procedure Finalize (Manager    : in out Wallet_Repository);
