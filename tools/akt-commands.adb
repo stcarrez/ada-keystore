@@ -234,7 +234,7 @@ package body AKT.Commands is
 
       if Context.Password_Askpass then
          Context.Provider := Passwords.Cmds.Create ("ssh-askpass");
-      elsif Context.Password_Command /= null then
+      elsif Context.Password_Command'Length > 0 then
          Context.Provider := Passwords.Cmds.Create (Context.Password_Command.all);
       elsif Context.Password_File'Length > 0 then
          Context.Provider := Passwords.Files.Create (Context.Password_File.all);
