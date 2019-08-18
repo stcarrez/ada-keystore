@@ -65,7 +65,7 @@ package body AKT.Commands.Edit is
       end if;
       File.Initialize (Fd);
       if Context.Wallet.Contains (Name) then
-         Context.Wallet.Write (Name, File);
+         Context.Wallet.Get (Name, File);
       end if;
    end Export_Value;
 
