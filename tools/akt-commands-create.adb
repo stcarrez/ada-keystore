@@ -35,6 +35,7 @@ package body AKT.Commands.Create is
       if Command.Counter_Range /= null and then Command.Counter_Range'Length > 0 then
          Parse_Range (Command.Counter_Range.all, Config);
       end if;
+      Config.Overwrite := Command.Force;
       Keystore.Files.Create (Container => Context.Wallet,
                              Password  => Context.Provider.Get_Password,
                              Path      => Context.Wallet_File.all,
@@ -57,6 +58,11 @@ package body AKT.Commands.Create is
                         Long_Switch => "--counter-range:",
                         Argument => "RANGE",
                         Help => "Set the range for the PBKDF2 counter");
+      GC.Define_Switch (Config => Config,
+                        Output => Command.Force'Access,
+                        Switch => "-f",
+                        Long_Switch => "--force",
+                        Help   => "Force the creation of the keystore");
    end Setup;
 
    --  ------------------------------
