@@ -29,9 +29,12 @@ with Util.Streams.Pipes;
 with Util.Streams.Texts;
 package body Keystore.Tests is
 
+   use type Ada.Directories.File_Size;
+
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Tool");
 
-   TEST_TOOL_PATH : constant String := "regtests/result/test-tool.akt";
+   TEST_TOOL_PATH  : constant String := "regtests/result/test-tool.akt";
+   TEST_TOOL2_PATH : constant String := "regtests/result/test-tool-2.akt";
 
    function Tool return String;
 
@@ -70,6 +73,8 @@ package body Keystore.Tests is
                        Test_Tool_Create_Password_File'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Remove",
                        Test_Tool_Set_Remove'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Set+Remove",
+                       Test_Tool_Set_Remove_2'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Set",
                        Test_Tool_Set_Big'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Get",
@@ -198,7 +203,7 @@ package body Keystore.Tests is
 
       --  Open keystore with invalid password
       T.Execute (Tool & " -f " & Path & " -p admin2 list", Result, 1);
-      Util.Tests.Assert_Matches (T, "^ERROR: Invalid password to unlock the keystore file",
+      Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
                                  Result, "list command failed");
 
    end Test_Tool_Create;
@@ -259,6 +264,45 @@ package body Keystore.Tests is
 
 
    end Test_Tool_Set_Remove;
+
+   --  ------------------------------
+   --  Test the akt command adding and removing values.
+   --  ------------------------------
+   procedure Test_Tool_Set_Remove_2 (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL2_PATH);
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+      Size   : Ada.Directories.File_Size;
+   begin
+      if Ada.Directories.Exists (Path) then
+         Ada.Directories.Delete_File (Path);
+      end if;
+
+      --  Create keystore
+      T.Execute (Tool & " -f " & Path & " -p admin create --counter-range 10:100", Result);
+      Util.Tests.Assert_Equals (T, "", Result, "create command failed");
+      T.Assert (Ada.Directories.Exists (Path),
+                "Keystore file does not exist");
+
+      --  Set property with configure file (128K file or more).
+      T.Execute (Tool & " -f " & Path & " -p admin "
+                 & "set -f configure configure", Result);
+      Util.Tests.Assert_Equals (T, "", Result, "set command failed");
+
+      Size := Ada.Directories.Size (Path);
+      T.Assert (Size > 100_000, "Keystore file looks too small");
+
+      --  Remove property.
+      T.Execute (Tool & " -f " & Path & " -p admin "
+                 & "remove configure", Result);
+      Util.Tests.Assert_Equals (T, "", Result, "remove command failed");
+
+      T.Execute (Tool & " -f " & Path & " -p admin "
+                 & "remove", Result, 1);
+
+      Size := Ada.Directories.Size (Path);
+      T.Assert (Size < 10_000, "Keystore file was not truncated after removal of large content");
+
+   end Test_Tool_Set_Remove_2;
 
    --  ------------------------------
    --  Test the akt command setting a big file.
@@ -323,7 +367,7 @@ package body Keystore.Tests is
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " -f " & Path & " -p admin unkown-cmd", Result, 1);
-      Util.Tests.Assert_Matches (T, "^ERROR: Unkown command 'unkown-cmd'",
+      Util.Tests.Assert_Matches (T, "^Unkown command 'unkown-cmd'",
                                  Result, "Wrong message when command was not found");
 
       T.Execute (Tool & " -f " & Path & " -p admin -k create", Result, 1);
@@ -333,13 +377,13 @@ package body Keystore.Tests is
       --  Create keystore with a missing key file.
       T.Execute (Tool & " -f " & Path & " --passfile regtests/missing.key create",
                  Result, 1);
-      Util.Tests.Assert_Matches (T, "^ERROR: Invalid password to unlock the keystore file",
+      Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
                                  Result, "Wrong message when command was not found");
 
       --  Create keystore with a key file that does not satisfy the security constraints.
       T.Execute (Tool & " -f " & Path & " --passfile src/keystore.ads create",
                  Result, 1);
-      Util.Tests.Assert_Matches (T, "^ERROR: Invalid password to unlock the keystore file",
+      Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
                                  Result, "Wrong message when command was not found");
 
       T.Execute (Tool & " -f " & Path & " -p admin "
@@ -413,7 +457,7 @@ package body Keystore.Tests is
       --  Check extract command with invalid value
       T.Execute (Tool & " -f " & Path & " -p admin extract missing",
                  Result, 1);
-      Util.Tests.Assert_Matches (T, "^ERROR: Value 'missing' not found", Result,
+      Util.Tests.Assert_Matches (T, "^Value 'missing' not found", Result,
                                  "Invalid value for extract command");
 
       --  Check extract command with missing parameter
@@ -440,7 +484,7 @@ package body Keystore.Tests is
       --  Check using old password.
       T.Execute (Tool & " -f " & Path & " -p admin password-set --new-password admin-ko",
                  Result, 1);
-      Util.Tests.Assert_Matches (T, "^ERROR: Invalid password to unlock the keystore file",
+      Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
                                  Result, "password-set command failed");
 
       --  Add new password
