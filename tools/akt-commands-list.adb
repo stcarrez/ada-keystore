@@ -46,9 +46,12 @@ package body AKT.Commands.List is
                Ada.Text_IO.Put (Name);
             end if;
             Ada.Text_IO.Set_Col (53);
-            Ada.Text_IO.Put (Integer'Image (Item.Size));
-            Ada.Text_IO.Set_Col (65);
+            Ada.Text_IO.Put (Natural'Image (Item.Size));
+            Ada.Text_IO.Set_Col (63);
+            Ada.Text_IO.Put (Natural'Image (Item.Block_Count));
+            Ada.Text_IO.Set_Col (70);
             Ada.Text_IO.Put (Ada.Calendar.Formatting.Image (Item.Create_Date));
+
             Ada.Text_IO.New_Line;
          end;
          Keystore.Entry_Maps.Next (Iter);
