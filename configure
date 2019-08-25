@@ -673,7 +673,6 @@ enable_shared
 enable_distrib
 enable_coverage
 with_ada_util
-with_ada_libsecret
 enable_gtk
 with_gtkada
 '
@@ -1313,7 +1312,6 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-build-root=PATH  Path to find the Ada libraries
   --with-ada-util=x       Path for Ada Utility Library
-  --with-ada-libsecret=x  Path for Ada Libsecret Library
   --with-gtkada=x         Path for the Gtk Ada library
                           (libre.adacore.com/tools/gtkada)
 
@@ -2608,31 +2606,13 @@ $as_echo "no" >&6; }
 ##########################################
 HAVE_SECRETADA='no'
 
-
-# Check whether --with-ada-libsecret was given.
-if test "${with_ada_libsecret+set}" = set; then :
-  withval=$with_ada_libsecret;
-      ac_cv_gnat_project_name_secretada=${withval}/
-      if test -d "${withval}"; then
-	    ac_cv_gnat_project_name_secretada=${withval}/secretada
-	  fi
-
-else
-
-      ac_cv_gnat_project_name_secretada=${awa_build_root}secretada
-
-fi
-
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking Ada Libsecret Library" >&5
-$as_echo_n "checking Ada Libsecret Library... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether secretada project exists" >&5
+$as_echo_n "checking whether secretada project exists... " >&6; }
 if ${ac_cv_gnat_project_secretada+:} false; then :
   $as_echo_n "(cached) " >&6
 else
 
-    rm -f conftest.gpr
-    # Search in the GNAT project path.
-    echo "with \"${ac_cv_gnat_project_name_secretada}\"; project conftest is for Source_Dirs use (); end conftest;" > conftest.gpr
+    echo "with \"secretada\"; project conftest is for Source_Dirs use (); end conftest;" > conftest.gpr
     if { ac_try='gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
   (eval $ac_try) 2>&5
@@ -2641,75 +2621,19 @@ else
   test $ac_status = 0; }; }
     then
       ac_cv_gnat_project_secretada=yes
+      ac_cv_gnat_project_with_secretada="with \"secretada\";";
     else
       ac_cv_gnat_project_secretada=no
-
-      # Search in ../ada-libsecret-*/secretada.gpr
-      dir=`cd .. && pwd ${awa_pwd_option}`
-      files=`ls -r $dir/ada-libsecret/secretada.gpr $dir/secretada/secretada.gpr $dir/ada-libsecret-*/secretada.gpr 2>/dev/null`
-      for name in $files; do
-        dir=`dirname $name`
-        # AC_MSG_CHECKING([for Ada Libsecret Library project in ${dir}])
-        echo "with \"${name}\"; project conftest is for Source_Dirs use (); end conftest;" > conftest.gpr
-        if { ac_try='gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
-  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; }
-        then
-           ac_cv_gnat_project_secretada=yes
-		   ac_cv_gnat_project_name_secretada=${name}
-           # AC_MSG_RESULT(yes, using ${name})
-           break
-        else
-           ac_cv_gnat_project_secretada=no
-           # AC_MSG_RESULT(no)
-        fi
-      done
     fi
     rm -f conftest.gpr
-
-    if test x${ac_cv_gnat_project_secretada} = xyes; then
-      ac_cv_gnat_project_with_secretada="with \"${ac_cv_gnat_project_name_secretada}\";";
-      ac_cv_gnat_project_dir_secretada=`dirname ${ac_cv_gnat_project_name_secretada}`
-      if test ${ac_cv_gnat_project_dir_secretada} = . ; then
-        ac_cv_gnat_project_dir_secretada=
-      else
-        ac_cv_gnat_project_dir_secretada="${ac_cv_gnat_project_dir_secretada}/"
-      fi
-    else
-      ac_cv_gnat_project_dir_secretada=
-      ac_cv_gnat_project_name_secretada=
-    fi
-
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_gnat_project_secretada" >&5
 $as_echo "$ac_cv_gnat_project_secretada" >&6; }
 
-  if test x${ac_cv_gnat_project_secretada} = xyes; then
-
-    SECRETADA_DIR=${gnat_project_dir_secretada}
-    HAVE_SECRETADA='yes'
-
-  else
-    if test x"Building keystore requires the Ada Libsecret Library." != x; then
-      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-      as_fn_error $? "Building keystore requires the Ada Libsecret Library.
-  You should build and install the Ada Libsecret Library component.
-  It must be available and found by ${GNATMAKE}.
-  This project was not found in the ADA_PROJECT_PATH environment variable.
-  This project was not found in ../secretada nor in ../ada-libsecret-*.
-  The component is available at git@github.com:stcarrez/ada-libsecret.git.
-  Please, download and configure Ada Libsecret Library.
-  The current configuration was using:
-    ${GNATMAKE}
-    ADA_PROJECT_PATH=$ADA_PROJECT_PATH
-" "$LINENO" 5
-    fi
-  fi
-
+if test $ac_cv_gnat_project_secretada = 'yes'; then
+  SECRETADA_DIR=${gnat_project_dir_secretada}
+  HAVE_SECRETADA='yes'
+fi
 
 
 
