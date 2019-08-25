@@ -41,6 +41,7 @@ private package AKT.Commands.Create is
 private
 
    type Command_Type is new AKT.Commands.Drivers.Command_Type with record
+      Force         : aliased Boolean := False;
       Counter_Range : aliased GNAT.Strings.String_Access;
    end record;
 

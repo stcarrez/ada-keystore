@@ -46,7 +46,7 @@ package body AKT.Commands.Get is
             declare
                Key : constant String := Args.Get_Argument (I);
             begin
-               Context.Wallet.Write (Key, Output);
+               Context.Wallet.Get (Key, Output);
                if not Command.No_Newline then
                   Output.Write (Sep);
                end if;

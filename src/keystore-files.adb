@@ -18,9 +18,10 @@
 with Util.Encoders.AES;
 with Util.Log.Loggers;
 with Keystore.IO.Refs;
+with Keystore.IO.Files;
 package body Keystore.Files is
 
-   Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Keys");
+   Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Files");
 
    --  ------------------------------
    --  Open the keystore file using the given password.
@@ -30,15 +31,18 @@ package body Keystore.Files is
                    Password  : in Secret_Key;
                    Path      : in String) is
       use IO.Files;
-      Wallet_Stream : IO.Files.Wallet_File_Stream_Access;
+      Block         : IO.Storage_Block;
+      Wallet_Stream : IO.Files.Wallet_Stream_Access;
       Stream        : IO.Refs.Stream_Ref;
    begin
       Log.Debug ("Open keystore {0}", Path);
 
-      Wallet_Stream := new IO.Files.Wallet_File_Stream;
+      Block.Storage := IO.DEFAULT_STORAGE_ID;
+      Block.Block := 1;
+      Wallet_Stream := new IO.Files.Wallet_Stream;
       Stream := IO.Refs.Create (Wallet_Stream.all'Access);
       Wallet_Stream.Open (Path);
-      Container.Container.Open (Password, 1, 1, Stream);
+      Container.Container.Open (Password, 1, Block, Stream);
       Log.Info ("Keystore {0} is opened", Path);
    end Open;
 
@@ -50,17 +54,19 @@ package body Keystore.Files is
                      Password  : in Secret_Key;
                      Path      : in String;
                      Config    : in Wallet_Config := Secure_Config) is
-      Block         : IO.Block_Number;
-      Wallet_Stream : IO.Files.Wallet_File_Stream_Access;
+      Block         : IO.Storage_Block;
+      Wallet_Stream : IO.Files.Wallet_Stream_Access;
       Stream        : IO.Refs.Stream_Ref;
    begin
       Log.Debug ("Create keystore {0}", Path);
 
-      Wallet_Stream := new IO.Files.Wallet_File_Stream;
+      Wallet_Stream := new IO.Files.Wallet_Stream;
       Stream := IO.Refs.Create (Wallet_Stream.all'Access);
 
-      Wallet_Stream.Create (Path);
-      Wallet_Stream.Allocate (Block);
+      Block.Storage := IO.DEFAULT_STORAGE_ID;
+      Block.Block := 1;
+      Wallet_Stream.Create (Path, Config);
+      Wallet_Stream.Allocate (IO.MASTER_BLOCK, Block);
       Container.Container.Create (Password, Config, Block, 1, Stream);
    end Create;
 
@@ -159,6 +165,15 @@ package body Keystore.Files is
       Container.Container.Add (Name, Kind, Content);
    end Add;
 
+   overriding
+   procedure Add (Container : in out Wallet_File;
+                  Name      : in String;
+                  Kind      : in Entry_Type := T_BINARY;
+                  Input     : in out Util.Streams.Input_Stream'Class) is
+   begin
+      Container.Container.Add (Name, Kind, Input);
+   end Add;
+
    --  ------------------------------
    --  Add or update in the wallet the named entry and associate it the content.
    --  The content is encrypted in AES-CBC with a secret key and an IV vector
@@ -222,12 +237,12 @@ package body Keystore.Files is
    --  Write in the output stream the named entry value from the wallet.
    --  ------------------------------
    overriding
-   procedure Write (Container : in out Wallet_File;
-                    Name      : in String;
-                    Output    : in out Util.Streams.Output_Stream'Class) is
+   procedure Get (Container : in out Wallet_File;
+                  Name      : in String;
+                  Output    : in out Util.Streams.Output_Stream'Class) is
    begin
-      Container.Container.Write (Name, Output);
-   end Write;
+      Container.Container.Get_Data (Name, Output);
+   end Get;
 
    --  ------------------------------
    --  Get the list of entries contained in the wallet.
@@ -266,10 +281,6 @@ package body Keystore.Files is
       if Wallet.Is_Open then
          Wallet.Container.Close;
       end if;
-      --  if Wallet.Stream /= null then
-      --    Wallet.Stream.Close;
-      --  end if;
-      --  Free (Wallet.Stream);
    end Finalize;
 
 end Keystore.Files;

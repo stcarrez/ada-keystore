@@ -37,6 +37,7 @@ with AKT.Commands.Password.Remove;
 with AKT.Passwords.Input;
 with AKT.Passwords.Files;
 with AKT.Passwords.Unsafe;
+with AKT.Passwords.Cmds;
 package body AKT.Commands is
 
    Help_Command            : aliased AKT.Commands.Drivers.Help_Command_Type;
@@ -172,6 +173,20 @@ package body AKT.Commands is
                         Long_Switch => "--password=",
                         Help   => "The password is passed within the command line (not safe)");
       GC.Define_Switch (Config => Context.Command_Config,
+                        Output => Context.Unsafe_Password'Access,
+                        Switch => "-p:",
+                        Long_Switch => "--password=",
+                        Help   => "The password is passed within the command line (not safe)");
+      GC.Define_Switch (Config => Context.Command_Config,
+                        Output => Context.Password_Askpass'Access,
+                        Long_Switch => "--passask",
+                        Help   => "Run the ssh-askpass command to get the password");
+      GC.Define_Switch (Config => Context.Command_Config,
+                        Output => Context.Password_Command'Access,
+                        Long_Switch => "--passcmd=",
+                        Argument => "COMMAND",
+                        Help   => "Run the command to get the password");
+      GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Worker_Count'Access,
                         Switch => "-t:",
                         Long_Switch => "--thread=",
@@ -203,6 +218,7 @@ package body AKT.Commands is
 
    procedure Parse (Context   : in out Context_Type;
                     Arguments : out Util.Commands.Dynamic_Argument_List) is
+      use GNAT.Strings;
    begin
       GC.Getopt (Config => Context.Command_Config);
       Util.Commands.Parsers.GNAT_Parser.Get_Arguments (Arguments, GC.Get_Argument);
@@ -216,7 +232,11 @@ package body AKT.Commands is
          return;
       end if;
 
-      if Context.Password_File'Length > 0 then
+      if Context.Password_Askpass then
+         Context.Provider := Passwords.Cmds.Create ("ssh-askpass");
+      elsif Context.Password_Command'Length > 0 then
+         Context.Provider := Passwords.Cmds.Create (Context.Password_Command.all);
+      elsif Context.Password_File'Length > 0 then
          Context.Provider := Passwords.Files.Create (Context.Password_File.all);
       elsif Context.Unsafe_Password'Length > 0 then
          Context.Provider := Passwords.Unsafe.Create (Context.Unsafe_Password.all);

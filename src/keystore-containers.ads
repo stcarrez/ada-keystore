@@ -27,12 +27,12 @@ private package Keystore.Containers is
 
       procedure Open (Password      : in Secret_Key;
                       Ident         : in Wallet_Identifier;
-                      Block         : in Keystore.IO.Block_Number;
+                      Block         : in Keystore.IO.Storage_Block;
                       Wallet_Stream : in out Keystore.IO.Refs.Stream_Ref);
 
       procedure Create (Password      : in Secret_Key;
                         Config        : in Wallet_Config;
-                        Block         : in IO.Block_Number;
+                        Block         : in IO.Storage_Block;
                         Ident         : in Wallet_Identifier;
                         Wallet_Stream : in out IO.Refs.Stream_Ref);
 
@@ -48,6 +48,10 @@ private package Keystore.Containers is
       procedure Add (Name    : in String;
                      Kind    : in Entry_Type;
                      Content : in Ada.Streams.Stream_Element_Array);
+
+      procedure Add (Name    : in String;
+                     Kind    : in Entry_Type;
+                     Input   : in out Util.Streams.Input_Stream'Class);
 
       procedure Set (Name    : in String;
                      Kind    : in Entry_Type;
@@ -68,8 +72,8 @@ private package Keystore.Containers is
                           Result     : out Entry_Info;
                           Output     : out Ada.Streams.Stream_Element_Array);
 
-      procedure Write (Name      : in String;
-                       Output    : in out Util.Streams.Output_Stream'Class);
+      procedure Get_Data (Name      : in String;
+                          Output    : in out Util.Streams.Output_Stream'Class);
 
       procedure Delete (Name     : in String);
 
@@ -83,7 +87,7 @@ private package Keystore.Containers is
       Stream       : Keystore.IO.Refs.Stream_Ref;
       Repository   : Keystore.Repository.Wallet_Repository;
       State        : State_Type := S_INVALID;
-      Master_Block : Keystore.IO.Block_Number;
+      Master_Block : Keystore.IO.Storage_Block;
    end Wallet_Container;
 
 end Keystore.Containers;

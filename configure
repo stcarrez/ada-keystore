@@ -586,6 +586,7 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 GTKADA_DIR
 HAVE_GTK
+WITH_SECRETADA
 HAVE_SECRETADA
 SECRETADA_DIR
 UTIL_DIR
@@ -2708,6 +2709,46 @@ $as_echo "no" >&6; }
 " "$LINENO" 5
     fi
   fi
+
+
+
+
+##########################################
+# Ada LibSecret library
+##########################################
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether secretada project exists" >&5
+$as_echo_n "checking whether secretada project exists... " >&6; }
+if ${ac_cv_gnat_project_secretada+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+    echo "with \"secretada\"; project conftest is for Source_Dirs use (); end conftest;" > conftest.gpr
+    if { ac_try='gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+    then
+      ac_cv_gnat_project_secretada=yes
+      ac_cv_gnat_project_with_secretada="with \"secretada\";";
+    else
+      ac_cv_gnat_project_secretada=no
+    fi
+    rm -f conftest.gpr
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_gnat_project_secretada" >&5
+$as_echo "$ac_cv_gnat_project_secretada" >&6; }
+
+
+if test T$gnat_project_secretada = Tno; then
+  WITH_SECRETADA='';
+  HAVE_SECRETADA='no';
+else
+  WITH_SECRETADA="with \"${SECRETADA_DIR}secretada\";";
+  HAVE_SECRETADA='yes';
+fi
 
 
 

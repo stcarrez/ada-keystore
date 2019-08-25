@@ -36,7 +36,11 @@ private package Keystore.Keys is
    procedure Set_IV (Into  : in out Cryptor;
                      Block : in IO.Block_Number);
 
+   procedure Set_Key (Into : in out Cryptor;
+                      From : in Cryptor);
+
    type Wallet_Config is limited record
+      UUID        : UUID_Type;
       Data        : Cryptor;
       Dir         : Cryptor;
       Key         : Cryptor;
@@ -51,8 +55,8 @@ private package Keystore.Keys is
    procedure Open (Manager  : in out Key_Manager;
                    Password : in Secret_Key;
                    Ident    : in Wallet_Identifier;
-                   Block    : in Keystore.IO.Block_Number;
-                   Root     : out Keystore.IO.Block_Number;
+                   Block    : in Keystore.IO.Storage_Block;
+                   Root     : out Keystore.IO.Storage_Block;
                    Config   : in out Wallet_Config;
                    Stream   : in out IO.Wallet_Stream'Class);
 
@@ -62,8 +66,8 @@ private package Keystore.Keys is
                      Password : in Secret_Key;
                      Slot     : in Key_Slot;
                      Ident    : in Wallet_Identifier;
-                     Block    : in Keystore.IO.Block_Number;
-                     Root     : in Keystore.IO.Block_Number;
+                     Block    : in Keystore.IO.Storage_Block;
+                     Root     : in Keystore.IO.Storage_Block;
                      Config   : in out Wallet_Config;
                      Stream   : in out IO.Wallet_Stream'Class);
 
@@ -76,7 +80,7 @@ private package Keystore.Keys is
                       Config       : in Keystore.Wallet_Config;
                       Mode         : in Mode_Type;
                       Ident        : in Wallet_Identifier;
-                      Block        : in Keystore.IO.Block_Number;
+                      Block        : in Keystore.IO.Storage_Block;
                       Stream       : in out IO.Wallet_Stream'Class);
 
 private
@@ -93,9 +97,8 @@ private
    WH_KEY_SIZE       : constant := Util.Encoders.AES.AES_256_Length;
 
    WH_HEADER_START   : constant IO.Block_Index := IO.BT_DATA_START;
-   WH_KEY_HASH_START : constant IO.Block_Index := WH_HEADER_START + WH_HEADER_SIZE;
-   WH_KEY_HASH_END   : constant IO.Block_Index := WH_KEY_HASH_START + WH_HASH_SIZE - 1;
-   WH_KEY_LIST_START : constant IO.Block_Index := WH_KEY_HASH_END + 8 + 1;
+   WH_HEADER_LENGTH  : constant := 16 + 16 + 8;
+   WH_KEY_LIST_START : constant IO.Block_Index := WH_HEADER_START + WH_HEADER_LENGTH + 1;
 
    --  Key slot type is using PBKDF2-HMAC-256.
    WH_KEY_PBKDF2     : constant := 16#0001#;
@@ -103,7 +106,7 @@ private
    type Key_Manager is limited record
       Id                : Wallet_Identifier;
       Parent_Id         : Wallet_Identifier;
-      Header_Block      : Keystore.IO.Block_Number;
+      Header_Block      : Keystore.IO.Storage_Block;
       Random            : Keystore.Random.Generator;
       Crypt             : Cryptor;
    end record;

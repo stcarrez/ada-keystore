@@ -15,7 +15,6 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-private with Keystore.IO.Files;
 private with Keystore.Containers;
 package Keystore.Files is
 
@@ -99,6 +98,14 @@ package Keystore.Files is
      Pre  => Container.Is_Open,
      Post => Container.Contains (Name);
 
+   overriding
+   procedure Add (Container : in out Wallet_File;
+                  Name      : in String;
+                  Kind      : in Entry_Type := T_BINARY;
+                  Input     : in out Util.Streams.Input_Stream'Class) with
+     Pre'Class  => Container.Is_Open,
+     Post'Class => Container.Contains (Name);
+
    --  Add or update in the wallet the named entry and associate it the content.
    --  The content is encrypted in AES-CBC with a secret key and an IV vector
    --  that is created randomly for the new or updated named entry.
@@ -143,9 +150,9 @@ package Keystore.Files is
 
    --  Write in the output stream the named entry value from the wallet.
    overriding
-   procedure Write (Container : in out Wallet_File;
-                    Name      : in String;
-                    Output    : in out Util.Streams.Output_Stream'Class) with
+   procedure Get (Container : in out Wallet_File;
+                  Name      : in String;
+                  Output    : in out Util.Streams.Output_Stream'Class) with
      Pre => Container.Is_Open;
 
    --  Get the list of entries contained in the wallet.
@@ -162,8 +169,6 @@ package Keystore.Files is
                                Workers   : in Keystore.Task_Manager_Access);
 
 private
-
-   type Wallet_File_Stream_Access is access all Keystore.IO.Files.Wallet_File_Stream;
 
    type Wallet_File is limited new Wallet with record
       Container  : Keystore.Containers.Wallet_Container;

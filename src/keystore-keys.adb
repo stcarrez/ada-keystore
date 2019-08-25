@@ -20,6 +20,8 @@ with Util.Log.Loggers;
 with Util.Encoders.HMAC.SHA256;
 with Util.Encoders.KDF.PBKDF2_HMAC_SHA256;
 with Keystore.Logs;
+with Keystore.Buffers;
+with Keystore.Marshallers;
 
 --  Wallet header encrypted with the parent wallet id
 --  +------------------+
@@ -33,8 +35,10 @@ with Keystore.Logs;
 --  +------------------+
 --  | Wallet magic     | 4b
 --  | Wallet version   | 4b
---  | Wallet id        | 4b
+--  | Wallet lid       | 4b
 --  | Wallet block ID  | 4b
+--  +------------------+
+--  | Wallet gid       | 16b
 --  +------------------+
 --  | Wallet key count | 4b
 --  | PAD 0            | 4b
@@ -82,25 +86,25 @@ package body Keystore.Keys is
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Keys");
 
    procedure Save_Key (Manager  : in out Key_Manager;
-                       Buffer   : in out IO.Marshaller;
+                       Buffer   : in out Marshallers.Marshaller;
                        Password : in Secret_Key;
                        Slot     : in Key_Slot;
                        Config   : in Wallet_Config;
                        Stream   : in out IO.Wallet_Stream'Class);
 
    procedure Erase_Key (Manager  : in out Key_Manager;
-                        Buffer   : in out IO.Marshaller;
+                        Buffer   : in out Marshallers.Marshaller;
                         Slot     : in Key_Slot;
                         Stream   : in out IO.Wallet_Stream'Class);
 
-   procedure Extract (Buffer   : in out IO.Marshaller;
+   procedure Extract (Buffer   : in out Marshallers.Marshaller;
                       Lock_Key : in Secret_Key;
                       Lock_IV  : in Secret_Key;
                       Crypt    : in out Cryptor;
                       Hmac     : in out Util.Encoders.HMAC.SHA256.Context);
 
    function Verify (Manager  : in Key_Manager;
-                    Buffer   : in out IO.Marshaller;
+                    Buffer   : in out Marshallers.Marshaller;
                     Password : in Secret_Key;
                     Size     : in Positive;
                     Config   : in out Wallet_Config) return Boolean;
@@ -115,10 +119,10 @@ package body Keystore.Keys is
                    Hmac     : in out Util.Encoders.HMAC.SHA256.Context);
 
    procedure Load (Manager  : in out Key_Manager;
-                   Block    : in Keystore.IO.Block_Number;
+                   Block    : in Keystore.IO.Storage_Block;
                    Ident    : in Wallet_Identifier;
                    Buffer   : in out IO.Marshaller;
-                   Root     : out Keystore.IO.Block_Number;
+                   Root     : out Keystore.IO.Storage_Block;
                    Stream   : in out IO.Wallet_Stream'Class);
 
    --  ------------------------------
@@ -133,19 +137,28 @@ package body Keystore.Keys is
       Into.Cipher.Set_IV (Into.IV, Block_IV);
    end Set_IV;
 
+   procedure Set_Key (Into : in out Cryptor;
+                      From : in Cryptor) is
+   begin
+      Into.Cipher.Set_Key (From.Key, Util.Encoders.AES.CBC);
+      Into.Cipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
+      Into.Decipher.Set_Key (From.Key, Util.Encoders.AES.CBC);
+      Into.Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
+   end Set_Key;
+
    --  ------------------------------
    --  Extract the AES encryption key, the AES IV and the signature key.
    --  Update the HMAC with the extracted encryption keys for global verification.
    --  ------------------------------
-   procedure Extract (Buffer   : in out IO.Marshaller;
+   procedure Extract (Buffer   : in out Marshallers.Marshaller;
                       Lock_Key : in Secret_Key;
                       Lock_IV  : in Secret_Key;
                       Crypt    : in out Cryptor;
                       Hmac     : in out Util.Encoders.HMAC.SHA256.Context) is
    begin
-      IO.Get_Secret (Buffer, Crypt.Key, Lock_Key, Lock_IV);
-      IO.Get_Secret (Buffer, Crypt.IV, Lock_Key, Lock_IV);
-      IO.Get_Secret (Buffer, Crypt.Sign, Lock_Key, Lock_IV);
+      Marshallers.Get_Secret (Buffer, Crypt.Key, Lock_Key, Lock_IV);
+      Marshallers.Get_Secret (Buffer, Crypt.IV, Lock_Key, Lock_IV);
+      Marshallers.Get_Secret (Buffer, Crypt.Sign, Lock_Key, Lock_IV);
       Util.Encoders.HMAC.SHA256.Update (Hmac, Crypt.Key);
       Util.Encoders.HMAC.SHA256.Update (Hmac, Crypt.IV);
       Util.Encoders.HMAC.SHA256.Update (Hmac, Crypt.Sign);
@@ -169,22 +182,22 @@ package body Keystore.Keys is
       Crypt.Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
    end Generate;
 
-   procedure Save (Buffer   : in out IO.Marshaller;
+   procedure Save (Buffer   : in out Marshallers.Marshaller;
                    Lock_Key : in Secret_Key;
                    Lock_IV  : in Secret_Key;
                    Crypt    : in Cryptor;
                    Hmac     : in out Util.Encoders.HMAC.SHA256.Context) is
    begin
-      IO.Put_Secret (Buffer, Crypt.Key, Lock_Key, Lock_IV);
-      IO.Put_Secret (Buffer, Crypt.IV, Lock_Key, Lock_IV);
-      IO.Put_Secret (Buffer, Crypt.Sign, Lock_Key, Lock_IV);
+      Marshallers.Put_Secret (Buffer, Crypt.Key, Lock_Key, Lock_IV);
+      Marshallers.Put_Secret (Buffer, Crypt.IV, Lock_Key, Lock_IV);
+      Marshallers.Put_Secret (Buffer, Crypt.Sign, Lock_Key, Lock_IV);
       Util.Encoders.HMAC.SHA256.Update (Hmac, Crypt.Key);
       Util.Encoders.HMAC.SHA256.Update (Hmac, Crypt.IV);
       Util.Encoders.HMAC.SHA256.Update (Hmac, Crypt.Sign);
    end Save;
 
    function Verify (Manager  : in Key_Manager;
-                    Buffer   : in out IO.Marshaller;
+                    Buffer   : in out Marshallers.Marshaller;
                     Password : in Secret_Key;
                     Size     : in Positive;
                     Config   : in out Wallet_Config) return Boolean is
@@ -198,15 +211,15 @@ package body Keystore.Keys is
       Counter_Key   : Interfaces.Unsigned_32;
       Counter_IV    : Interfaces.Unsigned_32;
    begin
-      Counter_Key := IO.Get_Unsigned_32 (Buffer);
-      Counter_IV := IO.Get_Unsigned_32 (Buffer);
+      Counter_Key := Marshallers.Get_Unsigned_32 (Buffer);
+      Counter_IV := Marshallers.Get_Unsigned_32 (Buffer);
       if Counter_Key = 0 or Counter_IV = 0 or Size /= Util.Encoders.AES.AES_256_Length then
          return False;
       end if;
 
-      IO.Get_Secret (Buffer, Salt_Key, Manager.Crypt.Key, Manager.Crypt.IV);
-      IO.Get_Secret (Buffer, Salt_IV, Manager.Crypt.Key, Manager.Crypt.IV);
-      IO.Get_Secret (Buffer, Sign, Manager.Crypt.Key, Manager.Crypt.IV);
+      Marshallers.Get_Secret (Buffer, Salt_Key, Manager.Crypt.Key, Manager.Crypt.IV);
+      Marshallers.Get_Secret (Buffer, Salt_IV, Manager.Crypt.Key, Manager.Crypt.IV);
+      Marshallers.Get_Secret (Buffer, Sign, Manager.Crypt.Key, Manager.Crypt.IV);
 
       --  Generate a derived key from the password, salt, counter.
       PBKDF2_HMAC_SHA256 (Password => Password,
@@ -229,7 +242,7 @@ package body Keystore.Keys is
 
       Util.Encoders.HMAC.SHA256.Finish (Hmac, Result);
 
-      return Result = Buffer.Data (Buffer.Pos .. Buffer.Pos + Result'Length - 1);
+      return Result = Buffer.Buffer.Data.Value.Data (Buffer.Pos .. Buffer.Pos + Result'Length - 1);
    end Verify;
 
    --  ------------------------------
@@ -239,7 +252,7 @@ package body Keystore.Keys is
    --  that protects the key slot.
    --  ------------------------------
    procedure Save_Key (Manager  : in out Key_Manager;
-                       Buffer   : in out IO.Marshaller;
+                       Buffer   : in out Marshallers.Marshaller;
                        Password : in Secret_Key;
                        Slot     : in Key_Slot;
                        Config   : in Wallet_Config;
@@ -254,7 +267,10 @@ package body Keystore.Keys is
       Counter_IV  : Positive;
       Hmac        : Util.Encoders.HMAC.SHA256.Context;
       Result      : Util.Encoders.SHA256.Hash_Array;
+      Buf         : constant Buffers.Buffer_Accessor := Buffer.Buffer.Data.Value;
    begin
+      Log.Info ("Saving key for wallet {0}", To_String (Config.UUID));
+
       --  Make a first random counter in range 100_000 .. 1_148_575.
       Counter_Key := Natural (Manager.Random.Generate mod Config.Max_Counter);
       if Counter_Key < Positive (Config.Min_Counter) then
@@ -272,14 +288,14 @@ package body Keystore.Keys is
       Manager.Random.Generate (Sign);
 
       Buffer.Pos := WH_KEY_LIST_START + IO.Block_Index (Slot) * WH_SLOT_SIZE - WH_SLOT_SIZE;
-      Buffer.Data (Buffer.Pos .. Buffer.Pos + WH_KEY_SIZE - 1) := (others => 0);
-      IO.Put_Unsigned_32 (Buffer, WH_KEY_PBKDF2);
-      IO.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Lock_Key.Length));
-      IO.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Counter_Key));
-      IO.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Counter_IV));
-      IO.Put_Secret (Buffer, Salt_Key, Manager.Crypt.Key, Manager.Crypt.IV);
-      IO.Put_Secret (Buffer, Salt_IV, Manager.Crypt.Key, Manager.Crypt.IV);
-      IO.Put_Secret (Buffer, Sign, Manager.Crypt.Key, Manager.Crypt.IV);
+      Buf.Data (Buffer.Pos .. Buffer.Pos + WH_KEY_SIZE - 1) := (others => 0);
+      Marshallers.Put_Unsigned_32 (Buffer, WH_KEY_PBKDF2);
+      Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Lock_Key.Length));
+      Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Counter_Key));
+      Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Counter_IV));
+      Marshallers.Put_Secret (Buffer, Salt_Key, Manager.Crypt.Key, Manager.Crypt.IV);
+      Marshallers.Put_Secret (Buffer, Salt_IV, Manager.Crypt.Key, Manager.Crypt.IV);
+      Marshallers.Put_Secret (Buffer, Sign, Manager.Crypt.Key, Manager.Crypt.IV);
 
       --  Generate a derived key from the password, salt, counter.
       PBKDF2_HMAC_SHA256 (Password => Password,
@@ -300,82 +316,89 @@ package body Keystore.Keys is
       Save (Buffer, Lock_Key, Lock_IV, Config.Key, Hmac);
 
       Util.Encoders.HMAC.SHA256.Finish (Hmac, Result);
-      Buffer.Data (Buffer.Pos .. Buffer.Pos + Result'Length - 1) := Result;
+      Buf.Data (Buffer.Pos .. Buffer.Pos + Result'Length - 1) := Result;
 
-      Stream.Write (Block  => Manager.Header_Block,
-                    Cipher => Manager.Crypt.Cipher,
-                    Sign   => Manager.Crypt.Sign,
-                    From   => Buffer);
+      Stream.Write (Cipher  => Manager.Crypt.Cipher,
+                    Sign    => Manager.Crypt.Sign,
+                    From    => Buffer.Buffer);
    end Save_Key;
 
    --  ------------------------------
    --  Erase the walley key slot amd save the waller master block.
    --  ------------------------------
    procedure Erase_Key (Manager  : in out Key_Manager;
-                        Buffer   : in out IO.Marshaller;
+                        Buffer   : in out Marshallers.Marshaller;
                         Slot     : in Key_Slot;
                         Stream   : in out IO.Wallet_Stream'Class) is
+      Buf : constant Buffers.Buffer_Accessor := Buffer.Buffer.Data.Value;
    begin
       Buffer.Pos := WH_KEY_LIST_START + IO.Block_Index (Slot) * WH_SLOT_SIZE - WH_SLOT_SIZE;
-      Buffer.Data (Buffer.Pos .. Buffer.Pos + WH_KEY_SIZE - 1) := (others => 0);
+      Buf.Data (Buffer.Pos .. Buffer.Pos + WH_KEY_SIZE - 1) := (others => 0);
 
-      Stream.Write (Block  => Manager.Header_Block,
-                    Cipher => Manager.Crypt.Cipher,
-                    Sign   => Manager.Crypt.Sign,
-                    From   => Buffer);
+      Stream.Write (Cipher  => Manager.Crypt.Cipher,
+                    Sign    => Manager.Crypt.Sign,
+                    From    => Buffer.Buffer);
    end Erase_Key;
 
    --  ------------------------------
    --  Load the wallet header keys
    --  ------------------------------
    procedure Load (Manager  : in out Key_Manager;
-                   Block    : in Keystore.IO.Block_Number;
+                   Block    : in Keystore.IO.Storage_Block;
                    Ident    : in Wallet_Identifier;
                    Buffer   : in out IO.Marshaller;
-                   Root     : out Keystore.IO.Block_Number;
+                   Root     : out Keystore.IO.Storage_Block;
                    Stream   : in out IO.Wallet_Stream'Class) is
       Value   : Interfaces.Unsigned_32;
       Size    : IO.Block_Index;
+      UUID    : UUID_Type;
    begin
+      Buffer.Buffer := Buffers.Allocate (Block);
       Manager.Header_Block := Block;
-      Stream.Read (Block        => Manager.Header_Block,
-                   Decipher     => Manager.Crypt.Decipher,
+      Stream.Read (Decipher     => Manager.Crypt.Decipher,
                    Sign         => Manager.Crypt.Sign,
                    Decrypt_Size => Size,
-                   Into         => Buffer);
-      if IO.Get_Unsigned_16 (Buffer) /= IO.BT_WALLET_HEADER then
+                   Into         => Buffer.Buffer);
+      Buffer.Pos := IO.BT_HEADER_START;
+      if Marshallers.Get_Unsigned_16 (Buffer) /= IO.BT_WALLET_HEADER then
          Keystore.Logs.Warn (Log, "Invalid wallet block header BN{0}", Manager.Header_Block);
          raise Invalid_Block;
       end if;
-      IO.Skip (Buffer, 2);
-      Value := IO.Get_Unsigned_32 (Buffer);
-      IO.Skip (Buffer, 8);
-      if IO.Get_Unsigned_32 (Buffer) /= WH_MAGIC then
+      Marshallers.Skip (Buffer, 2);
+      Value := Marshallers.Get_Unsigned_32 (Buffer);
+      Marshallers.Skip (Buffer, 8);
+      if Marshallers.Get_Unsigned_32 (Buffer) /= WH_MAGIC then
          Keystore.Logs.Warn (Log, "Invalid wallet magic in header BN{0}", Manager.Header_Block);
          raise Invalid_Block;
       end if;
-      Value := IO.Get_Unsigned_32 (Buffer);
+      Value := Marshallers.Get_Unsigned_32 (Buffer);
       if Value /= 1 then
          Log.Warn ("Version{0} not supported in header BN{0}",
                    Interfaces.Unsigned_32'Image (Value),
-                   IO.Block_Number'Image (Manager.Header_Block));
+                   IO.Block_Number'Image (Manager.Header_Block.Block));
          raise Invalid_Block;
       end if;
-      Value := IO.Get_Unsigned_32 (Buffer);
+      Value := Marshallers.Get_Unsigned_32 (Buffer);
       if Value /= Interfaces.Unsigned_32 (Ident) then
          Log.Warn ("Wallet id{0} does not match in header BN{0}",
                    Interfaces.Unsigned_32'Image (Value),
-                   IO.Block_Number'Image (Manager.Header_Block));
+                   IO.Block_Number'Image (Manager.Header_Block.Block));
          raise Invalid_Block;
       end if;
-      Value := IO.Get_Unsigned_32 (Buffer);
+      Value := Marshallers.Get_Unsigned_32 (Buffer);
       if Value = 0 then
          Log.Warn ("Wallet block{0} is invalid in header BN{0}",
                    Interfaces.Unsigned_32'Image (Value),
-                   IO.Block_Number'Image (Manager.Header_Block));
+                   IO.Block_Number'Image (Manager.Header_Block.Block));
          raise Invalid_Block;
       end if;
-      Root := IO.Block_Number (Value);
+      Root.Storage := Block.Storage;
+      Root.Block := IO.Block_Number (Value);
+
+      --  Extract wallet uuid.
+      for I in UUID'Range loop
+         UUID (I) := Marshallers.Get_Unsigned_32 (Buffer);
+      end loop;
    end Load;
 
    --  Open the key manager and read the wallet header block.  Use the secret key
@@ -383,21 +406,21 @@ package body Keystore.Keys is
    procedure Open (Manager  : in out Key_Manager;
                    Password : in Secret_Key;
                    Ident    : in Wallet_Identifier;
-                   Block    : in Keystore.IO.Block_Number;
-                   Root     : out Keystore.IO.Block_Number;
+                   Block    : in Keystore.IO.Storage_Block;
+                   Root     : out Keystore.IO.Storage_Block;
                    Config   : in out Wallet_Config;
                    Stream   : in out IO.Wallet_Stream'Class) is
 
       Value   : Interfaces.Unsigned_32;
-      Buffer  : IO.Marshaller;
+      Buffer  : Marshallers.Marshaller;
    begin
       Load (Manager, Block, Ident, Buffer, Root, Stream);
 
       for Slot in 1 .. 7 loop
          Buffer.Pos := WH_KEY_LIST_START + IO.Block_Index (Slot) * WH_SLOT_SIZE - WH_SLOT_SIZE;
-         Value := IO.Get_Unsigned_32 (Buffer);
+         Value := Marshallers.Get_Unsigned_32 (Buffer);
          if Value = WH_KEY_PBKDF2 then
-            Value := IO.Get_Unsigned_32 (Buffer);
+            Value := Marshallers.Get_Unsigned_32 (Buffer);
             if Value > 0 and Value <= WH_KEY_SIZE then
                if Verify (Manager, Buffer, Password, Positive (Value), Config) then
                   return;
@@ -413,27 +436,33 @@ package body Keystore.Keys is
                      Password : in Secret_Key;
                      Slot     : in Key_Slot;
                      Ident    : in Wallet_Identifier;
-                     Block    : in Keystore.IO.Block_Number;
-                     Root     : in Keystore.IO.Block_Number;
+                     Block    : in Keystore.IO.Storage_Block;
+                     Root     : in Keystore.IO.Storage_Block;
                      Config   : in out Wallet_Config;
                      Stream   : in out IO.Wallet_Stream'Class) is
       Buffer   : IO.Marshaller;
    begin
+      Buffer.Buffer := Buffers.Allocate (Block);
       Generate (Manager, Config.Data);
       Generate (Manager, Config.Dir);
       Generate (Manager, Config.Key);
+      Manager.Random.Generate (Config.UUID);
       Manager.Header_Block := Block;
 
       --  Build wallet header.
-      Buffer.Data := (others => 0);
-      Buffer.Block := Block;
-      IO.Set_Header (Into => Buffer,
-                     Tag  => IO.BT_WALLET_HEADER,
-                     Id   => Interfaces.Unsigned_32 (Ident));
-      IO.Put_Unsigned_32 (Buffer, WH_MAGIC);
-      IO.Put_Unsigned_32 (Buffer, 1);
-      IO.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Ident));
-      IO.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Root));
+      Buffer.Buffer.Data.Value.Data := (others => 0);
+      Marshallers.Set_Header (Into => Buffer,
+                              Tag  => IO.BT_WALLET_HEADER,
+                              Id   => Ident);
+      Marshallers.Put_Unsigned_32 (Buffer, WH_MAGIC);
+      Marshallers.Put_Unsigned_32 (Buffer, 1);
+      Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Ident));
+      Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Root.Block));
+
+      --  Write wallet uuid.
+      for I in Config.UUID'Range loop
+         Marshallers.Put_Unsigned_32 (Buffer, Config.UUID (I));
+      end loop;
 
       Save_Key (Manager, Buffer, Password, Slot, Config, Stream);
    end Create;
@@ -461,20 +490,20 @@ package body Keystore.Keys is
                       Config       : in Keystore.Wallet_Config;
                       Mode         : in Mode_Type;
                       Ident        : in Wallet_Identifier;
-                      Block        : in Keystore.IO.Block_Number;
+                      Block        : in Keystore.IO.Storage_Block;
                       Stream       : in out IO.Wallet_Stream'Class) is
       function Find_Free_Slot return Key_Slot;
 
-      Buffer       : IO.Marshaller;
+      Buffer       : Marshallers.Marshaller;
       Local_Config : Wallet_Config;
-      Root         : Keystore.IO.Block_Number;
+      Root         : Keystore.IO.Storage_Block;
       Value        : Interfaces.Unsigned_32;
 
       function Find_Free_Slot return Key_Slot is
       begin
          for Slot in Key_Slot'Range loop
             Buffer.Pos := WH_KEY_LIST_START + IO.Block_Index (Slot) * WH_SLOT_SIZE - WH_SLOT_SIZE;
-            Value := IO.Get_Unsigned_32 (Buffer);
+            Value := Marshallers.Get_Unsigned_32 (Buffer);
             if Value = 0 then
                return Slot;
             end if;
@@ -488,9 +517,9 @@ package body Keystore.Keys is
 
       for Slot in Key_Slot'Range loop
          Buffer.Pos := WH_KEY_LIST_START + IO.Block_Index (Slot) * WH_SLOT_SIZE - WH_SLOT_SIZE;
-         Value := IO.Get_Unsigned_32 (Buffer);
+         Value := Marshallers.Get_Unsigned_32 (Buffer);
          if Value = WH_KEY_PBKDF2 then
-            Value := IO.Get_Unsigned_32 (Buffer);
+            Value := Marshallers.Get_Unsigned_32 (Buffer);
             if Value > 0 and Value <= WH_KEY_SIZE then
                if Verify (Manager, Buffer, Password, Positive (Value), Local_Config) then
                   Local_Config.Min_Counter := Unsigned_32 (Config.Min_Counter);

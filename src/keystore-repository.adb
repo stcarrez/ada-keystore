@@ -17,8 +17,10 @@
 -----------------------------------------------------------------------
 with Util.Log.Loggers;
 with Ada.Unchecked_Deallocation;
+with Keystore.Marshallers;
 with Keystore.Repository.Data;
 with Keystore.Repository.Entries;
+with Keystore.Repository.Workers;
 
 --  Block = 4K, 8K, 16K, 64K, 128K ?
 --
@@ -58,7 +60,7 @@ package body Keystore.Repository is
                                      Name   => Wallet_Directory_Entry_Access);
 
    procedure Free is
-     new Ada.Unchecked_Deallocation (Object => Keystore.Repository.Data.Wallet_Worker,
+     new Ada.Unchecked_Deallocation (Object => Keystore.Repository.Workers.Wallet_Worker,
                                      Name   => Wallet_Worker_Access);
 
    function Hash (Value : in Wallet_Entry_Index) return Ada.Containers.Hash_Type is
@@ -77,23 +79,25 @@ package body Keystore.Repository is
    procedure Open (Repository : in out Wallet_Repository;
                    Password   : in Secret_Key;
                    Ident      : in Wallet_Identifier;
-                   Block      : in Keystore.IO.Block_Number;
+                   Block      : in Keystore.IO.Storage_Block;
                    Keys       : in out Keystore.Keys.Key_Manager;
-                   Stream     : in out IO.Wallet_Stream'Class) is
+                   Stream     : in IO.Wallet_Stream_Access) is
    begin
       Repository.Id := Ident;
-      Repository.Workers := Data.Create (Repository'Unchecked_Access, null, 1).all'Access;
+      Repository.Stream := Stream;
+      Repository.Next_Id := 1;
       Keystore.Keys.Open (Keys, Password, Ident, Block,
-                          Repository.Root, Repository.Config, Stream);
+                          Repository.Root, Repository.Config, Stream.all);
+      Repository.Workers := Workers.Create (Repository'Unchecked_Access, null, 1).all'Access;
 
-      Entries.Load_Complete_Directory (Repository, Repository.Root, Stream);
+      Entries.Load_Complete_Directory (Repository, Repository.Root);
    end Open;
 
    procedure Open (Repository : in out Wallet_Repository;
                    Name       : in String;
                    Password   : in Secret_Key;
                    Wallet     : in out Wallet_Repository;
-                   Stream     : in out IO.Wallet_Stream'Class) is
+                   Stream     : in IO.Wallet_Stream_Access) is
    begin
       null;
    end Open;
@@ -101,38 +105,35 @@ package body Keystore.Repository is
    procedure Create (Repository : in out Wallet_Repository;
                      Password   : in Secret_Key;
                      Config     : in Wallet_Config;
-                     Block      : in IO.Block_Number;
+                     Block      : in IO.Storage_Block;
                      Ident      : in Wallet_Identifier;
                      Keys       : in out Keystore.Keys.Key_Manager;
-                     Stream     : in out IO.Wallet_Stream'Class) is
+                     Stream     : in IO.Wallet_Stream_Access) is
       Entry_Block : Wallet_Directory_Entry_Access;
    begin
-      Stream.Allocate (Repository.Root);
+      Stream.Allocate (IO.DIRECTORY_BLOCK, Repository.Root);
       Repository.Id := Ident;
       Repository.Next_Id := 1;
+      Repository.Stream := Stream;
       Repository.Randomize := Config.Randomize;
       Repository.Config.Max_Counter := Interfaces.Unsigned_32 (Config.Max_Counter);
       Repository.Config.Min_Counter := Interfaces.Unsigned_32 (Config.Min_Counter);
-      Repository.Workers := Data.Create (Repository'Unchecked_Access, null, 1).all'Access;
       Keystore.Keys.Create (Keys, Password, 1, Ident, Block, Repository.Root,
-                            Repository.Config, Stream);
+                            Repository.Config, Stream.all);
+      Repository.Workers := Workers.Create (Repository'Unchecked_Access, null, 1).all'Access;
 
       --  We need a new wallet directory block.
-      Entry_Block := new Wallet_Directory_Entry;
-      Entry_Block.Available := IO.Block_Index'Last - IO.BT_DATA_START - 4;
-      Entry_Block.Count := 0;
-      Entry_Block.Last_Pos := IO.BT_DATA_START + 4;
-      Entry_Block.Ready := True;
-      Entry_Block.Block := Repository.Root;
-      Repository.Entry_List.Append (Entry_Block);
+      Entries.Initialize_Directory_Block (Repository, Repository.Root, 0, Entry_Block);
 
-      Repository.Buffer.Data := (others => 0);
-      IO.Set_Header (Into => Repository.Buffer,
-                     Tag  => IO.BT_WALLET_REPOSITORY,
-                     Id   => Interfaces.Unsigned_32 (Repository.Id));
-      Keystore.Keys.Set_IV (Repository.Config.Dir, Repository.Root);
-      Stream.Write (Block  => Repository.Root,
-                    From   => Repository.Buffer,
+      Repository.Current.Buffer := Buffers.Allocate (Repository.Root);
+      Repository.Current.Buffer.Data.Value.Data := (others => 0);
+      Marshallers.Set_Header (Into => Repository.Current,
+                              Tag  => IO.BT_WALLET_DIRECTORY,
+                              Id   => Repository.Id);
+      Marshallers.Put_Unsigned_32 (Repository.Current, 0);
+      Marshallers.Put_Block_Index (Repository.Current, IO.Block_Index'Last);
+      Keystore.Keys.Set_IV (Repository.Config.Dir, Repository.Root.Block);
+      Stream.Write (From   => Repository.Current.Buffer,
                     Cipher => Repository.Config.Dir.Cipher,
                     Sign   => Repository.Config.Dir.Sign);
    end Create;
@@ -140,44 +141,51 @@ package body Keystore.Repository is
    procedure Add (Repository : in out Wallet_Repository;
                   Name       : in String;
                   Kind       : in Entry_Type;
-                  Content    : in Ada.Streams.Stream_Element_Array;
-                  Stream     : in out IO.Wallet_Stream'Class) is
+                  Content    : in Ada.Streams.Stream_Element_Array) is
       Item        : Wallet_Entry_Access;
-      Data_Offset : Stream_Element_Offset := 0;
+      Data_Offset : Interfaces.Unsigned_64 := 0;
+      Iterator    : Entries.Data_Key_Iterator;
    begin
-      Entries.Add_Entry (Repository, Name, Kind, Content'Length, Item, Stream);
+      Entries.Add_Entry (Repository, Name, Kind, Content'Length, Item);
 
-      if Content'Length = 0 then
-         return;
+      if Content'Length > 0 then
+         Entries.Initialize (Repository, Iterator, Item);
+
+         Data.Add_Data (Repository, Iterator, Content, Data_Offset);
       end if;
 
-      Data.Add_Data (Repository, Item, Item.Data, Content, Data_Offset, Stream);
+      Entries.Save (Manager => Repository);
    end Add;
 
    procedure Add (Repository : in out Wallet_Repository;
                   Name       : in String;
                   Kind       : in Entry_Type;
-                  Input      : in out Util.Streams.Input_Stream'Class;
-                  Stream     : in out IO.Wallet_Stream'Class) is
+                  Input      : in out Util.Streams.Input_Stream'Class) is
       Item        : Wallet_Entry_Access;
-      Data_Offset : Stream_Element_Offset := 0;
+      Data_Offset : Interfaces.Unsigned_64 := 0;
+      Iterator    : Entries.Data_Key_Iterator;
    begin
-      Entries.Add_Entry (Repository, Name, Kind, 1, Item, Stream);
+      Entries.Add_Entry (Repository, Name, Kind, 1, Item);
 
-      Data.Add_Data (Repository, Item, Item.Data, Input, Data_Offset, Stream);
+      Entries.Initialize (Repository, Iterator, Item);
+
+      Data.Add_Data (Repository, Iterator, Input, Data_Offset);
+
+      Entries.Update_Entry (Repository, Item, Kind, Data_Offset);
+
+      Entries.Save (Manager => Repository);
    end Add;
 
    procedure Add_Wallet (Repository : in out Wallet_Repository;
                          Name       : in String;
                          Password   : in Secret_Key;
-                         Wallet     : out Wallet_Repository'Class;
-                         Stream     : in out IO.Wallet_Stream'Class) is
+                         Wallet     : out Wallet_Repository'Class) is
       Item      : Wallet_Entry_Access;
       --  Keys      : Keystore.Keys.Key_Manager;
    begin
-      Entries.Add_Entry (Repository, Name, T_WALLET, 0, Item, Stream);
+      Entries.Add_Entry (Repository, Name, T_WALLET, 0, Item);
 
-      Stream.Allocate (Item.Block);
+      --  Repository.Stream.Allocate (IO.MASTER_BLOCK, Item.Block);
 
       --  Keys.Set_Header_Key
       --  Repo.Create (Password, 1, IO.Block_Number (Item.Block), Keys, Stream);
@@ -188,41 +196,33 @@ package body Keystore.Repository is
    procedure Set (Repository : in out Wallet_Repository;
                   Name       : in String;
                   Kind       : in Entry_Type;
-                  Content    : in Ada.Streams.Stream_Element_Array;
-                  Stream     : in out IO.Wallet_Stream'Class) is
+                  Content    : in Ada.Streams.Stream_Element_Array) is
    begin
       if Repository.Map.Contains (Name) then
-         Repository.Update (Name, Kind, Content, Stream);
+         Repository.Update (Name, Kind, Content);
       else
-         Repository.Add (Name, Kind, Content, Stream);
+         Repository.Add (Name, Kind, Content);
       end if;
    end Set;
 
    procedure Set (Repository : in out Wallet_Repository;
                   Name       : in String;
                   Kind       : in Entry_Type;
-                  Input      : in out Util.Streams.Input_Stream'Class;
-                  Stream     : in out IO.Wallet_Stream'Class) is
+                  Input      : in out Util.Streams.Input_Stream'Class) is
    begin
       if Repository.Map.Contains (Name) then
-         Repository.Update (Name, Kind, Input, Stream);
+         Repository.Update (Name, Kind, Input);
       else
-         Repository.Add (Name, Kind, Input, Stream);
+         Repository.Add (Name, Kind, Input);
       end if;
    end Set;
 
    procedure Update (Repository : in out Wallet_Repository;
                      Name       : in String;
                      Kind       : in Entry_Type;
-                     Content    : in Ada.Streams.Stream_Element_Array;
-                     Stream     : in out IO.Wallet_Stream'Class) is
+                     Content    : in Ada.Streams.Stream_Element_Array) is
       Pos          : constant Wallet_Maps.Cursor := Repository.Map.Find (Name);
-      Item         : Wallet_Entry_Access;
-      Start        : Stream_Element_Offset := Content'First;
-      Data_Block   : Wallet_Block_Entry_Access;
-      New_Block    : Wallet_Block_Entry_Access;
-      Delete_Block : Wallet_Block_Entry_Access;
-      Data_Offset  : Ada.Streams.Stream_Element_Offset := 0;
+      Data_Offset  : Interfaces.Unsigned_64 := 0;
    begin
       Log.Debug ("Update keystore entry {0}", Name);
 
@@ -231,45 +231,27 @@ package body Keystore.Repository is
          raise Not_Found;
       end if;
 
-      Item := Wallet_Maps.Element (Pos);
+      declare
+         Item     : constant Wallet_Entry_Access := Wallet_Maps.Element (Pos);
+         Iterator : Entries.Data_Key_Iterator;
+      begin
+         Item.Kind := Kind;
+         Entries.Initialize (Repository, Iterator, Item);
 
-      --  If there is enough room in the current data block, use it.
-      Data_Block := Item.Data;
+         Data.Update_Data (Repository, Iterator, Content, Data_Offset);
 
-      Item.Kind := Kind;
-      Data.Update_Data (Repository, Item, Data_Block, Content,
-                        Data_Offset, New_Block, Delete_Block, Stream);
+         Entries.Update_Entry (Repository, Item, Kind, Data_Offset);
 
-      --  Write the data in one or several blocks.
-      if New_Block /= null then
-         Start := Content'First + Data_Offset;
-         Data.Add_Data (Repository, Item, New_Block, Content (Start .. Content'Last),
-                        Data_Offset, Stream);
-      end if;
-
-      if Delete_Block /= null then
-         Data.Delete_Data (Repository, Item, Delete_Block, Stream);
-      end if;
-
-      Entries.Update_Entry (Repository, Item, Kind, Content'Length, Stream);
+         Entries.Save (Repository);
+      end;
    end Update;
 
-   procedure Update (Manager    : in out Wallet_Repository;
+   procedure Update (Repository : in out Wallet_Repository;
                      Name       : in String;
                      Kind       : in Entry_Type;
-                     Input      : in out Util.Streams.Input_Stream'Class;
-                     Stream     : in out IO.Wallet_Stream'Class) is
-      Item_Pos     : constant Wallet_Maps.Cursor := Manager.Map.Find (Name);
-      Item         : Wallet_Entry_Access;
-      Data_Block   : Wallet_Block_Entry_Access;
-      New_Block    : Wallet_Block_Entry_Access;
-      Delete_Block : Wallet_Block_Entry_Access;
-      Pos          : Ada.Streams.Stream_Element_Offset;
-      Last         : Ada.Streams.Stream_Element_Offset;
-      Old_Offset   : Ada.Streams.Stream_Element_Offset;
-      Data_Offset  : Ada.Streams.Stream_Element_Offset := 0;
-      Content      : Stream_Element_Array (1 .. 4 * 4096);
-      Remain       : Stream_Element_Offset;
+                     Input      : in out Util.Streams.Input_Stream'Class) is
+      Item_Pos     : constant Wallet_Maps.Cursor := Repository.Map.Find (Name);
+      Data_Offset  : Interfaces.Unsigned_64 := 0;
    begin
       Log.Debug ("Update keystore entry {0}", Name);
 
@@ -278,54 +260,19 @@ package body Keystore.Repository is
          raise Not_Found;
       end if;
 
-      Item := Wallet_Maps.Element (Item_Pos);
+      declare
+         Item     : constant Wallet_Entry_Access := Wallet_Maps.Element (Item_Pos);
+         Iterator : Entries.Data_Key_Iterator;
+      begin
+         Item.Kind := Kind;
+         Entries.Initialize (Repository, Iterator, Item);
 
-      --  If there is enough room in the current data block, use it.
-      Data_Block := Item.Data;
+         Data.Update_Data (Repository, Iterator, Input, Data_Offset);
 
-      Item.Kind := Kind;
-      Pos := Content'First;
-      loop
-         while Pos < Content'Last loop
-            Input.Read (Content (Pos .. Content'Last), Last);
-            exit when Last < Pos;
-            Pos := Last + 1;
-         end loop;
+         Entries.Update_Entry (Repository, Item, Kind, Data_Offset);
 
-         Old_Offset := Data_Offset;
-         if New_Block = null then
-            if Last < Content'Last then
-               Data.Update_Data (Manager, Item, Data_Block, Content (Content'First .. Last),
-                                 Data_Offset, New_Block, Delete_Block, Stream);
-               exit when New_Block = null;
-            else
-               Data.Update_Data (Manager, Item, Data_Block, Content,
-                                 Data_Offset, New_Block, Delete_Block, Stream);
-            end if;
-         else
-            if Last < Content'Last then
-               Data.Add_Data (Manager, Item, New_Block, Content (Content'First .. Last),
-                              Data_Offset, Stream);
-               exit;
-            else
-               --  Write the data in one or several blocks.
-               Data.Add_Data (Manager, Item, New_Block, Content,
-                              Data_Offset, Stream);
-            end if;
-         end if;
-         Remain := (Last - Content'First + 1) - (Data_Offset - Old_Offset);
-         Pos := Content'First + Remain;
-         if Remain > 0 then
-            Content (Content'First .. Content'First + Remain - 1)
-              := Content (Last - Remain + 1 .. Last);
-         end if;
-      end loop;
-
-      if Delete_Block /= null then
-         Data.Delete_Data (Manager, Item, Delete_Block, Stream);
-      end if;
-
-      Entries.Update_Entry (Manager, Item, Kind, Interfaces.Unsigned_64 (Data_Offset), Stream);
+         Entries.Save (Repository);
+      end;
    end Update;
 
    --  ------------------------------
@@ -333,25 +280,32 @@ package body Keystore.Repository is
    --  Raises the Not_Found exception if the name was not found.
    --  ------------------------------
    procedure Delete (Repository : in out Wallet_Repository;
-                     Name       : in String;
-                     Stream     : in out IO.Wallet_Stream'Class) is
+                     Name       : in String) is
       Pos        : Wallet_Maps.Cursor := Repository.Map.Find (Name);
-      Item       : Wallet_Entry_Access;
    begin
       if not Wallet_Maps.Has_Element (Pos) then
          Log.Info ("Data entry '{0}' not found", Name);
          raise Not_Found;
       end if;
 
-      Item := Wallet_Maps.Element (Pos);
+      declare
+         Item     : Wallet_Entry_Access := Wallet_Maps.Element (Pos);
+         Iterator : Entries.Data_Key_Iterator;
       begin
+         Entries.Initialize (Repository, Iterator, Item);
+
          --  Erase the data fragments used by the entry.
-         Data.Delete_Data (Repository, Item, Item.Data, Stream);
+         Data.Delete_Data (Repository, Iterator);
 
          --  Erase the entry from the repository.
          Entries.Delete_Entry (Manager => Repository,
-                               Item    => Item,
-                               Stream  => Stream);
+                               Item    => Item);
+
+         Entries.Save (Manager => Repository);
+         Repository.Entry_Indexes.Delete (Item.Id);
+         Repository.Map.Delete (Pos);
+         Free (Item);
+
       exception
          when others =>
             --  Handle data or directory block corruption or IO error.
@@ -360,9 +314,7 @@ package body Keystore.Repository is
             Free (Item);
             raise;
       end;
-      Repository.Entry_Indexes.Delete (Item.Id);
-      Repository.Map.Delete (Pos);
-      Free (Item);
+
    end Delete;
 
    function Contains (Repository : in Wallet_Repository;
@@ -373,8 +325,7 @@ package body Keystore.Repository is
 
    procedure Find (Repository : in out Wallet_Repository;
                    Name       : in String;
-                   Result     : out Entry_Info;
-                   Stream     : in out IO.Wallet_Stream'Class) is
+                   Result     : out Entry_Info) is
       Pos  : constant Wallet_Maps.Cursor := Repository.Map.Find (Name);
       Item : Wallet_Entry_Access;
    begin
@@ -385,11 +336,8 @@ package body Keystore.Repository is
 
       Item := Wallet_Maps.Element (Pos);
       if Item.Kind = T_INVALID then
-         Data.Load_Data (Repository, Item.Data, Repository.Buffer, Stream);
-         if Item.Kind = T_INVALID then
-            Log.Error ("Wallet entry {0} is corrupted", Name);
-            raise Corrupted;
-         end if;
+         Log.Error ("Wallet entry {0} is corrupted", Name);
+         raise Corrupted;
       end if;
       Result.Size := Natural (Item.Size);
       Result.Kind := Item.Kind;
@@ -400,34 +348,56 @@ package body Keystore.Repository is
    procedure Get_Data (Repository : in out Wallet_Repository;
                        Name       : in String;
                        Result     : out Entry_Info;
-                       Output     : out Ada.Streams.Stream_Element_Array;
-                       Stream     : in out IO.Wallet_Stream'Class) is
+                       Output     : out Ada.Streams.Stream_Element_Array) is
+      Pos : constant Wallet_Maps.Cursor := Repository.Map.Find (Name);
    begin
-      Data.Get_Data (Repository, Name, Result, Output, Stream);
+      if not Wallet_Maps.Has_Element (Pos) then
+         Log.Info ("Data entry '{0}' not found", Name);
+         raise Not_Found;
+      end if;
+      declare
+         Item     : constant Wallet_Entry_Access := Wallet_Maps.Element (Pos);
+         Iterator : Entries.Data_Key_Iterator;
+      begin
+         Result.Size := Natural (Item.Size);
+         Result.Kind := Item.Kind;
+         Result.Create_Date := Item.Create_Date;
+         Result.Update_Date := Item.Update_Date;
+
+         Entries.Initialize (Repository, Iterator, Item);
+         Data.Get_Data (Repository, Iterator, Output);
+      end;
    end Get_Data;
 
-   procedure Write (Repository : in out Wallet_Repository;
-                    Name       : in String;
-                    Output     : in out Util.Streams.Output_Stream'Class;
-                    Stream     : in out IO.Wallet_Stream'Class) is
+   procedure Get_Data (Repository : in out Wallet_Repository;
+                       Name       : in String;
+                       Output     : in out Util.Streams.Output_Stream'Class) is
+      Pos : constant Wallet_Maps.Cursor := Repository.Map.Find (Name);
    begin
-      Data.Write (Repository, Name, Output, Stream);
-   end Write;
+      if not Wallet_Maps.Has_Element (Pos) then
+         Log.Info ("Data entry '{0}' not found", Name);
+         raise Not_Found;
+      end if;
+      declare
+         Item     : constant Wallet_Entry_Access := Wallet_Maps.Element (Pos);
+         Iterator : Entries.Data_Key_Iterator;
+      begin
+         Entries.Initialize (Repository, Iterator, Item);
+         Data.Get_Data (Repository, Iterator, Output);
+      end;
+   end Get_Data;
 
    --  Get the list of entries contained in the wallet.
    procedure List (Repository : in out Wallet_Repository;
-                   Content    : out Entry_Map;
-                   Stream     : in out IO.Wallet_Stream'Class) is
+                   Content    : out Entry_Map) is
       Value : Entry_Info;
    begin
       for Item of Repository.Map loop
-         if Item.Kind = T_INVALID then
-            Data.Load_Data (Repository, Item.Data, Repository.Buffer, Stream);
-         end if;
          Value.Size := Integer (Item.Size);
          Value.Kind := Item.Kind;
          Value.Create_Date := Item.Create_Date;
          Value.Update_Date := Item.Update_Date;
+         Value.Block_Count := Natural (Item.Data_Blocks.Length);
          Content.Include (Key      => Item.Name,
                           New_Item => Value);
       end loop;
@@ -439,9 +409,9 @@ package body Keystore.Repository is
       First : Wallet_Maps.Cursor;
       Item  : Wallet_Entry_Access;
    begin
-      while not Repository.Entry_List.Is_Empty loop
-         Dir := Repository.Entry_List.First_Element;
-         Repository.Entry_List.Delete_First;
+      while not Repository.Directory_List.Is_Empty loop
+         Dir := Repository.Directory_List.First_Element;
+         Repository.Directory_List.Delete_First;
          Free (Dir);
       end loop;
       while not Repository.Data_List.Is_Empty loop
@@ -465,7 +435,8 @@ package body Keystore.Repository is
    begin
       Free (Repository.Workers);
       Repository.Workers
-        := Data.Create (Repository'Unchecked_Access, Workers, Workers.Count).all'Access;
+        := Keystore.Repository.Workers.Create (Repository'Unchecked_Access,
+                                               Workers, Workers.Count).all'Access;
    end Set_Work_Manager;
 
    overriding

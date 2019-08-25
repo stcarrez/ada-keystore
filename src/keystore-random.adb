@@ -87,6 +87,14 @@ package body Keystore.Random is
       end;
    end Generate;
 
+   procedure Generate (Gen  : in out Generator;
+                       Into : out UUID_Type) is
+      Data : Ada.Streams.Stream_Element_Array (1 .. 16);
+      for Data'Address use Into'Address;
+   begin
+      Gen.Rand.Generate (Data);
+   end Generate;
+
    function Generate (Gen : in out Generator'Class) return Interfaces.Unsigned_32 is
       Result : Interfaces.Unsigned_32;
    begin

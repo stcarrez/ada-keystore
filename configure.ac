@@ -38,6 +38,22 @@ AM_GNAT_FIND_PROJECT([ada-libsecret],[Ada Libsecret Library],[secretada],
 AC_SUBST(SECRETADA_DIR)
 AC_SUBST(HAVE_SECRETADA)
 
+##########################################
+# Ada LibSecret library
+##########################################
+AM_GNAT_CHECK_PROJECT([secretada],[secretada])
+
+if test T$gnat_project_secretada = Tno; then
+  WITH_SECRETADA='';
+  HAVE_SECRETADA='no';
+else
+  WITH_SECRETADA="with \"${SECRETADA_DIR}secretada\";";
+  HAVE_SECRETADA='yes';
+fi
+AC_SUBST(WITH_SECRETADA)
+AC_SUBST(SECRETADA_DIR)
+AC_SUBST(HAVE_SECRETADA)
+
 ac_enable_gtk=no
 AC_ARG_ENABLE(gtk,
 [  --enable-gtk            enable compilation of Gtk tool (disabled)],

@@ -17,7 +17,6 @@
 -----------------------------------------------------------------------
 with Ada.Streams;
 with Ada.Finalization;
-with Ada.Strings.Unbounded;
 with Interfaces;
 with Util.Encoders.AES;
 private with Ada.Numerics.Discrete_Random;
@@ -45,6 +44,9 @@ package Keystore.Random is
    --  Fill the secret with pseudo-random numbers.
    procedure Generate (Gen  : in out Generator;
                        Into : out Secret_Key);
+
+   procedure Generate (Gen  : in out Generator;
+                       Into : out UUID_Type);
 
    --  Generate a random sequence of bits and convert the result
    --  into a string in base64url.

@@ -21,6 +21,7 @@ with Ada.Streams;
 with Ada.Calendar;
 with Ada.Strings.Hash;
 with Ada.Containers.Indefinite_Hashed_Maps;
+private with Interfaces;
 private with Ada.Exceptions;
 private with Ada.Finalization;
 private with Util.Executors;
@@ -90,6 +91,9 @@ package Keystore is
    --  Invalid data block when reading the wallet.
    Invalid_Block : exception;
 
+   --  Invalid storage identifier when loading a wallet data block.
+   Invalid_Storage : exception;
+
    --  The wallet state.
    type State_Type is (S_INVALID, S_CONFIGURED, S_OPEN, S_CLOSED);
 
@@ -105,6 +109,7 @@ package Keystore is
       Kind        : Entry_Type := T_INVALID;
       Create_Date : Ada.Calendar.Time;
       Update_Date : Ada.Calendar.Time;
+      Block_Count : Natural := 0;
    end record;
 
    package Entry_Maps is
@@ -121,6 +126,7 @@ package Keystore is
    type Key_Slot is new Positive range 1 .. 7;
 
    --  Task manager to run encryption and decryption work.
+   --  It can be assigned to the wallet through the `Set_Task_Manager` procedure.
    type Task_Manager (Count : Positive) is limited private;
 
    type Task_Manager_Access is access all Task_Manager;
@@ -132,18 +138,26 @@ package Keystore is
    procedure Stop (Manager : in Task_Manager_Access);
 
    type Wallet_Config is record
-      Randomize   : Boolean := True;
-      Max_Counter : Positive := 300_000;
-      Min_Counter : Positive := 100_000;
+      Randomize     : Boolean := True;
+      Overwrite     : Boolean := False;
+      Max_Counter   : Positive := 300_000;
+      Min_Counter   : Positive := 100_000;
+      Max_File_Size : Positive := Positive'Last;
    end record;
 
    --  Fast configuration but less secure.
    Unsecure_Config : constant Wallet_Config
-     := (Randomize => False, Min_Counter => 10_000, Max_Counter => 100_000);
+     := (Randomize => False, Overwrite => False, Min_Counter => 10_000, Max_Counter => 100_000,
+         Max_File_Size => Positive'Last);
 
    --  Slow configuration but more secure.
    Secure_Config : constant Wallet_Config
-     := (Randomize => True, Min_Counter => 500_000, Max_Counter => 1_000_000);
+     := (Randomize => True, Overwrite => False, Min_Counter => 500_000, Max_Counter => 1_000_000,
+        Max_File_Size => Positive'Last);
+
+   type UUID_Type is private;
+
+   function To_String (UUID : in UUID_Type) return String;
 
    --  The wallet base type.
    type Wallet is abstract tagged limited private;
@@ -186,6 +200,13 @@ package Keystore is
                   Name      : in String;
                   Kind      : in Entry_Type := T_BINARY;
                   Content   : in Ada.Streams.Stream_Element_Array) is abstract with
+     Pre'Class  => Container.Is_Open,
+     Post'Class => Container.Contains (Name);
+
+   procedure Add (Container : in out Wallet;
+                  Name      : in String;
+                  Kind      : in Entry_Type := T_BINARY;
+                  Input     : in out Util.Streams.Input_Stream'Class) is abstract with
      Pre'Class  => Container.Is_Open,
      Post'Class => Container.Contains (Name);
 
@@ -250,9 +271,9 @@ package Keystore is
      Pre'Class => Wallet'Class (Container).Is_Open;
 
    --  Write in the output stream the named entry value from the wallet.
-   procedure Write (Container : in out Wallet;
-                    Name      : in String;
-                    Output    : in out Util.Streams.Output_Stream'Class) is abstract with
+   procedure Get (Container : in out Wallet;
+                  Name      : in String;
+                  Output    : in out Util.Streams.Output_Stream'Class) is abstract with
      Pre'Class => Container.Is_Open;
 
    --  Get the list of entries contained in the wallet.
@@ -266,7 +287,11 @@ package Keystore is
 
 private
 
+   type UUID_Type is array (1 .. 4) of Interfaces.Unsigned_32;
+
    type Wallet_Identifier is new Positive;
+
+   type Wallet_Entry_Index is new Interfaces.Unsigned_32 range 1 .. Interfaces.Unsigned_32'Last;
 
    type Wallet is abstract limited new Ada.Finalization.Limited_Controlled with null record;
 

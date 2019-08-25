@@ -41,7 +41,7 @@ package body AKT.Commands.Extract is
          declare
             Key : constant String := Args.Get_Argument (1);
          begin
-            Context.Wallet.Write (Key, Output);
+            Context.Wallet.Get (Key, Output);
 
          exception
             when Keystore.Not_Found =>
