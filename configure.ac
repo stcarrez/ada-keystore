@@ -18,21 +18,25 @@ AC_SUBST(KEYSTORE_MICRO_VERSION)
 
 EXEC_PREFIX="$prefix"
 AC_SUBST(EXEC_PREFIX)
-AM_GNAT_LIBRARY_PROJECT(keystore)
-
 AC_CHECK_PROG(HAVE_PANDOC,pandoc,yes)
 AC_CHECK_PROG(HAVE_DYNAMO,dynamo,yes)
 
+AM_GNAT_LIBRARY_PROJECT(keystore)
+AM_GNAT_FIND_ADA_UTIL([Ada Keystore])
+
 ##########################################
-# Ada Util library
+# Ada LibSecret library
 ##########################################
-AM_GNAT_FIND_PROJECT([ada-util],[Ada Utility Library],[utilada_sys],
-  [git@github.com:stcarrez/ada-util.git],
-  [Building keystore requires the Ada Utility Library.],
+HAVE_SECRETADA='no'
+AM_GNAT_FIND_PROJECT([ada-libsecret],[Ada Libsecret Library],[secretada],
+  [git@github.com:stcarrez/ada-libsecret.git],
+  [Building keystore requires the Ada Libsecret Library.],
   [
-    UTIL_DIR=${gnat_project_dir_utilada_sys}
+    SECRETADA_DIR=${gnat_project_dir_secretada}
+    HAVE_SECRETADA='yes'
   ])
-AC_SUBST(UTIL_DIR)
+AC_SUBST(SECRETADA_DIR)
+AC_SUBST(HAVE_SECRETADA)
 
 ac_enable_gtk=no
 AC_ARG_ENABLE(gtk,
