@@ -25,6 +25,8 @@ with Util.Systems.Constants;
 package body Keystore.IO.Files is
 
    use type Util.Systems.Types.File_Type;
+   use type Interfaces.C.int;
+   use Util.Systems.Constants;
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.IO.Files");
 
@@ -227,8 +229,6 @@ package body Keystore.IO.Files is
 
    end File_Stream;
 
-   use Util.Systems.Constants;
-   use type Interfaces.C.int;
 
    protected body Stream_Descriptor is
 
