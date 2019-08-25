@@ -586,14 +586,9 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 GTKADA_DIR
 HAVE_GTK
+HAVE_SECRETADA
+SECRETADA_DIR
 UTIL_DIR
-HAVE_DYNAMO
-HAVE_PANDOC
-ADA_PRJ_BASE
-ADA_ALI_BASE
-ADA_LIB_BASE
-ADA_INC_BASE
-GPRINSTALL
 NR_CPUS
 BUILDS_COVERAGE
 BUILDS_QUIET
@@ -605,6 +600,7 @@ INSTALL_DATA
 INSTALL_SCRIPT
 INSTALL_PROGRAM
 SET_MAKE
+GPRINSTALL
 GNATCLEAN
 GPRCLEAN
 GNATMAKE
@@ -621,6 +617,9 @@ build_os
 build_vendor
 build_cpu
 build
+awa_has_msys
+HAVE_DYNAMO
+HAVE_PANDOC
 EXEC_PREFIX
 KEYSTORE_MICRO_VERSION
 KEYSTORE_MINOR_VERSION
@@ -668,10 +667,12 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
+with_build_root
 enable_shared
 enable_distrib
 enable_coverage
 with_ada_util
+with_ada_libsecret
 enable_gtk
 with_gtkada
 '
@@ -1309,7 +1310,9 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+  --with-build-root=PATH  Path to find the Ada libraries
   --with-ada-util=x       Path for Ada Utility Library
+  --with-ada-libsecret=x  Path for Ada Libsecret Library
   --with-gtkada=x         Path for the Gtk Ada library
                           (libre.adacore.com/tools/gtkada)
 
@@ -1756,6 +1759,81 @@ KEYSTORE_VERSION=$KEYSTORE_MAJOR_VERSION.$KEYSTORE_MINOR_VERSION.$KEYSTORE_MICRO
 
 EXEC_PREFIX="$prefix"
 
+# Extract the first word of "pandoc", so it can be a program name with args.
+set dummy pandoc; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_HAVE_PANDOC+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$HAVE_PANDOC"; then
+  ac_cv_prog_HAVE_PANDOC="$HAVE_PANDOC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_HAVE_PANDOC="yes"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+HAVE_PANDOC=$ac_cv_prog_HAVE_PANDOC
+if test -n "$HAVE_PANDOC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $HAVE_PANDOC" >&5
+$as_echo "$HAVE_PANDOC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+# Extract the first word of "dynamo", so it can be a program name with args.
+set dummy dynamo; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_HAVE_DYNAMO+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$HAVE_DYNAMO"; then
+  ac_cv_prog_HAVE_DYNAMO="$HAVE_DYNAMO" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_HAVE_DYNAMO="yes"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+HAVE_DYNAMO=$ac_cv_prog_HAVE_DYNAMO
+if test -n "$HAVE_DYNAMO"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $HAVE_DYNAMO" >&5
+$as_echo "$HAVE_DYNAMO" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+
 ac_aux_dir=
 for ac_dir in "$srcdir" "$srcdir/.." "$srcdir/../.."; do
   if test -f "$ac_dir/install-sh"; then
@@ -1989,6 +2067,74 @@ test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL}'
 test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
 
 
+
+# Check whether --with-build-root was given.
+if test "${with_build_root+set}" = set; then :
+  withval=$with_build_root;
+      awa_build_root=${withval}/
+
+else
+
+      awa_build_root=''
+
+fi
+
+
+  if test x${awa_build_root} != x; then
+
+  if test x${awa_host_pwd_check} != xyes; then
+    # Extract the first word of "msysinfo", so it can be a program name with args.
+set dummy msysinfo; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_awa_has_msys+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$awa_has_msys"; then
+  ac_cv_prog_awa_has_msys="$awa_has_msys" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_awa_has_msys="yes"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_awa_has_msys" && ac_cv_prog_awa_has_msys="no"
+fi
+fi
+awa_has_msys=$ac_cv_prog_awa_has_msys
+if test -n "$awa_has_msys"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $awa_has_msys" >&5
+$as_echo "$awa_has_msys" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+    if test x${awa_has_msys} = xyes; then
+      awa_pwd_option="-W"
+    else
+      awa_pwd_option=""
+    fi
+    awa_host_pwd_check=yes
+  fi
+
+    awa_build_pwd=`cd ${awa_build_root} && pwd $pwd_option`
+    if test x${awa_build_pwd} != x${awa_build_root}; then
+      awa_build_root=${awa_build_pwd}/
+    fi
+  fi
+
   # checking for local tools
 
 
@@ -2174,6 +2320,50 @@ test -n "$GNATCLEAN" || GNATCLEAN=""""
 
   fi
 
+  for ac_prog in gprinstall
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_GPRINSTALL+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$GPRINSTALL"; then
+  ac_cv_prog_GPRINSTALL="$GPRINSTALL" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_GPRINSTALL="$ac_prog"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+GPRINSTALL=$ac_cv_prog_GPRINSTALL
+if test -n "$GPRINSTALL"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $GPRINSTALL" >&5
+$as_echo "$GPRINSTALL" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$GPRINSTALL" && break
+done
+test -n "$GPRINSTALL" || GPRINSTALL=""""
+
+
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${MAKE-make} sets \$(MAKE)" >&5
 $as_echo_n "checking whether ${MAKE-make} sets \$(MAKE)... " >&6; }
@@ -2286,436 +2476,16 @@ $as_echo "${ac_enable_coverage}" >&6; }
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking number of processors" >&5
 $as_echo_n "checking number of processors... " >&6; }
-  NR_CPUS=`getconf _NPROCESSORS_CONF 2>/dev/null || getconf NPROCESSORS_CONF 2>/dev/null || echo 1`
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $NR_CPUS" >&5
-$as_echo "$NR_CPUS" >&6; }
-
-
-
-  for ac_prog in gprinstall
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_GPRINSTALL+:} false; then :
+if ${ac_cv_proc_count+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  if test -n "$GPRINSTALL"; then
-  ac_cv_prog_GPRINSTALL="$GPRINSTALL" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_GPRINSTALL="$ac_prog"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
+
+    ac_cv_proc_count=`getconf _NPROCESSORS_CONF 2>/dev/null || getconf NPROCESSORS_CONF 2>/dev/null || echo 1`
 
 fi
-fi
-GPRINSTALL=$ac_cv_prog_GPRINSTALL
-if test -n "$GPRINSTALL"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $GPRINSTALL" >&5
-$as_echo "$GPRINSTALL" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  test -n "$GPRINSTALL" && break
-done
-test -n "$GPRINSTALL" || GPRINSTALL=""""
-
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether util_config project exists" >&5
-$as_echo_n "checking whether util_config project exists... " >&6; }
-  echo "with \"util_config\"; project conftest is for Source_Dirs use (); end conftest;" > conftest.gpr
-  if { ac_try='gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
-  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; }
-  then
-    gnat_project_util_config=yes
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, using util_config" >&5
-$as_echo "yes, using util_config" >&6; }
-    gnat_project_with_util_config="with \"util_config\";";
-  else
-    gnat_project_util_config=no
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-  fi
-  rm -f conftest.gpr
-
-
-  # Search in the GNAT project path.
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for util_config.gpr installation" >&5
-$as_echo_n "checking for util_config.gpr installation... " >&6; }
-  # echo "D:${gnat_project_with_util_config}"
-  echo "${gnat_project_with_util_config} project t is for Source_Dirs use (); end t;" > t.gpr
-  # cat t.gpr
-  gnat_util_config_path=`$GNATMAKE -vP1 -Pt 2>&1 | awk '/Parsing.*util_config.gpr/ {print $2}' | sed -e 's,",,g'`
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${gnat_util_config_path}" >&5
-$as_echo "${gnat_util_config_path}" >&6; }
-
-  gnat_inc_dir=
-  gnat_ali_dir=
-  gnat_prj_dir=
-  gnat_lib_dir=
-  if test x${gnat_util_config_path} != x; then
-    if test -f ${gnat_util_config_path}; then
-      gnat_inc_dir=`awk '/Includedir/ {print $3}' ${gnat_util_config_path} | sed -e 's,",,g' -e 's,;,,'`
-      gnat_lib_dir=`awk '/Libdir/ {print $3}' ${gnat_util_config_path} | sed -e 's,",,g' -e 's,;,,'`
-      gnat_ali_dir=`awk '/Alidir/ {print $3}' ${gnat_util_config_path} | sed -e 's,",,g' -e 's,;,,'`
-      gnat_prj_dir=`dirname ${gnat_util_config_path}`
-    fi
-  fi
-  if test x${gnat_prj_dir} != x; then
-
-  gnat_prefix=
-  for dir in ${gnat_inc_dir} ${gnat_ali_dir} ${gnat_lib_dir} ${gnat_prj_dir}; do
-    dir=`echo $dir | sed -e 's,\\\\,/,g'`
-    # If we have a valid path, try to identify the common path prefix.
-    if test x$gnat_prefix = x; then
-      gnat_prefix=$dir
-    else
-	  # echo "Dir=$dir"
-	  gnat_old_ifs=$IFS
-	  path=
-	  IFS='/\'
-	  for c in $dir; do
-	    if test x"$path" = x"/" || test x"$path" = x ; then
-		  case $c in
-		    c:|C:|d:|D:|e:|E:)
-			  try="$c"
-			  ;;
-		    *)
-			  try="/$c"
-			  ;;
-		  esac
-		else
-          try="$path/$c"
-		fi
-		# echo "gnat_prefix=$gnat_prefix try=$try path=$path c=$c"
-		case $gnat_prefix in
-		  $try*)
-			;;
-		  *)
-			break
-			;;
-		esac
-		  path=$try
-	  done
-	  IFS=$gnat_old_ifs
-	  gnat_prefix=$path
-    fi
-  done
-  ADA_INC_BASE=`echo ${gnat_inc_dir} | sed -e 's,\\\\,/,g' | sed -e s,^$gnat_prefix/,,`
-  ADA_ALI_BASE=`echo ${gnat_ali_dir} | sed -e 's,\\\\,/,g' | sed -e s,^$gnat_prefix/,,`
-  ADA_LIB_BASE=`echo ${gnat_lib_dir} | sed -e 's,\\\\,/,g' | sed -e s,^$gnat_prefix/,,`
-  ADA_PRJ_BASE=`echo ${gnat_prj_dir} | sed -e 's,\\\\,/,g' | sed -e s,^$gnat_prefix/,,`
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking installation of Ada source files" >&5
-$as_echo_n "checking installation of Ada source files... " >&6; }
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: <prefix>/${ADA_INC_BASE}" >&5
-$as_echo "<prefix>/${ADA_INC_BASE}" >&6; }
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking installation of Ada ALI files" >&5
-$as_echo_n "checking installation of Ada ALI files... " >&6; }
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: <prefix>/${ADA_ALI_BASE}" >&5
-$as_echo "<prefix>/${ADA_ALI_BASE}" >&6; }
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking installation of library files" >&5
-$as_echo_n "checking installation of library files... " >&6; }
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: <prefix>/${ADA_LIB_BASE}" >&5
-$as_echo "<prefix>/${ADA_LIB_BASE}" >&6; }
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking installation of GNAT project files" >&5
-$as_echo_n "checking installation of GNAT project files... " >&6; }
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: <prefix>/${ADA_PRJ_BASE}" >&5
-$as_echo "<prefix>/${ADA_PRJ_BASE}" >&6; }
-
-
-
-
-
-
-  else
-
-  #
-  gnat_prefix=
-  gnat_xml_inc_dir=
-  gnat_xml_ali_dir=
-  gnat_xml_lib_dir=
-  gnat_xml_prl_dir=
-
-  for ac_prog in gprinstall
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_GPRINSTALL+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$GPRINSTALL"; then
-  ac_cv_prog_GPRINSTALL="$GPRINSTALL" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_GPRINSTALL="$ac_prog"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-GPRINSTALL=$ac_cv_prog_GPRINSTALL
-if test -n "$GPRINSTALL"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $GPRINSTALL" >&5
-$as_echo "$GPRINSTALL" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  test -n "$GPRINSTALL" && break
-done
-test -n "$GPRINSTALL" || GPRINSTALL=""""
-
-  if test x${gnat_xml_ada} = 'x'; then
-     gnat_xml_ada=xmlada-config
-  fi
-  gnat_xml_config=`$gnat_xml_ada --sax 2>/dev/null`
-
-  # echo "Config: $gnat_xml_config"
-  for i in $gnat_xml_config; do
-	# echo "  Checking $i"
-	case $i in
-	  -aI*)
-	    name=`echo $i | sed -e 's,-aI,,'`
-	    dir=`dirname $name`
-	    name=`basename $name`
-	    if test x$name = "xxmlada"; then
-	   	   gnat_xml_inc_dir=$dir
-		else
-		   dir=''
-	    fi
-	    ;;
-
-	 -aO*)
-	    name=`echo $i | sed -e 's,-aO,,'`
-	    dir=`dirname $name`
-	    name=`basename $name`
-		case $name in
-		  xmlada)
-	        gnat_xml_ali_dir=$dir
-			;;
-
-		  static|relocatable)
-		    name=`basename $dir`
-		    dir=`dirname $dir`
-			if test x$name = "xxmlada"; then
-			   gnat_xml_ali_dir=$dir
-			else
-			   dir=''
-			fi
-		    ;;
-
-		  *)
-		    dir=''
-			;;
-
-		esac
-	    ;;
-
-	-largs)
-	    dir=''
-		;;
-
-     -L*)
-	    dir=`echo $i | sed -e 's,-L,,'`
-	    gnat_xml_lib_dir=$dir
-	    ;;
-
-	/*.a)
-		dir=`dirname $i`
-	    name=`basename $dir`
-		case $name in
-		  xmlada)
-	        dir=`dirname $dir`
-	        gnat_xml_lib_dir=$dir
-			;;
-
-		  static|relocatable)
-		    dir=`dirname $dir`
-		    name=`basename $dir`
-			if test x$name = "xxmlada"; then
-			   dir=`dirname $dir`
-			   gnat_xml_lib_dir=$dir
-			else
-			   dir=''
-			fi
-		    ;;
-
-		  *)
-		    dir=''
-			;;
-
-		esac
-		;;
-
-     *)
-	    dir=
-	    ;;
-    esac
-
-    # If we have a valid path, try to identify the common path prefix.
-    if test x$dir != "x"; then
-       if test x$gnat_prefix = x; then
-          gnat_prefix=$dir
-       else
-	   # echo "Dir=$dir"
-	   gnat_old_ifs=$IFS
-	   path=
-	   IFS=/
-	   for c in $dir; do
-	      if test x"$path" = x"/"; then
-		    try="/$c"
-		  else
-			try="$path/$c"
-		  fi
-		  # echo "gnat_prefix=$gnat_prefix try=$try path=$path c=$c"
-		  case $gnat_prefix in
-		    $try*)
-			   ;;
-		    *)
-			   break
-			   ;;
-		  esac
-		  path=$try
-	   done
-	   IFS=$gnat_old_ifs
-	   gnat_prefix=$path
-       fi
-    fi
-  done
-
-  if test -f $gnat_prefix/lib/gnat/xmlada.gpr ; then
-    gnat_xml_prj_dir=$gnat_prefix/lib/gnat
-  elif test -f $gnat_xml_inc_dir/xmlada.gpr ; then
-    gnat_xml_prj_dir=$gnat_xml_inc_dir
-  elif test -f $gnat_prefix/share/gpr/xmlada.gpr ; then
-    gnat_xml_prj_dir=$gnat_prefix/share/gpr
-  else
-    gnat_xml_prj_dir=$gnat_xml_inc_dir
-  fi
-  if test x${gnat_xml_inc_dir} = x ; then
-    gnat_xml_inc_dir='include'
-  fi
-  if test x${gnat_xml_lib_dir} = x ; then
-    gnat_xml_lib_dir='lib'
-  fi
-  if test x${gnat_xml_ali_dir} = x ; then
-    gnat_xml_ali_dir='lib'
-  fi
-  if test x${gnat_xml_prj_dir} = x ; then
-    gnat_xml_prj_dir='lib/gnat'
-  fi
-  ADA_INC_BASE=`echo $gnat_xml_inc_dir | sed -e s,^$gnat_prefix/,,`
-  ADA_LIB_BASE=`echo $gnat_xml_lib_dir | sed -e s,^$gnat_prefix/,,`
-  ADA_ALI_BASE=`echo $gnat_xml_ali_dir | sed -e s,^$gnat_prefix/,,`
-  ADA_PRJ_BASE=`echo $gnat_xml_prj_dir | sed -e s,^$gnat_prefix/,,`
-
-  gnat_prefix=
-  for dir in ${gnat_xml_inc_dir} ${gnat_xml_ali_dir} ${gnat_xml_lib_dir} ${gnat_xml_prj_dir}; do
-    dir=`echo $dir | sed -e 's,\\\\,/,g'`
-    # If we have a valid path, try to identify the common path prefix.
-    if test x$gnat_prefix = x; then
-      gnat_prefix=$dir
-    else
-	  # echo "Dir=$dir"
-	  gnat_old_ifs=$IFS
-	  path=
-	  IFS='/\'
-	  for c in $dir; do
-	    if test x"$path" = x"/" || test x"$path" = x ; then
-		  case $c in
-		    c:|C:|d:|D:|e:|E:)
-			  try="$c"
-			  ;;
-		    *)
-			  try="/$c"
-			  ;;
-		  esac
-		else
-          try="$path/$c"
-		fi
-		# echo "gnat_prefix=$gnat_prefix try=$try path=$path c=$c"
-		case $gnat_prefix in
-		  $try*)
-			;;
-		  *)
-			break
-			;;
-		esac
-		  path=$try
-	  done
-	  IFS=$gnat_old_ifs
-	  gnat_prefix=$path
-    fi
-  done
-  ADA_INC_BASE=`echo ${gnat_xml_inc_dir} | sed -e 's,\\\\,/,g' | sed -e s,^$gnat_prefix/,,`
-  ADA_ALI_BASE=`echo ${gnat_xml_ali_dir} | sed -e 's,\\\\,/,g' | sed -e s,^$gnat_prefix/,,`
-  ADA_LIB_BASE=`echo ${gnat_xml_lib_dir} | sed -e 's,\\\\,/,g' | sed -e s,^$gnat_prefix/,,`
-  ADA_PRJ_BASE=`echo ${gnat_xml_prj_dir} | sed -e 's,\\\\,/,g' | sed -e s,^$gnat_prefix/,,`
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking installation of Ada source files" >&5
-$as_echo_n "checking installation of Ada source files... " >&6; }
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: <prefix>/${ADA_INC_BASE}" >&5
-$as_echo "<prefix>/${ADA_INC_BASE}" >&6; }
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking installation of Ada ALI files" >&5
-$as_echo_n "checking installation of Ada ALI files... " >&6; }
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: <prefix>/${ADA_ALI_BASE}" >&5
-$as_echo "<prefix>/${ADA_ALI_BASE}" >&6; }
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking installation of library files" >&5
-$as_echo_n "checking installation of library files... " >&6; }
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: <prefix>/${ADA_LIB_BASE}" >&5
-$as_echo "<prefix>/${ADA_LIB_BASE}" >&6; }
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking installation of GNAT project files" >&5
-$as_echo_n "checking installation of GNAT project files... " >&6; }
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: <prefix>/${ADA_PRJ_BASE}" >&5
-$as_echo "<prefix>/${ADA_PRJ_BASE}" >&6; }
-
-
-
-
-
-
-
-  fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_proc_count" >&5
+$as_echo "$ac_cv_proc_count" >&6; }
+  NR_CPUS=$ac_cv_proc_count
 
 
 
@@ -2727,172 +2497,99 @@ $as_echo "done" >&6; }
 
 
 
-# Extract the first word of "pandoc", so it can be a program name with args.
-set dummy pandoc; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_HAVE_PANDOC+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$HAVE_PANDOC"; then
-  ac_cv_prog_HAVE_PANDOC="$HAVE_PANDOC" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_HAVE_PANDOC="yes"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
 
-fi
-fi
-HAVE_PANDOC=$ac_cv_prog_HAVE_PANDOC
-if test -n "$HAVE_PANDOC"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $HAVE_PANDOC" >&5
-$as_echo "$HAVE_PANDOC" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-# Extract the first word of "dynamo", so it can be a program name with args.
-set dummy dynamo; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_HAVE_DYNAMO+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test -n "$HAVE_DYNAMO"; then
-  ac_cv_prog_HAVE_DYNAMO="$HAVE_DYNAMO" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_HAVE_DYNAMO="yes"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi
-fi
-HAVE_DYNAMO=$ac_cv_prog_HAVE_DYNAMO
-if test -n "$HAVE_DYNAMO"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $HAVE_DYNAMO" >&5
-$as_echo "$HAVE_DYNAMO" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-
-##########################################
-# Ada Util library
-##########################################
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking Ada Utility Library" >&5
-$as_echo_n "checking Ada Utility Library... " >&6; }
 
 # Check whether --with-ada-util was given.
 if test "${with_ada_util+set}" = set; then :
   withval=$with_ada_util;
-      gnat_project_name_utilada_sys=${withval}/
+      ac_cv_gnat_project_name_utilada_base=${withval}/
       if test -d "${withval}"; then
-	    gnat_project_name_utilada_sys=${withval}/utilada_sys
+	    ac_cv_gnat_project_name_utilada_base=${withval}/utilada_base
 	  fi
 
 else
 
-      gnat_project_name_utilada_sys=utilada_sys
+      ac_cv_gnat_project_name_utilada_base=${awa_build_root}utilada_base
 
 fi
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: trying ${gnat_project_name_utilada_sys}" >&5
-$as_echo "trying ${gnat_project_name_utilada_sys}" >&6; }
 
-  rm -f conftest.gpr
-  # Search in the GNAT project path.
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${gnat_project_name_utilada_sys} project exists in gnatmake's search path" >&5
-$as_echo_n "checking whether ${gnat_project_name_utilada_sys} project exists in gnatmake's search path... " >&6; }
-  echo "with \"${gnat_project_name_utilada_sys}\"; project conftest is for Source_Dirs use (); end conftest;" > conftest.gpr
-  if { ac_try='gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking Ada Utility Library" >&5
+$as_echo_n "checking Ada Utility Library... " >&6; }
+if ${ac_cv_gnat_project_utilada_base+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+    rm -f conftest.gpr
+    # Search in the GNAT project path.
+    echo "with \"${ac_cv_gnat_project_name_utilada_base}\"; project conftest is for Source_Dirs use (); end conftest;" > conftest.gpr
+    if { ac_try='gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
   (eval $ac_try) 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; }
-  then
-    gnat_project_utilada_sys=yes
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-  else
-    gnat_project_utilada_sys=no
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-
-    # Search in ../ada-util-*/utilada_sys.gpr
-    files=`ls -r ../ada-util/utilada_sys.gpr ../utilada_sys/utilada_sys.gpr ../ada-util-*/utilada_sys.gpr 2>/dev/null`
-    for name in $files; do
-      dir=`dirname $name`
-      { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Ada Utility Library project in ${dir}" >&5
-$as_echo_n "checking for Ada Utility Library project in ${dir}... " >&6; }
-      echo "with \"${name}\"; project conftest is for Source_Dirs use (); end conftest;" > conftest.gpr
-      if { ac_try='gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
-  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
-  test $ac_status = 0; }; }
-      then
-         gnat_project_utilada_sys=yes
-		 gnat_project_name_utilada_sys=${name}
-         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-         break
-      else
-         gnat_project_utilada_sys=no
-         { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-      fi
-    done
-  fi
-  rm -f conftest.gpr
-  if test x${gnat_project_utilada_sys} = xyes; then
-    gnat_project_with_utilada_sys="with \"${gnat_project_name_utilada_sys}\";";
-    gnat_project_dir_utilada_sys=`dirname ${gnat_project_name_utilada_sys}`
-    if test ${gnat_project_dir_utilada_sys} = . ; then
-       gnat_project_dir_utilada_sys=
+    then
+      ac_cv_gnat_project_utilada_base=yes
     else
-       gnat_project_dir_utilada_sys="${gnat_project_dir_utilada_sys}/"
+      ac_cv_gnat_project_utilada_base=no
+
+      # Search in ../ada-util-*/utilada_base.gpr
+      dir=`cd .. && pwd ${awa_pwd_option}`
+      files=`ls -r $dir/ada-util/utilada_base.gpr $dir/utilada_base/utilada_base.gpr $dir/ada-util-*/utilada_base.gpr 2>/dev/null`
+      for name in $files; do
+        dir=`dirname $name`
+        # AC_MSG_CHECKING([for Ada Utility Library project in ${dir}])
+        echo "with \"${name}\"; project conftest is for Source_Dirs use (); end conftest;" > conftest.gpr
+        if { ac_try='gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+        then
+           ac_cv_gnat_project_utilada_base=yes
+		   ac_cv_gnat_project_name_utilada_base=${name}
+           # AC_MSG_RESULT(yes, using ${name})
+           break
+        else
+           ac_cv_gnat_project_utilada_base=no
+           # AC_MSG_RESULT(no)
+        fi
+      done
+    fi
+    rm -f conftest.gpr
+
+    if test x${ac_cv_gnat_project_utilada_base} = xyes; then
+      ac_cv_gnat_project_with_utilada_base="with \"${ac_cv_gnat_project_name_utilada_base}\";";
+      ac_cv_gnat_project_dir_utilada_base=`dirname ${ac_cv_gnat_project_name_utilada_base}`
+      if test ${ac_cv_gnat_project_dir_utilada_base} = . ; then
+        ac_cv_gnat_project_dir_utilada_base=
+      else
+        ac_cv_gnat_project_dir_utilada_base="${ac_cv_gnat_project_dir_utilada_base}/"
+      fi
+    else
+      ac_cv_gnat_project_dir_utilada_base=
+      ac_cv_gnat_project_name_utilada_base=
     fi
 
-    UTIL_DIR=${gnat_project_dir_utilada_sys}
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_gnat_project_utilada_base" >&5
+$as_echo "$ac_cv_gnat_project_utilada_base" >&6; }
+
+  if test x${ac_cv_gnat_project_utilada_base} = xyes; then
+
+      UTIL_DIR=${ac_cv_gnat_project_dir_utilada_base}
 
   else
-    gnat_project_dir_utilada_sys=
-    gnat_project_name_utilada_sys=
-    if test x"Building keystore requires the Ada Utility Library." != x; then
-      as_fn_error $? "Building keystore requires the Ada Utility Library.
+    if test x"Building Ada Keystore requires the Ada Utility Library." != x; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+      as_fn_error $? "Building Ada Keystore requires the Ada Utility Library.
   You should build and install the Ada Utility Library component.
   It must be available and found by ${GNATMAKE}.
   This project was not found in the ADA_PROJECT_PATH environment variable.
-  This project was not found in ../utilada_sys nor in ../ada-util-*.
+  This project was not found in ../utilada_base nor in ../ada-util-*.
   The component is available at git@github.com:stcarrez/ada-util.git.
   Please, download and configure Ada Utility Library.
   The current configuration was using:
@@ -2901,6 +2598,117 @@ $as_echo "no" >&6; }
 " "$LINENO" 5
     fi
   fi
+
+
+
+
+##########################################
+# Ada LibSecret library
+##########################################
+HAVE_SECRETADA='no'
+
+
+# Check whether --with-ada-libsecret was given.
+if test "${with_ada_libsecret+set}" = set; then :
+  withval=$with_ada_libsecret;
+      ac_cv_gnat_project_name_secretada=${withval}/
+      if test -d "${withval}"; then
+	    ac_cv_gnat_project_name_secretada=${withval}/secretada
+	  fi
+
+else
+
+      ac_cv_gnat_project_name_secretada=${awa_build_root}secretada
+
+fi
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking Ada Libsecret Library" >&5
+$as_echo_n "checking Ada Libsecret Library... " >&6; }
+if ${ac_cv_gnat_project_secretada+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+    rm -f conftest.gpr
+    # Search in the GNAT project path.
+    echo "with \"${ac_cv_gnat_project_name_secretada}\"; project conftest is for Source_Dirs use (); end conftest;" > conftest.gpr
+    if { ac_try='gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+    then
+      ac_cv_gnat_project_secretada=yes
+    else
+      ac_cv_gnat_project_secretada=no
+
+      # Search in ../ada-libsecret-*/secretada.gpr
+      dir=`cd .. && pwd ${awa_pwd_option}`
+      files=`ls -r $dir/ada-libsecret/secretada.gpr $dir/secretada/secretada.gpr $dir/ada-libsecret-*/secretada.gpr 2>/dev/null`
+      for name in $files; do
+        dir=`dirname $name`
+        # AC_MSG_CHECKING([for Ada Libsecret Library project in ${dir}])
+        echo "with \"${name}\"; project conftest is for Source_Dirs use (); end conftest;" > conftest.gpr
+        if { ac_try='gnat ls -Pconftest.gpr system.ads > /dev/null 2>conftest.out'
+  { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; }
+        then
+           ac_cv_gnat_project_secretada=yes
+		   ac_cv_gnat_project_name_secretada=${name}
+           # AC_MSG_RESULT(yes, using ${name})
+           break
+        else
+           ac_cv_gnat_project_secretada=no
+           # AC_MSG_RESULT(no)
+        fi
+      done
+    fi
+    rm -f conftest.gpr
+
+    if test x${ac_cv_gnat_project_secretada} = xyes; then
+      ac_cv_gnat_project_with_secretada="with \"${ac_cv_gnat_project_name_secretada}\";";
+      ac_cv_gnat_project_dir_secretada=`dirname ${ac_cv_gnat_project_name_secretada}`
+      if test ${ac_cv_gnat_project_dir_secretada} = . ; then
+        ac_cv_gnat_project_dir_secretada=
+      else
+        ac_cv_gnat_project_dir_secretada="${ac_cv_gnat_project_dir_secretada}/"
+      fi
+    else
+      ac_cv_gnat_project_dir_secretada=
+      ac_cv_gnat_project_name_secretada=
+    fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_gnat_project_secretada" >&5
+$as_echo "$ac_cv_gnat_project_secretada" >&6; }
+
+  if test x${ac_cv_gnat_project_secretada} = xyes; then
+
+    SECRETADA_DIR=${gnat_project_dir_secretada}
+    HAVE_SECRETADA='yes'
+
+  else
+    if test x"Building keystore requires the Ada Libsecret Library." != x; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+      as_fn_error $? "Building keystore requires the Ada Libsecret Library.
+  You should build and install the Ada Libsecret Library component.
+  It must be available and found by ${GNATMAKE}.
+  This project was not found in the ADA_PROJECT_PATH environment variable.
+  This project was not found in ../secretada nor in ../ada-libsecret-*.
+  The component is available at git@github.com:stcarrez/ada-libsecret.git.
+  Please, download and configure Ada Libsecret Library.
+  The current configuration was using:
+    ${GNATMAKE}
+    ADA_PROJECT_PATH=$ADA_PROJECT_PATH
+" "$LINENO" 5
+    fi
+  fi
+
 
 
 
