@@ -28,13 +28,11 @@ AM_GNAT_FIND_ADA_UTIL([Ada Keystore])
 # Ada LibSecret library
 ##########################################
 HAVE_SECRETADA='no'
-AM_GNAT_FIND_PROJECT([ada-libsecret],[Ada Libsecret Library],[secretada],
-  [git@github.com:stcarrez/ada-libsecret.git],
-  [Building keystore requires the Ada Libsecret Library.],
-  [
-    SECRETADA_DIR=${gnat_project_dir_secretada}
-    HAVE_SECRETADA='yes'
-  ])
+AM_GNAT_CHECK_PROJECT([secretada],[secretada])
+if test $ac_cv_gnat_project_secretada = 'yes'; then
+  SECRETADA_DIR=${gnat_project_dir_secretada}
+  HAVE_SECRETADA='yes'
+fi
 AC_SUBST(SECRETADA_DIR)
 AC_SUBST(HAVE_SECRETADA)
 
