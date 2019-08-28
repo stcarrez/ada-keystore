@@ -201,7 +201,7 @@ package body Keystore.Repository.Workers is
          Fragment_Pos : Natural := 0;
       begin
          Data_Pos := IO.Block_Index'Last;
-         Work.Fragment_Count := Natural ((Size / DATA_ENTRY_SIZE) - 1);
+         Work.Fragment_Count := Natural (Size / DATA_ENTRY_SIZE);
          while Data_Block.Pos < IO.BT_DATA_START + Size loop
             Index := Wallet_Entry_Index (Marshallers.Get_Unsigned_32 (Data_Block));
             Slot_Size := Marshallers.Get_Unsigned_16 (Data_Block);
