@@ -251,10 +251,10 @@ package body Keystore.Repository.Workers is
          Buf : constant Buffers.Buffer_Accessor := Data_Block.Buffer.Data.Value;
       begin
          Work.Key_Block.Pos := Work.Key_Pos;
-         Marshallers.Get_Secret (Work.Key_Block, IV, Work.Manager.Config.Data.Key,
-                                 Work.Manager.Config.Data.IV);
-         Marshallers.Get_Secret (Work.Key_Block, Secret, Work.Manager.Config.Data.Key,
-                                 Work.Manager.Config.Data.IV);
+         Marshallers.Get_Secret (Work.Key_Block, IV, Work.Manager.Config.Key.Key,
+                                 Work.Manager.Config.Key.IV);
+         Marshallers.Get_Secret (Work.Key_Block, Secret, Work.Manager.Config.Key.Key,
+                                 Work.Manager.Config.Key.IV);
 
          Work.Data_Decipher.Set_IV (IV, (others => 0));
          Work.Data_Decipher.Set_Key (Secret, Util.Encoders.AES.CBC);
@@ -307,10 +307,10 @@ package body Keystore.Repository.Workers is
       Work.Random.Generate (Secret);
 
       Work.Key_Block.Pos := Work.Key_Pos;
-      Marshallers.Put_Secret (Work.Key_Block, IV, Work.Manager.Config.Data.Key,
-                              Work.Manager.Config.Data.IV);
-      Marshallers.Put_Secret (Work.Key_Block, Secret, Work.Manager.Config.Data.Key,
-                              Work.Manager.Config.Data.IV);
+      Marshallers.Put_Secret (Work.Key_Block, IV, Work.Manager.Config.Key.Key,
+                              Work.Manager.Config.Key.IV);
+      Marshallers.Put_Secret (Work.Key_Block, Secret, Work.Manager.Config.Key.Key,
+                              Work.Manager.Config.Key.IV);
 
       --  Encrypt the data content using the item encryption key and IV.
       Work.Data_Cipher.Set_IV (IV, (others => 0));
@@ -468,7 +468,7 @@ package body Keystore.Repository.Workers is
       for I in 1 .. Count loop
          Work := Result.Work_Slots (I)'Access;
          Work.Stream := Manager.Stream;
-         Keys.Set_Key (Work.Info_Cryptor, Manager.Config.Dir);
+         Keys.Set_Key (Work.Info_Cryptor, Manager.Config.Data);
          Result.Work_Pool (I) := Work;
          Result.Work_Slots (I).Queue := Result.Data_Queue'Access;
          Result.Work_Slots (I).Manager := Manager;
