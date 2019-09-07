@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---  keystore-ios -- IO low level operation for the keystore
+--  keystore-marshallers -- Data marshaller for the keystore
 --  Copyright (C) 2019 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
@@ -18,54 +18,6 @@
 with Interfaces.C;
 with Ada.Calendar.Conversions;
 with Util.Encoders.HMAC.SHA256;
-
---  Generic Block header
---  +------------------+
---  | Block HMAC-256   | 32b
---  +------------------+
---  | Block type       | 2b
---  | Encrypt 1 size   | 2b
---  | Wallet id        | 4b
---  | PAD 0            | 4b
---  | PAD 0            | 4b
---  +------------------+
---  | ...AES-CTR...    | B
---  +------------------+
---
---  Free block
---  +------------------+
---  | PAD 0            | 32b
---  +------------------+
---  | 00 00 00 00      | 4b
---  | 00 00 00 00      | 4b
---  | Next free block  | 4b
---  | PAD 0            | 4b
---  +------------------+
---  | Free block ID    | 4b
---  +------------------+
---  | ...              |
---  +------------------+
---  | PAD 0            |
---  +------------------+
---
---  Wallet repository encrypted with Wallet id AES-CTR key
---  +------------------+
---  | Block HMAC-256   | 32b
---  +------------------+
---  | 02 02            | 2b
---  | Encrypt 1 size   | 2b
---  | Wallet id        | 4b
---  | PAD 0            | 4b
---  | PAD 0            | 4b
---  +------------------+
---  | Next block ID    | 4b  Block number for next repository
---  +------------------+
---  | Data block count | 2b
---  +------------------+
---  | Data block ID    | 4b
---  | Data header size | 2b
---  +------------------+
---  | ...              |
 
 package body Keystore.Marshallers is
 
@@ -196,14 +148,6 @@ package body Keystore.Marshallers is
       Into.Pos := Last + 1;
    end Put_Secret;
 
-   procedure Put_Data (Into  : in out Marshaller;
-                       Value : in Util.Encoders.AES.Word_Block_Type) is
-   begin
-      for V of Value loop
-         Put_Unsigned_32 (Into, V);
-      end loop;
-   end Put_Data;
-
    procedure Put_HMAC_SHA256 (Into    : in out Marshaller;
                               Key     : in Secret_Key;
                               Content : in Ada.Streams.Stream_Element_Array) is
@@ -314,22 +258,6 @@ package body Keystore.Marshallers is
                                    Secret => Secret);
       From.Pos := Last + 1;
    end Get_Secret;
-
-   procedure Get_Data (From  : in out Marshaller;
-                       Value : out Ada.Streams.Stream_Element_Array) is
-      Buf           : constant Buffers.Buffer_Accessor := From.Buffer.Data.Value;
-   begin
-      Value := Buf.Data (From.Pos .. From.Pos + Value'Length - 1);
-      From.Pos := From.Pos + Value'Length;
-   end Get_Data;
-
-   procedure Get_Data (From  : in out Marshaller;
-                       Value : out Util.Encoders.AES.Word_Block_Type) is
-   begin
-      for I in Value'Range loop
-         Value (I) := Get_Unsigned_32 (From);
-      end loop;
-   end Get_Data;
 
    procedure Skip (From  : in out Marshaller;
                    Count : in Block_Index) is
