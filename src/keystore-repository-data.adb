@@ -89,8 +89,7 @@ package body Keystore.Repository.Data is
 
          Allocate_Data_Block (Manager, Size, Work);
 
-         Entries.Allocate_Key_Slot (Manager, Iterator, Work.Data_Block,
-                                    Interfaces.Unsigned_16 (Size),
+         Entries.Allocate_Key_Slot (Manager, Iterator, Work.Data_Block, Size,
                                     Work.Key_Pos, Work.Key_Block.Buffer.Block);
          Work.Key_Block.Buffer := Iterator.Current.Buffer;
 
@@ -106,6 +105,13 @@ package body Keystore.Repository.Data is
       end loop;
       Offset := Interfaces.Unsigned_64 (Data_Offset);
       Workers.Flush_Queue (Manager, null);
+
+   exception
+      when E : others =>
+         Log.Error ("Exception while encryptinh data: ", E);
+         Workers.Flush_Queue (Manager, null);
+         raise;
+
    end Add_Data;
 
    --  ------------------------------
@@ -115,7 +121,7 @@ package body Keystore.Repository.Data is
                        Iterator    : in out Entries.Data_Key_Iterator;
                        Content     : in out Util.Streams.Input_Stream'Class;
                        Offset      : in out Interfaces.Unsigned_64) is
-      Last        : Stream_Element_Offset;
+      Size        : IO.Buffer_Size;
       Data_Offset : Stream_Element_Offset := Stream_Element_Offset (Offset);
       Work        : Workers.Data_Work_Access;
    begin
@@ -125,16 +131,15 @@ package body Keystore.Repository.Data is
          Workers.Allocate_Work (Manager, Workers.DATA_ENCRYPT, null, Iterator, Work);
 
          --  Fill the work buffer by reading the stream.
-         Workers.Fill (Work.all, Content, DATA_MAX_SIZE, Last);
-         if Last = 0 then
+         Workers.Fill (Work.all, Content, DATA_MAX_SIZE, Size);
+         if Size = 0 then
             Workers.Put_Work (Manager.Workers.all, Work);
             exit;
          end if;
 
          Allocate_Data_Block (Manager, DATA_MAX_SIZE, Work);
 
-         Entries.Allocate_Key_Slot (Manager, Iterator, Work.Data_Block,
-                                    Interfaces.Unsigned_16 (Last),
+         Entries.Allocate_Key_Slot (Manager, Iterator, Work.Data_Block, Size,
                                     Work.Key_Pos, Work.Key_Block.Buffer.Block);
          Work.Key_Block.Buffer := Iterator.Current.Buffer;
 
@@ -145,10 +150,17 @@ package body Keystore.Repository.Data is
          end if;
 
          --  Move on to what remains.
-         Data_Offset := Data_Offset + Last;
+         Data_Offset := Data_Offset + Size;
       end loop;
       Offset := Interfaces.Unsigned_64 (Data_Offset);
       Workers.Flush_Queue (Manager, null);
+
+   exception
+      when E : others =>
+         Log.Error ("Exception while encryptinh data: ", E);
+         Workers.Flush_Queue (Manager, null);
+         raise;
+
    end Add_Data;
 
    procedure Update_Data (Manager    : in out Wallet_Manager;
@@ -244,7 +256,9 @@ package body Keystore.Repository.Data is
       end if;
    end Update_Data;
 
+   --  ------------------------------
    --  Erase the data fragments starting at the key iterator current position.
+   --  ------------------------------
    procedure Delete_Data (Manager    : in out Wallet_Manager;
                           Iterator   : in out Entries.Data_Key_Iterator) is
       Work : Workers.Data_Work_Access;
@@ -270,6 +284,13 @@ package body Keystore.Repository.Data is
          end if;
       end loop;
       Workers.Flush_Queue (Manager, null);
+
+   exception
+      when E : others =>
+         Log.Error ("Exception while deleting data: ", E);
+         Workers.Flush_Queue (Manager, null);
+         raise;
+
    end Delete_Data;
 
    --  ------------------------------
@@ -280,11 +301,10 @@ package body Keystore.Repository.Data is
                        Output     : out Ada.Streams.Stream_Element_Array) is
       procedure Process (Work : in Workers.Data_Work_Access);
 
-      Data_Offset : Ada.Streams.Stream_Element_Offset := Output'First;
+      Data_Offset : Stream_Element_Offset := Output'First;
 
       procedure Process (Work : in Workers.Data_Work_Access) is
-         Data_Size : constant Stream_Element_Offset
-           := Work.End_Data - Work.Start_Data + 1;
+         Data_Size : constant Stream_Element_Offset := Work.End_Data - Work.Start_Data + 1;
       begin
          Output (Data_Offset .. Data_Offset + Data_Size - 1)
            := Work.Data (Work.Buffer_Pos .. Work.Buffer_Pos + Data_Size - 1);
@@ -313,7 +333,7 @@ package body Keystore.Repository.Data is
 
    exception
       when E : others =>
-         Log.Error ("Exception while decrypting data: {0}", E);
+         Log.Error ("Exception while decrypting data: ", E);
          Workers.Flush_Queue (Manager, null);
          raise;
 
@@ -350,7 +370,7 @@ package body Keystore.Repository.Data is
 
    exception
       when E : others =>
-         Log.Error ("Exception while decrypting data: {0}", E);
+         Log.Error ("Exception while decrypting data: ", E);
          Workers.Flush_Queue (Manager, null);
          raise;
 
