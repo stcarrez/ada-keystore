@@ -89,7 +89,7 @@ private package Keystore.Repository.Entries is
    procedure Allocate_Key_Slot (Manager    : in out Wallet_Repository;
                                 Iterator   : in out Data_Key_Iterator;
                                 Data_Block : in IO.Storage_Block;
-                                Size       : in Interfaces.Unsigned_16;
+                                Size       : in IO.Buffer_Size;
                                 Key_Pos    : out IO.Block_Index;
                                 Key_Block  : out IO.Storage_Block);
 
