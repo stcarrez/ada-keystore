@@ -20,6 +20,7 @@ with Keystore.IO;
 with Ada.Streams;
 with Util.Streams;
 with Keystore.Repository.Entries;
+with Keystore.Repository.Keys;
 
 private package Keystore.Repository.Data is
 
@@ -29,38 +30,38 @@ private package Keystore.Repository.Data is
 
    --  Write the data in one or several blocks.
    procedure Add_Data (Manager     : in out Wallet_Repository;
-                       Iterator    : in out Entries.Data_Key_Iterator;
+                       Iterator    : in out Keys.Data_Key_Iterator;
                        Content     : in Ada.Streams.Stream_Element_Array;
                        Offset      : in out Interfaces.Unsigned_64);
 
    procedure Add_Data (Manager     : in out Wallet_Repository;
-                       Iterator    : in out Entries.Data_Key_Iterator;
+                       Iterator    : in out Keys.Data_Key_Iterator;
                        Content     : in out Util.Streams.Input_Stream'Class;
                        Offset      : in out Interfaces.Unsigned_64);
 
    --  Update the data fragments.
    procedure Update_Data (Manager      : in out Wallet_Repository;
-                          Iterator     : in out Entries.Data_Key_Iterator;
+                          Iterator     : in out Keys.Data_Key_Iterator;
                           Content      : in Ada.Streams.Stream_Element_Array;
                           Offset       : in out Interfaces.Unsigned_64);
 
    procedure Update_Data (Manager      : in out Wallet_Repository;
-                          Iterator     : in out Entries.Data_Key_Iterator;
+                          Iterator     : in out Keys.Data_Key_Iterator;
                           Content      : in out Util.Streams.Input_Stream'Class;
                           Offset       : in out Interfaces.Unsigned_64);
 
    --  Erase the data fragments starting at the key iterator current position.
    procedure Delete_Data (Manager    : in out Wallet_Repository;
-                          Iterator   : in out Entries.Data_Key_Iterator);
+                          Iterator   : in out Keys.Data_Key_Iterator);
 
    --  Get the data associated with the named entry.
    procedure Get_Data (Manager    : in out Wallet_Repository;
-                       Iterator   : in out Entries.Data_Key_Iterator;
+                       Iterator   : in out Keys.Data_Key_Iterator;
                        Output     : out Ada.Streams.Stream_Element_Array);
 
    --  Get the data associated with the named entry and write it in the output stream.
    procedure Get_Data (Manager    : in out Wallet_Repository;
-                       Iterator   : in out Entries.Data_Key_Iterator;
+                       Iterator   : in out Keys.Data_Key_Iterator;
                        Output     : in out Util.Streams.Output_Stream'Class);
 
 private
