@@ -19,6 +19,7 @@ with Util.Log.Loggers;
 with Ada.IO_Exceptions;
 with Ada.Unchecked_Deallocation;
 with Keystore.Logs;
+with Keystore.Marshallers;
 
 --
 --  Wallet repository encrypted with Wallet directory key
@@ -65,6 +66,7 @@ with Keystore.Logs;
 --
 package body Keystore.Repository.Entries is
 
+   use type Interfaces.Unsigned_16;
    use type Interfaces.Unsigned_32;
 
    Log : constant Util.Log.Loggers.Logger
@@ -93,6 +95,7 @@ package body Keystore.Repository.Entries is
          return;
       end if;
 
+      --  Get it from the modified list in case it has some pending changes not written yet.
       Into.Buffer := Buffers.Find (Manager.Modified, Directory.Block);
       if not Buffers.Is_Null (Into.Buffer) then
          return;
@@ -129,13 +132,12 @@ package body Keystore.Repository.Entries is
          Marshallers.Skip (Into, 8);
 
          declare
-            Prev   : Wallet_Entry_Access := null;
-            Item   : Wallet_Entry_Access;
-            Index  : Interfaces.Unsigned_32;
-            Count  : Interfaces.Unsigned_16;
-            Offset : IO.Block_Index;
-            Pos        : Wallet_Indexs.Cursor;
-            Data_Key   : Wallet_Data_Key_Entry;
+            Item     : Wallet_Entry_Access;
+            Index    : Interfaces.Unsigned_32;
+            Count    : Interfaces.Unsigned_16;
+            Offset   : IO.Block_Index;
+            Pos      : Wallet_Indexs.Cursor;
+            Data_Key : Wallet_Data_Key_Entry;
          begin
             Directory.Next_Block := Marshallers.Get_Unsigned_32 (Into);
             Directory.Key_Pos := Marshallers.Get_Block_Index (Into);
@@ -160,13 +162,6 @@ package body Keystore.Repository.Entries is
                   Item.Header := Directory;
                   Item.Name := Name;
 
-                  if Prev = null then
-                     Directory.First := Item;
-                  else
-                     Prev.Next_Entry := Item;
-                  end if;
-                  Prev := Item;
-                  Item.Next_Entry := null;
                   if Item.Id >= Manager.Next_Id then
                      Manager.Next_Id := Item.Id + 1;
                   end if;
@@ -203,8 +198,7 @@ package body Keystore.Repository.Entries is
 
                   --  Set marshaller to the data key size position.
                   Into.Pos := Offset + 8;
-                  Data_Key.Size := Data_Key.Size
-                    + Stream_Element_Offset (Marshallers.Get_Unsigned_16 (Into));
+                  Data_Key.Size := Data_Key.Size + Marshallers.Get_Buffer_Size (Into);
                   Count := Count - 1;
                end loop;
 
@@ -402,8 +396,6 @@ package body Keystore.Repository.Entries is
    procedure Delete_Entry (Manager    : in out Wallet_Manager;
                            Item       : in Wallet_Entry_Access) is
       Directory    : constant Wallet_Directory_Entry_Access := Item.Header;
-      Wallet_Entry : Wallet_Entry_Access;
-      Prev_Entry   : Wallet_Entry_Access;
       Size         : IO.Block_Index;
       End_Entry    : IO.Block_Index;
    begin
@@ -417,23 +409,6 @@ package body Keystore.Repository.Entries is
       declare
          Buf : constant Buffers.Buffer_Accessor := Manager.Current.Buffer.Data.Value;
       begin
-
-         --  Unlink the item from the directory block list and identify the entry position.
-         Wallet_Entry := Directory.First;
-         while Wallet_Entry /= null and Wallet_Entry /= Item loop
-            Prev_Entry := Wallet_Entry;
-            Wallet_Entry := Wallet_Entry.Next_Entry;
-         end loop;
-
-         if Wallet_Entry = null then
-            return;
-         end if;
-         if Prev_Entry /= null then
-            Prev_Entry.Next_Entry := Item.Next_Entry;
-         else
-            Directory.First := Item.Next_Entry;
-         end if;
-
          --  Move the data entry.
          Size := Entry_Size (Item);
          End_Entry := Item.Entry_Offset + Size;
