@@ -58,7 +58,7 @@ package body Keystore.Repository.Data is
    --  The first data block that has enough space is used otherwise a new block
    --  is allocated and initialized.
    --  ------------------------------
-   procedure Allocate_Data_Block (Manager    : in out Wallet_Manager;
+   procedure Allocate_Data_Block (Manager    : in out Wallet_Repository;
                                   Space      : in IO.Block_Index;
                                   Work       : in Workers.Data_Work_Access) is
    begin
@@ -71,7 +71,7 @@ package body Keystore.Repository.Data is
    --  ------------------------------
    --  Write the data in one or several blocks.
    --  ------------------------------
-   procedure Add_Data (Manager     : in out Wallet_Manager;
+   procedure Add_Data (Manager     : in out Wallet_Repository;
                        Iterator    : in out Entries.Data_Key_Iterator;
                        Content     : in Ada.Streams.Stream_Element_Array;
                        Offset      : in out Interfaces.Unsigned_64) is
@@ -86,6 +86,10 @@ package body Keystore.Repository.Data is
          Workers.Allocate_Work (Manager, Workers.DATA_ENCRYPT, null, Iterator, Work);
 
          Workers.Fill (Work.all, Content, Input_Pos, Size);
+         if Size = 0 then
+            Workers.Put_Work (Manager.Workers.all, Work);
+            exit;
+         end if;
 
          Allocate_Data_Block (Manager, Size, Work);
 
@@ -108,7 +112,7 @@ package body Keystore.Repository.Data is
 
    exception
       when E : others =>
-         Log.Error ("Exception while encryptinh data: ", E);
+         Log.Error ("Exception while encrypting data: ", E);
          Workers.Flush_Queue (Manager, null);
          raise;
 
@@ -117,7 +121,7 @@ package body Keystore.Repository.Data is
    --  ------------------------------
    --  Write the data in one or several blocks.
    --  ------------------------------
-   procedure Add_Data (Manager     : in out Wallet_Manager;
+   procedure Add_Data (Manager     : in out Wallet_Repository;
                        Iterator    : in out Entries.Data_Key_Iterator;
                        Content     : in out Util.Streams.Input_Stream'Class;
                        Offset      : in out Interfaces.Unsigned_64) is
@@ -163,7 +167,7 @@ package body Keystore.Repository.Data is
 
    end Add_Data;
 
-   procedure Update_Data (Manager    : in out Wallet_Manager;
+   procedure Update_Data (Manager    : in out Wallet_Repository;
                           Iterator   : in out Entries.Data_Key_Iterator;
                           Content    : in Ada.Streams.Stream_Element_Array;
                           Offset     : in out Interfaces.Unsigned_64) is
@@ -211,7 +215,7 @@ package body Keystore.Repository.Data is
       end if;
    end Update_Data;
 
-   procedure Update_Data (Manager    : in out Wallet_Manager;
+   procedure Update_Data (Manager    : in out Wallet_Repository;
                           Iterator   : in out Entries.Data_Key_Iterator;
                           Content    : in out Util.Streams.Input_Stream'Class;
                           Offset     : in out Interfaces.Unsigned_64) is
@@ -259,7 +263,7 @@ package body Keystore.Repository.Data is
    --  ------------------------------
    --  Erase the data fragments starting at the key iterator current position.
    --  ------------------------------
-   procedure Delete_Data (Manager    : in out Wallet_Manager;
+   procedure Delete_Data (Manager    : in out Wallet_Repository;
                           Iterator   : in out Entries.Data_Key_Iterator) is
       Work : Workers.Data_Work_Access;
       Mark : Entries.Data_Key_Marker;
@@ -296,7 +300,7 @@ package body Keystore.Repository.Data is
    --  ------------------------------
    --  Get the data associated with the named entry.
    --  ------------------------------
-   procedure Get_Data (Manager    : in out Wallet_Manager;
+   procedure Get_Data (Manager    : in out Wallet_Repository;
                        Iterator   : in out Entries.Data_Key_Iterator;
                        Output     : out Ada.Streams.Stream_Element_Array) is
       procedure Process (Work : in Workers.Data_Work_Access);
@@ -339,7 +343,7 @@ package body Keystore.Repository.Data is
 
    end Get_Data;
 
-   procedure Get_Data (Manager    : in out Wallet_Manager;
+   procedure Get_Data (Manager    : in out Wallet_Repository;
                        Iterator   : in out Entries.Data_Key_Iterator;
                        Output     : in out Util.Streams.Output_Stream'Class) is
       procedure Process (Work : in Workers.Data_Work_Access);
