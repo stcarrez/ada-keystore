@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---  keystore-repository-entries -- Repository management for the keystore
+--  keystore-repository-keys -- Data keys management
 --  Copyright (C) 2019 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
