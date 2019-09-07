@@ -23,53 +23,53 @@ with Keystore.Repository.Entries;
 
 private package Keystore.Repository.Data is
 
-   subtype Wallet_Manager is Wallet_Repository;
+   --  Start offset of the data entry descriptor in the data block.
+   function Data_Entry_Offset (Index : in Natural) return IO.Block_Index is
+      (IO.BT_DATA_START + Stream_Element_Offset (Index * DATA_ENTRY_SIZE) - DATA_ENTRY_SIZE);
 
-   --  Find the data block to hold a new data entry that occupies the given space.
-   --  The first data block that has enough space is used otherwise a new block
-   --  is allocated and initialized.
-   procedure Allocate_Data_Block (Manager    : in out Wallet_Manager;
-                                  Space      : in IO.Block_Index;
-                                  Work       : in Workers.Data_Work_Access);
+   --  Write the data in one or several blocks.
+   procedure Add_Data (Manager     : in out Wallet_Repository;
+                       Iterator    : in out Entries.Data_Key_Iterator;
+                       Content     : in Ada.Streams.Stream_Element_Array;
+                       Offset      : in out Interfaces.Unsigned_64);
+
+   procedure Add_Data (Manager     : in out Wallet_Repository;
+                       Iterator    : in out Entries.Data_Key_Iterator;
+                       Content     : in out Util.Streams.Input_Stream'Class;
+                       Offset      : in out Interfaces.Unsigned_64);
 
    --  Update the data fragments.
-   procedure Update_Data (Manager      : in out Wallet_Manager;
+   procedure Update_Data (Manager      : in out Wallet_Repository;
                           Iterator     : in out Entries.Data_Key_Iterator;
                           Content      : in Ada.Streams.Stream_Element_Array;
                           Offset       : in out Interfaces.Unsigned_64);
 
-   procedure Update_Data (Manager      : in out Wallet_Manager;
+   procedure Update_Data (Manager      : in out Wallet_Repository;
                           Iterator     : in out Entries.Data_Key_Iterator;
                           Content      : in out Util.Streams.Input_Stream'Class;
                           Offset       : in out Interfaces.Unsigned_64);
 
    --  Erase the data fragments starting at the key iterator current position.
-   procedure Delete_Data (Manager    : in out Wallet_Manager;
+   procedure Delete_Data (Manager    : in out Wallet_Repository;
                           Iterator   : in out Entries.Data_Key_Iterator);
 
    --  Get the data associated with the named entry.
-   procedure Get_Data (Manager    : in out Wallet_Manager;
+   procedure Get_Data (Manager    : in out Wallet_Repository;
                        Iterator   : in out Entries.Data_Key_Iterator;
                        Output     : out Ada.Streams.Stream_Element_Array);
 
    --  Get the data associated with the named entry and write it in the output stream.
-   procedure Get_Data (Manager    : in out Wallet_Manager;
+   procedure Get_Data (Manager    : in out Wallet_Repository;
                        Iterator   : in out Entries.Data_Key_Iterator;
                        Output     : in out Util.Streams.Output_Stream'Class);
 
-   --  Write the data in one or several blocks.
-   procedure Add_Data (Manager     : in out Wallet_Manager;
-                       Iterator    : in out Entries.Data_Key_Iterator;
-                       Content     : in Ada.Streams.Stream_Element_Array;
-                       Offset      : in out Interfaces.Unsigned_64);
+private
 
-   procedure Add_Data (Manager     : in out Wallet_Manager;
-                       Iterator    : in out Entries.Data_Key_Iterator;
-                       Content     : in out Util.Streams.Input_Stream'Class;
-                       Offset      : in out Interfaces.Unsigned_64);
-
-   --  Start offset of the data entry descriptor in the data block.
-   function Data_Entry_Offset (Index : in Natural) return IO.Block_Index is
-      (IO.BT_DATA_START + Stream_Element_Offset (Index * DATA_ENTRY_SIZE) - DATA_ENTRY_SIZE);
+   --  Find the data block to hold a new data entry that occupies the given space.
+   --  The first data block that has enough space is used otherwise a new block
+   --  is allocated and initialized.
+   procedure Allocate_Data_Block (Manager    : in out Wallet_Repository;
+                                  Space      : in IO.Block_Index;
+                                  Work       : in Workers.Data_Work_Access);
 
 end Keystore.Repository.Data;
