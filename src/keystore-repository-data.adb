@@ -299,18 +299,9 @@ package body Keystore.Repository.Data is
          exit when not Entries.Has_Data_Key (Iterator);
          Workers.Allocate_Work (Manager, Workers.DATA_DECRYPT, Process'Access, Iterator, Work);
 
-         Work.Buffer_Pos := Work.Data'First;
-         Work.Last_Pos := Work.Buffer_Pos + Iterator.Data_Size - 1;
-
          --  Run the decipher work either through work manager or through current task.
          if not Workers.Queue (Manager, Work) then
-            begin
-               Work.Do_Decipher_Data;
-            exception
-               when others =>
-                  Workers.Put_Work (Manager.Workers.all, Work);
-                  raise;
-            end;
+            Work.Do_Decipher_Data;
             Workers.Put_Work (Manager.Workers.all, Work);
             Work.Check_Raise_Error;
             Process (Work);
@@ -346,21 +337,12 @@ package body Keystore.Repository.Data is
          exit when not Entries.Has_Data_Key (Iterator);
          Workers.Allocate_Work (Manager, Workers.DATA_DECRYPT, Process'Access, Iterator, Work);
 
-         Work.Buffer_Pos := Work.Data'First;
-         Work.Last_Pos := Work.Buffer_Pos + Iterator.Data_Size - 1;
-
          --  Run the decipher work either through work manager or through current task.
          if not Workers.Queue (Manager, Work) then
-            begin
-               Work.Do_Decipher_Data;
-            exception
-               when others =>
-                  Workers.Put_Work (Manager.Workers.all, Work);
-                  raise;
-            end;
+            Work.Do_Decipher_Data;
             Workers.Put_Work (Manager.Workers.all, Work);
             Work.Check_Raise_Error;
-            Output.Write (Work.Data (Work.Buffer_Pos .. Work.Last_Pos));
+            Process (Work);
          end if;
 
       end loop;
