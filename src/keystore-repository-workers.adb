@@ -133,7 +133,10 @@ package body Keystore.Repository.Workers is
       end loop;
 
       Work.Kind := Kind;
-      Work.Buffer_Pos := 1;
+      Work.Buffer_Pos := Work.Data'First;
+      if Kind = DATA_DECRYPT then
+         Work.Last_Pos := Work.Data'First + Iterator.Data_Size - 1;
+      end if;
       Work.Entry_Id := Iterator.Entry_Id;
       Work.Key_Pos := Iterator.Key_Pos;
       Work.Key_Block.Buffer := Iterator.Current.Buffer;
@@ -308,6 +311,10 @@ package body Keystore.Repository.Workers is
          end if;
          Work.Status := SUCCESS;
       end;
+
+   exception
+      when E : others =>
+         Work.Status := DATA_CORRUPTION;
    end Do_Decipher_Data;
 
    procedure Do_Cipher_Data (Work : in out Data_Work) is
@@ -393,6 +400,10 @@ package body Keystore.Repository.Workers is
          end if;
          Work.Status := SUCCESS;
       end;
+
+   exception
+      when E : others =>
+         Work.Status := DATA_CORRUPTION;
    end Do_Cipher_Data;
 
    procedure Do_Delete_Data (Work : in out Data_Work) is
