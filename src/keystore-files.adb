@@ -272,7 +272,7 @@ package body Keystore.Files is
    overriding
    procedure Initialize (Wallet : in out Wallet_File) is
    begin
-      null; --  Wallet.Container.Set_Repository (Wallet.Repository);
+      null;
    end Initialize;
 
    overriding
