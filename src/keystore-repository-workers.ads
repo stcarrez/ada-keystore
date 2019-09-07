@@ -37,13 +37,20 @@ private package Keystore.Repository.Workers is
 
    type Data_Work_Type is (DATA_ENCRYPT, DATA_DECRYPT, DATA_RELEASE);
 
+   type Status_Type is (SUCCESS, PENDING, IO_ERROR, DATA_CORRUPTION);
+
    type Data_Work;
    type Data_Work_Access is access all Data_Work;
 
-   procedure Fill (Work  : in out Data_Work;
-                   Input : in out Util.Streams.Input_Stream'Class;
-                   Space : in Buffer_Offset;
-                   Last  : out Buffers.Buffer_Size);
+   procedure Fill (Work      : in out Data_Work;
+                   Input     : in out Util.Streams.Input_Stream'Class;
+                   Space     : in Buffer_Offset;
+                   Data_Size : out Buffers.Buffer_Size);
+
+   procedure Fill (Work      : in out Data_Work;
+                   Input     : in Ada.Streams.Stream_Element_Array;
+                   Input_Pos : in Ada.Streams.Stream_Element_Offset;
+                   Data_Size : out IO.Buffer_Size);
 
    package Work_Queues is
      new Util.Concurrent.Sequence_Queues (Element_Type     => Data_Work_Access,
@@ -53,6 +60,7 @@ private package Keystore.Repository.Workers is
 
    type Data_Work is limited new Work_Type with record
       Kind             : Data_Work_Type := DATA_DECRYPT;
+      Status           : Status_Type;
       Key_Block        : IO.Marshaller;
       Key_Pos          : IO.Block_Index;
       Data_Block       : IO.Storage_Block;
@@ -90,6 +98,8 @@ private package Keystore.Repository.Workers is
 
    procedure Put_Work (Worker : in out Wallet_Worker;
                        Work   : in Data_Work_Access);
+
+   procedure Check_Raise_Error (Work : in Data_Work);
 
    procedure Allocate_Work (Manager  : in out Wallet_Repository;
                             Kind     : in Data_Work_Type;
