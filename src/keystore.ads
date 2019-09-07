@@ -137,6 +137,7 @@ package Keystore is
    --  Stop the tasks.
    procedure Stop (Manager : in Task_Manager_Access);
 
+   --  Configuration to create or open a keystore.
    type Wallet_Config is record
       Randomize     : Boolean := True;
       Overwrite     : Boolean := False;
@@ -147,12 +148,14 @@ package Keystore is
 
    --  Fast configuration but less secure.
    Unsecure_Config : constant Wallet_Config
-     := (Randomize => False, Overwrite => False, Min_Counter => 10_000, Max_Counter => 100_000,
+     := (Randomize => False, Overwrite => False,
+         Min_Counter => 10_000, Max_Counter => 100_000,
          Max_File_Size => Positive'Last);
 
    --  Slow configuration but more secure.
    Secure_Config : constant Wallet_Config
-     := (Randomize => True, Overwrite => False, Min_Counter => 500_000, Max_Counter => 1_000_000,
+     := (Randomize => True, Overwrite => False,
+         Min_Counter => 500_000, Max_Counter => 1_000_000,
         Max_File_Size => Positive'Last);
 
    type UUID_Type is private;
