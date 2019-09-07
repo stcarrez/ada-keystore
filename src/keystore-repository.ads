@@ -181,7 +181,6 @@ private
       Available  : IO.Buffer_Size := IO.Block_Index'Last - IO.BT_DATA_START - 4 - 2;
       Last_Pos   : IO.Block_Index := IO.BT_DATA_START + 4 + 2;
       Key_Pos    : IO.Block_Index := IO.Block_Index'Last;
-      First      : Wallet_Entry_Access;
       Next_Block : Interfaces.Unsigned_32 := 0;
       Count      : Natural := 0;
       Ready      : Boolean := False;
@@ -190,7 +189,6 @@ private
    type Wallet_Entry (Length : Natural) is limited record
       --  The block header that contains this entry.
       Header       : Wallet_Directory_Entry_Access;
-      Next_Entry   : Wallet_Entry_Access;
       Entry_Offset : IO.Block_Index := IO.Block_Index'First;
 
       --  List of data key blocks.
