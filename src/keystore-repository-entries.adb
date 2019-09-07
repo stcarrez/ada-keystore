@@ -319,7 +319,7 @@ package body Keystore.Repository.Entries is
             Iterator.Current.Pos := Iterator.Current.Pos - DATA_KEY_ENTRY_SIZE;
             Pos := Iterator.Current.Pos;
             Iterator.Data_Block := Marshallers.Get_Storage_Block (Iterator.Current);
-            Iterator.Data_Size := Stream_Element_Offset (Marshallers.Get_Unsigned_16 (Iterator.Current));
+            Iterator.Data_Size := Marshallers.Get_Buffer_Size (Iterator.Current);
             Iterator.Key_Pos := Iterator.Current.Pos;
             Iterator.Current.Pos := Pos;
             Iterator.Count := Iterator.Count - 1;
@@ -354,7 +354,6 @@ package body Keystore.Repository.Entries is
                          Mark     : in out Data_Key_Marker) is
       Buf  : constant Buffers.Buffer_Accessor := Iterator.Current.Buffer.Data.Value;
       Key_Start_Pos : IO.Block_Index;
-      Key_Size      : IO.Buffer_Size;
       Next_Iter     : Wallet_Data_Key_List.Cursor;
       Key_Pos       : IO.Block_Index;
       Del_Count     : Interfaces.Unsigned_16;
@@ -453,6 +452,7 @@ package body Keystore.Repository.Entries is
                                       Interfaces.Unsigned_32 (Iterator.Entry_Id));
          Marshallers.Put_Unsigned_16 (Iterator.Current, 0);
          Marshallers.Put_Unsigned_32 (Iterator.Current, 0);
+         Iterator.Item.Data_Blocks.Append (Wallet_Data_Key_Entry '(Iterator.Directory, 0));
       end if;
 
       declare
@@ -488,6 +488,20 @@ package body Keystore.Repository.Entries is
          Key_Block := Iterator.Current.Buffer.Block;
       end;
    end Allocate_Key_Slot;
+
+   procedure Update_Key_Slot (Manager    : in out Wallet_Repository;
+                              Iterator   : in out Data_Key_Iterator;
+                              Size       : in IO.Buffer_Size) is
+   begin
+      pragma Assert (Iterator.Directory /= null);
+
+      if Iterator.Data_Size /= Size then
+         Iterator.Current.Pos := Iterator.Key_Pos - 2;
+         Marshallers.Put_Unsigned_16 (Iterator.Current, Interfaces.Unsigned_16 (Size));
+
+         Manager.Modified.Include (Iterator.Current.Buffer.Block, Iterator.Current.Buffer.Data);
+      end if;
+   end Update_Key_Slot;
 
    procedure Initialize_Directory_Block (Manager   : in out Wallet_Manager;
                                          Block     : in IO.Storage_Block;
@@ -531,7 +545,6 @@ package body Keystore.Repository.Entries is
    procedure Find_Directory_Block (Manager   : in out Wallet_Manager;
                                    Space     : in IO.Block_Index;
                                    Directory : out Wallet_Directory_Entry_Access) is
-      Last_Directory : Wallet_Directory_Entry_Access;
       Block : IO.Storage_Block;
    begin
       --  Scan for a block having enough space for us.
