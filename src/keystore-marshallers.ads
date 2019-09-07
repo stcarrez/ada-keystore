@@ -94,6 +94,10 @@ private package Keystore.Marshallers is
                               Value : in Block_Index) with
      Pre => Into.Pos <= Block_Type'Last - 2;
 
+   procedure Put_Buffer_Size (Into  : in out Marshaller;
+                              Value : in Buffer_Size) with
+     Pre => Into.Pos <= Block_Type'Last - 2;
+
    procedure Put_String (Into  : in out Marshaller;
                          Value : in String) with
      Pre => Into.Pos < Block_Type'Last - 4 - Value'Length;
