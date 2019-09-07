@@ -22,6 +22,7 @@ with Util.Streams;
 
 with Keystore.Random;
 with Keystore.Repository.Entries;
+with Keystore.Repository.Keys;
 with Util.Concurrent.Sequence_Queues;
 private package Keystore.Repository.Workers is
 
@@ -104,7 +105,7 @@ private package Keystore.Repository.Workers is
    procedure Allocate_Work (Manager  : in out Wallet_Repository;
                             Kind     : in Data_Work_Type;
                             Process  : access procedure (Work : in Data_Work_Access);
-                            Iterator : in Entries.Data_Key_Iterator;
+                            Iterator : in Keys.Data_Key_Iterator;
                             Work     : out Data_Work_Access);
 
    procedure Initialize_Queue (Manager : in out Wallet_Repository);
