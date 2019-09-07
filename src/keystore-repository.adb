@@ -53,10 +53,6 @@ package body Keystore.Repository is
                                      Name   => Wallet_Entry_Access);
 
    procedure Free is
-     new Ada.Unchecked_Deallocation (Object => Wallet_Block_Entry,
-                                     Name   => Wallet_Block_Entry_Access);
-
-   procedure Free is
      new Ada.Unchecked_Deallocation (Object => Wallet_Directory_Entry,
                                      Name   => Wallet_Directory_Entry_Access);
 
@@ -411,7 +407,6 @@ package body Keystore.Repository is
 
    procedure Close (Repository : in out Wallet_Repository) is
       Dir   : Wallet_Directory_Entry_Access;
-      Block : Wallet_Block_Entry_Access;
       First : Wallet_Maps.Cursor;
       Item  : Wallet_Entry_Access;
    begin
@@ -419,11 +414,6 @@ package body Keystore.Repository is
          Dir := Repository.Directory_List.First_Element;
          Repository.Directory_List.Delete_First;
          Free (Dir);
-      end loop;
-      while not Repository.Data_List.Is_Empty loop
-         Block := Repository.Data_List.First_Element;
-         Repository.Data_List.Delete_First;
-         Free (Block);
       end loop;
 
       Repository.Entry_Indexes.Clear;
