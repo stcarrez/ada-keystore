@@ -19,6 +19,7 @@
 with Ahven;
 with Ada.Directories;
 with Ada.Exceptions;
+with Ada.IO_Exceptions;
 with Ada.Streams.Stream_IO;
 with Util.Test_Caller;
 with Util.Streams.Files;
@@ -42,10 +43,10 @@ package body Keystore.Files.Tests is
                        Test_List'Access);
       Caller.Add_Test (Suite, "Test Keystore.Delete",
                        Test_Delete'Access);
-      --Caller.Add_Test (Suite, "Test Keystore.Update",
-      --                 Test_Update'Access);
-      --Caller.Add_Test (Suite, "Test Keystore.Update (grow, shrink)",
-      --                 Test_Update_Sequence'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Update",
+                       Test_Update'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Update (grow, shrink)",
+                       Test_Update_Sequence'Access);
       Caller.Add_Test (Suite, "Test Keystore.Files.Open+Close",
                        Test_Open_Close'Access);
       Caller.Add_Test (Suite, "Test Keystore.Add (Name_Exist)",
@@ -68,11 +69,13 @@ package body Keystore.Files.Tests is
    procedure Test_Create (T : in out Test) is
       Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-create.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
+      Config   : Keystore.Wallet_Config := Unsecure_Config;
    begin
       declare
          W        : Keystore.Files.Wallet_File;
       begin
-         W.Create (Path => Path, Password => Password, Config => Unsecure_Config);
+         Config.Overwrite := True;
+         W.Create (Path => Path, Password => Password, Config => Config);
       end;
       declare
          Wread    : Keystore.Files.Wallet_File;
@@ -88,6 +91,16 @@ package body Keystore.Files.Tests is
 
       exception
          when Bad_Password =>
+            null;
+      end;
+      declare
+         W        : Keystore.Files.Wallet_File;
+      begin
+         W.Create (Path => Path, Password => Password, Config => Unsecure_Config);
+         T.Fail ("Create should raise Name_Error exception if the file exists");
+
+      exception
+         when Ada.IO_Exceptions.Name_Error =>
             null;
       end;
    end Test_Create;
@@ -115,25 +128,26 @@ package body Keystore.Files.Tests is
          --  Source_File  : IO.Files.Block_IO.File_Type;
          --  Corrupt_File : IO.Files.Block_IO.File_Type;
          Data         : IO.Block_Type;
+         Last         : Ada.Streams.Stream_Element_Offset;
          Current      : IO.Block_Number := 1;
+         Input_File   : Util.Streams.Files.File_Stream;
+         Output_File  : Util.Streams.Files.File_Stream;
       begin
-         null;
-         --  IO.Files.Block_IO.Open (Name => Path,
-         --                        File => Source_File,
-         --                        Mode => IO.Files.Block_IO.In_File);
-         --  IO.Files.Block_IO.Create (Name => Corrupt_Path,
-         --                          File => Corrupt_File,
-         --                          Mode => IO.Files.Block_IO.Inout_File);
-         --  while not IO.Files.Block_IO.End_Of_File (Source_File) loop
-         --   IO.Files.Block_IO.Read (Source_File, Data);
-         --   if Current = Block then
-         --      Data (Pos) := Data (Pos) xor 1;
-         --   end if;
-         --   IO.Files.Block_IO.Write (Corrupt_File, Data);
-         --   Current := Current + 1;
-         --  end loop;
-         --  IO.Files.Block_IO.Close (Source_File);
-         --  IO.Files.Block_IO.Close (Corrupt_File);
+         Input_File.Open (Name => Path,
+                          Mode => Ada.Streams.Stream_IO.In_File);
+         Output_File.Create (Name => Corrupt_Path,
+                             Mode => Ada.Streams.Stream_IO.Out_File);
+         loop
+            Input_File.Read (Data, Last);
+            if Current = Block then
+               Data (Pos) := Data (Pos) xor 1;
+            end if;
+            if Last > Data'First then
+               Output_File.Write (Data (Data'First .. Last));
+            end if;
+            exit when Last < Data'Last;
+            Current := Current + 1;
+         end loop;
       end Corrupt;
 
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
@@ -156,8 +170,10 @@ package body Keystore.Files.Tests is
                           & " at" & IO.Block_Index'Image (Pos));
                end if;
 
-               --  Block 3 is read only if we need the repository content.
+               --  Block 3 is read only if we need the repository and datacontent.
                W.List (Items);
+
+               W.Set ("no-corruption-detected", W.Get ("list-1"));
                T.Fail ("No corruption detected block" & IO.Block_Number'Image (Block)
                        & " at" & IO.Block_Index'Image (Pos));
 
