@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---  keystore-repository-keys -- Repository management for the keystore
+--  keystore-repository-keys -- Data keys management
 --  Copyright (C) 2019 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
@@ -74,10 +74,6 @@ private package Keystore.Repository.Keys is
 private
 
    use type Interfaces.Unsigned_16;
-
-   --  Size of the wallet entry in the repository.
-   function Entry_Size (Item : in Wallet_Entry_Access) return IO.Block_Index is
-      (DATA_NAME_ENTRY_SIZE + Item.Name'Length);
 
    function Key_Slot_Size (Count : in Interfaces.Unsigned_16) return IO.Block_Index is
       (IO.Block_Index (DATA_KEY_ENTRY_SIZE * Count));
