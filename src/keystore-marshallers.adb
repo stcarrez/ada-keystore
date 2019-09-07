@@ -98,6 +98,12 @@ package body Keystore.Marshallers is
       Put_Unsigned_16 (Into, Interfaces.Unsigned_16 (Value));
    end Put_Block_Index;
 
+   procedure Put_Buffer_Size (Into  : in out Marshaller;
+                              Value : in Buffer_Size) is
+   begin
+      Put_Unsigned_16 (Into, Interfaces.Unsigned_16 (Value));
+   end Put_Buffer_Size;
+
    procedure Put_String (Into  : in out Marshaller;
                          Value : in String) is
       Pos : Block_Index;
