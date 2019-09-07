@@ -332,7 +332,6 @@ package body Keystore.Repository.Data is
          end if;
 
       end loop;
-      Iterator.Current_Offset := Iterator.Current_Offset + Interfaces.Unsigned_64 (Iterator.Data_Size);
       Workers.Flush_Queue (Manager, Process'Access);
 
    exception
