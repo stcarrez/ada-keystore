@@ -72,7 +72,7 @@ package body Keystore.Repository.Data is
    --  Write the data in one or several blocks.
    --  ------------------------------
    procedure Add_Data (Manager     : in out Wallet_Repository;
-                       Iterator    : in out Entries.Data_Key_Iterator;
+                       Iterator    : in out Keys.Data_Key_Iterator;
                        Content     : in Ada.Streams.Stream_Element_Array;
                        Offset      : in out Interfaces.Unsigned_64) is
       Size        : IO.Buffer_Size;
@@ -93,8 +93,8 @@ package body Keystore.Repository.Data is
 
          Allocate_Data_Block (Manager, Size, Work);
 
-         Entries.Allocate_Key_Slot (Manager, Iterator, Work.Data_Block, Size,
-                                    Work.Key_Pos, Work.Key_Block.Buffer.Block);
+         Keys.Allocate_Key_Slot (Manager, Iterator, Work.Data_Block, Size,
+                                 Work.Key_Pos, Work.Key_Block.Buffer.Block);
          Work.Key_Block.Buffer := Iterator.Current.Buffer;
 
          if not Workers.Queue (Manager, Work) then
@@ -122,7 +122,7 @@ package body Keystore.Repository.Data is
    --  Write the data in one or several blocks.
    --  ------------------------------
    procedure Add_Data (Manager     : in out Wallet_Repository;
-                       Iterator    : in out Entries.Data_Key_Iterator;
+                       Iterator    : in out Keys.Data_Key_Iterator;
                        Content     : in out Util.Streams.Input_Stream'Class;
                        Offset      : in out Interfaces.Unsigned_64) is
       Size        : IO.Buffer_Size;
@@ -143,8 +143,8 @@ package body Keystore.Repository.Data is
 
          Allocate_Data_Block (Manager, DATA_MAX_SIZE, Work);
 
-         Entries.Allocate_Key_Slot (Manager, Iterator, Work.Data_Block, Size,
-                                    Work.Key_Pos, Work.Key_Block.Buffer.Block);
+         Keys.Allocate_Key_Slot (Manager, Iterator, Work.Data_Block, Size,
+                                 Work.Key_Pos, Work.Key_Block.Buffer.Block);
          Work.Key_Block.Buffer := Iterator.Current.Buffer;
 
          if not Workers.Queue (Manager, Work) then
@@ -168,7 +168,7 @@ package body Keystore.Repository.Data is
    end Add_Data;
 
    procedure Update_Data (Manager    : in out Wallet_Repository;
-                          Iterator   : in out Entries.Data_Key_Iterator;
+                          Iterator   : in out Keys.Data_Key_Iterator;
                           Content    : in Ada.Streams.Stream_Element_Array;
                           Offset     : in out Interfaces.Unsigned_64) is
       Size        : Stream_Element_Offset;
@@ -177,8 +177,8 @@ package body Keystore.Repository.Data is
       Data_Offset : Stream_Element_Offset := Stream_Element_Offset (Offset);
    begin
       Workers.Initialize_Queue (Manager);
-      Entries.Next_Data_Key (Manager, Iterator);
-      while Input_Pos <= Content'Last and Entries.Has_Data_Key (Iterator) loop
+      Keys.Next_Data_Key (Manager, Iterator);
+      while Input_Pos <= Content'Last and Keys.Has_Data_Key (Iterator) loop
          Workers.Allocate_Work (Manager, Workers.DATA_ENCRYPT, null, Iterator, Work);
 
          Size := Content'Last - Input_Pos + 1;
@@ -191,7 +191,7 @@ package body Keystore.Repository.Data is
          Work.Buffer_Pos := 1;
          Work.Last_Pos := Size;
          Work.Data (1 .. Size) := Content (Input_Pos .. Input_Pos + Size - 1);
-         Entries.Update_Key_Slot (Manager, Iterator, Size);
+         Keys.Update_Key_Slot (Manager, Iterator, Size);
 
          --  Run the encrypt data work either through work manager or through current task.
          if not Workers.Queue (Manager, Work) then
@@ -203,7 +203,7 @@ package body Keystore.Repository.Data is
          Input_Pos := Input_Pos + Size;
          Data_Offset := Data_Offset + Size;
 
-         Entries.Next_Data_Key (Manager, Iterator);
+         Keys.Next_Data_Key (Manager, Iterator);
       end loop;
 
       Offset := Interfaces.Unsigned_64 (Data_Offset);
@@ -216,7 +216,7 @@ package body Keystore.Repository.Data is
    end Update_Data;
 
    procedure Update_Data (Manager    : in out Wallet_Repository;
-                          Iterator   : in out Entries.Data_Key_Iterator;
+                          Iterator   : in out Keys.Data_Key_Iterator;
                           Content    : in out Util.Streams.Input_Stream'Class;
                           Offset     : in out Interfaces.Unsigned_64) is
       Work        : Workers.Data_Work_Access;
@@ -225,8 +225,8 @@ package body Keystore.Repository.Data is
       Data_Offset : Stream_Element_Offset := Stream_Element_Offset (Offset);
    begin
       Workers.Initialize_Queue (Manager);
-      Entries.Next_Data_Key (Manager, Iterator);
-      while Entries.Has_Data_Key (Iterator) loop
+      Keys.Next_Data_Key (Manager, Iterator);
+      while Keys.Has_Data_Key (Iterator) loop
          Workers.Allocate_Work (Manager, Workers.DATA_ENCRYPT, null, Iterator, Work);
 
          --  Fill the work buffer by reading the stream.
@@ -237,7 +237,7 @@ package body Keystore.Repository.Data is
          end if;
 
          Size := Work.Last_Pos - Work.Buffer_Pos + 1;
-         Entries.Update_Key_Slot (Manager, Iterator, Size);
+         Keys.Update_Key_Slot (Manager, Iterator, Size);
 
          --  Run the encrypt data work either through work manager or through current task.
          if not Workers.Queue (Manager, Work) then
@@ -248,7 +248,7 @@ package body Keystore.Repository.Data is
 
          Data_Offset := Data_Offset + Last;
 
-         Entries.Next_Data_Key (Manager, Iterator);
+         Keys.Next_Data_Key (Manager, Iterator);
       end loop;
 
       Offset := Interfaces.Unsigned_64 (Data_Offset);
@@ -264,15 +264,15 @@ package body Keystore.Repository.Data is
    --  Erase the data fragments starting at the key iterator current position.
    --  ------------------------------
    procedure Delete_Data (Manager    : in out Wallet_Repository;
-                          Iterator   : in out Entries.Data_Key_Iterator) is
+                          Iterator   : in out Keys.Data_Key_Iterator) is
       Work : Workers.Data_Work_Access;
-      Mark : Entries.Data_Key_Marker;
+      Mark : Keys.Data_Key_Marker;
    begin
-      Entries.Mark_Data_Key (Iterator, Mark);
+      Keys.Mark_Data_Key (Iterator, Mark);
       Workers.Initialize_Queue (Manager);
       loop
-         Entries.Next_Data_Key (Manager, Iterator);
-         exit when not Entries.Has_Data_Key (Iterator);
+         Keys.Next_Data_Key (Manager, Iterator);
+         exit when not Keys.Has_Data_Key (Iterator);
          Workers.Allocate_Work (Manager, Workers.DATA_RELEASE, null, Iterator, Work);
 
          --  Run the delete data work either through work manager or through current task.
@@ -283,8 +283,8 @@ package body Keystore.Repository.Data is
          end if;
 
          --  When the last data block was processed, erase the data key.
-         if Entries.Is_Last_Key (Iterator) then
-            Entries.Delete_Key (Manager, Iterator, Mark);
+         if Keys.Is_Last_Key (Iterator) then
+            Keys.Delete_Key (Manager, Iterator, Mark);
          end if;
       end loop;
       Workers.Flush_Queue (Manager, null);
@@ -301,7 +301,7 @@ package body Keystore.Repository.Data is
    --  Get the data associated with the named entry.
    --  ------------------------------
    procedure Get_Data (Manager    : in out Wallet_Repository;
-                       Iterator   : in out Entries.Data_Key_Iterator;
+                       Iterator   : in out Keys.Data_Key_Iterator;
                        Output     : out Ada.Streams.Stream_Element_Array) is
       procedure Process (Work : in Workers.Data_Work_Access);
 
@@ -319,8 +319,8 @@ package body Keystore.Repository.Data is
    begin
       Workers.Initialize_Queue (Manager);
       loop
-         Entries.Next_Data_Key (Manager, Iterator);
-         exit when not Entries.Has_Data_Key (Iterator);
+         Keys.Next_Data_Key (Manager, Iterator);
+         exit when not Keys.Has_Data_Key (Iterator);
          Workers.Allocate_Work (Manager, Workers.DATA_DECRYPT, Process'Access, Iterator, Work);
 
          --  Run the decipher work either through work manager or through current task.
@@ -344,7 +344,7 @@ package body Keystore.Repository.Data is
    end Get_Data;
 
    procedure Get_Data (Manager    : in out Wallet_Repository;
-                       Iterator   : in out Entries.Data_Key_Iterator;
+                       Iterator   : in out Keys.Data_Key_Iterator;
                        Output     : in out Util.Streams.Output_Stream'Class) is
       procedure Process (Work : in Workers.Data_Work_Access);
 
@@ -357,8 +357,8 @@ package body Keystore.Repository.Data is
    begin
       Workers.Initialize_Queue (Manager);
       loop
-         Entries.Next_Data_Key (Manager, Iterator);
-         exit when not Entries.Has_Data_Key (Iterator);
+         Keys.Next_Data_Key (Manager, Iterator);
+         exit when not Keys.Has_Data_Key (Iterator);
          Workers.Allocate_Work (Manager, Workers.DATA_DECRYPT, Process'Access, Iterator, Work);
 
          --  Run the decipher work either through work manager or through current task.
