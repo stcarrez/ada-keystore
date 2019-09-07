@@ -51,7 +51,7 @@ package body Keystore.Repository.Data is
 
    use type Interfaces.Unsigned_64;
 
-   Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Metadata");
+   Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Repository.Data");
 
    --  ------------------------------
    --  Find the data block to hold a new data entry that occupies the given space.
@@ -75,7 +75,7 @@ package body Keystore.Repository.Data is
                        Iterator    : in out Entries.Data_Key_Iterator;
                        Content     : in Ada.Streams.Stream_Element_Array;
                        Offset      : in out Interfaces.Unsigned_64) is
-      Size        : Stream_Element_Offset;
+      Size        : IO.Buffer_Size;
       Input_Pos   : Stream_Element_Offset := Content'First;
       Data_Offset : Stream_Element_Offset := Stream_Element_Offset (Offset);
       Work        : Workers.Data_Work_Access;
@@ -85,15 +85,9 @@ package body Keystore.Repository.Data is
          --  Get a data work instance or flush pending works to make one available.
          Workers.Allocate_Work (Manager, Workers.DATA_ENCRYPT, null, Iterator, Work);
 
-         Work.Buffer_Pos := 1;
-         Size := Content'Last - Input_Pos + 1;
-         if Size > DATA_MAX_SIZE then
-            Size := DATA_MAX_SIZE;
-         end if;
-         Work.Last_Pos := Size;
-         Work.Data (1 .. Size) := Content (Input_Pos .. Input_Pos + Size - 1);
+         Workers.Fill (Work.all, Content, Input_Pos, Size);
 
-         Allocate_Data_Block (Manager, DATA_MAX_SIZE, Work);
+         Allocate_Data_Block (Manager, Size, Work);
 
          Entries.Allocate_Key_Slot (Manager, Iterator, Work.Data_Block,
                                     Interfaces.Unsigned_16 (Size),
@@ -103,6 +97,7 @@ package body Keystore.Repository.Data is
          if not Workers.Queue (Manager, Work) then
             Work.Do_Cipher_Data;
             Workers.Put_Work (Manager.Workers.all, Work);
+            Work.Check_Raise_Error;
          end if;
 
          --  Move on to what remains.
@@ -146,6 +141,7 @@ package body Keystore.Repository.Data is
          if not Workers.Queue (Manager, Work) then
             Work.Do_Cipher_Data;
             Workers.Put_Work (Manager.Workers.all, Work);
+            Work.Check_Raise_Error;
          end if;
 
          --  Move on to what remains.
@@ -157,7 +153,7 @@ package body Keystore.Repository.Data is
 
    procedure Update_Data (Manager    : in out Wallet_Manager;
                           Iterator   : in out Entries.Data_Key_Iterator;
-                          Content      : in Ada.Streams.Stream_Element_Array;
+                          Content    : in Ada.Streams.Stream_Element_Array;
                           Offset     : in out Interfaces.Unsigned_64) is
       Size        : Stream_Element_Offset;
       Input_Pos   : Stream_Element_Offset := Content'First;
@@ -173,21 +169,24 @@ package body Keystore.Repository.Data is
          if Size > DATA_MAX_SIZE then
             Size := DATA_MAX_SIZE;
          end if;
+         if Size > AES_Align (Iterator.Data_Size) then
+            Size := AES_Align (Iterator.Data_Size);
+         end if;
          Work.Buffer_Pos := 1;
          Work.Last_Pos := Size;
          Work.Data (1 .. Size) := Content (Input_Pos .. Input_Pos + Size - 1);
+         Entries.Update_Key_Slot (Manager, Iterator, Size);
 
          --  Run the encrypt data work either through work manager or through current task.
          if not Workers.Queue (Manager, Work) then
             Work.Do_Cipher_Data;
             Workers.Put_Work (Manager.Workers.all, Work);
+            Work.Check_Raise_Error;
          end if;
 
          Input_Pos := Input_Pos + Size;
          Data_Offset := Data_Offset + Size;
 
-         Manager.Modified.Include (Iterator.Current.Buffer.Block,
-                                   Iterator.Current.Buffer.Data);
          Entries.Next_Data_Key (Manager, Iterator);
       end loop;
 
@@ -205,7 +204,8 @@ package body Keystore.Repository.Data is
                           Content    : in out Util.Streams.Input_Stream'Class;
                           Offset     : in out Interfaces.Unsigned_64) is
       Work        : Workers.Data_Work_Access;
-      Last        : IO.Buffer_Size;
+      Last        : IO.Buffer_Size := IO.Buffer_Size'Last;
+      Size        : IO.Buffer_Size;
       Data_Offset : Stream_Element_Offset := Stream_Element_Offset (Offset);
    begin
       Workers.Initialize_Queue (Manager);
@@ -214,22 +214,24 @@ package body Keystore.Repository.Data is
          Workers.Allocate_Work (Manager, Workers.DATA_ENCRYPT, null, Iterator, Work);
 
          --  Fill the work buffer by reading the stream.
-         Workers.Fill (Work.all, Content, DATA_MAX_SIZE, Last);
+         Workers.Fill (Work.all, Content, AES_Align (Iterator.Data_Size), Last);
          if Last = 0 then
             Workers.Put_Work (Manager.Workers.all, Work);
             exit;
          end if;
 
+         Size := Work.Last_Pos - Work.Buffer_Pos + 1;
+         Entries.Update_Key_Slot (Manager, Iterator, Size);
+
          --  Run the encrypt data work either through work manager or through current task.
          if not Workers.Queue (Manager, Work) then
             Work.Do_Cipher_Data;
             Workers.Put_Work (Manager.Workers.all, Work);
+            Work.Check_Raise_Error;
          end if;
 
          Data_Offset := Data_Offset + Last;
 
-         Manager.Modified.Include (Iterator.Current.Buffer.Block,
-                                   Iterator.Current.Buffer.Data);
          Entries.Next_Data_Key (Manager, Iterator);
       end loop;
 
@@ -238,14 +240,13 @@ package body Keystore.Repository.Data is
          Delete_Data (Manager, Iterator);
       else
          Workers.Flush_Queue (Manager, null);
+         Add_Data (Manager, Iterator, Content, Offset);
       end if;
    end Update_Data;
 
    --  Erase the data fragments starting at the key iterator current position.
    procedure Delete_Data (Manager    : in out Wallet_Manager;
                           Iterator   : in out Entries.Data_Key_Iterator) is
-      use type Buffers.Storage_Block;
-
       Work : Workers.Data_Work_Access;
       Mark : Entries.Data_Key_Marker;
    begin
@@ -260,6 +261,7 @@ package body Keystore.Repository.Data is
          if not Workers.Queue (Manager, Work) then
             Work.Do_Delete_Data;
             Workers.Put_Work (Manager.Workers.all, Work);
+            Work.Check_Raise_Error;
          end if;
 
          --  When the last data block was processed, erase the data key.
@@ -285,7 +287,7 @@ package body Keystore.Repository.Data is
            := Work.End_Data - Work.Start_Data + 1;
       begin
          Output (Data_Offset .. Data_Offset + Data_Size - 1)
-           := Work.Data (Work.Buffer_Pos .. Work.Last_Pos);
+           := Work.Data (Work.Buffer_Pos .. Work.Buffer_Pos + Data_Size - 1);
          Data_Offset := Data_Offset + Data_Size;
       end Process;
 
@@ -302,12 +304,20 @@ package body Keystore.Repository.Data is
 
          --  Run the decipher work either through work manager or through current task.
          if not Workers.Queue (Manager, Work) then
-            Work.Do_Decipher_Data;
+            begin
+               Work.Do_Decipher_Data;
+            exception
+               when others =>
+                  Workers.Put_Work (Manager.Workers.all, Work);
+                  raise;
+            end;
             Workers.Put_Work (Manager.Workers.all, Work);
+            Work.Check_Raise_Error;
             Process (Work);
          end if;
 
       end loop;
+      Iterator.Current_Offset := Iterator.Current_Offset + Interfaces.Unsigned_64 (Iterator.Data_Size);
       Workers.Flush_Queue (Manager, Process'Access);
 
    exception
@@ -341,8 +351,15 @@ package body Keystore.Repository.Data is
 
          --  Run the decipher work either through work manager or through current task.
          if not Workers.Queue (Manager, Work) then
-            Work.Do_Decipher_Data;
+            begin
+               Work.Do_Decipher_Data;
+            exception
+               when others =>
+                  Workers.Put_Work (Manager.Workers.all, Work);
+                  raise;
+            end;
             Workers.Put_Work (Manager.Workers.all, Work);
+            Work.Check_Raise_Error;
             Output.Write (Work.Data (Work.Buffer_Pos .. Work.Last_Pos));
          end if;
 
