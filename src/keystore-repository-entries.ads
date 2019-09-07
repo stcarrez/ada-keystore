@@ -93,6 +93,10 @@ private package Keystore.Repository.Entries is
                                 Key_Pos    : out IO.Block_Index;
                                 Key_Block  : out IO.Storage_Block);
 
+   procedure Update_Key_Slot (Manager    : in out Wallet_Repository;
+                              Iterator   : in out Data_Key_Iterator;
+                              Size       : in IO.Buffer_Size);
+
    --  Save the directory blocks that have been modified.
    procedure Save (Manager    : in out Wallet_Manager);
 
