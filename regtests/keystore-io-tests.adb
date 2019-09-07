@@ -77,12 +77,12 @@ package body Keystore.IO.Tests is
          Decipher.Set_Key (Secret);
          Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
          Stream.Open (Path => Path);
-         Buffer.Buffer := Buffers.Allocate (Storage_Block '(0, 1));
+         Buffer.Buffer := Buffers.Allocate (Storage_Block '(DEFAULT_STORAGE_ID, 1));
          Stream.Read (Decipher     => Decipher,
                       Sign         => Sign,
                       Decrypt_Size => Size,
                       Into         => Buffer.Buffer);
-         Buffer.Pos := IO.BT_DATA_START;
+         Buffer.Pos := IO.BT_HEADER_START;
          Util.Tests.Assert_Equals (T, BT_WALLET_HEADER,
                                    Integer (Marshallers.Get_Unsigned_16 (Buffer)),
                                    "Invalid wallet header tag");
@@ -115,7 +115,7 @@ package body Keystore.IO.Tests is
          Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
          Stream.Open (Path => Path);
          begin
-            Buffer.Buffer := Buffers.Allocate (Storage_Block '(1, 1));
+            Buffer.Buffer := Buffers.Allocate (Storage_Block '(DEFAULT_STORAGE_ID, 1));
             Stream.Read (Decipher     => Decipher,
                          Sign         => Sign,
                          Decrypt_Size => Size,
@@ -183,13 +183,15 @@ package body Keystore.IO.Tests is
          Decipher.Set_Key (Secret);
          Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
          Stream.Open (Path => Path);
-         Buffer.Buffer := Buffers.Allocate (Storage_Block '(1, 1));
+         Buffer.Buffer := Buffers.Allocate (Storage_Block '(DEFAULT_STORAGE_ID, 1));
 
          --  Read first block
          Stream.Read (Decipher     => Decipher,
                       Sign         => Sign,
                       Decrypt_Size => Size,
                       Into         => Buffer.Buffer);
+
+         Buffer.Pos := IO.BT_HEADER_START;
          Util.Tests.Assert_Equals (T, BT_WALLET_HEADER,
                                    Integer (Marshallers.Get_Unsigned_16 (Buffer)),
                                    "Invalid wallet header tag");
@@ -211,11 +213,14 @@ package body Keystore.IO.Tests is
 
          --  Read other blocks
          for I in 1 .. 1000 loop
-            Buffer.Buffer := Buffers.Allocate (Storage_Block '(1, IO.Block_Number (I + 1)));
+            Buffer.Buffer := Buffers.Allocate (Storage_Block '(DEFAULT_STORAGE_ID,
+                                               IO.Block_Number (I + 1)));
             Stream.Read (Decipher     => Decipher,
                          Sign         => Sign,
                          Decrypt_Size => Size,
                          Into         => Buffer.Buffer);
+
+            Buffer.Pos := IO.BT_HEADER_START;
             Util.Tests.Assert_Equals (T, BT_WALLET_DATA,
                                       Integer (Marshallers.Get_Unsigned_16 (Buffer)),
                                       "Invalid wallet header tag");
