@@ -22,6 +22,7 @@ with Keystore.Repository.Entries;
 package body Keystore.Repository.Keys is
 
    use type Interfaces.Unsigned_32;
+   use type Interfaces.Unsigned_64;
 
    Log : constant Util.Log.Loggers.Logger
      := Util.Log.Loggers.Create ("Keystore.Repository.Keys");
@@ -66,8 +67,11 @@ package body Keystore.Repository.Keys is
       Iterator.Entry_Id := Item.Id;
       Iterator.Current_Offset := 0;
       Iterator.Key_Pos := IO.Block_Index'Last;
+      Iterator.Key_Count := 0;
+      Iterator.Key_Header_Pos := IO.Block_Index'Last;
       Iterator.Count := 0;
       Iterator.Item := Item;
+      Iterator.Data_Size := 0;
       if Wallet_Data_Key_List.Has_Element (Iterator.Key_Iter) then
          Load_Next_Keys (Manager, Iterator);
       else
@@ -89,6 +93,7 @@ package body Keystore.Repository.Keys is
                             Iterator : in out Data_Key_Iterator) is
       Pos : IO.Block_Index;
    begin
+      Iterator.Current_Offset := Iterator.Current_Offset + Interfaces.Unsigned_64 (Iterator.Data_Size);
       loop
          --  Extract the next data key from the current directory block.
          if Iterator.Count > 0 then
@@ -104,12 +109,14 @@ package body Keystore.Repository.Keys is
 
          if not Wallet_Data_Key_List.Has_Element (Iterator.Key_Iter) then
             Iterator.Directory := null;
+            Iterator.Data_Size := 0;
             return;
          end if;
 
          Wallet_Data_Key_List.Next (Iterator.Key_Iter);
          if not Wallet_Data_Key_List.Has_Element (Iterator.Key_Iter) then
             Iterator.Directory := null;
+            Iterator.Data_Size := 0;
             return;
          end if;
 
