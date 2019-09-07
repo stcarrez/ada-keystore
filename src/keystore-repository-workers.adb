@@ -117,7 +117,7 @@ package body Keystore.Repository.Workers is
    procedure Allocate_Work (Manager  : in out Wallet_Repository;
                             Kind     : in Data_Work_Type;
                             Process  : access procedure (Work : in Data_Work_Access);
-                            Iterator : in Entries.Data_Key_Iterator;
+                            Iterator : in Keys.Data_Key_Iterator;
                             Work     : out Data_Work_Access) is
       Workers : constant access Wallet_Worker := Manager.Workers;
       Seq     : Natural;
@@ -193,7 +193,7 @@ package body Keystore.Repository.Workers is
       end if;
 
       --  Read wallet data block.
-      Keys.Set_IV (Work.Info_Cryptor, Work.Data_Block.Block);
+      Keystore.Keys.Set_IV (Work.Info_Cryptor, Work.Data_Block.Block);
       Work.Stream.Read (Decipher     => Work.Info_Cryptor.Decipher,
                         Sign         => Work.Info_Cryptor.Sign,
                         Decrypt_Size => Size,
@@ -382,7 +382,7 @@ package body Keystore.Repository.Workers is
          end if;
 
          --  Write the encrypted data block.
-         Keys.Set_IV (Work.Info_Cryptor, Work.Data_Block.Block);
+         Keystore.Keys.Set_IV (Work.Info_Cryptor, Work.Data_Block.Block);
          Work.Stream.Write (Encrypt_Size => Encrypt_Size,
                             Cipher       => Work.Info_Cryptor.Cipher,
                             Sign         => Work.Info_Cryptor.Sign,
@@ -531,7 +531,7 @@ package body Keystore.Repository.Workers is
       for I in 1 .. Count loop
          Work := Result.Work_Slots (I)'Access;
          Work.Stream := Manager.Stream;
-         Keys.Set_Key (Work.Info_Cryptor, Manager.Config.Data);
+         Keystore.Keys.Set_Key (Work.Info_Cryptor, Manager.Config.Data);
          Result.Work_Pool (I) := Work;
          Result.Work_Slots (I).Queue := Result.Data_Queue'Access;
          Result.Work_Slots (I).Manager := Manager;
