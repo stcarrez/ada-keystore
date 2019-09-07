@@ -155,9 +155,6 @@ private
    type Wallet_Directory_Entry;
    type Wallet_Directory_Entry_Access is access Wallet_Directory_Entry;
 
-   type Wallet_Block_Entry;
-   type Wallet_Block_Entry_Access is access Wallet_Block_Entry;
-
    type Wallet_Data_Key_Entry is record
       Directory : Wallet_Directory_Entry_Access;
       Size      : Stream_Element_Offset;
@@ -166,15 +163,6 @@ private
    package Wallet_Data_Key_List is
      new Ada.Containers.Doubly_Linked_Lists (Element_Type => Wallet_Data_Key_Entry,
                                              "="          => "=");
-
-   type Wallet_Block_Entry is record
-      Storage    : Keystore.IO.Storage_Identifier;
-      Block      : Keystore.IO.Block_Number;
-      Available  : Stream_Element_Offset := IO.Block_Index'Last - IO.BT_DATA_START - 4;
-      Last_Pos   : IO.Block_Index := IO.BT_DATA_START + 4;
-      Data_Start : IO.Block_Index := IO.Block_Index'Last;
-      Ready      : Boolean := False;
-   end record;
 
    type Wallet_Directory_Entry is record
       Block      : Keystore.IO.Storage_Block;
@@ -209,11 +197,6 @@ private
 
    use type IO.Block_Count;
 
-   package Wallet_Block_Maps is
-     new Ada.Containers.Ordered_Maps (Key_Type      => IO.Block_Number,
-                                      Element_Type  => Wallet_Block_Entry_Access,
-                                      "<" => Buffers."<");
-
    package Wallet_Maps is
      new Ada.Containers.Indefinite_Hashed_Maps (Key_Type        => String,
                                                 Element_Type    => Wallet_Entry_Access,
@@ -233,7 +216,6 @@ private
    type Wallet_Repository is limited new Ada.Finalization.Limited_Controlled with record
       Id             : Wallet_Identifier;
       Next_Id        : Wallet_Entry_Index;
-      Data_List      : Wallet_Block_Maps.Map;
       Directory_List : Wallet_Directory_List.List;
       Randomize      : Boolean := False;
       Root           : IO.Storage_Block;
