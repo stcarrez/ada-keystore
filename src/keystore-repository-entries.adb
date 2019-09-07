@@ -415,7 +415,7 @@ package body Keystore.Repository.Entries is
    procedure Allocate_Key_Slot (Manager    : in out Wallet_Repository;
                                 Iterator   : in out Data_Key_Iterator;
                                 Data_Block : in IO.Storage_Block;
-                                Size       : in Interfaces.Unsigned_16;
+                                Size       : in IO.Buffer_Size;
                                 Key_Pos    : out IO.Block_Index;
                                 Key_Block  : out IO.Storage_Block) is
       Key_Start : IO.Block_Index;
@@ -479,7 +479,7 @@ package body Keystore.Repository.Entries is
          Marshallers.Put_Unsigned_16 (Iterator.Current, Iterator.Key_Count);
          Iterator.Current.Pos := Iterator.Key_Header_Pos - Key_Slot_Size (Iterator.Key_Count);
          Marshallers.Put_Storage_Block (Iterator.Current, Data_Block);
-         Marshallers.Put_Unsigned_16 (Iterator.Current, Size);
+         Marshallers.Put_Buffer_Size (Iterator.Current, Size);
          Iterator.Key_Pos := Iterator.Current.Pos;
 
          Manager.Modified.Include (Iterator.Current.Buffer.Block, Iterator.Current.Buffer.Data);
