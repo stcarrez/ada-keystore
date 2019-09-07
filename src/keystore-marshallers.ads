@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---  keystore-io -- IO low level operation for the keystore
+--  keystore-marshallers -- Data marshaller for the keystore
 --  Copyright (C) 2019 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
@@ -49,6 +49,7 @@ private package Keystore.Marshallers is
    subtype Block_Count is Buffers.Block_Count;
    subtype Block_Number is Buffers.Block_Number;
    subtype Block_Index is Stream_Element_Offset range 1 .. Block_Size;
+   subtype Buffer_Size is Buffers.Buffer_Size;
 
    subtype Block_Type is Stream_Element_Array (Block_Index);
 
@@ -111,10 +112,6 @@ private package Keystore.Marshallers is
                          Protect_IV  : in Secret_Key) with
      Pre => Into.Pos < Block_Type'Last - Value.Length;
 
-   procedure Put_Data (Into  : in out Marshaller;
-                       Value : in Util.Encoders.AES.Word_Block_Type) with
-     Pre => Into.Pos < Block_Type'Last - 16;
-
    procedure Put_HMAC_SHA256 (Into    : in out Marshaller;
                               Key     : in Secret_Key;
                               Content : in Ada.Streams.Stream_Element_Array) with
@@ -149,18 +146,13 @@ private package Keystore.Marshallers is
    function Get_Block_Index (From : in out Marshaller) return Block_Index is
      (Block_Index (Get_Unsigned_16 (From)));
 
+   function Get_Buffer_Size (From : in out Marshaller) return Buffer_Size is
+     (Buffer_Size (Get_Unsigned_16 (From)));
+
    procedure Get_Secret (From        : in out Marshaller;
                          Secret      : out Secret_Key;
                          Protect_Key : in Secret_Key;
                          Protect_IV  : in Secret_Key);
-
-   procedure Get_Data (From  : in out Marshaller;
-                       Value : out Ada.Streams.Stream_Element_Array) with
-     Pre => From.Pos < Block_Type'Last - Value'Length;
-
-   procedure Get_Data (From  : in out Marshaller;
-                       Value : out Util.Encoders.AES.Word_Block_Type) with
-     Pre => From.Pos < Block_Type'Last - 16;
 
    procedure Skip (From  : in out Marshaller;
                    Count : in Block_Index) with
