@@ -15,7 +15,6 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Keystore.Marshallers;
 private package Keystore.Repository.Entries is
 
    subtype Wallet_Manager is Wallet_Repository;
@@ -64,13 +63,8 @@ private package Keystore.Repository.Entries is
 
 private
 
-   use type Interfaces.Unsigned_16;
-
    --  Size of the wallet entry in the repository.
    function Entry_Size (Item : in Wallet_Entry_Access) return IO.Block_Index is
       (DATA_NAME_ENTRY_SIZE + Item.Name'Length);
-
-   function Key_Slot_Size (Count : in Interfaces.Unsigned_16) return IO.Block_Index is
-      (IO.Block_Index (DATA_KEY_ENTRY_SIZE * Count));
 
 end Keystore.Repository.Entries;
