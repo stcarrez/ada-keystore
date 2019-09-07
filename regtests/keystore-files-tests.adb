@@ -24,6 +24,7 @@ with Ada.Streams.Stream_IO;
 with Util.Test_Caller;
 with Util.Streams.Files;
 with Util.Measures;
+with Util.Streams.Buffered;
 with Keystore.IO.Files;
 package body Keystore.Files.Tests is
 
@@ -53,6 +54,8 @@ package body Keystore.Files.Tests is
                        Test_Add_Error'Access);
       Caller.Add_Test (Suite, "Test Keystore.Write",
                        Test_Get_Stream'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Add (Empty)",
+                       Test_Add_Empty'Access);
       Caller.Add_Test (Suite, "Test Keystore.Add (Perf)",
                        Test_Perf_Add'Access);
       Caller.Add_Test (Suite, "Test Keystore.Set (Input_Stream < 4K)",
@@ -653,6 +656,45 @@ package body Keystore.Files.Tests is
          W.Set_Key (New_Password, New_Password, Keystore.Unsecure_Config, Keystore.KEY_REMOVE);
       end;
    end Test_Set_Key;
+
+   --  ------------------------------
+   --  Test adding empty values to a keystore.
+   --  ------------------------------
+   procedure Test_Add_Empty (T : in out Test) is
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-empty.akt");
+      Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
+      Config   : Keystore.Wallet_Config := Unsecure_Config;
+   begin
+      Config.Overwrite := True;
+      declare
+         W        : Keystore.Files.Wallet_File;
+         Empty    : Util.Streams.Buffered.Input_Buffer_Stream;
+      begin
+         W.Create (Path => Path, Password => Password, Config => Config);
+         W.Add ("empty-1", "");
+         T.Assert (W.Contains ("empty-1"), "Property 'empty-1' not contained in wallet");
+
+         Empty.Initialize ("");
+         W.Add ("empty-2", T_BINARY, Empty);
+         T.Assert (W.Contains ("empty-2"), "Property 'empty-2' not contained in wallet");
+
+         Util.Tests.Assert_Equals (T, "", W.Get ("empty-1"),
+                                   "Property 'empty-1' cannot be retrieved from keystore");
+         Util.Tests.Assert_Equals (T, "", W.Get ("empty-2"),
+                                   "Property 'empty-1' cannot be retrieved from keystore");
+      end;
+      declare
+         W        : Keystore.Files.Wallet_File;
+      begin
+         W.Open (Path => Path, Password => Password);
+         T.Assert (W.Contains ("empty-1"), "Property 'empty-1' not contained in wallet");
+         T.Assert (W.Contains ("empty-2"), "Property 'empty-2' not contained in wallet");
+         Util.Tests.Assert_Equals (T, "", W.Get ("empty-1"),
+                                   "Property 'empty-1' cannot be retrieved from keystore");
+         Util.Tests.Assert_Equals (T, "", W.Get ("empty-2"),
+                                   "Property 'empty-1' cannot be retrieved from keystore");
+      end;
+   end Test_Add_Empty;
 
    --  ------------------------------
    --  Test getting values through an Output_Stream.
