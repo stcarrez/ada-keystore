@@ -49,12 +49,13 @@ package body Keystore.Repository.Workers is
       end if;
    end Queue;
 
-   procedure Fill (Work  : in out Data_Work;
-                   Input : in out Util.Streams.Input_Stream'Class;
-                   Space : in Buffer_Offset;
-                   Last  : out Buffers.Buffer_Size) is
+   procedure Fill (Work      : in out Data_Work;
+                   Input     : in out Util.Streams.Input_Stream'Class;
+                   Space     : in Buffer_Offset;
+                   Data_Size : out Buffers.Buffer_Size) is
       Pos   : Buffer_Offset := Work.Data'First;
       Limit : constant Buffer_Offset := Pos + Space - 1;
+      Last  : Stream_Element_Offset;
    begin
       Work.Buffer_Pos := 1;
       loop
@@ -63,6 +64,7 @@ package body Keystore.Repository.Workers is
          --  Reached end of buffer.
          if Last >= Limit then
             Work.Last_Pos := Limit;
+            Data_Size := Last;
             return;
          end if;
 
@@ -70,13 +72,29 @@ package body Keystore.Repository.Workers is
          if Last < Pos then
             if Last >= Work.Data'First then
                Work.Last_Pos := Last;
+               Data_Size := Last;
             else
-               Last := 0;
+               Data_Size := 0;
             end if;
             return;
          end if;
          Pos := Last + 1;
       end loop;
+   end Fill;
+
+   procedure Fill (Work      : in out Data_Work;
+                   Input     : in Ada.Streams.Stream_Element_Array;
+                   Input_Pos : in Ada.Streams.Stream_Element_Offset;
+                   Data_Size : out Buffers.Buffer_Size) is
+      Size : Stream_Element_Offset;
+   begin
+      Size := Input'Last - Input_Pos + 1;
+      if Size > DATA_MAX_SIZE then
+         Size := DATA_MAX_SIZE;
+      end if;
+      Data_Size := Size;
+      Work.Last_Pos := Size;
+      Work.Data (1 .. Size) := Input (Input_Pos .. Input_Pos + Size - 1);
    end Fill;
 
    procedure Put_Work (Worker : in out Wallet_Worker;
@@ -115,12 +133,15 @@ package body Keystore.Repository.Workers is
       end loop;
 
       Work.Kind := Kind;
+      Work.Buffer_Pos := 1;
       Work.Entry_Id := Iterator.Entry_Id;
       Work.Key_Pos := Iterator.Key_Pos;
       Work.Key_Block.Buffer := Iterator.Current.Buffer;
       Work.Data_Block := Iterator.Data_Block;
       Work.Data_Need_Setup := False;
+      Work.Data_Offset := Iterator.Current_Offset;
       Work.Sequence := Workers.Sequence;
+      Work.Status := PENDING;
       Workers.Sequence := Workers.Sequence + 1;
    end Allocate_Work;
 
@@ -181,7 +202,8 @@ package body Keystore.Repository.Workers is
       Btype := Marshallers.Get_Unsigned_16 (Data_Block);
       if Btype /= IO.BT_WALLET_DATA then
          Logs.Error (Log, "Block{0} invalid block type", Data_Block.Buffer.Block);
-         raise Keystore.Corrupted;
+         Work.Status := DATA_CORRUPTION;
+         return;
       end if;
       Marshallers.Skip (Data_Block, 2);
 
@@ -190,13 +212,14 @@ package body Keystore.Repository.Workers is
       if Wid /= Interfaces.Unsigned_32 (Work.Manager.Id) then
          Logs.Error (Log, "Block{0} invalid block wallet identifier",
                      Work.Data_Block);
-         raise Keystore.Corrupted;
+         Work.Status := DATA_CORRUPTION;
+         return;
       end if;
       Marshallers.Skip (Data_Block, 8);
 
       declare
          Index        : Wallet_Entry_Index;
-         Slot_Size    : Interfaces.Unsigned_16;
+         Slot_Size    : IO.Buffer_Size;
          Data_Pos     : IO.Block_Index;
          Fragment_Pos : Natural := 0;
       begin
@@ -204,28 +227,29 @@ package body Keystore.Repository.Workers is
          Work.Fragment_Count := Natural (Size / DATA_ENTRY_SIZE);
          while Data_Block.Pos < IO.BT_DATA_START + Size loop
             Index := Wallet_Entry_Index (Marshallers.Get_Unsigned_32 (Data_Block));
-            Slot_Size := Marshallers.Get_Unsigned_16 (Data_Block);
+            Slot_Size := Marshallers.Get_Buffer_Size (Data_Block);
             if Index = Work.Entry_Id then
                Work.Fragment_Pos := Fragment_Pos + 1;
                Work.End_Aligned_Data := Data_Pos;
-               Data_Pos := Data_Pos - AES_Align (Stream_Element_Offset (Slot_Size)) + 1;
+               Data_Pos := Data_Pos - AES_Align (Slot_Size) + 1;
                Work.Start_Data := Data_Pos;
-               Work.End_Data := Data_Pos + IO.Block_Index (Slot_Size) - 1;
+               Work.End_Data := Data_Pos + Slot_Size - 1;
                Marshallers.Skip (Data_Block, 2);
                Work.Data_Offset := Marshallers.Get_Unsigned_64 (Data_Block);
                return;
             end if;
             Fragment_Pos := Fragment_Pos + 1;
-            Data_Pos := Data_Pos - AES_Align (Stream_Element_Offset (Slot_Size));
+            Data_Pos := Data_Pos - AES_Align (Slot_Size);
             Marshallers.Skip (Data_Block, DATA_ENTRY_SIZE - 4 - 2);
          end loop;
          Logs.Error (Log, "Block{0} does not contain expected data entry", Work.Data_Block);
+         Work.Status := DATA_CORRUPTION;
       end;
 
    exception
       when Ada.IO_Exceptions.End_Error | Ada.IO_Exceptions.Data_Error =>
          Logs.Error (Log, "Block{0} cannot be read", Work.Data_Block);
-         raise Keystore.Corrupted;
+         Work.Status := DATA_CORRUPTION;
 
    end Load_Data;
 
@@ -246,6 +270,9 @@ package body Keystore.Repository.Workers is
 
       --  Read the encrypted data block.
       Load_Data (Work, Data_Block);
+      if Work.Status /= PENDING then
+         return;
+      end if;
 
       declare
          Buf : constant Buffers.Buffer_Accessor := Data_Block.Buffer.Data.Value;
@@ -279,6 +306,7 @@ package body Keystore.Repository.Workers is
             Log.Debug ("Dump data:");
             Logs.Dump (Log, Work.Data (Work.Buffer_Pos .. Work.Last_Pos));
          end if;
+         Work.Status := SUCCESS;
       end;
    end Do_Decipher_Data;
 
@@ -301,6 +329,9 @@ package body Keystore.Repository.Workers is
 
       --  Read the encrypted data block.
       Load_Data (Work, Data_Block);
+      if Work.Status /= PENDING then
+         return;
+      end if;
 
       --  Generate a new IV and key.
       Work.Random.Generate (IV);
@@ -360,6 +391,7 @@ package body Keystore.Repository.Workers is
             Logs.Dump (Log, Buf.Data (Work.Start_Data .. Work.End_Aligned_Data));
 
          end if;
+         Work.Status := SUCCESS;
       end;
    end Do_Cipher_Data;
 
@@ -370,6 +402,9 @@ package body Keystore.Repository.Workers is
 
       --  Read the encrypted data block to release the data fragment or the full data block.
       Load_Data (Work, Data_Block);
+      if Work.Status /= PENDING then
+         return;
+      end if;
 
       if Work.Fragment_Count > 1 then
          --  The data block looks like:
@@ -387,7 +422,7 @@ package body Keystore.Repository.Workers is
             Start_Entry  : IO.Block_Index;
             Last_Entry   : IO.Block_Index;
             Start_Pos    : IO.Block_Index;
-            Slot_Size    : Interfaces.Unsigned_16;
+            Slot_Size    : IO.Buffer_Size;
             Data_Size    : constant IO.Block_Index := Work.End_Aligned_Data - Work.Start_Data;
             Encrypt_Size : constant IO.Block_Index
               := Data.Data_Entry_Offset (Work.Fragment_Count);
@@ -405,8 +440,8 @@ package body Keystore.Repository.Workers is
             Start_Pos := Work.Start_Data;
             Data_Block.Pos := Start_Entry + 4;
             while Data_Block.Pos < Last_Entry - DATA_ENTRY_SIZE loop
-               Slot_Size := Marshallers.Get_Unsigned_16 (Data_Block);
-               Start_Pos := Start_Pos - AES_Align (Stream_Element_Offset (Slot_Size));
+               Slot_Size := Marshallers.Get_Buffer_Size (Data_Block);
+               Start_Pos := Start_Pos - AES_Align (Slot_Size);
                Marshallers.Skip (Data_Block, DATA_ENTRY_SIZE - 2);
             end loop;
 
@@ -428,6 +463,7 @@ package body Keystore.Repository.Workers is
       else
          Work.Stream.Release (Block => Work.Data_Block);
       end if;
+      Work.Status := SUCCESS;
    end Do_Delete_Data;
 
    overriding
@@ -449,10 +485,26 @@ package body Keystore.Repository.Workers is
       exception
          when E : others =>
             Log.Error ("Unexpected exception", E);
+            Work.Status := DATA_CORRUPTION;
 
       end;
       Work.Queue.Enqueue (Work'Unchecked_Access, Work.Sequence);
    end Execute;
+
+   procedure Check_Raise_Error (Work : in Data_Work) is
+   begin
+      case Work.Status is
+         when DATA_CORRUPTION =>
+            raise Keystore.Corrupted;
+
+         when PENDING | SUCCESS =>
+            null;
+
+         when others =>
+            raise Keystore.Invalid_Block;
+
+      end case;
+   end Check_Raise_Error;
 
    --  ------------------------------
    --  Create the wallet encryption and decryption work manager.
