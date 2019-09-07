@@ -21,6 +21,7 @@ with Keystore.Marshallers;
 with Keystore.Repository.Data;
 with Keystore.Repository.Entries;
 with Keystore.Repository.Workers;
+with Keystore.Repository.Keys;
 
 --  Block = 4K, 8K, 16K, 64K, 128K ?
 --
@@ -144,14 +145,16 @@ package body Keystore.Repository is
                   Content    : in Ada.Streams.Stream_Element_Array) is
       Item        : Wallet_Entry_Access;
       Data_Offset : Interfaces.Unsigned_64 := 0;
-      Iterator    : Entries.Data_Key_Iterator;
+      Iterator    : Keys.Data_Key_Iterator;
    begin
       Entries.Add_Entry (Repository, Name, Kind, Content'Length, Item);
 
       if Content'Length > 0 then
-         Entries.Initialize (Repository, Iterator, Item);
+         Keys.Initialize (Repository, Iterator, Item);
 
          Data.Add_Data (Repository, Iterator, Content, Data_Offset);
+
+         Entries.Update_Entry (Repository, Item, Kind, Data_Offset);
       end if;
 
       Entries.Save (Manager => Repository);
@@ -163,11 +166,11 @@ package body Keystore.Repository is
                   Input      : in out Util.Streams.Input_Stream'Class) is
       Item        : Wallet_Entry_Access;
       Data_Offset : Interfaces.Unsigned_64 := 0;
-      Iterator    : Entries.Data_Key_Iterator;
+      Iterator    : Keys.Data_Key_Iterator;
    begin
       Entries.Add_Entry (Repository, Name, Kind, 1, Item);
 
-      Entries.Initialize (Repository, Iterator, Item);
+      Keys.Initialize (Repository, Iterator, Item);
 
       Data.Add_Data (Repository, Iterator, Input, Data_Offset);
 
@@ -233,10 +236,10 @@ package body Keystore.Repository is
 
       declare
          Item     : constant Wallet_Entry_Access := Wallet_Maps.Element (Pos);
-         Iterator : Entries.Data_Key_Iterator;
+         Iterator : Keys.Data_Key_Iterator;
       begin
          Item.Kind := Kind;
-         Entries.Initialize (Repository, Iterator, Item);
+         Keys.Initialize (Repository, Iterator, Item);
 
          Data.Update_Data (Repository, Iterator, Content, Data_Offset);
 
@@ -262,10 +265,10 @@ package body Keystore.Repository is
 
       declare
          Item     : constant Wallet_Entry_Access := Wallet_Maps.Element (Item_Pos);
-         Iterator : Entries.Data_Key_Iterator;
+         Iterator : Keys.Data_Key_Iterator;
       begin
          Item.Kind := Kind;
-         Entries.Initialize (Repository, Iterator, Item);
+         Keys.Initialize (Repository, Iterator, Item);
 
          Data.Update_Data (Repository, Iterator, Input, Data_Offset);
 
@@ -290,9 +293,9 @@ package body Keystore.Repository is
 
       declare
          Item     : Wallet_Entry_Access := Wallet_Maps.Element (Pos);
-         Iterator : Entries.Data_Key_Iterator;
+         Iterator : Keys.Data_Key_Iterator;
       begin
-         Entries.Initialize (Repository, Iterator, Item);
+         Keys.Initialize (Repository, Iterator, Item);
 
          --  Erase the data fragments used by the entry.
          Data.Delete_Data (Repository, Iterator);
@@ -357,15 +360,18 @@ package body Keystore.Repository is
       end if;
       declare
          Item     : constant Wallet_Entry_Access := Wallet_Maps.Element (Pos);
-         Iterator : Entries.Data_Key_Iterator;
+         Iterator : Keys.Data_Key_Iterator;
       begin
          Result.Size := Natural (Item.Size);
          Result.Kind := Item.Kind;
          Result.Create_Date := Item.Create_Date;
          Result.Update_Date := Item.Update_Date;
 
-         Entries.Initialize (Repository, Iterator, Item);
+         Keys.Initialize (Repository, Iterator, Item);
          Data.Get_Data (Repository, Iterator, Output);
+         if Iterator.Current_Offset /= Item.Size then
+            pragma Assert (Iterator.Current_Offset = Item.Size);
+         end if;
       end;
    end Get_Data;
 
@@ -380,9 +386,9 @@ package body Keystore.Repository is
       end if;
       declare
          Item     : constant Wallet_Entry_Access := Wallet_Maps.Element (Pos);
-         Iterator : Entries.Data_Key_Iterator;
+         Iterator : Keys.Data_Key_Iterator;
       begin
-         Entries.Initialize (Repository, Iterator, Item);
+         Keys.Initialize (Repository, Iterator, Item);
          Data.Get_Data (Repository, Iterator, Output);
       end;
    end Get_Data;
