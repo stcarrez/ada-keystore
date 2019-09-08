@@ -161,7 +161,7 @@ package body Keystore.Repository.Data is
 
    exception
       when E : others =>
-         Log.Error ("Exception while encryptinh data: ", E);
+         Log.Error ("Exception while encrypting data: ", E);
          Workers.Flush_Queue (Manager, null);
          raise;
 
@@ -170,6 +170,7 @@ package body Keystore.Repository.Data is
    procedure Update_Data (Manager    : in out Wallet_Repository;
                           Iterator   : in out Keys.Data_Key_Iterator;
                           Content    : in Ada.Streams.Stream_Element_Array;
+                          Last_Pos   : out Ada.Streams.Stream_Element_Offset;
                           Offset     : in out Interfaces.Unsigned_64) is
       Size        : Stream_Element_Offset;
       Input_Pos   : Stream_Element_Offset := Content'First;
@@ -192,6 +193,7 @@ package body Keystore.Repository.Data is
          Work.Last_Pos := Size;
          Work.Data (1 .. Size) := Content (Input_Pos .. Input_Pos + Size - 1);
          Keys.Update_Key_Slot (Manager, Iterator, Size);
+         Work.Key_Block.Buffer := Iterator.Current.Buffer;
 
          --  Run the encrypt data work either through work manager or through current task.
          if not Workers.Queue (Manager, Work) then
@@ -206,21 +208,27 @@ package body Keystore.Repository.Data is
          Keys.Next_Data_Key (Manager, Iterator);
       end loop;
 
+      Workers.Flush_Queue (Manager, null);
       Offset := Interfaces.Unsigned_64 (Data_Offset);
-      if Input_Pos > Content'Last then
-         Delete_Data (Manager, Iterator);
-      else
-         Workers.Flush_Queue (Manager, null);
-         Add_Data (Manager, Iterator, Content, Offset);
+      Last_Pos := Input_Pos;
+      if Input_Pos <= Content'Last then
+         Keys.Prepare_Append (Manager, Iterator);
       end if;
+
+   exception
+      when E : others =>
+         Log.Error ("Exception while encrypting data: ", E);
+         Workers.Flush_Queue (Manager, null);
+         raise;
+
    end Update_Data;
 
-   procedure Update_Data (Manager    : in out Wallet_Repository;
-                          Iterator   : in out Keys.Data_Key_Iterator;
-                          Content    : in out Util.Streams.Input_Stream'Class;
-                          Offset     : in out Interfaces.Unsigned_64) is
+   procedure Update_Data (Manager       : in out Wallet_Repository;
+                          Iterator      : in out Keys.Data_Key_Iterator;
+                          Content       : in out Util.Streams.Input_Stream'Class;
+                          End_Of_Stream : out Boolean;
+                          Offset        : in out Interfaces.Unsigned_64) is
       Work        : Workers.Data_Work_Access;
-      Last        : IO.Buffer_Size := IO.Buffer_Size'Last;
       Size        : IO.Buffer_Size;
       Data_Offset : Stream_Element_Offset := Stream_Element_Offset (Offset);
    begin
@@ -230,14 +238,14 @@ package body Keystore.Repository.Data is
          Workers.Allocate_Work (Manager, Workers.DATA_ENCRYPT, null, Iterator, Work);
 
          --  Fill the work buffer by reading the stream.
-         Workers.Fill (Work.all, Content, AES_Align (Iterator.Data_Size), Last);
-         if Last = 0 then
+         Workers.Fill (Work.all, Content, AES_Align (Iterator.Data_Size), Size);
+         if Size = 0 then
             Workers.Put_Work (Manager.Workers.all, Work);
             exit;
          end if;
 
-         Size := Work.Last_Pos - Work.Buffer_Pos + 1;
          Keys.Update_Key_Slot (Manager, Iterator, Size);
+         Work.Key_Block.Buffer := Iterator.Current.Buffer;
 
          --  Run the encrypt data work either through work manager or through current task.
          if not Workers.Queue (Manager, Work) then
@@ -246,18 +254,24 @@ package body Keystore.Repository.Data is
             Work.Check_Raise_Error;
          end if;
 
-         Data_Offset := Data_Offset + Last;
+         Data_Offset := Data_Offset + Size;
 
          Keys.Next_Data_Key (Manager, Iterator);
       end loop;
 
+      Workers.Flush_Queue (Manager, null);
       Offset := Interfaces.Unsigned_64 (Data_Offset);
-      if Last = 0 then
-         Delete_Data (Manager, Iterator);
-      else
-         Workers.Flush_Queue (Manager, null);
-         Add_Data (Manager, Iterator, Content, Offset);
+      End_Of_Stream := Size = 0;
+      if not End_Of_Stream then
+         Keys.Prepare_Append (Manager, Iterator);
       end if;
+
+   exception
+      when E : others =>
+         Log.Error ("Exception while encrypting data: ", E);
+         Workers.Flush_Queue (Manager, null);
+         raise;
+
    end Update_Data;
 
    --  ------------------------------
