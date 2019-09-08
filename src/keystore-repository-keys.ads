@@ -18,6 +18,8 @@
 with Keystore.Marshallers;
 private package Keystore.Repository.Keys is
 
+   subtype Key_Count_Type is Interfaces.Unsigned_16 range 0 .. DATA_MAX_KEY_COUNT;
+
    type Data_Key_Iterator is limited record
       Current        : Marshallers.Marshaller;
       Current_Offset : Interfaces.Unsigned_64;
@@ -28,7 +30,7 @@ private package Keystore.Repository.Keys is
       Key_Iter       : Wallet_Data_Key_List.Cursor;
       Data_Size      : Stream_Element_Offset;
       Count          : Interfaces.Unsigned_16;
-      Key_Count      : Interfaces.Unsigned_16;
+      Key_Count      : Key_Count_Type;
       Key_Pos        : IO.Block_Index;
       Key_Header_Pos : IO.Block_Index;
       Key_Last_Pos   : IO.Block_Index;
@@ -59,6 +61,9 @@ private package Keystore.Repository.Keys is
    procedure Delete_Key (Manager  : in out Wallet_Repository;
                          Iterator : in out Data_Key_Iterator;
                          Mark     : in out Data_Key_Marker);
+
+   procedure Prepare_Append (Manager : in out Wallet_Repository;
+                             Iterator : in out Data_Key_Iterator);
 
    procedure Allocate_Key_Slot (Manager    : in out Wallet_Repository;
                                 Iterator   : in out Data_Key_Iterator;
