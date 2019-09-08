@@ -233,11 +233,19 @@ package body Keystore.Repository is
       declare
          Item     : constant Wallet_Entry_Access := Wallet_Maps.Element (Pos);
          Iterator : Keys.Data_Key_Iterator;
+         Last_Pos : Stream_Element_Offset;
       begin
          Item.Kind := Kind;
          Keys.Initialize (Repository, Iterator, Item);
 
-         Data.Update_Data (Repository, Iterator, Content, Data_Offset);
+         Data.Update_Data (Repository, Iterator, Content, Last_Pos, Data_Offset);
+
+         if Last_Pos > Content'Last then
+            Data.Delete_Data (Repository, Iterator);
+         else
+            Data.Add_Data (Repository, Iterator,
+                           Content (Last_Pos .. Content'Last), Data_Offset);
+         end if;
 
          Entries.Update_Entry (Repository, Item, Kind, Data_Offset);
 
@@ -260,13 +268,19 @@ package body Keystore.Repository is
       end if;
 
       declare
-         Item     : constant Wallet_Entry_Access := Wallet_Maps.Element (Item_Pos);
-         Iterator : Keys.Data_Key_Iterator;
+         Item          : constant Wallet_Entry_Access := Wallet_Maps.Element (Item_Pos);
+         Iterator      : Keys.Data_Key_Iterator;
+         End_Of_Stream : Boolean;
       begin
          Item.Kind := Kind;
          Keys.Initialize (Repository, Iterator, Item);
 
-         Data.Update_Data (Repository, Iterator, Input, Data_Offset);
+         Data.Update_Data (Repository, Iterator, Input, End_Of_Stream, Data_Offset);
+         if End_Of_Stream then
+            Data.Delete_Data (Repository, Iterator);
+         else
+            Data.Add_Data (Repository, Iterator, Input, Data_Offset);
+         end if;
 
          Entries.Update_Entry (Repository, Item, Kind, Data_Offset);
 
