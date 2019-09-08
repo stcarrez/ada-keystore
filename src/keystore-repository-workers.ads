@@ -43,16 +43,6 @@ private package Keystore.Repository.Workers is
    type Data_Work;
    type Data_Work_Access is access all Data_Work;
 
-   procedure Fill (Work      : in out Data_Work;
-                   Input     : in out Util.Streams.Input_Stream'Class;
-                   Space     : in Buffer_Offset;
-                   Data_Size : out Buffers.Buffer_Size);
-
-   procedure Fill (Work      : in out Data_Work;
-                   Input     : in Ada.Streams.Stream_Element_Array;
-                   Input_Pos : in Ada.Streams.Stream_Element_Offset;
-                   Data_Size : out IO.Buffer_Size);
-
    package Work_Queues is
      new Util.Concurrent.Sequence_Queues (Element_Type     => Data_Work_Access,
                                           Sequence_Type    => Natural,
@@ -88,6 +78,16 @@ private package Keystore.Repository.Workers is
 
    overriding
    procedure Execute (Work : in out Data_Work);
+
+   procedure Fill (Work      : in out Data_Work;
+                   Input     : in out Util.Streams.Input_Stream'Class;
+                   Space     : in Buffer_Offset;
+                   Data_Size : out Buffers.Buffer_Size);
+
+   procedure Fill (Work      : in out Data_Work;
+                   Input     : in Ada.Streams.Stream_Element_Array;
+                   Input_Pos : in Ada.Streams.Stream_Element_Offset;
+                   Data_Size : out IO.Buffer_Size);
 
    procedure Do_Decipher_Data (Work : in out Data_Work);
 
