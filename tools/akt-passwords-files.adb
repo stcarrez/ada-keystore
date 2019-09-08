@@ -23,6 +23,12 @@ with Util.Systems.Types;
 with Util.Systems.Os;
 package body AKT.Passwords.Files is
 
+   --  GNAT 2019 complains about unused use type but gcc 7.4 fails if it not defined (st_mode).
+   pragma Warnings (Off);
+   use type Interfaces.C.unsigned;
+   use type Interfaces.C.unsigned_short;
+   pragma Warnings (On);
+
    type Provider (Len : Natural) is limited new AKT.Passwords.Provider with record
       Path : String (1 .. Len);
    end record;
@@ -44,8 +50,6 @@ package body AKT.Passwords.Files is
    --  ------------------------------
    overriding
    function Get_Password (From : in Provider) return Keystore.Secret_Key is
-      use type Interfaces.C.unsigned;
-
       Content : Ada.Strings.Unbounded.Unbounded_String;
       Path    : Interfaces.C.Strings.chars_ptr;
       Stat    : aliased Util.Systems.Types.Stat_Type;
