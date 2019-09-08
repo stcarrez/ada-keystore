@@ -195,6 +195,15 @@ package body Keystore.Repository.Keys is
       Mark_Data_Key (Iterator, Mark);
    end Delete_Key;
 
+   procedure Prepare_Append (Manager : in out Wallet_Repository;
+                             Iterator : in out Data_Key_Iterator) is
+   begin
+      Iterator.Key_Iter := Iterator.Item.Data_Blocks.Last;
+      if Wallet_Data_Key_List.Has_Element (Iterator.Key_Iter) then
+         Iterator.Directory := Wallet_Data_Key_List.Element (Iterator.Key_Iter).Directory;
+      end if;
+   end Prepare_Append;
+
    procedure Allocate_Key_Slot (Manager    : in out Wallet_Repository;
                                 Iterator   : in out Data_Key_Iterator;
                                 Data_Block : in IO.Storage_Block;
@@ -204,7 +213,8 @@ package body Keystore.Repository.Keys is
       Key_Start : IO.Block_Index;
       Key_Last  : IO.Block_Index;
    begin
-      if Iterator.Directory = null or else Iterator.Directory.Available < DATA_KEY_ENTRY_SIZE then
+      if Iterator.Directory = null or else Iterator.Directory.Available < DATA_KEY_ENTRY_SIZE
+        or else Iterator.Key_Count = Key_Count_Type'Last then
          Entries.Find_Directory_Block (Manager, DATA_KEY_ENTRY_SIZE * 4, Iterator.Directory);
          Iterator.Directory.Available := Iterator.Directory.Available + DATA_KEY_ENTRY_SIZE * 4;
          if Iterator.Directory.Count > 0 then
@@ -281,9 +291,9 @@ package body Keystore.Repository.Keys is
       if Iterator.Data_Size /= Size then
          Iterator.Current.Pos := Iterator.Key_Pos - 2;
          Marshallers.Put_Unsigned_16 (Iterator.Current, Interfaces.Unsigned_16 (Size));
-
-         Manager.Modified.Include (Iterator.Current.Buffer.Block, Iterator.Current.Buffer.Data);
       end if;
+
+      Manager.Modified.Include (Iterator.Current.Buffer.Block, Iterator.Current.Buffer.Data);
    end Update_Key_Slot;
 
 end Keystore.Repository.Keys;
