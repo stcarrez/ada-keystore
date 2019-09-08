@@ -43,12 +43,14 @@ private package Keystore.Repository.Data is
    procedure Update_Data (Manager      : in out Wallet_Repository;
                           Iterator     : in out Keys.Data_Key_Iterator;
                           Content      : in Ada.Streams.Stream_Element_Array;
+                          Last_Pos     : out Ada.Streams.Stream_Element_Offset;
                           Offset       : in out Interfaces.Unsigned_64);
 
-   procedure Update_Data (Manager      : in out Wallet_Repository;
-                          Iterator     : in out Keys.Data_Key_Iterator;
-                          Content      : in out Util.Streams.Input_Stream'Class;
-                          Offset       : in out Interfaces.Unsigned_64);
+   procedure Update_Data (Manager       : in out Wallet_Repository;
+                          Iterator      : in out Keys.Data_Key_Iterator;
+                          Content       : in out Util.Streams.Input_Stream'Class;
+                          End_Of_Stream : out Boolean;
+                          Offset        : in out Interfaces.Unsigned_64);
 
    --  Erase the data fragments starting at the key iterator current position.
    procedure Delete_Data (Manager    : in out Wallet_Repository;
