@@ -146,6 +146,7 @@ private
    DATA_ENTRY_SIZE      : constant := 4 + 2 + 2 + 8 + 32;
    DATA_MAX_SIZE        : constant := IO.Block_Size - IO.BT_HMAC_HEADER_SIZE
      - IO.BT_TYPE_HEADER_SIZE - DATA_ENTRY_SIZE;
+   DATA_MAX_KEY_COUNT   : constant := (DATA_MAX_SIZE - DATA_KEY_HEADER_SIZE) / DATA_KEY_ENTRY_SIZE;
 
    function Hash (Value : in Wallet_Entry_Index) return Ada.Containers.Hash_Type;
 
