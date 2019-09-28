@@ -21,7 +21,7 @@ with Ada.Streams;
 with Ada.Calendar;
 with Ada.Strings.Hash;
 with Ada.Containers.Indefinite_Hashed_Maps;
-private with Interfaces;
+with Interfaces;
 private with Ada.Exceptions;
 private with Ada.Finalization;
 private with Util.Executors;
@@ -85,8 +85,14 @@ package Keystore is
    --  Exception raised by Set_Key when there is no available free slot to add a new key.
    No_Key_Slot   : exception;
 
+   --  Exception raised by Set_Header_Data when the slot index is out of range.
+   No_Header_Slot : exception;
+
    --  Exception raised when the wallet is corrupted.
    Corrupted     : exception;
+
+   --  Exception raised when opening the keystore and the header is invalid.
+   Invalid_Keystore : exception;
 
    --  Invalid data block when reading the wallet.
    Invalid_Block : exception;
@@ -95,13 +101,32 @@ package Keystore is
    Invalid_Storage : exception;
 
    --  The wallet state.
-   type State_Type is (S_INVALID, S_CONFIGURED, S_OPEN, S_CLOSED);
+   type State_Type is (S_INVALID, S_PROTECTED, S_OPEN, S_CLOSED);
 
    --  Identifies the type of data stored for a named entry in the wallet.
    type Entry_Type is (T_INVALID, T_STRING, T_BINARY, T_WALLET);
 
    --  Defines the key operation mode.
    type Mode_Type is (KEY_ADD, KEY_REPLACE, KEY_REMOVE, KEY_REMOVE_LAST);
+
+   type Header_Slot_Type is new Interfaces.Unsigned_16;
+
+   type Header_Slot_Count_Type is new Natural range 0 .. 32;
+   subtype Header_Slot_Index_Type is Header_Slot_Count_Type range 1 .. Header_Slot_Count_Type'Last;
+
+   SLOT_EMPTY        : constant Header_Slot_Type := 0;
+   SLOT_KEY_GPG1     : constant Header_Slot_Type := 1;
+   SLOT_KEY_GPG2     : constant Header_Slot_Type := 2;
+
+   type UUID_Type is private;
+
+   function To_String (UUID : in UUID_Type) return String;
+
+   type Wallet_Info is record
+      UUID          : UUID_Type;
+      Header_Count  : Header_Slot_Count_Type := 0;
+      Storage_Count : Natural := 0;
+   end record;
 
    --  Information about a keystore entry.
    type Entry_Info is record
@@ -158,9 +183,14 @@ package Keystore is
          Min_Counter => 500_000, Max_Counter => 1_000_000,
         Max_File_Size => Positive'Last);
 
-   type UUID_Type is private;
-
-   function To_String (UUID : in UUID_Type) return String;
+   type Wallet_Stats is record
+      UUID             : UUID_Type;
+      Entry_Count      : Natural := 0;
+      Total_Size       : Natural := 0;
+      Block_Count      : Natural := 0;
+      Free_Block_Count : Natural := 0;
+      Storage_Count    : Natural := 0;
+   end record;
 
    --  The wallet base type.
    type Wallet is abstract tagged limited private;
