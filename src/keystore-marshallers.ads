@@ -121,6 +121,10 @@ private package Keystore.Marshallers is
                               Content : in Ada.Streams.Stream_Element_Array) with
      Pre => Into.Pos < Block_Type'Last - BT_HMAC_HEADER_SIZE;
 
+   procedure Put_UUID (Into  : in out Marshaller;
+                       Value : in UUID_Type) with
+     Pre => Into.Pos < Block_Type'Last - 16;
+
    function Get_Unsigned_16 (From  : in out Marshaller) return Interfaces.Unsigned_16 with
      Pre => From.Pos <= Block_Type'Last - 2;
 
@@ -157,6 +161,16 @@ private package Keystore.Marshallers is
                          Secret      : out Secret_Key;
                          Protect_Key : in Secret_Key;
                          Protect_IV  : in Secret_Key);
+
+   procedure Get_UUID (From : in out Marshaller;
+                       UUID : out UUID_Type) with
+     Pre => From.Pos <= Block_Type'Last - 16;
+
+   procedure Get_Data (From : in out Marshaller;
+                       Size : in Ada.Streams.Stream_Element_Offset;
+                       Data : out Ada.Streams.Stream_Element_Array;
+                       Last : out Ada.Streams.Stream_Element_Offset) with
+     Pre => From.Pos <= Block_Type'Last - Size;
 
    procedure Skip (From  : in out Marshaller;
                    Count : in Block_Index) with
