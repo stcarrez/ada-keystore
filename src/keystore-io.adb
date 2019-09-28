@@ -99,7 +99,7 @@ package body Keystore.IO is
          Size := Get_Decrypt_Size (Data);
 
          --  Check that the decrypt size looks correct.
-         if Size > Data'Length or else (Size mod 16) /= 0 then
+         if Size = 0 or else Size > Data'Length or else (Size mod 16) /= 0 then
             Keystore.Logs.Warn (Log, "Bloc{0} has invalid size", Into.Block);
             raise Invalid_Block;
          end if;
