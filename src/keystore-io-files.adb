@@ -66,7 +66,9 @@ package body Keystore.IO.Files is
       return Ada.Containers.Hash_Type (Value);
    end Hash;
 
+   --  ------------------------------
    --  Open the wallet stream.
+   --  ------------------------------
    procedure Open (Stream    : in out Wallet_Stream;
                    Path      : in String;
                    Data_Path : in String) is
@@ -80,9 +82,14 @@ package body Keystore.IO.Files is
                      Config    : in Wallet_Config) is
    begin
       Stream.Descriptor.Create (Path, Data_Path, Config, Stream.Sign);
+      if Config.Storage_Count > 1 then
+         Stream.Add_Storage (Config.Storage_Count - 1);
+      end if;
    end Create;
 
+   --  ------------------------------
    --  Get information about the keystore file.
+   --  ------------------------------
    function Get_Info (Stream : in out Wallet_Stream) return Wallet_Info is
       File   : File_Stream_Access;
    begin
@@ -90,8 +97,10 @@ package body Keystore.IO.Files is
       return File.Get_Info;
    end Get_Info;
 
+   --  ------------------------------
    --  Read from the wallet stream the block identified by the number and
    --  call the `Process` procedure with the data block content.
+   --  ------------------------------
    overriding
    procedure Read (Stream  : in out Wallet_Stream;
                    Block   : in Storage_Block;
@@ -103,7 +112,9 @@ package body Keystore.IO.Files is
       File.Read (Block.Block, Process);
    end Read;
 
+   --  ------------------------------
    --  Write in the wallet stream the block identified by the block number.
+   --  ------------------------------
    overriding
    procedure Write (Stream  : in out Wallet_Stream;
                     Block   : in Storage_Block;
@@ -115,7 +126,9 @@ package body Keystore.IO.Files is
       File.Write (Block.Block, Process);
    end Write;
 
+   --  ------------------------------
    --  Allocate a new block and return the block number in `Block`.
+   --  ------------------------------
    overriding
    procedure Allocate (Stream  : in out Wallet_Stream;
                        Kind    : in Block_Kind;
@@ -126,7 +139,9 @@ package body Keystore.IO.Files is
       File.Allocate (Block.Block);
    end Allocate;
 
+   --  ------------------------------
    --  Release the block number.
+   --  ------------------------------
    overriding
    procedure Release (Stream  : in out Wallet_Stream;
                       Block   : in Storage_Block) is
@@ -168,14 +183,18 @@ package body Keystore.IO.Files is
       File.Get_Header_Data (Index, Kind, Data, Last);
    end Get_Header_Data;
 
+   --  ------------------------------
    --  Add up to Count data storage files associated with the wallet.
+   --  ------------------------------
    procedure Add_Storage (Stream  : in out Wallet_Stream;
                           Count   : in Positive) is
    begin
       Stream.Descriptor.Add_Storage (Count, Stream.Sign);
    end Add_Storage;
 
+   --  ------------------------------
    --  Close the wallet stream and release any resource.
+   --  ------------------------------
    procedure Close (Stream : in out Wallet_Stream) is
    begin
       Stream.Descriptor.Close;
@@ -294,20 +313,22 @@ package body Keystore.IO.Files is
          Free_Blocks.Insert (Block);
       end Release;
 
+      procedure Save_Header (Sign : in Secret_Key) is
+         Buf  : constant Buffers.Buffer_Accessor := Header.Buffer.Data.Value;
+      begin
+         Keystore.IO.Headers.Sign_Header (Header, Sign);
+         File.Seek (Pos  => 0, Mode => Util.Systems.Types.SEEK_SET);
+         File.Write (Buf.Data);
+         Current_Pos := Block_Size;
+      end Save_Header;
+
       procedure Set_Header_Data (Index  : in Header_Slot_Index_Type;
                                  Kind   : in Header_Slot_Type;
                                  Data   : in Ada.Streams.Stream_Element_Array;
                                  Sign   : in Secret_Key) is
       begin
          IO.Headers.Set_Header_Data (Header, Index, Kind, Data);
-         Keystore.IO.Headers.Sign_Header (Header, Sign);
-         declare
-            Buf  : constant Buffers.Buffer_Accessor := Header.Buffer.Data.Value;
-         begin
-            File.Seek (Pos  => 0, Mode => Util.Systems.Types.SEEK_SET);
-            File.Write (Buf.Data);
-            Current_Pos := Block_Size;
-         end;
+         Save_Header (Sign);
       end Set_Header_Data;
 
       procedure Get_Header_Data (Index  : in Header_Slot_Index_Type;
@@ -323,6 +344,7 @@ package body Keystore.IO.Files is
          Pos : Block_Index;
       begin
          IO.Headers.Add_Storage (Header, Identifier, 1, Pos);
+         Save_Header (Sign);
       end Add_Storage;
 
       procedure Scan_Storage (Process : not null
@@ -449,7 +471,6 @@ package body Keystore.IO.Files is
          File       : File_Stream_Access;
          Flags      : Interfaces.C.int;
          Result     : Integer with Unreferenced => True;
-         UUID       : UUID_Type;
       begin
          Directory := To_Unbounded_String (Data_Path);
          Flags := O_CREAT + O_TRUNC + O_CLOEXEC + O_RDWR;
