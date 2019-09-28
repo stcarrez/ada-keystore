@@ -67,17 +67,19 @@ package body Keystore.IO.Files is
    end Hash;
 
    --  Open the wallet stream.
-   procedure Open (Stream : in out Wallet_Stream;
-                   Path   : in String) is
+   procedure Open (Stream    : in out Wallet_Stream;
+                   Path      : in String;
+                   Data_Path : in String) is
    begin
-      Stream.Descriptor.Open (Path, Stream.Sign);
+      Stream.Descriptor.Open (Path, Data_Path, Stream.Sign);
    end Open;
 
-   procedure Create (Stream : in out Wallet_Stream;
-                     Path   : in String;
-                     Config : in Wallet_Config) is
+   procedure Create (Stream    : in out Wallet_Stream;
+                     Path      : in String;
+                     Data_Path : in String;
+                     Config    : in Wallet_Config) is
    begin
-      Stream.Descriptor.Create (Path, Config, Stream.Sign);
+      Stream.Descriptor.Create (Path, Data_Path, Config, Stream.Sign);
    end Create;
 
    --  Get information about the keystore file.
@@ -190,7 +192,7 @@ package body Keystore.IO.Files is
                       Storage         : in Storage_Identifier;
                       Sign            : in Secret_Key;
                       File_Size       : in Block_Count;
-                      Process         : access procedure (Storage : in Wallet_Storage)) is
+                      UUID            : out UUID_Type) is
       begin
          File.Initialize (File_Descriptor);
          Size := File_Size;
@@ -201,7 +203,8 @@ package body Keystore.IO.Files is
             Last : Ada.Streams.Stream_Element_Offset;
          begin
             File.Read (Buf.Data, Last);
-            Keystore.IO.Headers.Read_Header (Header, Sign, Process);
+            Keystore.IO.Headers.Read_Header (Header, Sign);
+            UUID := Header.UUID;
          end;
       end Open;
 
@@ -317,6 +320,12 @@ package body Keystore.IO.Files is
          IO.Headers.Get_Header_Data (Header, Index, Kind, Data, Last);
       end Get_Header_Data;
 
+      procedure Scan_Storage (Process : not null
+                              access procedure (Storage : in Wallet_Storage)) is
+      begin
+         IO.Headers.Scan_Storage (Header, Process);
+      end Scan_Storage;
+
       procedure Close is
          Last       : Block_Number := Size;
          Free_Block : Block_Number;
@@ -359,9 +368,10 @@ package body Keystore.IO.Files is
          return Ada.Directories.Compose (To_String (Directory), Name & ".dkt");
       end Get_Storage_Path;
 
-      procedure Open (Path : in String;
-                      Sign : in Secret_Key) is
-         Storage_Id : constant Storage_Identifier := DEFAULT_STORAGE_ID;
+      procedure Open (Path       : in String;
+                      Identifier : in Storage_Identifier;
+                      Sign       : in Secret_Key;
+                      Tag        : out UUID_Type) is
          Fd         : Util.Systems.Types.File_Type := Util.Systems.Os.NO_FILE;
          P          : Interfaces.C.Strings.chars_ptr;
          File       : File_Stream_Access;
@@ -395,13 +405,36 @@ package body Keystore.IO.Files is
          Size := Block_Count (Stat.st_size / IO.Block_Size);
 
          File := new File_Stream;
-         File.Open (Fd, Storage_Id, Sign, Size, null);
-         Files.Insert (Storage_Id, File);
+         Files.Insert (Identifier, File);
+         File.Open (Fd, Identifier, Sign, Size, Tag);
       end Open;
 
-      procedure Create (Path   : in String;
-                        Config : in Wallet_Config;
-                        Sign   : in Secret_Key) is
+      procedure Open (Path      : in String;
+                      Data_Path : in String;
+                      Sign      : in Secret_Key) is
+
+         procedure Open_Storage (Storage : in Wallet_Storage) is
+            Path : constant String := Get_Storage_Path (Storage.Identifier);
+            Tag  : UUID_Type;
+         begin
+            Open (Path, Storage.Identifier, Sign, Tag);
+            if Tag /= UUID then
+               Log.Error ("Invalid UUID for storage file {0}", Path);
+            end if;
+         end Open_Storage;
+
+         File       : File_Stream_Access;
+      begin
+         Directory := To_Unbounded_String (Data_Path);
+         Open (Path, DEFAULT_STORAGE_ID, Sign, UUID);
+         Get (DEFAULT_STORAGE_ID, File);
+         File.Scan_Storage (Open_Storage'Access);
+      end Open;
+
+      procedure Create (Path      : in String;
+                        Data_Path : in String;
+                        Config    : in Wallet_Config;
+                        Sign      : in Secret_Key) is
          Storage_Id : constant Storage_Identifier := DEFAULT_STORAGE_ID;
          Fd         : Util.Systems.Types.File_Type := Util.Systems.Os.NO_FILE;
          P          : Interfaces.C.Strings.chars_ptr;
@@ -429,7 +462,7 @@ package body Keystore.IO.Files is
       end Create;
 
       procedure Create_Storage (Storage_Id : in Storage_Identifier;
-                                Sign   : in Secret_Key) is
+                                Sign       : in Secret_Key) is
          Path    : constant String := Get_Storage_Path (Storage_Id);
          Fd      : Util.Systems.Types.File_Type := Util.Systems.Os.NO_FILE;
          P       : Interfaces.C.Strings.chars_ptr;
