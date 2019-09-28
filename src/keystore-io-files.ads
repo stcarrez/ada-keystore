@@ -203,6 +203,7 @@ private
       Directory : Ada.Strings.Unbounded.Unbounded_String;
       UUID      : UUID_Type;
       Files     : File_Stream_Maps.Map;
+      Alloc_Id  : Storage_Identifier := DEFAULT_STORAGE_ID;
       Last_Id   : Storage_Identifier := DEFAULT_STORAGE_ID;
    end Stream_Descriptor;
 
