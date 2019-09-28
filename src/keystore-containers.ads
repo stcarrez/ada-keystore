@@ -25,8 +25,7 @@ private package Keystore.Containers is
    --  The `Wallet_Container` protects concurrent accesses to the repository.
    protected type Wallet_Container is
 
-      procedure Open (Password      : in Secret_Key;
-                      Ident         : in Wallet_Identifier;
+      procedure Open (Ident         : in Wallet_Identifier;
                       Block         : in Keystore.IO.Storage_Block;
                       Wallet_Stream : in out Keystore.IO.Refs.Stream_Ref);
 
@@ -37,6 +36,17 @@ private package Keystore.Containers is
                         Wallet_Stream : in out IO.Refs.Stream_Ref);
 
       function Get_State return State_Type;
+
+      procedure Set_Header_Data (Index     : in Header_Slot_Index_Type;
+                                 Kind      : in Header_Slot_Type;
+                                 Data      : in Ada.Streams.Stream_Element_Array);
+
+      procedure Get_Header_Data (Index     : in Header_Slot_Index_Type;
+                                 Kind      : out Header_Slot_Type;
+                                 Data      : out Ada.Streams.Stream_Element_Array;
+                                 Last      : out Ada.Streams.Stream_Element_Offset);
+
+      procedure Unlock (Password  : in Secret_Key);
 
       procedure Set_Key (Password     : in Secret_Key;
                          New_Password : in Secret_Key;
@@ -79,6 +89,8 @@ private package Keystore.Containers is
 
       procedure List (Content    : out Entry_Map);
 
+      procedure Get_Stats (Stats : out Wallet_Stats);
+
       procedure Close;
 
       procedure Set_Work_Manager (Workers   : in Keystore.Task_Manager_Access);
@@ -88,6 +100,7 @@ private package Keystore.Containers is
       Repository   : Keystore.Repository.Wallet_Repository;
       State        : State_Type := S_INVALID;
       Master_Block : Keystore.IO.Storage_Block;
+      Master_Ident : Wallet_Identifier;
    end Wallet_Container;
 
 end Keystore.Containers;
