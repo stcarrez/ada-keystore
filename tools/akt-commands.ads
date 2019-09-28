@@ -93,9 +93,11 @@ private
       Provider          : AKT.Passwords.Provider_Access;
       Worker_Count      : aliased Integer := 1;
       Version           : aliased Boolean := False;
+      Verbose           : aliased Boolean := False;
       Debug             : aliased Boolean := False;
       Zero              : aliased Boolean := False;
       Wallet_File       : aliased GNAT.Strings.String_Access;
+      Data_Path         : aliased GNAT.Strings.String_Access;
       Password_File     : aliased GNAT.Strings.String_Access;
       Password_Env      : aliased GNAT.Strings.String_Access;
       Unsafe_Password   : aliased GNAT.Strings.String_Access;
