@@ -149,12 +149,17 @@ package body AKT.Commands is
                     Help   => "akt - tool to store and protect your sensitive data");
       GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Version'Access,
-                        Switch => "-v",
+                        Switch => "-V",
                         Long_Switch => "--version",
                         Help   => "Print the version");
       GC.Define_Switch (Config => Context.Command_Config,
+                        Output => Context.Verbose'Access,
+                        Switch => "-v",
+                        Long_Switch => "--verbose",
+                        Help   => "Verbose execution mode");
+      GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Debug'Access,
-                        Switch => "-d",
+                        Switch => "-vv",
                         Long_Switch => "--debug",
                         Help   => "Enable debug execution");
       GC.Define_Switch (Config => Context.Command_Config,
@@ -213,10 +218,12 @@ package body AKT.Commands is
       GC.Initialize_Option_Scan (Stop_At_First_Non_Switch => True);
 
       Driver.Set_Description ("akt - tool to store and protect your sensitive data");
-      Driver.Set_Usage ("[-v] [-d] [-f keystore] [-p <password>] <command> [<args>]" & ASCII.LF &
+      Driver.Set_Usage ("[-V] [-v] [-vv] [-f keystore] [-d data-path] [-p <password>]" &
+                          " <command> [<args>]" & ASCII.LF &
                           "where:" & ASCII.LF &
-                          "  -v           Print the tool version" & ASCII.LF &
-                          "  -d           Debug execution mode" & ASCII.LF &
+                          "  -V           Print the tool version" & ASCII.LF &
+                          "  -v           Verbose execution mode" & ASCII.LF &
+                          "  -vv          Debug execution mode" & ASCII.LF &
                           "  -f keystore  The keystore file to use");
       Driver.Add_Command ("help", "print some help", Help_Command'Access);
       Driver.Add_Command ("set", "insert or update a value in the keystore", Set_Command'Access);
@@ -241,8 +248,8 @@ package body AKT.Commands is
       GC.Getopt (Config => Context.Command_Config);
       Util.Commands.Parsers.GNAT_Parser.Get_Arguments (Arguments, GC.Get_Argument);
 
-      if Context.Debug then
-         AKT.Configure_Logs (Debug => Context.Debug, Verbose => Context.Debug);
+      if Context.Debug or Context.Verbose then
+         AKT.Configure_Logs (Debug => Context.Debug, Verbose => Context.Verbose);
       end if;
 
       if Context.Version then
