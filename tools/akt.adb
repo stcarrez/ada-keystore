@@ -38,6 +38,7 @@ package body AKT is
       Log_Config.Set ("log4j.logger.AKT", "ERROR");
       if Verbose or Debug then
          Log_Config.Set ("log4j.logger.Util", "WARN");
+         Log_Config.Set ("log4j.logger.Util.Processes", "INFO");
          Log_Config.Set ("log4j.logger.AKT", "DEBUG");
          Log_Config.Set ("log4j.logger.Keystore", "DEBUG");
       end if;
