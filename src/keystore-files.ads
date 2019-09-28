@@ -24,7 +24,8 @@ package Keystore.Files is
    --  Raises the Bad_Password exception if no key slot match the password.
    procedure Open (Container : in out Wallet_File;
                    Password  : in Secret_Key;
-                   Path      : in String) with
+                   Path      : in String;
+                   Data_Path : in String := "") with
      Pre  => not Container.Is_Open,
      Post => Container.Is_Open;
 
@@ -32,6 +33,7 @@ package Keystore.Files is
    --  from the header section.
    procedure Open (Container : in out Wallet_File;
                    Path      : in String;
+                   Data_Path : in String := "";
                    Info      : out Wallet_Info) with
      Pre  => not Container.Is_Open,
      Post => Container.State = S_PROTECTED;
@@ -41,6 +43,7 @@ package Keystore.Files is
    procedure Create (Container : in out Wallet_File;
                      Password  : in Secret_Key;
                      Path      : in String;
+                     Data_Path : in String := "";
                      Config    : in Wallet_Config := Secure_Config) with
      Pre  => not Container.Is_Open,
      Post => Container.Is_Open;
