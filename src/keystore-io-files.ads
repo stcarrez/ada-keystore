@@ -29,12 +29,14 @@ package Keystore.IO.Files is
    type Wallet_Stream_Access is access all Wallet_Stream'Class;
 
    --  Open the wallet stream.
-   procedure Open (Stream : in out Wallet_Stream;
-                   Path   : in String);
+   procedure Open (Stream    : in out Wallet_Stream;
+                   Path      : in String;
+                   Data_Path : in String);
 
-   procedure Create (Stream : in out Wallet_Stream;
-                     Path   : in String;
-                     Config : in Wallet_Config);
+   procedure Create (Stream    : in out Wallet_Stream;
+                     Path      : in String;
+                     Data_Path : in String;
+                     Config    : in Wallet_Config);
 
    --  Get information about the keystore file.
    function Get_Info (Stream : in out Wallet_Stream) return Wallet_Info;
@@ -108,7 +110,7 @@ private
                       Storage         : in Storage_Identifier;
                       Sign            : in Secret_Key;
                       File_Size       : in Block_Count;
-                      Process         : access procedure (Storage : in Wallet_Storage));
+                      UUID            : out UUID_Type);
 
       procedure Create (File_Descriptor : in Util.Systems.Types.File_Type;
                         Storage         : in Storage_Identifier;
@@ -146,6 +148,8 @@ private
                                  Data   : out Ada.Streams.Stream_Element_Array;
                                  Last   : out Ada.Streams.Stream_Element_Offset);
 
+      procedure Scan_Storage (Process : not null access procedure (Storage : in Wallet_Storage));
+
       procedure Close;
 
    private
@@ -170,12 +174,14 @@ private
 
    protected type Stream_Descriptor is
 
-      procedure Open (Path : in String;
-                      Sign : in Secret_Key);
+      procedure Open (Path      : in String;
+                      Data_Path : in String;
+                      Sign      : in Secret_Key);
 
-      procedure Create (Path   : in String;
-                        Config : in Wallet_Config;
-                        Sign   : in Secret_Key);
+      procedure Create (Path      : in String;
+                        Data_Path : in String;
+                        Config    : in Wallet_Config;
+                        Sign      : in Secret_Key);
 
       procedure Create_Storage (Storage_Id : in Storage_Identifier;
                                 Sign   : in Secret_Key);
