@@ -296,11 +296,11 @@ package body Keystore.Tests is
                  & "remove configure", Result);
       Util.Tests.Assert_Equals (T, "", Result, "remove command failed");
 
+      Size := Ada.Directories.Size (Path);
+      T.Assert (Size < 13_000, "Keystore file was not truncated after removal of large content");
+
       T.Execute (Tool & " -f " & Path & " -p admin "
                  & "remove", Result, 1);
-
-      Size := Ada.Directories.Size (Path);
-      T.Assert (Size < 10_000, "Keystore file was not truncated after removal of large content");
 
    end Test_Tool_Set_Remove_2;
 
@@ -404,7 +404,7 @@ package body Keystore.Tests is
       T.Execute (Tool & " -f " & Path & " -p admin"
                  & "", Result, 1);
 
-      T.Execute (Tool & " -d -f " & Path & " -p admin "
+      T.Execute (Tool & " -vv -f " & Path & " -p admin "
                  & "get testing", Result, 0);
 
       T.Execute (Tool & " -v -f " & Path & " -p admin "
