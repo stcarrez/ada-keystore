@@ -419,6 +419,22 @@ package body Keystore.Repository is
       end loop;
    end List;
 
+   --  ------------------------------
+   --  Get the keystore UUID.
+   --  ------------------------------
+   function Get_UUID (Repository : in Wallet_Repository) return UUID_Type is
+   begin
+      return Repository.Config.UUID;
+   end Get_UUID;
+
+   --  ------------------------------
+   --  Get the number of entries in the wallet.
+   --  ------------------------------
+   function Get_Entry_Count (Repository : in Wallet_Repository) return Natural is
+   begin
+      return Natural (Repository.Map.Length);
+   end Get_Entry_Count;
+
    procedure Close (Repository : in out Wallet_Repository) is
       Dir   : Wallet_Directory_Entry_Access;
       First : Wallet_Maps.Cursor;
