@@ -43,6 +43,7 @@ with AKT.Passwords.Cmds;
 package body AKT.Commands is
 
    use Ada.Strings.Unbounded;
+   use type Keystore.Header_Slot_Count_Type;
 
    Help_Command            : aliased AKT.Commands.Drivers.Help_Command_Type;
    Set_Command             : aliased AKT.Commands.Set.Command_Type;
@@ -80,7 +81,6 @@ package body AKT.Commands is
    --  ------------------------------
    procedure Open_Keystore (Context    : in out Context_Type;
                             Use_Worker : in Boolean := False) is
-      use type Keystore.Header_Slot_Count_Type;
    begin
       Context.Wallet.Open (Path => Context.Wallet_File.all,
                            Info => Context.Info);
@@ -108,6 +108,13 @@ package body AKT.Commands is
    begin
       Context.Wallet.Open (Path => Context.Wallet_File.all,
                            Info => Context.Info);
+
+      if not Context.No_Password_Opt or else Context.Info.Header_Count = 0 then
+         Context.Wallet.Unlock (Context.Provider.Get_Password);
+      else
+         Context.GPG.Unlock (Context.Wallet, Context.Info);
+      end if;
+
       Context.Wallet.Set_Key (Password     => Password,
                               New_Password => New_Password,
                               Config       => Config,
