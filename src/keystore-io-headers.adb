@@ -107,13 +107,10 @@ package body Keystore.IO.Headers is
    end Build_Header;
 
    --  ------------------------------
-   --  Read the header block for the storage and call the Process procedure for each
-   --  storage information found in the header block.
+   --  Read the header block and verify its integrity.
    --  ------------------------------
    procedure Read_Header (Header  : in out Wallet_Header;
-                          Sign    : in Secret_Key;
-                          Process : access procedure (Storage : in Wallet_Storage)) is
-
+                          Sign    : in Secret_Key) is
       Buf     : constant Buffers.Buffer_Accessor := Header.Buffer.Data.Value;
       Context : Util.Encoders.HMAC.SHA256.Context;
       Buffer  : Keystore.Marshallers.Marshaller;
@@ -193,30 +190,38 @@ package body Keystore.IO.Headers is
          raise Invalid_Keystore;
       end if;
       Header.Data_Count := Header_Slot_Count_Type (Value16);
-
-      if Process /= null then
-         --  Scan storage section
-         for I in 1 .. Header.Storage_Count loop
-            declare
-               S      : Wallet_Storage;
-               Status : Interfaces.Unsigned_16;
-            begin
-               Buffer.Pos := Get_Storage_Offset (I);
-               S.Pos := Buffer.Pos;
-               S.Identifier := Storage_Identifier (Marshallers.Get_Unsigned_32 (Buffer));
-               S.Kind := Marshallers.Get_Unsigned_16 (Buffer);
-               Status := Marshallers.Get_Unsigned_16 (Buffer);
-               S.Readonly := Status > 0;
-               S.Sealed := Status > 0;
-               S.Max_Block := Natural (Marshallers.Get_Unsigned_32 (Buffer));
-               S.HMAC := Buf.Data (Buffer.Pos .. Buffer.Pos + 32 - 1);
-               Marshallers.Skip (Buffer, 32);
-
-               Process (S);
-            end;
-         end loop;
-      end if;
    end Read_Header;
+
+   --  ------------------------------
+   --  Scan the header block for the storage and call the Process procedure for each
+   --  storage information found in the header block.
+   --  ------------------------------
+   procedure Scan_Storage (Header  : in out Wallet_Header;
+                           Process : not null access procedure (Storage : in Wallet_Storage)) is
+      Buf     : constant Buffers.Buffer_Accessor := Header.Buffer.Data.Value;
+      Buffer  : Keystore.Marshallers.Marshaller;
+   begin
+      Buffer.Buffer := Header.Buffer;
+      for I in 1 .. Header.Storage_Count loop
+         declare
+            S      : Wallet_Storage;
+            Status : Interfaces.Unsigned_16;
+         begin
+            Buffer.Pos := Get_Storage_Offset (I);
+            S.Pos := Buffer.Pos;
+            S.Identifier := Storage_Identifier (Marshallers.Get_Unsigned_32 (Buffer));
+            S.Kind := Marshallers.Get_Unsigned_16 (Buffer);
+            Status := Marshallers.Get_Unsigned_16 (Buffer);
+            S.Readonly := Status > 0;
+            S.Sealed := Status > 0;
+            S.Max_Block := Natural (Marshallers.Get_Unsigned_32 (Buffer));
+            S.HMAC := Buf.Data (Buffer.Pos .. Buffer.Pos + 32 - 1);
+            Marshallers.Skip (Buffer, 32);
+
+            Process (S);
+         end;
+      end loop;
+   end Scan_Storage;
 
    --  ------------------------------
    --  Sign the header block for the storage.
