@@ -94,7 +94,7 @@ package body Keystore.Files is
 
       Block.Storage := IO.DEFAULT_STORAGE_ID;
       Block.Block := 1;
-      Wallet_Stream.Create (Path, Config);
+      Wallet_Stream.Create (Path, Data_Path, Config);
       Wallet_Stream.Allocate (IO.MASTER_BLOCK, Block);
       Container.Container.Create (Password, Config, Block, 1, Stream);
    end Create;
