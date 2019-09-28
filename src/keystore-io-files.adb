@@ -448,9 +448,10 @@ package body Keystore.IO.Files is
             if Tag /= UUID then
                Log.Error ("Invalid UUID for storage file {0}", Path);
             end if;
-            if Storage.Identifier < Last_Id then
+            if Storage.Identifier > Last_Id then
                Last_Id := Storage.Identifier;
             end if;
+            Alloc_Id := 1;
          end Open_Storage;
 
          File : File_Stream_Access;
@@ -525,6 +526,9 @@ package body Keystore.IO.Files is
             Create_Storage (Last_Id, Sign);
             File.Add_Storage (Last_Id, Sign);
          end loop;
+         if Alloc_Id = DEFAULT_STORAGE_ID then
+            Alloc_Id := 1;
+         end if;
       end Add_Storage;
 
       procedure Get (Storage : in Storage_Identifier;
@@ -542,10 +546,14 @@ package body Keystore.IO.Files is
                           Storage : out Storage_Identifier;
                           File    : out File_Stream_Access) is
       begin
-         if Kind = IO.MASTER_BLOCK or Kind = IO.DIRECTORY_BLOCK then
+         if Kind = IO.MASTER_BLOCK or Kind = IO.DIRECTORY_BLOCK or Last_Id <= DEFAULT_STORAGE_ID then
             Storage := DEFAULT_STORAGE_ID;
          else
-            Storage := DEFAULT_STORAGE_ID;
+            Storage := Alloc_Id;
+            Alloc_Id := Alloc_Id + 1;
+            if Alloc_Id > Last_Id then
+               Alloc_Id := 1;
+            end if;
          end if;
          Get (Storage, File);
       end Allocate;
