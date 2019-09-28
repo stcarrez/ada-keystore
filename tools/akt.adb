@@ -27,7 +27,7 @@ package body AKT is
                              Verbose : in Boolean) is
       Log_Config  : Util.Properties.Manager;
    begin
-      Log_Config.Set ("log4j.rootCategory", "DEBUG,console");
+      Log_Config.Set ("log4j.rootCategory", "ERROR,console");
       Log_Config.Set ("log4j.appender.console", "Console");
       Log_Config.Set ("log4j.appender.console.level", "ERROR");
       Log_Config.Set ("log4j.appender.console.layout", "message");
@@ -39,10 +39,16 @@ package body AKT is
       if Verbose or Debug then
          Log_Config.Set ("log4j.logger.Util", "WARN");
          Log_Config.Set ("log4j.logger.Util.Processes", "INFO");
-         Log_Config.Set ("log4j.logger.AKT", "DEBUG");
-         Log_Config.Set ("log4j.logger.Keystore", "DEBUG");
+         Log_Config.Set ("log4j.logger.AKT", "INFO");
+         Log_Config.Set ("log4j.logger.Keystore", "INFO");
+         Log_Config.Set ("log4j.rootCategory", "INFO,console,verbose");
+         Log_Config.Set ("log4j.appender.verbose", "Console");
+         Log_Config.Set ("log4j.appender.verbose.level", "INFO");
+         Log_Config.Set ("log4j.appender.verbose.layout", "level-message");
       end if;
       if Debug then
+         Log_Config.Set ("log4j.logger.AKT", "DEBUG");
+         Log_Config.Set ("log4j.logger.Keystore", "DEBUG");
          Log_Config.Set ("log4j.rootCategory", "DEBUG,console,debug");
          Log_Config.Set ("log4j.appender.debug", "Console");
          Log_Config.Set ("log4j.appender.debug.level", "DEBUG");
