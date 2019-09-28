@@ -25,17 +25,14 @@ package body Keystore.Containers is
 
    protected body Wallet_Container is
 
-      procedure Open (Password      : in Secret_Key;
-                      Ident         : in Wallet_Identifier;
+      procedure Open (Ident         : in Wallet_Identifier;
                       Block         : in Keystore.IO.Storage_Block;
                       Wallet_Stream : in out Keystore.IO.Refs.Stream_Ref) is
-         Master : Keystore.Keys.Key_Manager;
       begin
          Stream := Wallet_Stream;
          Master_Block := Block;
-         Keys.Set_Header_Key (Master, Header_Key);
-         Keystore.Repository.Open (Repository, Password, Ident, Block, Master, Stream.Value);
-         State := S_OPEN;
+         Master_Ident := Ident;
+         State := S_PROTECTED;
       end Open;
 
       procedure Create (Password      : in Secret_Key;
@@ -47,11 +44,36 @@ package body Keystore.Containers is
       begin
          Stream := Wallet_Stream;
          Master_Block := Block;
+         Master_Ident := Ident;
          Keys.Set_Header_Key (Master, Header_Key);
          Keystore.Repository.Create (Repository, Password, Config, Block, Ident,
                                      Master, Stream.Value);
          State := S_OPEN;
       end Create;
+
+      procedure Set_Header_Data (Index     : in Header_Slot_Index_Type;
+                                 Kind      : in Header_Slot_Type;
+                                 Data      : in Ada.Streams.Stream_Element_Array) is
+      begin
+         Stream.Value.Set_Header_Data (Index, Kind, Data);
+      end Set_Header_Data;
+
+      procedure Get_Header_Data (Index     : in Header_Slot_Index_Type;
+                                 Kind      : out Header_Slot_Type;
+                                 Data      : out Ada.Streams.Stream_Element_Array;
+                                 Last      : out Ada.Streams.Stream_Element_Offset) is
+      begin
+         Stream.Value.Get_Header_Data (Index, Kind, Data, Last);
+      end Get_Header_Data;
+
+      procedure Unlock (Password  : in Secret_Key) is
+         Master : Keystore.Keys.Key_Manager;
+      begin
+         Keys.Set_Header_Key (Master, Header_Key);
+         Keystore.Repository.Open (Repository, Password, Master_Ident,
+                                   Master_Block, Master, Stream.Value);
+         State := S_OPEN;
+      end Unlock;
 
       procedure Set_Key (Password     : in Secret_Key;
                          New_Password : in Secret_Key;
@@ -137,6 +159,12 @@ package body Keystore.Containers is
       begin
          Keystore.Repository.List (Repository, Content);
       end List;
+
+      procedure Get_Stats (Stats : out Wallet_Stats) is
+      begin
+         Stats.UUID := Repository.Get_UUID;
+         Stats.Entry_Count := Repository.Get_Entry_Count;
+      end Get_Stats;
 
       procedure Close is
       begin
