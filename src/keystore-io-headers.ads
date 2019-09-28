@@ -22,6 +22,7 @@ package Keystore.IO.Headers is
 
    type Wallet_Storage is record
       Identifier : Storage_Identifier;
+      Pos        : Block_Index;
       Kind       : Interfaces.Unsigned_16;
       Readonly   : Boolean := False;
       Sealed     : Boolean := False;
@@ -30,14 +31,15 @@ package Keystore.IO.Headers is
    end record;
 
    type Wallet_Header is limited record
-      UUID          : UUID_Type;
-      Identifier    : Storage_Identifier;
-      Version       : Natural;
-      Block_Size    : Natural;
-      Data_Count    : Keystore.Header_Slot_Count_Type;
-      Storage_Count : Natural;
-      HMAC          : Util.Encoders.SHA256.Hash_Array;
-      Buffer        : Keystore.Buffers.Storage_Buffer;
+      UUID            : UUID_Type;
+      Identifier      : Storage_Identifier;
+      Version         : Natural;
+      Block_Size      : Natural;
+      Data_Count      : Keystore.Header_Slot_Count_Type;
+      Header_Last_Pos : Block_Index;
+      Storage_Count   : Natural;
+      HMAC            : Util.Encoders.SHA256.Hash_Array;
+      Buffer          : Keystore.Buffers.Storage_Buffer;
    end record;
 
    --  Build a new header with the given UUID and for the storage.
@@ -68,5 +70,12 @@ package Keystore.IO.Headers is
                               Kind   : out Header_Slot_Type;
                               Data   : out Ada.Streams.Stream_Element_Array;
                               Last   : out Ada.Streams.Stream_Element_Offset);
+
+   --  Add a new storage reference in the header and return its position in the header.
+   --  Raises the No_Header_Slot if there is no room in the header.
+   procedure Add_Storage (Header     : in out Wallet_Header;
+                          Identifier : in Storage_Identifier;
+                          Max_Block  : in Positive;
+                          Pos        : out Block_Index);
 
 end Keystore.IO.Headers;
