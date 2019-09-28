@@ -17,9 +17,12 @@
 -----------------------------------------------------------------------
 with Ada.Containers.Ordered_Sets;
 with Ada.Containers.Hashed_Maps;
+with Ada.Strings.Unbounded;
 with Util.Streams.Raw;
+private with Keystore.IO.Headers;
 private with Util.Systems.Types;
 private with Ada.Finalization;
+private with Keystore.Random;
 package Keystore.IO.Files is
 
    type Wallet_Stream is limited new Keystore.IO.Wallet_Stream with private;
@@ -32,6 +35,9 @@ package Keystore.IO.Files is
    procedure Create (Stream : in out Wallet_Stream;
                      Path   : in String;
                      Config : in Wallet_Config);
+
+   --  Get information about the keystore file.
+   function Get_Info (Stream : in out Wallet_Stream) return Wallet_Info;
 
    --  Read from the wallet stream the block identified by the number and
    --  call the `Process` procedure with the data block content.
@@ -63,6 +69,23 @@ package Keystore.IO.Files is
    function Is_Used (Stream  : in out Wallet_Stream;
                      Block   : in Storage_Block) return Boolean;
 
+   overriding
+   procedure Set_Header_Data (Stream : in out Wallet_Stream;
+                              Index  : in Header_Slot_Index_Type;
+                              Kind   : in Header_Slot_Type;
+                              Data   : in Ada.Streams.Stream_Element_Array);
+
+   overriding
+   procedure Get_Header_Data (Stream : in out Wallet_Stream;
+                              Index  : in Header_Slot_Index_Type;
+                              Kind   : out Header_Slot_Type;
+                              Data   : out Ada.Streams.Stream_Element_Array;
+                              Last   : out Ada.Streams.Stream_Element_Offset);
+
+   --  Add up to Count data storage files associated with the wallet.
+   procedure Add_Storage (Stream  : in out Wallet_Stream;
+                          Count   : in Positive);
+
    --  Close the wallet stream and release any resource.
    procedure Close (Stream : in out Wallet_Stream);
 
@@ -70,6 +93,9 @@ private
 
    use type Block_Number;
    use type Storage_Identifier;
+
+   subtype Wallet_Storage is Keystore.IO.Headers.Wallet_Storage;
+   subtype Wallet_Header is Keystore.IO.Headers.Wallet_Header;
 
    package Block_Number_Sets is
      new Ada.Containers.Ordered_Sets (Element_Type => Block_Number,
@@ -79,7 +105,17 @@ private
    protected type File_Stream is
 
       procedure Open (File_Descriptor : in Util.Systems.Types.File_Type;
-                      File_Size       : in Block_Count);
+                      Storage         : in Storage_Identifier;
+                      Sign            : in Secret_Key;
+                      File_Size       : in Block_Count;
+                      Process         : access procedure (Storage : in Wallet_Storage));
+
+      procedure Create (File_Descriptor : in Util.Systems.Types.File_Type;
+                        Storage         : in Storage_Identifier;
+                        UUID            : in UUID_Type;
+                        Sign            : in Secret_Key);
+
+      function Get_Info return Wallet_Info;
 
       --  Read from the wallet stream the block identified by the number and
       --  call the `Process` procedure with the data block content.
@@ -100,6 +136,16 @@ private
 
       function Is_Used (Block : in Block_Number) return Boolean;
 
+      procedure Set_Header_Data (Index  : in Header_Slot_Index_Type;
+                                 Kind   : in Header_Slot_Type;
+                                 Data   : in Ada.Streams.Stream_Element_Array;
+                                 Sign   : in Secret_Key);
+
+      procedure Get_Header_Data (Index  : in Header_Slot_Index_Type;
+                                 Kind   : out Header_Slot_Type;
+                                 Data   : out Ada.Streams.Stream_Element_Array;
+                                 Last   : out Ada.Streams.Stream_Element_Offset);
+
       procedure Close;
 
    private
@@ -108,6 +154,7 @@ private
       Size        : Block_Count;
       Data        : Block_Type;
       Free_Blocks : Block_Number_Sets.Set;
+      Header      : Wallet_Header;
    end File_Stream;
 
    type File_Stream_Access is access all File_Stream;
@@ -123,10 +170,15 @@ private
 
    protected type Stream_Descriptor is
 
-      procedure Open (Path : in String);
+      procedure Open (Path : in String;
+                      Sign : in Secret_Key);
 
       procedure Create (Path   : in String;
-                        Config : in Wallet_Config);
+                        Config : in Wallet_Config;
+                        Sign   : in Secret_Key);
+
+      procedure Create_Storage (Storage_Id : in Storage_Identifier;
+                                Sign   : in Secret_Key);
 
       procedure Get (Storage : in Storage_Identifier;
                      File    : out File_Stream_Access);
@@ -138,13 +190,17 @@ private
       procedure Close;
 
    private
-      UUID  : UUID_Type;
-      Files : File_Stream_Maps.Map;
+      Random    : Keystore.Random.Generator;
+      Directory : Ada.Strings.Unbounded.Unbounded_String;
+      UUID      : UUID_Type;
+      Files     : File_Stream_Maps.Map;
+      Last_Id   : Storage_Identifier := DEFAULT_STORAGE_ID;
    end Stream_Descriptor;
 
    type Wallet_Stream is limited new Ada.Finalization.Limited_Controlled
      and Keystore.IO.Wallet_Stream with record
       Descriptor : Stream_Descriptor;
+      Sign       : Secret_Key (Length => 32);
    end record;
 
 end Keystore.IO.Files;
