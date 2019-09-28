@@ -290,7 +290,7 @@ package body Keystore.Repository.Keys is
 
       if Iterator.Data_Size /= Size then
          Iterator.Current.Pos := Iterator.Key_Pos - 2;
-         Marshallers.Put_Unsigned_16 (Iterator.Current, Interfaces.Unsigned_16 (Size));
+         Marshallers.Put_Buffer_Size (Iterator.Current, Size);
       end if;
 
       Manager.Modified.Include (Iterator.Current.Buffer.Block, Iterator.Current.Buffer.Data);
