@@ -43,6 +43,7 @@ private
    type Command_Type is new AKT.Commands.Drivers.Command_Type with record
       Force         : aliased Boolean := False;
       Counter_Range : aliased GNAT.Strings.String_Access;
+      Gpg_User      : aliased GNAT.Strings.String_Access;
    end record;
 
 end AKT.Commands.Create;
