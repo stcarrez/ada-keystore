@@ -94,6 +94,9 @@ package Keystore is
    --  Exception raised when opening the keystore and the header is invalid.
    Invalid_Keystore : exception;
 
+   --  Exception raised when there is a configuration issue.
+   Invalid_Config : exception;
+
    --  Invalid data block when reading the wallet.
    Invalid_Block : exception;
 
