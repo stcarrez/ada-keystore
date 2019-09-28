@@ -172,19 +172,22 @@ package Keystore is
       Max_Counter   : Positive := 300_000;
       Min_Counter   : Positive := 100_000;
       Max_File_Size : Positive := Positive'Last;
+      Storage_Count : Positive := 1;
    end record;
 
    --  Fast configuration but less secure.
    Unsecure_Config : constant Wallet_Config
      := (Randomize => False, Overwrite => False,
          Min_Counter => 10_000, Max_Counter => 100_000,
-         Max_File_Size => Positive'Last);
+         Max_File_Size => Positive'Last,
+         Storage_Count => 1);
 
    --  Slow configuration but more secure.
    Secure_Config : constant Wallet_Config
      := (Randomize => True, Overwrite => False,
          Min_Counter => 500_000, Max_Counter => 1_000_000,
-        Max_File_Size => Positive'Last);
+         Max_File_Size => Positive'Last,
+         Storage_Count => 1);
 
    type Wallet_Stats is record
       UUID             : UUID_Type;
