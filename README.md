@@ -34,6 +34,13 @@ signed by using HMAC-256.  A data block can contain several values but
 each of them is protected by its own encryption key.  Each value is also
 signed using HMAC-256.
 
+The tool is able to separate the data blocks from the keys and use
+a specific file to keep track of keys and one or several files for
+the data blocks.  When data blocks are separate from the keys, it is
+possible to copy the data files on other storages without exposing
+any key used for encryption.  The data storage files use the `.dkt`
+extension and they are activated by using the `-d data-path` option.
+
 # Using Ada Keystore Tool
 
 The `akt` tool is the command line tool that manages the wallet.
@@ -48,6 +55,8 @@ It provides the following commands:
 * `remove`:   remove values from the keystore
 * `set`:      insert or update a value in the keystore
 * `store`:    insert or update a value in the keystore
+
+## Simple usage
 
 To create the secure file, use the following command and enter
 your secure password (it is recommended to use a long and complex password):
@@ -89,6 +98,44 @@ And it can be extracted by using the following command:
 ```
    akt -f secure.akt extract backup.tar.gz | tar xzf -
 ```
+
+## Advanced usage
+
+Even though the encryption keys are protected by a password,
+it is sometimes useful to avoid exposing them and keep them separate
+from the data blocks.  This is possible by using the `-d data-path`
+option when the keystore file is created.  When this option is used,
+the data blocks are written in one or several storage files located
+in the directory.  To use this, create the keystore as follows:
+
+```
+   akt -f secure.akt -d data create
+```
+
+Then, you can do your backup by using:
+
+```
+   tar czf - . | akt -f secure.akt -d data store backup.tar.gz
+```
+
+The tool will put in `secure.akt` all the encryption keys and it will
+create in the `data` directory the files that contain the data blocks.
+You can then copy these data blocks on a backup server.  They don't contain
+any encryption key.  Because each 4K data block is encrypted by its own
+key, it is necessary to know all the keys to be able to decrypt the full
+content.  The `secure.akt` file is the only content that contains
+encryption keys.
+
+## Using GPG to protect the keystore
+
+You can use GPG to lock/unlock the keystore.  To do this, you have
+to use the `--gpg` option and giving your own GPG key identifier
+(or your user's name).
+
+```
+   akt -f secure.akt -d data create --gpg your-gpg-key-id
+```
+
 
 # Building Ada Keystore
 
