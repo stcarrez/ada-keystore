@@ -16,7 +16,6 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Ada.Text_IO;
-with Ada.Streams;
 package body AKT.Commands.Create is
 
    use GNAT.Strings;
@@ -38,6 +37,10 @@ package body AKT.Commands.Create is
       end if;
       Config.Overwrite := Command.Force;
 
+      if Context.Data_Path'Length > 0 then
+         Config.Storage_Count := 10;
+      end if;
+
       if Command.Gpg_User /= null and Command.Gpg_User'Length > 0 then
 
          Context.Set_GPG_User (Command.Gpg_User.all);
@@ -46,6 +49,7 @@ package body AKT.Commands.Create is
          Keystore.Files.Create (Container => Context.Wallet,
                                 Password  => Context.Get_GPG_Secret,
                                 Path      => Context.Wallet_File.all,
+                                Data_Path => Context.Data_Path.all,
                                 Config    => Config);
 
          Context.Save_GPG_Secret;
@@ -54,6 +58,7 @@ package body AKT.Commands.Create is
          Keystore.Files.Create (Container => Context.Wallet,
                                 Password  => Context.Provider.Get_Password,
                                 Path      => Context.Wallet_File.all,
+                                Data_Path => Context.Data_Path.all,
                                 Config    => Config);
       end if;
    end Execute;
