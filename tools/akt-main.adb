@@ -60,6 +60,10 @@ exception
       Log.Error ("The keystore file is corrupted: invalid or missing storage file");
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
+   when Keystore.Invalid_Keystore =>
+      Log.Error ("The file is not a keystore");
+      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+
    when AKT.Commands.Error | Util.Commands.Not_Found =>
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
