@@ -67,7 +67,8 @@ package body Keystore.IO.Headers is
    --  Header positions and length.
    HMAC_START          : constant := 1 + 16;
    HMAC_END            : constant := HMAC_START + 32 - 1;
-   HEADER_DATA_POS     : constant := HMAC_END + 1 + 16 + 4 + 4 + 4;
+   STORAGE_COUNT_POS   : constant := HMAC_END + 1 + 16 + 4 + 4;
+   HEADER_DATA_POS     : constant := STORAGE_COUNT_POS + 4;
    STORAGE_SLOT_LENGTH : constant := 4 + 2 + 2 + 4 + 32;
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.IO.Headers");
@@ -201,6 +202,7 @@ package body Keystore.IO.Headers is
                Status : Interfaces.Unsigned_16;
             begin
                Buffer.Pos := Get_Storage_Offset (I);
+               S.Pos := Buffer.Pos;
                S.Identifier := Storage_Identifier (Marshallers.Get_Unsigned_32 (Buffer));
                S.Kind := Marshallers.Get_Unsigned_16 (Buffer);
                Status := Marshallers.Get_Unsigned_16 (Buffer);
@@ -342,16 +344,31 @@ package body Keystore.IO.Headers is
       Marshallers.Get_Data (Buffer, Size, Data, Last);
    end Get_Header_Data;
 
+   --  ------------------------------
+   --  Add a new storage reference in the header and return its position in the header.
+   --  Raises the No_Header_Slot if there is no room in the header.
+   --  ------------------------------
    procedure Add_Storage (Header     : in out Wallet_Header;
                           Identifier : in Storage_Identifier;
-                          Max_Block  : in Positive) is
-      Buffer  : Keystore.Marshallers.Marshaller;
+                          Max_Block  : in Positive;
+                          Pos        : out Block_Index) is
+      Buffer : Keystore.Marshallers.Marshaller;
+      Last   : constant Block_Index := Get_Header_Data_Size (Header) + HEADER_DATA_POS;
    begin
+      Pos := Get_Storage_Offset (Header.Storage_Count + 1);
+      if Pos <= Last + 4 then
+         raise No_Header_Slot;
+      end if;
+      Buffer.Pos := Pos;
+      Header.Storage_Count := Header.Storage_Count + 1;
       Buffer.Buffer := Header.Buffer;
       Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Identifier));
       Marshallers.Put_Unsigned_16 (Buffer, 0);
       Marshallers.Put_Unsigned_16 (Buffer, 0);
       Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Max_Block));
+
+      Buffer.Pos := STORAGE_COUNT_POS;
+      Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Header.Storage_Count));
    end Add_Storage;
 
 end Keystore.IO.Headers;
