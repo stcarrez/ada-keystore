@@ -1,12 +1,14 @@
 .\"
 .\"
-.TH AKT 1 "Aug 2, 2019" "Ada Keystore Tool"
+.TH AKT 1 "Sep 28, 2019" "Ada Keystore Tool"
 .SH NAME
 akt - Ada Keystore Tool
 .SH SYNOPSIS
 .B akt
-[ -v ] [-d] [ -f
+[ -v ] [-vv] [-V] [ -f
 .I file
+] [ -d
+.I dir
 ] [ -p
 .I password
 ] [--password
@@ -85,17 +87,27 @@ by asking through a network socket for the password.
 .SH OPTIONS
 The following options are recognized by \fIakt\fR:
 .TP 5
--v
+-V
 Prints the
 .I akt
 version.
 .TP 5
--d
+-v
+Enable the verbose mode.
+.TP 5
+-vv
 Enable debugging output.
 .TP 5
 -f file
 .br
 Specifies the path of the keystore file to open.
+.TP 5
+-d directory
+.br
+Specifies the directory path of the keystore data files.
+When this option is used, the data blocks are written in separate
+files.  The data blocks do not contain the encryption keys and each of
+them is encrypted with its own secure key.
 .TP 5
 -p password
 .br
