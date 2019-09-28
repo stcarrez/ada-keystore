@@ -16,6 +16,7 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Ada.Text_IO;
+with Ada.Streams;
 package body AKT.Commands.Create is
 
    use GNAT.Strings;
@@ -30,16 +31,31 @@ package body AKT.Commands.Create is
                       Context   : in out Context_Type) is
       pragma Unreferenced (Name, Args);
 
-      Config : Keystore.Wallet_Config := Keystore.Secure_Config;
+      Config       : Keystore.Wallet_Config := Keystore.Secure_Config;
    begin
       if Command.Counter_Range /= null and then Command.Counter_Range'Length > 0 then
          Parse_Range (Command.Counter_Range.all, Config);
       end if;
       Config.Overwrite := Command.Force;
-      Keystore.Files.Create (Container => Context.Wallet,
-                             Password  => Context.Provider.Get_Password,
-                             Path      => Context.Wallet_File.all,
-                             Config    => Config);
+
+      if Command.Gpg_User /= null and Command.Gpg_User'Length > 0 then
+
+         Context.Set_GPG_User (Command.Gpg_User.all);
+         Context.Create_GPG_Secret;
+
+         Keystore.Files.Create (Container => Context.Wallet,
+                                Password  => Context.Get_GPG_Secret,
+                                Path      => Context.Wallet_File.all,
+                                Config    => Config);
+
+         Context.Save_GPG_Secret;
+
+      else
+         Keystore.Files.Create (Container => Context.Wallet,
+                                Password  => Context.Provider.Get_Password,
+                                Path      => Context.Wallet_File.all,
+                                Config    => Config);
+      end if;
    end Execute;
 
    --  ------------------------------
@@ -63,6 +79,12 @@ package body AKT.Commands.Create is
                         Switch => "-f",
                         Long_Switch => "--force",
                         Help   => "Force the creation of the keystore");
+      GC.Define_Switch (Config => Config,
+                        Output => Command.Gpg_User'Access,
+                        Switch => "-g:",
+                        Long_Switch => "--gpg=",
+                        Argument => "USER",
+                        Help   => "Use gpg to protect the keystore access");
    end Setup;
 
    --  ------------------------------
@@ -75,14 +97,16 @@ package body AKT.Commands.Create is
    begin
       Ada.Text_IO.Put_Line ("akt create: create the keystore");
       Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: akt create [--counter-range min:max]");
+      Ada.Text_IO.Put_Line ("Usage: akt create [--counter-range min:max] [--force] [--gpg USER]");
       Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("  The create command is used to create the new keystore file.");
       Ada.Text_IO.Put_Line ("  By default the PBKDF2 iteration counter is in range"
                             & " 500000..1000000.");
       Ada.Text_IO.Put_Line ("  You can change this range by using the `--counter-range` option.");
       Ada.Text_IO.Put_Line ("  High values provide best password protection at the expense"
-                              & " of speed.");
+                            & " of speed.");
+      Ada.Text_IO.Put_Line ("  When the `--gpg` option is used, the keystore is protected by");
+      Ada.Text_IO.Put_Line ("  using gpg and one of the user's GPG key.");
    end Help;
 
 end AKT.Commands.Create;
