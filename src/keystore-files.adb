@@ -42,7 +42,33 @@ package body Keystore.Files is
       Wallet_Stream := new IO.Files.Wallet_Stream;
       Stream := IO.Refs.Create (Wallet_Stream.all'Access);
       Wallet_Stream.Open (Path);
-      Container.Container.Open (Password, 1, Block, Stream);
+      Container.Container.Open (1, Block, Stream);
+      Container.Container.Unlock (Password);
+      Log.Info ("Keystore {0} is opened", Path);
+   end Open;
+
+   --  ------------------------------
+   --  Open the keystore file without unlocking the wallet but get some information
+   --  from the header section.
+   --  ------------------------------
+   procedure Open (Container : in out Wallet_File;
+                   Path      : in String;
+                   Info      : out Wallet_Info) is
+      use IO.Files;
+      Block         : IO.Storage_Block;
+      Wallet_Stream : IO.Files.Wallet_Stream_Access;
+      Stream        : IO.Refs.Stream_Ref;
+   begin
+      Log.Debug ("Open keystore {0}", Path);
+
+      Block.Storage := IO.DEFAULT_STORAGE_ID;
+      Block.Block := 1;
+      Wallet_Stream := new IO.Files.Wallet_Stream;
+      Stream := IO.Refs.Create (Wallet_Stream.all'Access);
+      Wallet_Stream.Open (Path);
+      Container.Container.Open (1, Block, Stream);
+      Info := Wallet_Stream.Get_Info;
+
       Log.Info ("Keystore {0} is opened", Path);
    end Open;
 
@@ -71,12 +97,45 @@ package body Keystore.Files is
    end Create;
 
    --  ------------------------------
+   --  Unlock the wallet with the password.
+   --  Raises the Bad_Password exception if no key slot match the password.
+   --  ------------------------------
+   procedure Unlock (Container : in out Wallet_File;
+                     Password  : in Secret_Key) is
+   begin
+      Container.Container.Unlock (Password);
+   end Unlock;
+
+   --  ------------------------------
    --  Close the keystore file.
    --  ------------------------------
    procedure Close (Container : in out Wallet_File) is
    begin
       Container.Container.Close;
    end Close;
+
+   --  ------------------------------
+   --  Set some header data in the keystore file.
+   --  ------------------------------
+   procedure Set_Header_Data (Container : in out Wallet_File;
+                              Index     : in Header_Slot_Index_Type;
+                              Kind      : in Header_Slot_Type;
+                              Data      : in Ada.Streams.Stream_Element_Array) is
+   begin
+      Container.Container.Set_Header_Data (Index, Kind, Data);
+   end Set_Header_Data;
+
+   --  ------------------------------
+   --  Get the header data information from the keystore file.
+   --  ------------------------------
+   procedure Get_Header_Data (Container : in out Wallet_File;
+                              Index     : in Header_Slot_Index_Type;
+                              Kind      : out Header_Slot_Type;
+                              Data      : out Ada.Streams.Stream_Element_Array;
+                              Last      : out Ada.Streams.Stream_Element_Offset) is
+   begin
+      Container.Container.Get_Header_Data (Index, Kind, Data, Last);
+   end Get_Header_Data;
 
    --  Add in the wallet the named entry and associate it the children wallet.
    --  The children wallet meta data is protected by the container.
@@ -107,7 +166,7 @@ package body Keystore.Files is
    overriding
    function Is_Configured (Container : in Wallet_File) return Boolean is
    begin
-      return Container.Container.Get_State = S_CONFIGURED;
+      return Container.Container.Get_State = S_PROTECTED;
    end Is_Configured;
 
    --  ------------------------------
@@ -262,6 +321,15 @@ package body Keystore.Files is
       Container.Container.Find (Name, Result);
       return Result;
    end Find;
+
+   --  ------------------------------
+   --  Get wallet file information and statistics.
+   --  ------------------------------
+   procedure Get_Stats (Container : in out Wallet_File;
+                        Stats     : out Wallet_Stats) is
+   begin
+      Container.Container.Get_Stats (Stats);
+   end Get_Stats;
 
    procedure Set_Work_Manager (Container : in out Wallet_File;
                                Workers   : in Keystore.Task_Manager_Access) is
