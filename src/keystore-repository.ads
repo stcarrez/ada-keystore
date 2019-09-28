@@ -121,6 +121,12 @@ private package Keystore.Repository is
    procedure List (Repository : in out Wallet_Repository;
                    Content    : out Entry_Map);
 
+   --  Get the keystore UUID.
+   function Get_UUID (Repository : in Wallet_Repository) return UUID_Type;
+
+   --  Get the number of entries in the wallet.
+   function Get_Entry_Count (Repository : in Wallet_Repository) return Natural;
+
    procedure Set_Work_Manager (Repository : in out Wallet_Repository;
                                Workers    : in Keystore.Task_Manager_Access);
 
