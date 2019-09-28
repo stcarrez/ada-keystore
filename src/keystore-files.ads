@@ -20,13 +20,21 @@ package Keystore.Files is
 
    type Wallet_File is limited new Wallet with private;
 
-   --  Open the keystore file using the given password.
+   --  Open the keystore file and unlock the wallet using the given password.
    --  Raises the Bad_Password exception if no key slot match the password.
    procedure Open (Container : in out Wallet_File;
                    Password  : in Secret_Key;
                    Path      : in String) with
      Pre  => not Container.Is_Open,
      Post => Container.Is_Open;
+
+   --  Open the keystore file without unlocking the wallet but get some information
+   --  from the header section.
+   procedure Open (Container : in out Wallet_File;
+                   Path      : in String;
+                   Info      : out Wallet_Info) with
+     Pre  => not Container.Is_Open,
+     Post => Container.State = S_PROTECTED;
 
    --  Create the keystore file and protect it with the given password.
    --  The key slot #1 is used.
@@ -37,10 +45,32 @@ package Keystore.Files is
      Pre  => not Container.Is_Open,
      Post => Container.Is_Open;
 
+   --  Unlock the wallet with the password.
+   --  Raises the Bad_Password exception if no key slot match the password.
+   procedure Unlock (Container : in out Wallet_File;
+                     Password  : in Secret_Key) with
+     Pre  => Container.State = S_PROTECTED,
+     Post => Container.Is_Open;
+
    --  Close the keystore file.
    procedure Close (Container : in out Wallet_File) with
      Pre  => Container.Is_Open,
      Post => not Container.Is_Open;
+
+   --  Set some header data in the keystore file.
+   procedure Set_Header_Data (Container : in out Wallet_File;
+                              Index     : in Header_Slot_Index_Type;
+                              Kind      : in Header_Slot_Type;
+                              Data      : in Ada.Streams.Stream_Element_Array) with
+     Pre => Container.State in S_OPEN | S_PROTECTED and Data'Length <= 1024;
+
+   --  Get the header data information from the keystore file.
+   procedure Get_Header_Data (Container : in out Wallet_File;
+                              Index     : in Header_Slot_Index_Type;
+                              Kind      : out Header_Slot_Type;
+                              Data      : out Ada.Streams.Stream_Element_Array;
+                              Last      : out Ada.Streams.Stream_Element_Offset) with
+     Pre => Container.State = S_PROTECTED;
 
    --  Add in the wallet the named entry and associate it the children wallet.
    --  The children wallet meta data is protected by the container.
@@ -164,6 +194,10 @@ package Keystore.Files is
    overriding
    function Find (Container : in out Wallet_File;
                   Name      : in String) return Entry_Info;
+
+   --  Get wallet file information and statistics.
+   procedure Get_Stats (Container : in out Wallet_File;
+                        Stats     : out Wallet_Stats);
 
    procedure Set_Work_Manager (Container : in out Wallet_File;
                                Workers   : in Keystore.Task_Manager_Access);
