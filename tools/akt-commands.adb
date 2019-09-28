@@ -83,6 +83,7 @@ package body AKT.Commands is
                             Use_Worker : in Boolean := False) is
    begin
       Context.Wallet.Open (Path => Context.Wallet_File.all,
+                           Data_Path => Context.Data_Path.all,
                            Info => Context.Info);
       if not Context.No_Password_Opt or else Context.Info.Header_Count = 0 then
          Context.Wallet.Unlock (Context.Provider.Get_Password);
@@ -173,6 +174,12 @@ package body AKT.Commands is
                         Long_Switch => "--file=",
                         Argument => "PATH",
                         Help   => "Defines the path for the wallet file");
+      GC.Define_Switch (Config => Context.Command_Config,
+                        Output => Context.Data_Path'Access,
+                        Switch => "-d:",
+                        Long_Switch => "--data-path=",
+                        Argument => "PATH",
+                        Help   => "The directory which contains the keystore data blocks");
       GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Password_File'Access,
                         Long_Switch => "--passfile=",
