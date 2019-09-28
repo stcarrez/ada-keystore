@@ -224,7 +224,8 @@ package body AKT.Commands is
                           "  -V           Print the tool version" & ASCII.LF &
                           "  -v           Verbose execution mode" & ASCII.LF &
                           "  -vv          Debug execution mode" & ASCII.LF &
-                          "  -f keystore  The keystore file to use");
+                          "  -f keystore  The keystore file to use" & ASCII.LF &
+                          "  -d data-path The directory which contains the keystore data blocks");
       Driver.Add_Command ("help", "print some help", Help_Command'Access);
       Driver.Add_Command ("set", "insert or update a value in the keystore", Set_Command'Access);
       Driver.Add_Command ("store", "read the standard input and insert or update the"
