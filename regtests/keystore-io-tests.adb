@@ -53,7 +53,7 @@ package body Keystore.IO.Tests is
          Config.Overwrite := True;
          Cipher.Set_Key (Secret);
          Cipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
-         Stream.Create (Path => Path, Config => Config);
+         Stream.Create (Path => Path, Data_Path => "", Config => Config);
          Stream.Allocate (IO.DATA_BLOCK, Block);
          T.Assert (Block.Block = 1, "Allocate should return first block");
 
@@ -76,7 +76,7 @@ package body Keystore.IO.Tests is
       begin
          Decipher.Set_Key (Secret);
          Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
-         Stream.Open (Path => Path);
+         Stream.Open (Path => Path, Data_Path => "");
          Buffer.Buffer := Buffers.Allocate (Storage_Block '(DEFAULT_STORAGE_ID, 1));
          Stream.Read (Decipher     => Decipher,
                       Sign         => Sign,
@@ -113,7 +113,7 @@ package body Keystore.IO.Tests is
       begin
          Decipher.Set_Key (Secret2);
          Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
-         Stream.Open (Path => Path);
+         Stream.Open (Path => Path, Data_Path => "");
          begin
             Buffer.Buffer := Buffers.Allocate (Storage_Block '(DEFAULT_STORAGE_ID, 1));
             Stream.Read (Decipher     => Decipher,
@@ -147,7 +147,7 @@ package body Keystore.IO.Tests is
          Config.Overwrite := True;
          Cipher.Set_Key (Secret);
          Cipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
-         Stream.Create (Path => Path, Config => Config);
+         Stream.Create (Path => Path, Data_Path => "", Config => Config);
          Stream.Allocate (IO.DATA_BLOCK, Block);
          T.Assert (Block.Block = 1, "Allocate should return first block");
 
@@ -182,7 +182,7 @@ package body Keystore.IO.Tests is
       begin
          Decipher.Set_Key (Secret);
          Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
-         Stream.Open (Path => Path);
+         Stream.Open (Path => Path, Data_Path => "");
          Buffer.Buffer := Buffers.Allocate (Storage_Block '(DEFAULT_STORAGE_ID, 1));
 
          --  Read first block
