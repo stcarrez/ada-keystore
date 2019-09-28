@@ -18,6 +18,7 @@
 with System.Multiprocessors;
 with Ada.Command_Line;
 with Ada.Text_IO;
+with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Util.Strings;
 with Util.Commands.Parsers.GNAT_Parser;
@@ -34,11 +35,14 @@ with AKT.Commands.Store;
 with AKT.Commands.Password.Add;
 with AKT.Commands.Password.Set;
 with AKT.Commands.Password.Remove;
+with AKT.Commands.Info;
 with AKT.Passwords.Input;
 with AKT.Passwords.Files;
 with AKT.Passwords.Unsafe;
 with AKT.Passwords.Cmds;
 package body AKT.Commands is
+
+   use Ada.Strings.Unbounded;
 
    Help_Command            : aliased AKT.Commands.Drivers.Help_Command_Type;
    Set_Command             : aliased AKT.Commands.Set.Command_Type;
@@ -52,6 +56,7 @@ package body AKT.Commands is
    Set_Password_Command    : aliased AKT.Commands.Password.Set.Command_Type;
    Add_Password_Command    : aliased AKT.Commands.Password.Add.Command_Type;
    Remove_Password_Command : aliased AKT.Commands.Password.Remove.Command_Type;
+   Info_Command            : aliased AKT.Commands.Info.Command_Type;
    Driver                  : Drivers.Driver_Type;
 
    --  ------------------------------
@@ -75,9 +80,16 @@ package body AKT.Commands is
    --  ------------------------------
    procedure Open_Keystore (Context    : in out Context_Type;
                             Use_Worker : in Boolean := False) is
+      use type Keystore.Header_Slot_Count_Type;
    begin
-      Context.Wallet.Open (Password => Context.Provider.Get_Password,
-                           Path     => Context.Wallet_File.all);
+      Context.Wallet.Open (Path => Context.Wallet_File.all,
+                           Info => Context.Info);
+      if not Context.No_Password_Opt or else Context.Info.Header_Count = 0 then
+         Context.Wallet.Unlock (Context.Provider.Get_Password);
+      else
+         Context.GPG.Unlock (Context.Wallet, Context.Info);
+      end if;
+
       if Use_Worker then
          Context.Workers := new Keystore.Task_Manager (Context.Worker_Count);
          Keystore.Start (Context.Workers);
@@ -94,8 +106,8 @@ package body AKT.Commands is
                               Mode         : in Keystore.Mode_Type) is
       Password : constant Keystore.Secret_Key := Context.Provider.Get_Password;
    begin
-      Context.Wallet.Open (Password => Password,
-                           Path     => Context.Wallet_File.all);
+      Context.Wallet.Open (Path => Context.Wallet_File.all,
+                           Info => Context.Info);
       Context.Wallet.Set_Key (Password     => Password,
                               New_Password => New_Password,
                               Config       => Config,
@@ -121,6 +133,9 @@ package body AKT.Commands is
    procedure Initialize (Context : in out Context_Type) is
    begin
       Context.Worker_Count := Positive (System.Multiprocessors.Number_Of_CPUs);
+
+      Context.GPG.Encrypt_Command := To_Unbounded_String (AKT.GPG.ENCRYPT_COMMAND);
+      Context.GPG.Decrypt_Command := To_Unbounded_String (AKT.GPG.DECRYPT_COMMAND);
 
       GC.Set_Usage (Config => Context.Command_Config,
                     Usage  => "[switchs] command [arguments]",
@@ -173,11 +188,6 @@ package body AKT.Commands is
                         Long_Switch => "--password=",
                         Help   => "The password is passed within the command line (not safe)");
       GC.Define_Switch (Config => Context.Command_Config,
-                        Output => Context.Unsafe_Password'Access,
-                        Switch => "-p:",
-                        Long_Switch => "--password=",
-                        Help   => "The password is passed within the command line (not safe)");
-      GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Password_Askpass'Access,
                         Long_Switch => "--passask",
                         Help   => "Run the ssh-askpass command to get the password");
@@ -214,6 +224,7 @@ package body AKT.Commands is
       Driver.Add_Command ("password-set", "change the password", Set_Password_Command'Access);
       Driver.Add_Command ("password-add", "add a password", Add_Password_Command'Access);
       Driver.Add_Command ("password-remove", "remove a password", Remove_Password_Command'Access);
+      Driver.Add_Command ("info", "report information about the keystore", Info_Command'Access);
    end Initialize;
 
    procedure Parse (Context   : in out Context_Type;
@@ -242,6 +253,7 @@ package body AKT.Commands is
          Context.Provider := Passwords.Unsafe.Create (Context.Unsafe_Password.all);
       else
          Context.Provider := AKT.Passwords.Input.Create (False);
+         Context.No_Password_Opt := True;
       end if;
 
       declare
@@ -295,6 +307,52 @@ package body AKT.Commands is
          raise Error;
 
    end Parse_Range;
+
+   --  ------------------------------
+   --  Get the keystore file path.
+   --  ------------------------------
+   function Get_Keystore_Path (Context : in Context_Type) return String is
+   begin
+      return Context.Wallet_File.all;
+   end Get_Keystore_Path;
+
+   procedure Set_GPG_User (Context : in out Context_Type;
+                           User    : in String) is
+   begin
+      Append (Context.GPG.Encrypt_Command, " -r ");
+      Append (Context.GPG.Encrypt_Command, User);
+   end Set_GPG_User;
+
+   --  ------------------------------
+   --  Create a new secret for the GPG password protection.
+   --  ------------------------------
+   procedure Create_GPG_Secret (Context : in out Context_Type) is
+   begin
+      Context.GPG.Generate_Secret;
+   end Create_GPG_Secret;
+
+   --  ------------------------------
+   --  Get the GPG secret to unlock the keystore.
+   --  ------------------------------
+   function Get_GPG_Secret (Context : in Context_Type) return Keystore.Secret_Key is
+   begin
+      return Context.GPG.Get_Secret;
+   end Get_GPG_Secret;
+
+   function Encrypt_GPG_Secret (Context : in Context_Type)
+                                return Ada.Streams.Stream_Element_Array is
+   begin
+      return Context.GPG.Encrypt_GPG_Secret;
+   end Encrypt_GPG_Secret;
+
+   --  ------------------------------
+   --  Save the GPG secret by encrypting it using the user's GPG key and storing
+   --  the encrypted data in the keystore data header.
+   --  ------------------------------
+   procedure Save_GPG_Secret (Context : in out Context_Type) is
+   begin
+      Context.GPG.Save_GPG_Secret (Context.Wallet);
+   end Save_GPG_Secret;
 
    overriding
    procedure Finalize (Context : in out Context_Type) is
