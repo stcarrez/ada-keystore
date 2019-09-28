@@ -148,6 +148,9 @@ private
                                  Data   : out Ada.Streams.Stream_Element_Array;
                                  Last   : out Ada.Streams.Stream_Element_Offset);
 
+      procedure Add_Storage (Identifier : in Storage_Identifier;
+                             Sign       : in Secret_Key);
+
       procedure Scan_Storage (Process : not null access procedure (Storage : in Wallet_Storage));
 
       procedure Close;
@@ -183,8 +186,8 @@ private
                         Config    : in Wallet_Config;
                         Sign      : in Secret_Key);
 
-      procedure Create_Storage (Storage_Id : in Storage_Identifier;
-                                Sign   : in Secret_Key);
+      procedure Add_Storage (Count : in Positive;
+                             Sign  : in Secret_Key);
 
       procedure Get (Storage : in Storage_Identifier;
                      File    : out File_Stream_Access);
