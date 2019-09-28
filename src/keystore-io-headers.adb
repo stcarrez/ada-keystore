@@ -216,8 +216,6 @@ package body Keystore.IO.Headers is
             S.Sealed := Status > 0;
             S.Max_Block := Natural (Marshallers.Get_Unsigned_32 (Buffer));
             S.HMAC := Buf.Data (Buffer.Pos .. Buffer.Pos + 32 - 1);
-            Marshallers.Skip (Buffer, 32);
-
             Process (S);
          end;
       end loop;
