@@ -99,7 +99,7 @@ package body Keystore.Verifier is
          Last : Ada.Streams.Stream_Element_Offset;
       begin
          File.Read (Buf.Data, Last);
-         Keystore.IO.Headers.Read_Header (Header, Sign, Process'Access);
+         Keystore.IO.Headers.Read_Header (Header, Sign);
       end;
    end Open;
 
