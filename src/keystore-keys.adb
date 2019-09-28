@@ -396,9 +396,7 @@ package body Keystore.Keys is
       Root.Block := IO.Block_Number (Value);
 
       --  Extract wallet uuid.
-      for I in UUID'Range loop
-         UUID (I) := Marshallers.Get_Unsigned_32 (Buffer);
-      end loop;
+      Marshallers.Get_UUID (Buffer, UUID);
    end Load;
 
    --  Open the key manager and read the wallet header block.  Use the secret key
@@ -460,9 +458,7 @@ package body Keystore.Keys is
       Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Root.Block));
 
       --  Write wallet uuid.
-      for I in Config.UUID'Range loop
-         Marshallers.Put_Unsigned_32 (Buffer, Config.UUID (I));
-      end loop;
+      Marshallers.Put_UUID (Buffer, Config.UUID);
 
       Save_Key (Manager, Buffer, Password, Slot, Config, Stream);
    end Create;
