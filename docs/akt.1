@@ -145,7 +145,7 @@ sets while launching the command.
 .\"
 .SS The create command
 .RS 0
-akt \fBcreate\fR [--counter-range \fImin\fR:\fImax\fR]
+akt \fBcreate\fR [--counter-range \fImin\fR:\fImax\fR] [--gpg \fIuser\fP]
 .RE
 .PP
 Create a new keystore and protect it with the password.
@@ -158,7 +158,9 @@ The password to protect the wallet is passed using one of the following options:
 ,
 .B --password
 ,
-.BR --passsocket .
+.B --passsocket
+or
+.BR --gpg .
 When none of these options are passed, the password is asked interactively.
 .PP
 The
@@ -166,6 +168,19 @@ The
 option allows to control the range for the random counter used by PBKDF2
 to generate the encryption key derived from the specified password.  High values
 provide a strongest derived key at the expense of speed.
+.PP
+The
+.B --gpg
+option allows to protect the keystore by using a user's GPG encryption key.
+The option argument defines the GPG user's name or GPG key.
+When the keystore password is protected by the user's GPG key,
+a random password is generated to protect the keystore.
+The
+.IR gpg2 (1)
+command is used to encrypt that password and save it in the keystore
+header.  The
+.IR gpg2 (1)
+command is then used to decrypt that and be able to unlock the keystore.
 .\"
 .SS The set command
 .RS 0
@@ -313,7 +328,8 @@ Wallet data are encrypted using AES-256-CBC.  The wallet data entry key and IV
 vectors are protected by the wallet master key.
 .\"
 .SH SEE ALSO
-\fIeditor(1)\fR, \fIupdate-alternative(1)\fR, \fIssh-askpass(1)\fR
+\fIeditor(1)\fR, \fIupdate-alternative(1)\fR, \fIssh-askpass(1)\fR,
+\fIgpg2(1)\fR
 .\"
 .\"
 .SH AUTHOR
