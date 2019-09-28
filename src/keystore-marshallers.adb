@@ -168,6 +168,14 @@ package body Keystore.Marshallers is
                                       Result => Buf.Data (Pos .. Into.Pos - 1));
    end Put_HMAC_SHA256;
 
+   procedure Put_UUID (Into  : in out Marshaller;
+                       Value : in UUID_Type) is
+   begin
+      for I in Value'Range loop
+         Put_Unsigned_32 (Into, Value (I));
+      end loop;
+   end Put_UUID;
+
    function Get_Unsigned_16 (From  : in out Marshaller) return Interfaces.Unsigned_16 is
       Pos : constant Block_Index := From.Pos;
       Buf : constant Buffers.Buffer_Accessor := From.Buffer.Data.Value;
@@ -264,6 +272,25 @@ package body Keystore.Marshallers is
                                    Secret => Secret);
       From.Pos := Last + 1;
    end Get_Secret;
+
+   procedure Get_UUID (From : in out Marshaller;
+                       UUID : out UUID_Type) is
+   begin
+      for I in UUID'Range loop
+         UUID (I) := Marshallers.Get_Unsigned_32 (From);
+      end loop;
+   end Get_UUID;
+
+   procedure Get_Data (From : in out Marshaller;
+                       Size : in Ada.Streams.Stream_Element_Offset;
+                       Data : out Ada.Streams.Stream_Element_Array;
+                       Last : out Ada.Streams.Stream_Element_Offset) is
+      Buf : constant Buffers.Buffer_Accessor := From.Buffer.Data.Value;
+   begin
+      Last := Data'First + Size - 1;
+      Data (Data'First .. Last) := Buf.Data (From.Pos .. From.Pos + Size - 1);
+      From.Pos := From.Pos + Size - 1;
+   end Get_Data;
 
    procedure Skip (From  : in out Marshaller;
                    Count : in Block_Index) is
