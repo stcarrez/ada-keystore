@@ -61,6 +61,8 @@ private package Keystore.IO is
    BT_DATA_START   : constant Block_Index := BT_HEADER_START + BT_TYPE_HEADER_SIZE;
    BT_DATA_LENGTH  : constant Block_Index := Block_Index'Last - BT_DATA_START + 1;
 
+   HEADER_BLOCK_NUM   : constant Block_Number := 1;
+
    DEFAULT_STORAGE_ID : constant Storage_Identifier := 0;
 
    type Wallet_Stream is limited interface;
@@ -94,6 +96,19 @@ private package Keystore.IO is
 
    --  Close the wallet stream and release any resource.
    procedure Close (Stream : in out Wallet_Stream) is abstract;
+
+   --  Set some header data in the keystore file.
+   procedure Set_Header_Data (Stream : in out Wallet_Stream;
+                              Index  : in Header_Slot_Index_Type;
+                              Kind   : in Header_Slot_Type;
+                              Data   : in Ada.Streams.Stream_Element_Array) is abstract;
+
+   --  Get the header data information from the keystore file.
+   procedure Get_Header_Data (Stream : in out Wallet_Stream;
+                              Index  : in Header_Slot_Index_Type;
+                              Kind   : out Header_Slot_Type;
+                              Data   : out Ada.Streams.Stream_Element_Array;
+                              Last   : out Ada.Streams.Stream_Element_Offset) is abstract;
 
    --  Read the block from the wallet IO stream and decrypt the block content using
    --  the decipher object.  The decrypted content is stored in the marshaller which
