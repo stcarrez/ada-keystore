@@ -172,9 +172,7 @@ package body Keystore.IO.Files is
    procedure Add_Storage (Stream  : in out Wallet_Stream;
                           Count   : in Positive) is
    begin
-      for I in 1 .. Count loop
-         Stream.Descriptor.Create_Storage (Storage_Identifier (I), Stream.Sign);
-      end loop;
+      Stream.Descriptor.Add_Storage (Count, Stream.Sign);
    end Add_Storage;
 
    --  Close the wallet stream and release any resource.
@@ -320,6 +318,13 @@ package body Keystore.IO.Files is
          IO.Headers.Get_Header_Data (Header, Index, Kind, Data, Last);
       end Get_Header_Data;
 
+      procedure Add_Storage (Identifier : in Storage_Identifier;
+                             Sign       : in Secret_Key) is
+         Pos : Block_Index;
+      begin
+         IO.Headers.Add_Storage (Header, Identifier, 1, Pos);
+      end Add_Storage;
+
       procedure Scan_Storage (Process : not null
                               access procedure (Storage : in Wallet_Storage)) is
       begin
@@ -421,13 +426,17 @@ package body Keystore.IO.Files is
             if Tag /= UUID then
                Log.Error ("Invalid UUID for storage file {0}", Path);
             end if;
+            if Storage.Identifier < Last_Id then
+               Last_Id := Storage.Identifier;
+            end if;
          end Open_Storage;
 
-         File       : File_Stream_Access;
+         File : File_Stream_Access;
       begin
          Directory := To_Unbounded_String (Data_Path);
          Open (Path, DEFAULT_STORAGE_ID, Sign, UUID);
          Get (DEFAULT_STORAGE_ID, File);
+         Last_Id := DEFAULT_STORAGE_ID;
          File.Scan_Storage (Open_Storage'Access);
       end Open;
 
@@ -435,7 +444,6 @@ package body Keystore.IO.Files is
                         Data_Path : in String;
                         Config    : in Wallet_Config;
                         Sign      : in Secret_Key) is
-         Storage_Id : constant Storage_Identifier := DEFAULT_STORAGE_ID;
          Fd         : Util.Systems.Types.File_Type := Util.Systems.Os.NO_FILE;
          P          : Interfaces.C.Strings.chars_ptr;
          File       : File_Stream_Access;
@@ -443,6 +451,7 @@ package body Keystore.IO.Files is
          Result     : Integer with Unreferenced => True;
          UUID       : UUID_Type;
       begin
+         Directory := To_Unbounded_String (Data_Path);
          Flags := O_CREAT + O_TRUNC + O_CLOEXEC + O_RDWR;
          if not Config.Overwrite then
             Flags := Flags + O_EXCL;
@@ -457,8 +466,9 @@ package body Keystore.IO.Files is
 
          File := new File_Stream;
          Random.Generate (UUID);
-         File.Create (Fd, Storage_Id, UUID, Sign);
-         Files.Insert (Storage_Id, File);
+         File.Create (Fd, DEFAULT_STORAGE_ID, UUID, Sign);
+         Files.Insert (DEFAULT_STORAGE_ID, File);
+         Last_Id := DEFAULT_STORAGE_ID;
       end Create;
 
       procedure Create_Storage (Storage_Id : in Storage_Identifier;
@@ -483,6 +493,18 @@ package body Keystore.IO.Files is
          File.Create (Fd, Storage_Id, UUID, Sign);
          Files.Insert (Storage_Id, File);
       end Create_Storage;
+
+      procedure Add_Storage (Count : in Positive;
+                             Sign  : in Secret_Key) is
+         File : File_Stream_Access;
+      begin
+         Get (DEFAULT_STORAGE_ID, File);
+         for I in 1 .. Count loop
+            Last_Id := Last_Id + 1;
+            Create_Storage (Last_Id, Sign);
+            File.Add_Storage (Last_Id, Sign);
+         end loop;
+      end Add_Storage;
 
       procedure Get (Storage : in Storage_Identifier;
                      File    : out File_Stream_Access) is
