@@ -74,4 +74,9 @@ package Keystore.Tests is
                       Expect  : in String;
                       Status  : in Natural := 0);
 
+   procedure Store_Extract (T       : in out Test;
+                            Command : in String;
+                            Name    : in String;
+                            Path    : in String);
+
 end Keystore.Tests;
