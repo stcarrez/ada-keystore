@@ -5,13 +5,15 @@ akt - Ada Keystore Tool
 
 ## SYNOPSIS
 
-*akt* [ -v ] [-d] [ -f
-_file_ ] [ -p
+*akt* [ -v ] [-vv] [-V] [ -f
+_file_ ] [ -d
+_dir_ ] [ -p
 _password_ ] [--password
 _password_ ] [--passfile
 _file_ ] [--passenv
 _name_ ] [--passfd
-_fd_ ]
+_fd_ ] [--passask] [--passcmd
+_cmd_ ]
 _command_ 
 
 ## DESCRIPTION
@@ -55,6 +57,9 @@ Passwords are retrieved using one of the following options:
 * by reading a file that contains the password,
 * by looking at an environment variable,
 * by using a command line argument,
+* by getting the password through the
+_ssh-askpass_(1) external command,
+* by running an external command,
 * by asking interactively the user for the password,
 * by asking through a network socket for the password.
 
@@ -63,16 +68,26 @@ Passwords are retrieved using one of the following options:
 
 The following options are recognized by _akt_:
 
--v
+-V
 Prints the
 _akt_ version.
 
--d
+-v
+Enable the verbose mode.
+
+-vv
 Enable debugging output.
 
 -f file
 
 Specifies the path of the keystore file to open.
+
+-d directory
+
+Specifies the directory path of the keystore data files.
+When this option is used, the data blocks are written in separate
+files.  The data blocks do not contain the encryption keys and each of
+them is encrypted with its own secure key.
 
 -p password
 
@@ -99,12 +114,27 @@ The keystore password is passed within a pipe whose file descriptor
 number is given.  The file descriptor is read to obtain the password.
 This method is safer.
 
+--passask
+
+The keystore password is retrieved by the running the external tool
+_ssh-askpass_(1) which will ask the password through either KDE, Gnome or another
+desktop interactive application.
+The password is retrieved through a pipe that
+_akt_ sets while launching the command.
+
+--passcmd cmd
+
+The keystore password is retrieved by the running the external command defined in
+_cmd_. The command should print the password on its standard output without end of line.
+The password is retrieved through a pipe that
+_akt_ sets while launching the command.
+
 ## COMMANDS
 
 
 ### The create command
 ```
-akt create [--counter-range min:max]
+akt create [--counter-range min:max] [--split count] [--gpg user]
 ```
 
 Create a new keystore and protect it with the password.
@@ -113,12 +143,29 @@ The password to protect the wallet is passed using one of the following options:
 *--passfile* ,
 *--passenv* ,
 *--password* ,
-*--passsocket*. When none of these options are passed, the password is asked interactively.
+*--passsocket* or
+*--gpg*. When none of these options are passed, the password is asked interactively.
 
 The
 *--counter-range* option allows to control the range for the random counter used by PBKDF2
 to generate the encryption key derived from the specified password.  High values
 provide a strongest derived key at the expense of speed.
+
+The
+*--split* option indicates to use several separate files for the data blocks
+and it controls the number of separate files to use.  When used, a
+directory with the name of the keystore file is created and will contain
+the data files.
+
+The
+*--gpg* option allows to protect the keystore by using a user's GPG encryption key.
+The option argument defines the GPG user's name or GPG key.
+When the keystore password is protected by the user's GPG key,
+a random password is generated to protect the keystore.
+The
+_gpg2_(1) command is used to encrypt that password and save it in the keystore
+header.  The
+_gpg2_(1) command is then used to decrypt that and be able to unlock the keystore.
 
 ### The set command
 ```
@@ -222,7 +269,7 @@ _password-set_ command allows to change the current wallet password.
 Wallet master keys are protected by a derived key that is created from the user's
 password using
 *PBKDF2* and
-*HMAC-512* as hashing operation.  When the wallet is first created, a random salt
+*HMAC-256* as hashing operation.  When the wallet is first created, a random salt
 and counter are allocated which are then used by the
 *PBKDF2* generation.  The wallet can be protected by up to 7 different passwords.
 Despite this, the security of the wallet master key still depends on the
@@ -235,13 +282,31 @@ could be possible for other processes to see these values.  It is best to
 use another method such as using the interactive form, passing the password
 through a file or passing using a socket based communication.
 
-Each wallet data entry is protected by using its own secret key and IV vector.
-Wallet data are encrypted using AES-256-CBC.  The wallet data entry key and IV
-vectors are protected by the wallet master key.
+When the wallet master key is protected using
+_gpg2_(1) a 256-bytes random binary string is created to protect the wallet master
+key.  This random binary string is then encrypted using the user's
+
+*--gpg* option is specified only for the creation of the keystore.
+To unlock the keystore file, the
+_gpg2_(1) command will be used to decrypt the keystore header content automatically.
+When the user's GPG private key is not found, it is not possible
+to unlock the keystore with this method.
+
+Depending on the size, a data stored in the wallet is split in one or
+several data entry. Each wallet data entry is then protected by their
+own secret key and IV vector.
+Wallet data entry are encrypted using AES-256-CBC.  The wallet data entry
+key and IV vectors are protected by the wallet master key.
+
+When the
+*--split* option is used, the data storage files only contain the data blocks.
+They do not contain any encryption key.  The data storage files use the
+*.dkt* file extension.
 
 ## SEE ALSO
 
-_editor(1)_, _update-alternative(1)_
+_editor(1)_, _update-alternative(1)_, _ssh-askpass(1)_,
+_gpg2(1)_
 
 ## AUTHOR
 
