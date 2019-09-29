@@ -37,7 +37,18 @@ package body AKT.Commands.Create is
       end if;
       Config.Overwrite := Command.Force;
 
-      if Context.Data_Path'Length > 0 then
+      if Command.Storage_Count /= null and then Command.Storage_Count'Length > 0 then
+         begin
+            Config.Storage_Count := Positive'Value (Command.Storage_Count.all);
+
+         exception
+            when others =>
+               AKT.Commands.Log.Error ("Split counter is invalid or out of range: "
+                                      & Command.Storage_Count.all);
+               raise Error;
+         end;
+      end if;
+      if Context.Data_Path'Length > 0 and Config.Storage_Count = 1 then
          Config.Storage_Count := 10;
       end if;
 
@@ -80,6 +91,12 @@ package body AKT.Commands.Create is
                         Argument => "RANGE",
                         Help => "Set the range for the PBKDF2 counter");
       GC.Define_Switch (Config => Config,
+                        Output => Command.Storage_Count'Access,
+                        Switch => "-S:",
+                        Long_Switch => "--split:",
+                        Argument => "COUNT",
+                        Help => "Split the data blocks in COUNT separate files");
+      GC.Define_Switch (Config => Config,
                         Output => Command.Force'Access,
                         Switch => "-f",
                         Long_Switch => "--force",
@@ -102,7 +119,8 @@ package body AKT.Commands.Create is
    begin
       Ada.Text_IO.Put_Line ("akt create: create the keystore");
       Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: akt create [--counter-range min:max] [--force] [--gpg USER]");
+      Ada.Text_IO.Put_Line ("Usage: akt create [--counter-range min:max] "
+                            & "[--split COUNT] [--force] [--gpg USER]");
       Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("  The create command is used to create the new keystore file.");
       Ada.Text_IO.Put_Line ("  By default the PBKDF2 iteration counter is in range"
@@ -110,6 +128,12 @@ package body AKT.Commands.Create is
       Ada.Text_IO.Put_Line ("  You can change this range by using the `--counter-range` option.");
       Ada.Text_IO.Put_Line ("  High values provide best password protection at the expense"
                             & " of speed.");
+      Ada.Text_IO.New_Line;
+      Ada.Text_IO.Put_Line ("  The `--split` option indicates to separate the data blocks");
+      Ada.Text_IO.Put_Line ("  from the encryption keys.  The option defines the number of data");
+      Ada.Text_IO.Put_Line ("  storage files which are created and used by default.");
+
+      Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("  When the `--gpg` option is used, the keystore is protected by");
       Ada.Text_IO.Put_Line ("  using gpg and one of the user's GPG key.");
    end Help;
