@@ -93,7 +93,7 @@ package body Keystore is
       use Ada.Streams;
 
       Info   : Entry_Info := Wallet'Class (Container).Find (Name);
-      Result : String (1 .. Info.Size);
+      Result : String (1 .. Natural (Info.Size));
       Buffer : Stream_Element_Array (1 .. Stream_Element_Offset (Info.Size));
       for Buffer'Address use Result'Address;
    begin
