@@ -352,7 +352,7 @@ package body Keystore.Repository is
          Log.Error ("Wallet entry {0} is corrupted", Name);
          raise Corrupted;
       end if;
-      Result.Size := Natural (Item.Size);
+      Result.Size := Item.Size;
       Result.Kind := Item.Kind;
       Result.Create_Date := Item.Create_Date;
       Result.Update_Date := Item.Update_Date;
@@ -372,7 +372,7 @@ package body Keystore.Repository is
          Item     : constant Wallet_Entry_Access := Wallet_Maps.Element (Pos);
          Iterator : Keys.Data_Key_Iterator;
       begin
-         Result.Size := Natural (Item.Size);
+         Result.Size := Item.Size;
          Result.Kind := Item.Kind;
          Result.Create_Date := Item.Create_Date;
          Result.Update_Date := Item.Update_Date;
@@ -409,7 +409,7 @@ package body Keystore.Repository is
       Value : Entry_Info;
    begin
       for Item of Repository.Map loop
-         Value.Size := Integer (Item.Size);
+         Value.Size := Item.Size;
          Value.Kind := Item.Kind;
          Value.Create_Date := Item.Create_Date;
          Value.Update_Date := Item.Update_Date;
