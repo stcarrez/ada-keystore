@@ -133,7 +133,7 @@ package Keystore is
 
    --  Information about a keystore entry.
    type Entry_Info is record
-      Size        : Natural := 0;
+      Size        : Interfaces.Unsigned_64 := 0;
       Kind        : Entry_Type := T_INVALID;
       Create_Date : Ada.Calendar.Time;
       Update_Date : Ada.Calendar.Time;
