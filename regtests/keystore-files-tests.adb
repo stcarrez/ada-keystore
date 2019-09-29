@@ -322,7 +322,8 @@ package body Keystore.Files.Tests is
          T.Assert (W.Contains (Name), "Wallet should contain:" & Name);
 
          Value := Items.Element (Name);
-         Util.Tests.Assert_Equals (T, Size, Value.Size, "Item " & Name & " has invalid size");
+         Util.Tests.Assert_Equals (T, Size, Natural (Value.Size),
+                                   "Item " & Name & " has invalid size");
 
          T.Assert (Value.Kind = Keystore.T_STRING, "Item " & Name & " should be a T_STRING");
       end Verify_Entry;
