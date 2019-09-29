@@ -21,6 +21,7 @@ with Ada.Directories;
 with Interfaces.C.Strings;
 with Util.Encoders.AES;
 with Util.Log.Loggers;
+with Util.Strings;
 with Util.Systems.Os;
 with Util.Systems.Constants;
 
@@ -49,6 +50,7 @@ package body Keystore.IO.Files is
    subtype off_t is Util.Systems.Types.off_t;
 
    function Sys_Error return String;
+   function Get_Default_Data (Path : in String) return String;
 
    procedure Free is
      new Ada.Unchecked_Deallocation (Object => File_Stream,
@@ -66,6 +68,16 @@ package body Keystore.IO.Files is
       return Ada.Containers.Hash_Type (Value);
    end Hash;
 
+   function Get_Default_Data (Path : in String) return String is
+      Pos : constant Natural := Util.Strings.Rindex (Path, '.');
+   begin
+      if Pos > 0 then
+         return Path (Path'First .. Pos - 1);
+      else
+         return Ada.Directories.Containing_Directory (Path);
+      end if;
+   end Get_Default_Data;
+
    --  ------------------------------
    --  Open the wallet stream.
    --  ------------------------------
@@ -73,7 +85,11 @@ package body Keystore.IO.Files is
                    Path      : in String;
                    Data_Path : in String) is
    begin
-      Stream.Descriptor.Open (Path, Data_Path, Stream.Sign);
+      if Data_Path'Length > 0 then
+         Stream.Descriptor.Open (Path, Data_Path, Stream.Sign);
+      else
+         Stream.Descriptor.Open (Path, Get_Default_Data (Path), Stream.Sign);
+      end if;
    end Open;
 
    procedure Create (Stream    : in out Wallet_Stream;
@@ -81,7 +97,11 @@ package body Keystore.IO.Files is
                      Data_Path : in String;
                      Config    : in Wallet_Config) is
    begin
-      Stream.Descriptor.Create (Path, Data_Path, Config, Stream.Sign);
+      if Data_Path'Length > 0 then
+         Stream.Descriptor.Create (Path, Data_Path, Config, Stream.Sign);
+      else
+         Stream.Descriptor.Create (Path, Get_Default_Data (Path), Config, Stream.Sign);
+      end if;
       if Config.Storage_Count > 1 then
          Stream.Add_Storage (Config.Storage_Count - 1);
       end if;
@@ -439,6 +459,7 @@ package body Keystore.IO.Files is
       procedure Open (Path      : in String;
                       Data_Path : in String;
                       Sign      : in Secret_Key) is
+         procedure Open_Storage (Storage : in Wallet_Storage);
 
          procedure Open_Storage (Storage : in Wallet_Storage) is
             Path : constant String := Get_Storage_Path (Storage.Identifier);
@@ -456,7 +477,11 @@ package body Keystore.IO.Files is
 
          File : File_Stream_Access;
       begin
-         Directory := To_Unbounded_String (Data_Path);
+         if Data_Path'Length > 0 then
+            Directory := To_Unbounded_String (Data_Path);
+         else
+            Directory := To_Unbounded_String (Ada.Directories.Containing_Directory (Path));
+         end if;
          Open (Path, DEFAULT_STORAGE_ID, Sign, UUID);
          Get (DEFAULT_STORAGE_ID, File);
          Last_Id := DEFAULT_STORAGE_ID;
@@ -519,8 +544,12 @@ package body Keystore.IO.Files is
       procedure Add_Storage (Count : in Positive;
                              Sign  : in Secret_Key) is
          File : File_Stream_Access;
+         Dir  : constant String := To_String (Directory);
       begin
          Get (DEFAULT_STORAGE_ID, File);
+         if not Ada.Directories.Exists (Dir) then
+            Ada.Directories.Create_Path (Dir);
+         end if;
          for I in 1 .. Count loop
             Last_Id := Last_Id + 1;
             Create_Storage (Last_Id, Sign);
@@ -546,7 +575,9 @@ package body Keystore.IO.Files is
                           Storage : out Storage_Identifier;
                           File    : out File_Stream_Access) is
       begin
-         if Kind = IO.MASTER_BLOCK or Kind = IO.DIRECTORY_BLOCK or Last_Id <= DEFAULT_STORAGE_ID then
+         if Kind = IO.MASTER_BLOCK or Kind = IO.DIRECTORY_BLOCK
+           or Last_Id = DEFAULT_STORAGE_ID
+         then
             Storage := DEFAULT_STORAGE_ID;
          else
             Storage := Alloc_Id;
