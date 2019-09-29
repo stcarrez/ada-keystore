@@ -40,7 +40,7 @@ package body Keystore.Tests is
    TEST_TOOL_PATH  : constant String := "regtests/result/test-tool.akt";
    TEST_TOOL2_PATH : constant String := "regtests/result/test-tool-2.akt";
    TEST_TOOL3_PATH : constant String := "regtests/result/test-tool-3.akt";
-   DATA_TOOL3_PATH : constant String := "regtests/result/data";
+   DATA_TOOL3_PATH : constant String := "regtests/result/test-tool-3";
 
    function Tool return String;
    function Compare (Path1 : in String;
