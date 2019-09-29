@@ -18,6 +18,7 @@
 
 with Ada.Text_IO;
 with Ada.Directories;
+with Ada.Streams.Stream_IO;
 with Ada.Environment_Variables;
 with Util.Files;
 with Util.Test_Caller;
@@ -27,16 +28,23 @@ with Util.Processes;
 with Util.Streams.Buffered;
 with Util.Streams.Pipes;
 with Util.Streams.Texts;
+with Util.Streams.Files;
 package body Keystore.Tests is
 
    use type Ada.Directories.File_Size;
+   use type Ada.Streams.Stream_Element_Offset;
+   use type Ada.Streams.Stream_Element_Array;
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Tool");
 
    TEST_TOOL_PATH  : constant String := "regtests/result/test-tool.akt";
    TEST_TOOL2_PATH : constant String := "regtests/result/test-tool-2.akt";
+   TEST_TOOL3_PATH : constant String := "regtests/result/test-tool-3.akt";
+   DATA_TOOL3_PATH : constant String := "regtests/result/data";
 
    function Tool return String;
+   function Compare (Path1 : in String;
+                     Path2 : in String) return Boolean;
 
    package Caller is new Util.Test_Caller (Test, "AKT");
 
@@ -111,6 +119,8 @@ package body Keystore.Tests is
                        Test_Tool_Store_Extract'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Password",
                        Test_Tool_Password_Set'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Create (separate data)",
+                       Test_Tool_Separate_Data'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -156,6 +166,50 @@ package body Keystore.Tests is
 
       Util.Tests.Assert_Equal_Files (T, Path, Output, "Command '" & Command & "' invalid output");
    end Execute;
+
+   function Compare (Path1 : in String;
+                     Path2 : in String) return Boolean is
+      In1   : Util.Streams.Files.File_Stream;
+      In2   : Util.Streams.Files.File_Stream;
+      Buf1  : Ada.Streams.Stream_Element_Array (1 .. 8192);
+      Buf2  : Ada.Streams.Stream_Element_Array (1 .. 8192);
+      Last1 : Ada.Streams.Stream_Element_Offset;
+      Last2 : Ada.Streams.Stream_Element_Offset;
+   begin
+      In1.Open (Ada.Streams.Stream_IO.In_File, Path1);
+      In2.Open (Ada.Streams.Stream_IO.In_File, Path2);
+      loop
+         In1.Read (Buf1, Last1);
+         In2.Read (Buf2, Last2);
+         if Last1 /= Last2 then
+            return False;
+         end if;
+         exit when Last1 < Buf1'First;
+         if Buf1 (Buf1'First .. Last1) /= Buf2 (Buf2'First .. Last2) then
+            return False;
+         end if;
+      end loop;
+      return True;
+
+   exception
+      when others =>
+         return False;
+   end Compare;
+
+   procedure Store_Extract (T       : in out Test;
+                            Command : in String;
+                            Name    : in String;
+                            Path    : in String) is
+      Output_Path : constant String := Util.Tests.Get_Test_Path ("regtests/result/" & Name);
+      Result      : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Command & " store " & Name & " < " & Path, Result);
+
+      T.Execute (Command & " extract " & Name & " > " & Output_Path, Result);
+
+      T.Assert (Compare (Path, Output_Path),
+                "store+extract invalid for " & Name);
+   end Store_Extract;
 
    --  ------------------------------
    --  Test the akt help command.
@@ -463,7 +517,7 @@ package body Keystore.Tests is
       --  Check extract command with missing parameter
       T.Execute (Tool & " -f " & Path & " -p admin extract",
                  Result, 1);
-      Util.Tests.Assert_Matches (T, "Usage: akt extract", Result,
+      Util.Tests.Assert_Matches (T, "Usage: akt ", Result,
                                  "Expecting usage print for extract command");
 
    end Test_Tool_Store_Extract;
@@ -527,5 +581,40 @@ package body Keystore.Tests is
                                 "Failed to pass the password as interactive");
 
    end Test_Tool_Interactive_Password;
+
+   --  ------------------------------
+   --  Test the akt with data blocks written in separate files.
+   --  ------------------------------
+   procedure Test_Tool_Separate_Data (T : in out Test) is
+      Path     : constant String := Util.Tests.Get_Test_Path (TEST_TOOL3_PATH);
+      Data     : constant String := Util.Tests.Get_Test_Path (DATA_TOOL3_PATH);
+      P        : aliased Util.Streams.Pipes.Pipe_Stream;
+      Buffer   : Util.Streams.Texts.Print_Stream;
+   begin
+      if not Ada.Directories.Exists (Data) then
+         Ada.Directories.Create_Path (Data);
+      end if;
+      P.Open (Tool & " -f " & Path & " -d " & Data & " create -c 10:20 --force",
+              Util.Processes.WRITE);
+      Buffer.Initialize (P'Unchecked_Access, 8192);
+      Buffer.Write ("admin");
+      Buffer.Flush;
+      P.Close;
+      Util.Tests.Assert_Equals (T, 0, P.Get_Exit_Status,
+                                "Failed to pass the password as interactive");
+
+      T.Store_Extract (Tool & " -f " & Path & " -d " & Data & " -p admin ",
+                       "data-makefile", "Makefile");
+
+      T.Store_Extract (Tool & " -f " & Path & " -d " & Data & " -p admin ",
+                       "data-configure", "configure");
+
+      T.Store_Extract (Tool & " -f " & Path & " -d " & Data & " -p admin ",
+                       "data-license.txt", "LICENSE.txt");
+
+      T.Store_Extract (Tool & " -f " & Path & " -d " & Data & " -p admin ",
+                       "data-bin-akt", "bin/akt");
+
+   end Test_Tool_Separate_Data;
 
 end Keystore.Tests;
