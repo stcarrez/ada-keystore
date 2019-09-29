@@ -288,6 +288,11 @@ package body AKT.Commands is
             return;
          end if;
          AKT.Commands.Execute (Cmd_Name, Arguments, Context);
+
+      exception
+         when GNAT.Command_Line.Invalid_Parameter =>
+            AKT.Commands.Log.Error ("Missing option parameter");
+            raise Error;
       end;
 
    end Parse;
