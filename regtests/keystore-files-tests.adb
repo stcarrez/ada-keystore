@@ -25,7 +25,7 @@ with Util.Test_Caller;
 with Util.Streams.Files;
 with Util.Measures;
 with Util.Streams.Buffered;
-with Keystore.IO.Files;
+with Keystore.IO;
 package body Keystore.Files.Tests is
 
    package Caller is new Util.Test_Caller (Test, "Files");
