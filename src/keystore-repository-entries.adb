@@ -22,7 +22,7 @@ with Keystore.Logs;
 with Keystore.Marshallers;
 
 --
---  Wallet repository encrypted with Wallet directory key
+--  The wallet repository block is encrypted with the wallet directory key.
 --  +------------------+
 --  | Block HMAC-256   | 32b
 --  +------------------+
@@ -32,7 +32,7 @@ with Keystore.Marshallers;
 --  | PAD 0            | 4b
 --  | PAD 0            | 4b
 --  +------------------+
---  | Next block ID    | 4b  Block number for next repository same storage
+--  | Next block ID    | 4b  Block number for next repository block with same storage
 --  | Data key offset  | 2b  Starts at IO.Block_Index'Last, decreasing
 --  +------------------+
 --  | Entry ID         | 4b   ^
@@ -171,7 +171,7 @@ package body Keystore.Repository.Entries is
                   Directory.Count := Directory.Count + 1;
 
                exception
-                  when E : others =>
+                  when others =>
                      Free (Item);
                      Logs.Error (Log, "Block{0} contains invalid data entry", Directory.Block);
                      raise Keystore.Corrupted;
