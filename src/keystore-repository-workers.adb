@@ -313,7 +313,7 @@ package body Keystore.Repository.Workers is
       end;
 
    exception
-      when E : others =>
+      when others =>
          Work.Status := DATA_CORRUPTION;
    end Do_Decipher_Data;
 
@@ -367,17 +367,18 @@ package body Keystore.Repository.Workers is
                                    Content => Work.Data (Start_Pos .. Last_Pos));
 
       declare
-         Buf : constant Buffers.Buffer_Accessor := Data_Block.Buffer.Data.Value;
+         Buf          : constant Buffers.Buffer_Accessor := Data_Block.Buffer.Data.Value;
+         End_Pos      : constant IO.Block_Index := Work.End_Aligned_Data;
          Encrypt_Size : IO.Block_Index;
       begin
          Encrypt_Size := IO.Block_Index (Work.Fragment_Count * DATA_ENTRY_SIZE);
 
          Work.Data_Cipher.Transform (Data    => Work.Data (Start_Pos .. Last_Pos),
-                                     Into    => Buf.Data (Work.Start_Data .. Work.End_Aligned_Data),
+                                     Into    => Buf.Data (Work.Start_Data .. End_Pos),
                                      Last    => Write_Pos,
                                      Encoded => Encoded);
-         if Write_Pos < Work.End_Aligned_Data then
-            Work.Data_Cipher.Finish (Into => Buf.Data (Write_Pos + 1 .. Work.End_Aligned_Data),
+         if Write_Pos < End_Pos then
+            Work.Data_Cipher.Finish (Into => Buf.Data (Write_Pos + 1 .. End_Pos),
                                      Last => Write_Pos);
          end if;
 
@@ -402,7 +403,7 @@ package body Keystore.Repository.Workers is
       end;
 
    exception
-      when E : others =>
+      when others =>
          Work.Status := DATA_CORRUPTION;
    end Do_Cipher_Data;
 
