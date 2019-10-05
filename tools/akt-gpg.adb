@@ -58,6 +58,8 @@ package body AKT.GPG is
       Last2  : Ada.Streams.Stream_Element_Offset;
       Cmd    : constant String := To_String (Context.Encrypt_Command);
    begin
+      Log.Info ("Encrypt GPG secret using {0}", Cmd);
+
       Util.Processes.Spawn (Proc    => Proc,
                             Command => Cmd,
                             Mode    => Util.Processes.READ_WRITE);
@@ -125,9 +127,11 @@ package body AKT.GPG is
       Result : Ada.Streams.Stream_Element_Array (1 .. MAX_DECRYPT_SIZE);
       Last   : Ada.Streams.Stream_Element_Offset := 0;
       Last2  : Ada.Streams.Stream_Element_Offset;
+      Cmd    : constant String := To_String (Context.Decrypt_Command);
    begin
+      Log.Info ("Decrypt GPG secret using {0}", Cmd);
       Util.Processes.Spawn (Proc    => Proc,
-                            Command => To_String (Context.Decrypt_Command),
+                            Command => Cmd,
                             Mode    => Util.Processes.READ_WRITE);
 
       Util.Processes.Get_Input_Stream (Proc).Write (Data);
