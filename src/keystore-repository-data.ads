@@ -15,11 +15,10 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Util.Encoders.AES;
-with Keystore.IO;
 with Ada.Streams;
 with Util.Streams;
-with Keystore.Repository.Entries;
+with Util.Encoders.AES;
+with Keystore.IO;
 with Keystore.Repository.Keys;
 
 private package Keystore.Repository.Data is
