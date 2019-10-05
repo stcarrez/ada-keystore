@@ -16,20 +16,19 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Ada.Calendar;
-with Util.Encoders.AES;
-with Keystore.IO;
 with Ada.Streams;
-with Keystore.Keys;
-with Util.Streams;
-with Interfaces;
-
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Doubly_Linked_Lists;
 with Ada.Strings.Hash;
 
+with Util.Encoders.AES;
+with Keystore.IO;
+with Keystore.Keys;
+with Util.Streams;
+with Interfaces;
+
 with Keystore.Buffers;
 private with Keystore.Random;
-private with Ada.Containers.Ordered_Maps;
 private with Ada.Finalization;
 limited private with Keystore.Repository.Workers;
 private package Keystore.Repository is
@@ -201,8 +200,6 @@ private
    package Wallet_Directory_List is
      new Ada.Containers.Doubly_Linked_Lists (Element_Type => Wallet_Directory_Entry_Access,
                                              "="          => "=");
-
-   use type IO.Block_Count;
 
    package Wallet_Maps is
      new Ada.Containers.Indefinite_Hashed_Maps (Key_Type        => String,
