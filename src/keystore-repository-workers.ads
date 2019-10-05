@@ -21,7 +21,6 @@ with Ada.Streams;
 with Util.Streams;
 
 with Keystore.Random;
-with Keystore.Repository.Entries;
 with Keystore.Repository.Keys;
 with Util.Concurrent.Sequence_Queues;
 private package Keystore.Repository.Workers is
