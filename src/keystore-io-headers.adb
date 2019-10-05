@@ -119,7 +119,7 @@ package body Keystore.IO.Headers is
       Storage_Count : Interfaces.Unsigned_32;
    begin
       Buffer.Buffer := Header.Buffer;
-      Buffer.Pos := 1;
+      Buffer.Pos := Buffers.Block_Type'First;
 
       --  Verify values found in header block.
       Value := Marshallers.Get_Unsigned_32 (Buffer);
@@ -163,8 +163,10 @@ package body Keystore.IO.Headers is
          raise Invalid_Block;
       end if;
 
-      --  Get keystore UUID
+      --  Skip HMAC.
       Marshallers.Skip (Buffer, 32);
+
+      --  Get keystore UUID
       Marshallers.Get_UUID (Buffer, Header.UUID);
       Header.Identifier := Storage_Identifier (Marshallers.Get_Unsigned_32 (Buffer));
       if Header.Identifier /= Header.Buffer.Block.Storage then
@@ -281,6 +283,7 @@ package body Keystore.IO.Headers is
       Limit   : constant Stream_Element_Offset := Get_Storage_Offset (Header.Storage_Count);
    begin
       if Index > Header.Data_Count + 1 then
+         Log.Warn ("Not enough header slots to add a header data");
          raise No_Header_Slot;
       end if;
       Buffer.Buffer := Header.Buffer;
@@ -297,6 +300,7 @@ package body Keystore.IO.Headers is
 
       --  Verify there is enough room.
       if Last + Space + 4 >= Limit then
+         Log.Warn ("Not enough header space to add a header data");
          raise No_Header_Slot;
       end if;
 
@@ -317,7 +321,7 @@ package body Keystore.IO.Headers is
       end if;
       Buffer.Pos := HEADER_DATA_POS;
       Marshallers.Put_Unsigned_16 (Buffer, Interfaces.Unsigned_16 (Header.Data_Count));
-  end Set_Header_Data;
+   end Set_Header_Data;
 
    --  ------------------------------
    --  Get the header data information from the keystore file.
@@ -360,6 +364,7 @@ package body Keystore.IO.Headers is
    begin
       Pos := Get_Storage_Offset (Header.Storage_Count + 1);
       if Pos <= Last + 4 then
+         Log.Warn ("Not enough header space to add a new storage file");
          raise No_Header_Slot;
       end if;
       Buffer.Pos := Pos;
