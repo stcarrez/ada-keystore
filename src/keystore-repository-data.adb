@@ -22,8 +22,10 @@ with Keystore.Repository.Workers;
 
 --  Block = 4K, 8K, 16K, 64K, 128K ?
 --
---  Data block start is encrypted with wallet id, data fragments are
---  encrypted with their own key.
+--  Data block start is encrypted with wallet data key, data fragments are
+--  encrypted with their own key.  Loading and saving data blocks occurs exclusively
+--  from the workers package.  The data block can be stored in a separate file so that
+--  the wallet repository and its keys are separate from the data blocks.
 --
 --  +------------------+
 --  | Block HMAC-256   | 32b
@@ -61,6 +63,7 @@ package body Keystore.Repository.Data is
    procedure Allocate_Data_Block (Manager    : in out Wallet_Repository;
                                   Space      : in IO.Block_Index;
                                   Work       : in Workers.Data_Work_Access) is
+      pragma Unreferenced (Space);
    begin
       Manager.Stream.Allocate (IO.DATA_BLOCK, Work.Data_Block);
       Work.Data_Need_Setup := True;
@@ -212,7 +215,7 @@ package body Keystore.Repository.Data is
       Offset := Interfaces.Unsigned_64 (Data_Offset);
       Last_Pos := Input_Pos;
       if Input_Pos <= Content'Last then
-         Keys.Prepare_Append (Manager, Iterator);
+         Keys.Prepare_Append (Iterator);
       end if;
 
    exception
@@ -263,7 +266,7 @@ package body Keystore.Repository.Data is
       Offset := Interfaces.Unsigned_64 (Data_Offset);
       End_Of_Stream := Size = 0;
       if not End_Of_Stream then
-         Keys.Prepare_Append (Manager, Iterator);
+         Keys.Prepare_Append (Iterator);
       end if;
 
    exception
