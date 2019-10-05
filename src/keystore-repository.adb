@@ -179,6 +179,7 @@ package body Keystore.Repository is
                          Name       : in String;
                          Password   : in Secret_Key;
                          Wallet     : out Wallet_Repository'Class) is
+      pragma Unreferenced (Wallet, Password);
       Item      : Wallet_Entry_Access;
       --  Keys      : Keystore.Keys.Key_Manager;
    begin
