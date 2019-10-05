@@ -34,6 +34,13 @@ package body Keystore.Verifier is
    use Util.Systems.Constants;
    use Util.Systems.Types;
 
+   function Sys_Error return String;
+
+   procedure Open (Path   : in String;
+                   File   : in out Util.Streams.Raw.Raw_Stream;
+                   Sign   : in Secret_Key;
+                   Header : in out Keystore.IO.Headers.Wallet_Header);
+
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Verifier");
 
    function Sys_Error return String is
@@ -52,13 +59,7 @@ package body Keystore.Verifier is
       P          : Interfaces.C.Strings.chars_ptr;
       Flags      : Interfaces.C.int;
       Stat       : aliased Util.Systems.Types.Stat_Type;
-      Size       : IO.Block_Count;
       Result     : Integer;
-
-      procedure Process (Storage : in IO.Headers.Wallet_Storage) is
-      begin
-         null;
-      end Process;
    begin
       Flags := O_CLOEXEC + O_RDONLY;
       P := Interfaces.C.Strings.New_String (Path);
@@ -90,7 +91,6 @@ package body Keystore.Verifier is
          Log.Error ("Invalid or truncated keystore file '{0}': size is incorrect", Path);
          raise Ada.IO_Exceptions.Name_Error with Path;
       end if;
-      Size := IO.Block_Count (Stat.st_size / IO.Block_Size);
 
       File.Initialize (Fd);
       Header.Buffer := Buffers.Allocate ((Storage_Id, IO.HEADER_BLOCK_NUM));
