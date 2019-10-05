@@ -32,11 +32,11 @@ private package Keystore.Buffers is
 
    subtype Block_Type is Stream_Element_Array (Block_Index);
 
-   type Block_Count is new Natural;
+   type Block_Count is new Interfaces.Unsigned_32;
 
    subtype Block_Number is Block_Count range 1 .. Block_Count'Last;
 
-   type Storage_Identifier is new Natural;
+   type Storage_Identifier is new Interfaces.Unsigned_32;
 
    type Storage_Block is record
       Storage : Storage_Identifier;
