@@ -53,13 +53,13 @@ with Keystore.Marshallers;
 --  | Dir key # 1      | 32b ---
 --  | Dir iv # 1       | 32b  ^
 --  | Dir sign # 1     | 32b  |
---  | Entry key # 1    | 32b  |
---  | Entry iv # 1     | 32b  | Encrypted by user's password
---  | Entry sign #1    | 32b  |
 --  | Data key # 1     | 32b  |
---  | Data iv # 1      | 32b  v
---  | Data sign #1     | 32b ---
---  | Key HMAC-256     | 32b
+--  | Data iv # 1      | 32b  | Encrypted by user's password
+--  | Data sign #1     | 32b  |
+--  | Key key # 1      | 32b  |
+--  | Key iv # 1       | 32b  v
+--  | Key sign #1      | 32b ---
+--  | Slot HMAC-256    | 32b
 --  | PAD 0 / Random   | 80b
 --  +------------------+
 --  | Key slot #2      | 512b
@@ -126,7 +126,7 @@ package body Keystore.Keys is
                    Stream   : in out IO.Wallet_Stream'Class);
 
    --  ------------------------------
-   --  Set the IV vector to be used for the encryption and decruption of the given block number.
+   --  Set the IV vector to be used for the encryption and decryption of the given block number.
    --  ------------------------------
    procedure Set_IV (Into  : in out Cryptor;
                      Block : in IO.Block_Number) is
@@ -414,7 +414,7 @@ package body Keystore.Keys is
    begin
       Load (Manager, Block, Ident, Buffer, Root, Stream);
 
-      for Slot in 1 .. 7 loop
+      for Slot in Key_Slot'Range loop
          Buffer.Pos := WH_KEY_LIST_START + IO.Block_Index (Slot) * WH_SLOT_SIZE - WH_SLOT_SIZE;
          Value := Marshallers.Get_Unsigned_32 (Buffer);
          if Value = WH_KEY_PBKDF2 then
