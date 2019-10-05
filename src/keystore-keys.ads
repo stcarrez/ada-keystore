@@ -32,7 +32,7 @@ private package Keystore.Keys is
       Sign      : Secret_Key (Length => 32);
    end record;
 
-   --  Set the IV vector to be used for the encryption and decruption of the given block number.
+   --  Set the IV vector to be used for the encryption and decryption of the given block number.
    procedure Set_IV (Into  : in out Cryptor;
                      Block : in IO.Block_Number);
 
