@@ -16,7 +16,6 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Ada.Text_IO;
-with Ada.Calendar.Formatting;
 with Keystore.Verifier;
 package body AKT.Commands.Info is
 
