@@ -106,7 +106,7 @@ package body AKT.GPG is
    --  ------------------------------
    procedure Save_GPG_Secret (Context : in out Context_Type;
                               Wallet  : in out Keystore.Files.Wallet_File) is
-      Data : Ada.Streams.Stream_Element_Array := Context.Encrypt_GPG_Secret;
+      Data : constant Ada.Streams.Stream_Element_Array := Context.Encrypt_GPG_Secret;
    begin
       if Data'Length <= 1 then
          raise Keystore.Bad_Password;
