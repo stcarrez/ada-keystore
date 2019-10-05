@@ -62,8 +62,7 @@ private package Keystore.Repository.Keys is
                          Iterator : in out Data_Key_Iterator;
                          Mark     : in out Data_Key_Marker);
 
-   procedure Prepare_Append (Manager : in out Wallet_Repository;
-                             Iterator : in out Data_Key_Iterator);
+   procedure Prepare_Append (Iterator : in out Data_Key_Iterator);
 
    procedure Allocate_Key_Slot (Manager    : in out Wallet_Repository;
                                 Iterator   : in out Data_Key_Iterator;
