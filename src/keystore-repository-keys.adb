@@ -15,17 +15,12 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Util.Log.Loggers;
-with Keystore.Logs;
 
 with Keystore.Repository.Entries;
 package body Keystore.Repository.Keys is
 
    use type Interfaces.Unsigned_32;
    use type Interfaces.Unsigned_64;
-
-   Log : constant Util.Log.Loggers.Logger
-     := Util.Log.Loggers.Create ("Keystore.Repository.Keys");
 
    procedure Load_Next_Keys (Manager  : in out Wallet_Manager;
                              Iterator : in out Data_Key_Iterator) is
@@ -93,7 +88,8 @@ package body Keystore.Repository.Keys is
                             Iterator : in out Data_Key_Iterator) is
       Pos : IO.Block_Index;
    begin
-      Iterator.Current_Offset := Iterator.Current_Offset + Interfaces.Unsigned_64 (Iterator.Data_Size);
+      Iterator.Current_Offset
+        := Iterator.Current_Offset + Interfaces.Unsigned_64 (Iterator.Data_Size);
       loop
          --  Extract the next data key from the current directory block.
          if Iterator.Count > 0 then
@@ -195,8 +191,7 @@ package body Keystore.Repository.Keys is
       Mark_Data_Key (Iterator, Mark);
    end Delete_Key;
 
-   procedure Prepare_Append (Manager : in out Wallet_Repository;
-                             Iterator : in out Data_Key_Iterator) is
+   procedure Prepare_Append (Iterator : in out Data_Key_Iterator) is
    begin
       Iterator.Key_Iter := Iterator.Item.Data_Blocks.Last;
       if Wallet_Data_Key_List.Has_Element (Iterator.Key_Iter) then
@@ -214,7 +209,8 @@ package body Keystore.Repository.Keys is
       Key_Last  : IO.Block_Index;
    begin
       if Iterator.Directory = null or else Iterator.Directory.Available < DATA_KEY_ENTRY_SIZE
-        or else Iterator.Key_Count = Key_Count_Type'Last then
+        or else Iterator.Key_Count = Key_Count_Type'Last
+      then
          Entries.Find_Directory_Block (Manager, DATA_KEY_ENTRY_SIZE * 4, Iterator.Directory);
          Iterator.Directory.Available := Iterator.Directory.Available + DATA_KEY_ENTRY_SIZE * 4;
          if Iterator.Directory.Count > 0 then
