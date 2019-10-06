@@ -30,7 +30,7 @@ package body Keystore.Marshallers is
                          Tag  : in Interfaces.Unsigned_16;
                          Id   : in Keystore.Wallet_Identifier) is
    begin
-      Into.Pos := BT_HEADER_START;
+      Into.Pos := BT_HEADER_START - 1;
       Put_Unsigned_16 (Into, Tag);
       Put_Unsigned_16 (Into, 0);
       Put_Unsigned_32 (Into, Interfaces.Unsigned_32 (Id));
@@ -38,14 +38,25 @@ package body Keystore.Marshallers is
       Put_Unsigned_32 (Into, 0);
    end Set_Header;
 
+   procedure Set_Header (Into  : in out Marshaller;
+                         Value : in Interfaces.Unsigned_32) is
+      Buf : constant Buffers.Buffer_Accessor := Into.Buffer.Data.Value;
+   begin
+      Buf.Data (Block_Index'First) := Stream_Element (Shift_Right (Value, 24));
+      Buf.Data (Block_Index'First + 1) := Stream_Element (Shift_Right (Value, 16) and 16#0ff#);
+      Buf.Data (Block_Index'First + 2) := Stream_Element (Shift_Right (Value, 8) and 16#0ff#);
+      Buf.Data (Block_Index'First + 3) := Stream_Element (Value and 16#0ff#);
+      Into.Pos := Block_Index'First + 3;
+   end Set_Header;
+
    procedure Put_Unsigned_16 (Into  : in out Marshaller;
                               Value : in Interfaces.Unsigned_16) is
       Pos : constant Block_Index := Into.Pos;
       Buf : constant Buffers.Buffer_Accessor := Into.Buffer.Data.Value;
    begin
-      Into.Pos := Into.Pos + 2;
-      Buf.Data (Pos) := Stream_Element (Shift_Right (Value, 8));
-      Buf.Data (Pos + 1) := Stream_Element (Value and 16#0ff#);
+      Into.Pos := Pos + 2;
+      Buf.Data (Pos + 1) := Stream_Element (Shift_Right (Value, 8));
+      Buf.Data (Pos + 2) := Stream_Element (Value and 16#0ff#);
    end Put_Unsigned_16;
 
    procedure Put_Unsigned_32 (Into  : in out Marshaller;
@@ -53,11 +64,11 @@ package body Keystore.Marshallers is
       Pos : constant Block_Index := Into.Pos;
       Buf : constant Buffers.Buffer_Accessor := Into.Buffer.Data.Value;
    begin
-      Into.Pos := Into.Pos + 4;
-      Buf.Data (Pos) := Stream_Element (Shift_Right (Value, 24));
-      Buf.Data (Pos + 1) := Stream_Element (Shift_Right (Value, 16) and 16#0ff#);
-      Buf.Data (Pos + 2) := Stream_Element (Shift_Right (Value, 8) and 16#0ff#);
-      Buf.Data (Pos + 3) := Stream_Element (Value and 16#0ff#);
+      Into.Pos := Pos + 4;
+      Buf.Data (Pos + 1) := Stream_Element (Shift_Right (Value, 24));
+      Buf.Data (Pos + 2) := Stream_Element (Shift_Right (Value, 16) and 16#0ff#);
+      Buf.Data (Pos + 3) := Stream_Element (Shift_Right (Value, 8) and 16#0ff#);
+      Buf.Data (Pos + 4) := Stream_Element (Value and 16#0ff#);
    end Put_Unsigned_32;
 
    procedure Put_Unsigned_64 (Into  : in out Marshaller;
@@ -113,8 +124,8 @@ package body Keystore.Marshallers is
       Pos := Into.Pos;
       Into.Pos := Into.Pos + Value'Length;
       for C of Value loop
-         Buf.Data (Pos) := Character'Pos (C);
          Pos := Pos + 1;
+         Buf.Data (Pos) := Character'Pos (C);
       end loop;
    end Put_String;
 
@@ -139,6 +150,7 @@ package body Keystore.Marshallers is
                          Protect_IV  : in Secret_Key) is
       Cipher_Key : Util.Encoders.AES.Encoder;
       Last       : Stream_Element_Offset;
+      Pos        : constant Block_Index := Into.Pos + 1;
       Buf        : constant Buffers.Buffer_Accessor := Into.Buffer.Data.Value;
       IV         : constant Util.Encoders.AES.Word_Block_Type
         := (others => Interfaces.Unsigned_32 (Into.Buffer.Block.Block));
@@ -147,11 +159,11 @@ package body Keystore.Marshallers is
       Cipher_Key.Set_IV (Protect_IV, IV);
       Cipher_Key.Set_Padding (Util.Encoders.AES.NO_PADDING);
 
-      --  Encrypt the key into the key-slot using the PBKDF2 protection key.
-      Last := Into.Pos + Block_Index (Value.Length) - 1;
+      --  Encrypt the key into the key-slot using the protection key.
+      Last := Pos + Block_Index (Value.Length) - 1;
       Cipher_Key.Encrypt_Secret (Secret  => Value,
-                                 Into    => Buf.Data (Into.Pos .. Last));
-      Into.Pos := Last + 1;
+                                 Into    => Buf.Data (Pos .. Last));
+      Into.Pos := Last;
    end Put_Secret;
 
    procedure Put_HMAC_SHA256 (Into    : in out Marshaller;
@@ -165,7 +177,7 @@ package body Keystore.Marshallers is
       --  Make HMAC-SHA256 signature of the data content before encryption.
       Util.Encoders.HMAC.SHA256.Sign (Key    => Key,
                                       Data   => Content,
-                                      Result => Buf.Data (Pos .. Into.Pos - 1));
+                                      Result => Buf.Data (Pos + 1 .. Into.Pos));
    end Put_HMAC_SHA256;
 
    procedure Put_UUID (Into  : in out Marshaller;
@@ -176,24 +188,34 @@ package body Keystore.Marshallers is
       end loop;
    end Put_UUID;
 
+   function Get_Header (From  : in out Marshaller) return Interfaces.Unsigned_32 is
+      Buf : constant Buffers.Buffer_Accessor := From.Buffer.Data.Value;
+   begin
+      From.Pos := Block_Index'First + 3;
+      return Shift_Left (Unsigned_32 (Buf.Data (Block_Index'First)), 24) or
+        Shift_Left (Unsigned_32 (Buf.Data (Block_Index'First + 1)), 16) or
+        Shift_Left (Unsigned_32 (Buf.Data (Block_Index'First + 2)), 8) or
+        Unsigned_32 (Buf.Data (Block_Index'First + 3));
+   end Get_Header;
+
    function Get_Unsigned_16 (From  : in out Marshaller) return Interfaces.Unsigned_16 is
       Pos : constant Block_Index := From.Pos;
       Buf : constant Buffers.Buffer_Accessor := From.Buffer.Data.Value;
    begin
-      From.Pos := From.Pos + 2;
-      return Shift_Left (Unsigned_16 (Buf.Data (Pos)), 8) or
-        Unsigned_16 (Buf.Data (Pos + 1));
+      From.Pos := Pos + 2;
+      return Shift_Left (Unsigned_16 (Buf.Data (Pos + 1)), 8) or
+        Unsigned_16 (Buf.Data (Pos + 2));
    end Get_Unsigned_16;
 
    function Get_Unsigned_32 (From  : in out Marshaller) return Interfaces.Unsigned_32 is
       Pos : constant Block_Index := From.Pos;
       Buf : constant Buffers.Buffer_Accessor := From.Buffer.Data.Value;
    begin
-      From.Pos := From.Pos + 4;
-      return Shift_Left (Unsigned_32 (Buf.Data (Pos)), 24) or
-        Shift_Left (Unsigned_32 (Buf.Data (Pos + 1)), 16) or
-        Shift_Left (Unsigned_32 (Buf.Data (Pos + 2)), 8) or
-        Unsigned_32 (Buf.Data (Pos + 3));
+      From.Pos := Pos + 4;
+      return Shift_Left (Unsigned_32 (Buf.Data (Pos + 1)), 24) or
+        Shift_Left (Unsigned_32 (Buf.Data (Pos + 2)), 16) or
+        Shift_Left (Unsigned_32 (Buf.Data (Pos + 3)), 8) or
+        Unsigned_32 (Buf.Data (Pos + 4));
    end Get_Unsigned_32;
 
    function Get_Unsigned_64 (From  : in out Marshaller) return Interfaces.Unsigned_64 is
@@ -219,8 +241,8 @@ package body Keystore.Marshallers is
    begin
       From.Pos := From.Pos + Block_Index (Length);
       for I in Result'Range loop
-         Result (I) := Character'Val (Buf.Data (Pos));
          Pos := Pos + 1;
+         Result (I) := Character'Val (Buf.Data (Pos));
       end loop;
       return Result;
    end Get_String;
@@ -259,6 +281,7 @@ package body Keystore.Marshallers is
                          Protect_IV  : in Secret_Key) is
       Decipher_Key  : Util.Encoders.AES.Decoder;
       Last          : Stream_Element_Offset;
+      Pos           : constant Block_Index := From.Pos + 1;
       Buf           : constant Buffers.Buffer_Accessor := From.Buffer.Data.Value;
       IV            : constant Util.Encoders.AES.Word_Block_Type
         := (others => Interfaces.Unsigned_32 (From.Buffer.Block.Block));
@@ -267,10 +290,10 @@ package body Keystore.Marshallers is
       Decipher_Key.Set_IV (Protect_IV, IV);
       Decipher_Key.Set_Padding (Util.Encoders.AES.NO_PADDING);
 
-      Last := From.Pos + Block_Index (Secret.Length) - 1;
-      Decipher_Key.Decrypt_Secret (Data   => Buf.Data (From.Pos .. Last),
+      Last := Pos + Block_Index (Secret.Length) - 1;
+      Decipher_Key.Decrypt_Secret (Data   => Buf.Data (Pos .. Last),
                                    Secret => Secret);
-      From.Pos := Last + 1;
+      From.Pos := Last;
    end Get_Secret;
 
    procedure Get_UUID (From : in out Marshaller;
@@ -286,10 +309,11 @@ package body Keystore.Marshallers is
                        Data : out Ada.Streams.Stream_Element_Array;
                        Last : out Ada.Streams.Stream_Element_Offset) is
       Buf : constant Buffers.Buffer_Accessor := From.Buffer.Data.Value;
+      Pos : constant Block_Index := From.Pos + 1;
    begin
       Last := Data'First + Size - 1;
-      Data (Data'First .. Last) := Buf.Data (From.Pos .. From.Pos + Size - 1);
-      From.Pos := From.Pos + Size - 1;
+      Data (Data'First .. Last) := Buf.Data (Pos .. Pos + Size - 1);
+      From.Pos := Pos + Size - 1;
    end Get_Data;
 
    procedure Skip (From  : in out Marshaller;
