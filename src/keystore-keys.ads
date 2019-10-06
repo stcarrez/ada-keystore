@@ -111,4 +111,7 @@ private
       Crypt             : Cryptor;
    end record;
 
+   function Key_Position (Slot : in Key_Slot) return IO.Block_Index is
+      (WH_KEY_LIST_START + IO.Block_Index (Slot) * WH_SLOT_SIZE - WH_SLOT_SIZE - 1);
+
 end Keystore.Keys;
