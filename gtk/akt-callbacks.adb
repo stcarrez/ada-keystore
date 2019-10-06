@@ -22,6 +22,7 @@ with Gtk.GEntry;
 with Gtk.File_Filter;
 with Gtk.File_Chooser;
 with Gtk.File_Chooser_Dialog;
+with Gtk.Tool_Item;
 
 with Util.Log.Loggers;
 
@@ -35,6 +36,9 @@ package body AKT.Callbacks is
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Callbacks");
 
    App : AKT.Windows.Application_Access;
+
+   procedure Set_Lock_Button (Object  : access Gtkada.Builder.Gtkada_Builder_Record'Class;
+                              Visible : in Boolean);
 
    --  ------------------------------
    --  Initialize and register the callbacks.
@@ -72,6 +76,8 @@ package body AKT.Callbacks is
                                 Handler      => AKT.Callbacks.On_Tool_Edit'Access);
       Builder.Register_Handler (Handler_Name => "tool-lock",
                                 Handler      => AKT.Callbacks.On_Tool_Lock'Access);
+      Builder.Register_Handler (Handler_Name => "tool-unlock",
+                                Handler      => AKT.Callbacks.On_Tool_Unlock'Access);
       Builder.Register_Handler (Handler_Name => "tool-save",
                                 Handler      => AKT.Callbacks.On_Tool_Save'Access);
    end Initialize;
@@ -149,8 +155,42 @@ package body AKT.Callbacks is
    --  ------------------------------
    procedure On_Tool_Lock (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
    begin
-      App.Lock;
+      Set_Lock_Button (Object, False);
+      if not App.Is_Locked then
+         App.Lock;
+      end if;
    end On_Tool_Lock;
+
+   --  ------------------------------
+   --  Callback executed when the "tool-unlock" action is executed from the toolbar.
+   --  ------------------------------
+   procedure On_Tool_Unlock (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
+   begin
+      Set_Lock_Button (Object, True);
+      if not App.Is_Locked then
+         App.Lock;
+      else
+         null;
+      end if;
+   end On_Tool_Unlock;
+
+   procedure Set_Lock_Button (Object  : access Gtkada.Builder.Gtkada_Builder_Record'Class;
+                              Visible : in Boolean) is
+      Unlock_Button : constant Gtk.Widget.Gtk_Widget
+        := Gtk.Widget.Gtk_Widget (Object.Get_Object ("tool_unlock_button"));
+      Lock_Button : constant Gtk.Widget.Gtk_Widget
+        := Gtk.Widget.Gtk_Widget (Object.Get_Object ("tool_lock_button"));
+      Item : Gtk.Tool_Item.Gtk_Tool_Item;
+   begin
+      if Lock_Button /= null then
+         Item := Gtk.Tool_Item.Gtk_Tool_Item (Lock_Button);
+         Item.Set_Visible_Horizontal (Visible);
+      end if;
+      if Unlock_Button /= null then
+         Item := Gtk.Tool_Item.Gtk_Tool_Item (Unlock_Button);
+         Item.Set_Visible_Horizontal (not Visible);
+      end if;
+   end Set_Lock_Button;
 
    --  ------------------------------
    --  Callback executed when the "open-file" action is executed from the open_file dialog.
