@@ -107,32 +107,31 @@ package body AKT.Windows is
    procedure Open_File (Application : in out Application_Type;
                         Path        : in String;
                         Password    : in Keystore.Secret_Key) is
-      Msg : Gtk.Status_Bar.Message_Id with Unreferenced;
    begin
       --  Close the current wallet if necessary.
       if Application.Wallet.Is_Open then
          Application.Wallet.Close;
       end if;
 
-      Msg := Gtk.Status_Bar.Push (Application.Status, 1, "Loading " & Path);
+      Application.Message ("Loading " & Path);
       Application.Wallet.Open (Path => Path, Password => Password);
 
-      Msg := Gtk.Status_Bar.Push (Application.Status, 1, "Opened " & Path);
+      Application.Message ("Opened " & Path);
 
       Application.List_Keystore;
    exception
       when Keystore.Bad_Password =>
-         Msg := Gtk.Status_Bar.Push (Application.Status, 1, "Invalid password to open " & Path);
+         Application.Message ("Invalid password to open " & Path);
 
       when Keystore.Corrupted | Keystore.Invalid_Storage | Keystore.Invalid_Block =>
-         Msg := Gtk.Status_Bar.Push (Application.Status, 1, "File is corrupted");
+         Application.Message ("File is corrupted");
 
       when Keystore.Invalid_Keystore | Ada.IO_Exceptions.End_Error =>
-         Msg := Gtk.Status_Bar.Push (Application.Status, 1, "File is not a keystore");
+         Application.Message ("File is not a keystore");
 
       when E : others =>
-         Msg := Gtk.Status_Bar.Push (Application.Status, 1, "Internal error: "
-                                     & Ada.Exceptions.Exception_Message (E));
+         Application.Message ("Internal error: "
+                              & Ada.Exceptions.Exception_Message (E));
 
    end Open_File;
 
@@ -192,17 +191,30 @@ package body AKT.Windows is
          begin
             Application.List.Append (Application.Current_Row, Gtk.Tree_Model.Null_Iter);
 
-            Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
-                                0, Name);
-            Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
-                                1, Keystore.Entry_Type'Image (Item.Kind));
-            Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
-                                2, Interfaces.Unsigned_64'Image (Item.Size));
-            Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
-                                3, Ada.Calendar.Formatting.Image (Item.Create_Date));
-            if Item.Size < 1024 then
+            if Application.Locked then
                Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
-                                   4, Application.Wallet.Get (Name));
+                                   0, "xxxxxxxx");
+               Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
+                                   1, Keystore.Entry_Type'Image (Item.Kind));
+               Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
+                                   2, Interfaces.Unsigned_64'Image (Item.Size));
+               Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
+                                   3, Ada.Calendar.Formatting.Image (Item.Create_Date));
+               Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
+                                      4, "XXXXXXXXXXX");
+            else
+               Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
+                                   0, Name);
+               Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
+                                   1, Keystore.Entry_Type'Image (Item.Kind));
+               Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
+                                   2, Interfaces.Unsigned_64'Image (Item.Size));
+               Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
+                                   3, Ada.Calendar.Formatting.Image (Item.Create_Date));
+               if Item.Size < 1024 then
+                  Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
+                                      4, Application.Wallet.Get (Name));
+               end if;
             end if;
          end;
          Keystore.Entry_Maps.Next (Iter);
@@ -214,7 +226,6 @@ package body AKT.Windows is
    procedure Edit_Current (Application : in out Application_Type) is
       Model : Gtk.Tree_Model.Gtk_Tree_Model;
       Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
-      Msg   : Gtk.Status_Bar.Message_Id with Unreferenced;
    begin
       Gtk.Status_Bar.Remove_All (Application.Status, 1);
 
@@ -231,7 +242,7 @@ package body AKT.Windows is
          Glib.Unicode.UTF8_Validate (Data, Valid, Pos);
          if not Valid then
             Log.Warn ("Data is binary content and not valid UTF-8");
-            Msg := Gtk.Status_Bar.Push (Application.Status, 1, "Cannot edit binary content");
+            Application.Message ("Cannot edit binary content");
             return;
          end if;
          Application.Current := Ada.Strings.Unbounded.To_Unbounded_String (Name);
@@ -250,7 +261,7 @@ package body AKT.Windows is
    exception
       when E : others =>
          Log.Error ("Exception to edit content", E);
-         Msg := Gtk.Status_Bar.Push (Application.Status, 1, "Cannot edit content");
+         Application.Message ("Cannot edit content");
 
    end Edit_Current;
 
@@ -265,6 +276,35 @@ package body AKT.Windows is
          Application.List_Keystore;
       end if;
    end Save_Current;
+
+   --  ------------------------------
+   --  Lock the keystore so that it is necessary to ask the password again to see/edit items.
+   --  ------------------------------
+   procedure Lock (Application : in out Application_Type) is
+   begin
+      Application.Locked := True;
+      if Application.Wallet.Is_Open then
+         Application.List_Keystore;
+         Application.Wallet.Close;
+      end if;
+   end Lock;
+
+   --  ------------------------------
+   --  Unlock the keystore with the password.
+   --  ------------------------------
+   procedure Unlock (Application : in out Application_Type;
+                     Password    : in Keystore.Secret_Key) is
+   begin
+      null;
+   end Unlock;
+
+   --  ------------------------------
+   --  Return True if the keystore is locked.
+   --  ------------------------------
+   function Is_Locked (Application : in Application_Type) return Boolean is
+   begin
+      return Application.Locked;
+   end Is_Locked;
 
    --  ------------------------------
    --  Set the UI label with the given value.
