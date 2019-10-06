@@ -57,8 +57,6 @@ private package Keystore.Marshallers is
    BT_DATA_START   : constant Block_Index := BT_HEADER_START + BT_TYPE_HEADER_SIZE;
    BT_DATA_LENGTH  : constant Block_Index := Block_Index'Last - BT_DATA_START + 1;
 
-   type Marshaller;
-
    type Marshaller is limited record
       Buffer : Keystore.Buffers.Storage_Buffer;
       Pos    : Block_Index := Block_Type'First;
@@ -68,7 +66,11 @@ private package Keystore.Marshallers is
    procedure Set_Header (Into : in out Marshaller;
                          Tag  : in Interfaces.Unsigned_16;
                          Id   : in Keystore.Wallet_Identifier) with
-     Post => Into.Pos = BT_DATA_START;
+     Post => Into.Pos = BT_DATA_START - 1;
+
+   procedure Set_Header (Into  : in out Marshaller;
+                         Value : in Interfaces.Unsigned_32) with
+     Pre => Into.Pos = Block_Type'First;
 
    procedure Put_Unsigned_16 (Into  : in out Marshaller;
                               Value : in Interfaces.Unsigned_16) with
@@ -100,30 +102,33 @@ private package Keystore.Marshallers is
 
    procedure Put_String (Into  : in out Marshaller;
                          Value : in String) with
-     Pre => Into.Pos < Block_Type'Last - 4 - Value'Length;
+     Pre => Into.Pos <= Block_Type'Last - 4 - Value'Length;
 
    procedure Put_Date (Into  : in out Marshaller;
                        Value : in Ada.Calendar.Time) with
-     Pre => Into.Pos < Block_Type'Last - 8;
+     Pre => Into.Pos <= Block_Type'Last - 8;
 
    procedure Put_Storage_Block (Into  : in out Marshaller;
                                 Value : in Buffers.Storage_Block) with
-     Pre => Into.Pos < Block_Type'Last - 8;
+     Pre => Into.Pos <= Block_Type'Last - 8;
 
    procedure Put_Secret (Into        : in out Marshaller;
                          Value       : in Secret_Key;
                          Protect_Key : in Secret_Key;
                          Protect_IV  : in Secret_Key) with
-     Pre => Into.Pos < Block_Type'Last - Value.Length;
+     Pre => Into.Pos <= Block_Type'Last - Value.Length;
 
    procedure Put_HMAC_SHA256 (Into    : in out Marshaller;
                               Key     : in Secret_Key;
                               Content : in Ada.Streams.Stream_Element_Array) with
-     Pre => Into.Pos < Block_Type'Last - BT_HMAC_HEADER_SIZE;
+     Pre => Into.Pos <= Block_Type'Last - BT_HMAC_HEADER_SIZE;
 
    procedure Put_UUID (Into  : in out Marshaller;
                        Value : in UUID_Type) with
-     Pre => Into.Pos < Block_Type'Last - 16;
+     Pre => Into.Pos <= Block_Type'Last - 16;
+
+   function Get_Header (From  : in out Marshaller) return Interfaces.Unsigned_32 with
+     Pre => From.Pos = Block_Type'First;
 
    function Get_Unsigned_16 (From  : in out Marshaller) return Interfaces.Unsigned_16 with
      Pre => From.Pos <= Block_Type'Last - 2;
@@ -174,6 +179,6 @@ private package Keystore.Marshallers is
 
    procedure Skip (From  : in out Marshaller;
                    Count : in Block_Index) with
-     Pre => From.Pos < Block_Type'Last - Count;
+     Pre => From.Pos <= Block_Type'Last - Count;
 
 end Keystore.Marshallers;
