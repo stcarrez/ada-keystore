@@ -70,6 +70,8 @@ package body AKT.Callbacks is
                                 Handler      => AKT.Callbacks.On_Close_Password'Access);
       Builder.Register_Handler (Handler_Name => "tool-edit",
                                 Handler      => AKT.Callbacks.On_Tool_Edit'Access);
+      Builder.Register_Handler (Handler_Name => "tool-lock",
+                                Handler      => AKT.Callbacks.On_Tool_Lock'Access);
       Builder.Register_Handler (Handler_Name => "tool-save",
                                 Handler      => AKT.Callbacks.On_Tool_Save'Access);
    end Initialize;
@@ -141,6 +143,14 @@ package body AKT.Callbacks is
    begin
       App.Edit_Current;
    end On_Tool_Edit;
+
+   --  ------------------------------
+   --  Callback executed when the "tool-lock" action is executed from the toolbar.
+   --  ------------------------------
+   procedure On_Tool_Lock (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
+   begin
+      App.Lock;
+   end On_Tool_Lock;
 
    --  ------------------------------
    --  Callback executed when the "open-file" action is executed from the open_file dialog.
