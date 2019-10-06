@@ -23,6 +23,7 @@ with Interfaces;
 with Util.Log.Loggers;
 
 with Glib.Error;
+with Glib.Unicode;
 with Glib.Object;
 
 with Gtk.Main;
@@ -106,7 +107,7 @@ package body AKT.Windows is
    procedure Open_File (Application : in out Application_Type;
                         Path        : in String;
                         Password    : in Keystore.Secret_Key) is
-      Msg : Gtk.Status_Bar.Message_Id;
+      Msg : Gtk.Status_Bar.Message_Id with Unreferenced;
    begin
       --  Close the current wallet if necessary.
       if Application.Wallet.Is_Open then
@@ -123,10 +124,10 @@ package body AKT.Windows is
       when Keystore.Bad_Password =>
          Msg := Gtk.Status_Bar.Push (Application.Status, 1, "Invalid password to open " & Path);
 
-      when Keystore.Corrupted =>
+      when Keystore.Corrupted | Keystore.Invalid_Storage | Keystore.Invalid_Block =>
          Msg := Gtk.Status_Bar.Push (Application.Status, 1, "File is corrupted");
 
-      when Ada.IO_Exceptions.End_Error =>
+      when Keystore.Invalid_Keystore | Ada.IO_Exceptions.End_Error =>
          Msg := Gtk.Status_Bar.Push (Application.Status, 1, "File is not a keystore");
 
       when E : others =>
@@ -158,6 +159,8 @@ package body AKT.Windows is
       end Add_Column;
 
    begin
+      Gtk.Status_Bar.Remove_All (Application.Status, 1);
+
       --  <name> <type> <size> <date> <content>
       Application.Wallet.List (List);
 
@@ -211,19 +214,31 @@ package body AKT.Windows is
    procedure Edit_Current (Application : in out Application_Type) is
       Model : Gtk.Tree_Model.Gtk_Tree_Model;
       Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+      Msg   : Gtk.Status_Bar.Message_Id with Unreferenced;
    begin
+      Gtk.Status_Bar.Remove_All (Application.Status, 1);
+
       Gtk.Tree_Selection.Get_Selected (Selection => Application.Selection,
                                        Model     => Model,
                                        Iter      => Iter);
       declare
-         Name : constant String := Gtk.Tree_Model.Get_String (Model, Iter, 0);
+         Name  : constant String := Gtk.Tree_Model.Get_String (Model, Iter, 0);
+         Data  : constant String := Application.Wallet.Get (Name);
+         Valid : Boolean;
+         Pos   : Natural;
       begin
          Log.Info ("Selected {0}", Name);
+         Glib.Unicode.UTF8_Validate (Data, Valid, Pos);
+         if not Valid then
+            Log.Warn ("Data is binary content and not valid UTF-8");
+            Msg := Gtk.Status_Bar.Push (Application.Status, 1, "Cannot edit binary content");
+            return;
+         end if;
          Application.Current := Ada.Strings.Unbounded.To_Unbounded_String (Name);
 
          Gtk.Text_Buffer.Gtk_New (Application.Buffer);
          Gtk.Text_View.Gtk_New (Application.Editor, Application.Buffer);
-         Gtk.Text_Buffer.Set_Text (Application.Buffer, Application.Wallet.Get (Name));
+         Gtk.Text_Buffer.Set_Text (Application.Buffer, Data);
          if not Application.Editing then
             Application.Viewport.Remove (Application.Tree);
             Application.Viewport.Add (Application.Editor);
@@ -231,6 +246,12 @@ package body AKT.Windows is
             Application.Editing := True;
          end if;
       end;
+
+   exception
+      when E : others =>
+         Log.Error ("Exception to edit content", E);
+         Msg := Gtk.Status_Bar.Push (Application.Status, 1, "Cannot edit content");
+
    end Edit_Current;
 
    procedure Save_Current (Application : in out Application_Type) is
@@ -267,7 +288,7 @@ package body AKT.Windows is
    --  ------------------------------
    procedure Message (Application : in out Application_Type;
                       Message     : in String) is
-      Msg : Gtk.Status_Bar.Message_Id;
+      Msg : Gtk.Status_Bar.Message_Id with Unreferenced;
    begin
       Msg := Gtk.Status_Bar.Push (Application.Status, 1, Message);
    end Message;
