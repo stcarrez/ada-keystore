@@ -264,7 +264,7 @@ package body Keystore.Repository.Workers is
       IV         : Secret_Key (Length => IO.SIZE_IV);
    begin
       if Log.Get_Level >= Util.Log.INFO_LEVEL then
-         Log.Info ("Decipher data block{0} with key block{1} @{2} ({3} bytes)",
+         Log.Info ("Decipher data block{0} with key block{1}@{2}{3} bytes",
                     Buffers.To_String (Work.Data_Block),
                     Buffers.To_String (Work.Key_Block.Buffer.Block),
                     IO.Block_Index'Image (Work.Key_Pos),
@@ -278,7 +278,8 @@ package body Keystore.Repository.Workers is
       end if;
 
       declare
-         Buf : constant Buffers.Buffer_Accessor := Data_Block.Buffer.Data.Value;
+         Buf      : constant Buffers.Buffer_Accessor := Data_Block.Buffer.Data.Value;
+         Last_Pos : constant IO.Block_Index := Work.Buffer_Pos + Work.End_Data - Work.Start_Data;
       begin
          Work.Key_Block.Pos := Work.Key_Pos;
          Marshallers.Get_Secret (Work.Key_Block, IV, Work.Manager.Config.Key.Key,
@@ -292,11 +293,11 @@ package body Keystore.Repository.Workers is
 
          Work.Data_Decipher.Transform
            (Data    => Buf.Data (Work.Start_Data .. Work.End_Aligned_Data),
-            Into    => Work.Data (Work.Buffer_Pos .. Work.Last_Pos),
+            Into    => Work.Data (Work.Buffer_Pos .. Last_Pos),
             Last    => Last,
             Encoded => Encoded);
 
-         Work.Data_Decipher.Finish (Into => Work.Data (Last + 1 .. Work.Last_Pos),
+         Work.Data_Decipher.Finish (Into => Work.Data (Last + 1 .. Last_Pos),
                                     Last => Last);
 
          if Log.Get_Level >= Util.Log.DEBUG_LEVEL then
@@ -307,7 +308,7 @@ package body Keystore.Repository.Workers is
             Logs.Dump (Log, Buf.Data (Work.Start_Data .. Work.End_Aligned_Data));
 
             Log.Debug ("Dump data:");
-            Logs.Dump (Log, Work.Data (Work.Buffer_Pos .. Work.Last_Pos));
+            Logs.Dump (Log, Work.Data (Work.Buffer_Pos .. Last_Pos));
          end if;
          Work.Status := SUCCESS;
       end;
@@ -327,7 +328,7 @@ package body Keystore.Repository.Workers is
       IV           : Secret_Key (Length => 16);
    begin
       if Log.Get_Level >= Util.Log.INFO_LEVEL then
-         Log.Info ("Cipher data block{0} with key block{1} @{2} ({3} bytes)",
+         Log.Info ("Cipher data block{0} with key block{1}@{2}{3} bytes",
                     Buffers.To_String (Work.Data_Block),
                     Buffers.To_String (Work.Key_Block.Buffer.Block),
                     IO.Block_Index'Image (Work.Key_Pos),
