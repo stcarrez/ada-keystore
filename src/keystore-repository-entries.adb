@@ -110,7 +110,7 @@ package body Keystore.Repository.Entries is
                            Sign         => Manager.Config.Dir.Sign,
                            Decrypt_Size => Size,
                            Into         => Into.Buffer);
-      Into.Pos := IO.BT_HEADER_START;
+      Into.Pos := IO.BT_HEADER_START - 1;
 
       --  Check block type.
       Btype := Marshallers.Get_Unsigned_16 (Into);
@@ -254,7 +254,7 @@ package body Keystore.Repository.Entries is
       Directory.Available := IO.Block_Index'Last - IO.BT_DATA_START - Space - 4 - 2;
       Directory.Count := 0;
       Directory.Key_Pos := IO.Block_Index'Last;
-      Directory.Last_Pos := IO.BT_DATA_START + 4 + 2;
+      Directory.Last_Pos := IO.BT_DATA_START + 4 + 2 - 1;
       Directory.Ready := True;
       Directory.Block := Block;
 
@@ -268,7 +268,7 @@ package body Keystore.Repository.Entries is
             Load_Directory (Manager, Last, Manager.Current);
             Last.Next_Block := Interfaces.Unsigned_32 (Directory.Block.Block);
 
-            Manager.Current.Pos := IO.BT_DATA_START;
+            Manager.Current.Pos := IO.BT_DATA_START - 1;
             Marshallers.Put_Block_Number (Manager.Current, Directory.Block.Block);
 
             Manager.Modified.Include (Manager.Current.Buffer.Block, Manager.Current.Buffer.Data);
@@ -413,13 +413,13 @@ package body Keystore.Repository.Entries is
          Size := Entry_Size (Item);
          End_Entry := Item.Entry_Offset + Size;
          if End_Entry /= Directory.Last_Pos then
-            Buf.Data (Item.Entry_Offset .. Directory.Last_Pos - Size - 1)
-              := Buf.Data (End_Entry .. Directory.Last_Pos - 1);
+            Buf.Data (Item.Entry_Offset + 1 .. Directory.Last_Pos - Size)
+              := Buf.Data (End_Entry + 1 .. Directory.Last_Pos);
          end if;
          if Manager.Randomize then
             --  When strong security is necessary, fill with random values
             --  (except the first 4 bytes).
-            Buf.Data (Directory.Last_Pos - Size .. Directory.Last_Pos - Size + 3)
+            Buf.Data (Directory.Last_Pos - Size + 1 .. Directory.Last_Pos - Size + 3)
               := (others => 0);
             Manager.Random.Generate
               (Buf.Data (Directory.Last_Pos - Size + 4 .. Directory.Last_Pos));
