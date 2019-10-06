@@ -65,6 +65,16 @@ package AKT.Windows is
 
    procedure Save_Current (Application : in out Application_Type);
 
+   --  Lock the keystore so that it is necessary to ask the password again to see/edit items.
+   procedure Lock (Application : in out Application_Type);
+
+   --  Unlock the keystore with the password.
+   procedure Unlock (Application : in out Application_Type;
+                     Password    : in Keystore.Secret_Key);
+
+   --  Return True if the keystore is locked.
+   function Is_Locked (Application : in Application_Type) return Boolean;
+
    procedure Main (Application : in out Application_Type);
 
    --  Report a message in the status area.
@@ -96,6 +106,7 @@ private
       Buffer      : Gtk.Text_Buffer.Gtk_Text_Buffer;
       Current     : Ada.Strings.Unbounded.Unbounded_String;
       Editing     : Boolean := False;
+      Locked      : Boolean := False;
    end record;
 
 end AKT.Windows;
