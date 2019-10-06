@@ -201,6 +201,7 @@ package body Keystore.Keys is
                     Password : in Secret_Key;
                     Size     : in Positive;
                     Config   : in out Wallet_Config) return Boolean is
+      Buf           : constant Buffers.Buffer_Accessor := Buffer.Buffer.Data.Value;
       Salt_Key      : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
       Salt_IV       : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
       Sign          : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
@@ -242,7 +243,7 @@ package body Keystore.Keys is
 
       Util.Encoders.HMAC.SHA256.Finish (Hmac, Result);
 
-      return Result = Buffer.Buffer.Data.Value.Data (Buffer.Pos .. Buffer.Pos + Result'Length - 1);
+      return Result = Buf.Data (Buffer.Pos + 1 .. Buffer.Pos + Result'Length);
    end Verify;
 
    --  ------------------------------
@@ -287,8 +288,8 @@ package body Keystore.Keys is
       Manager.Random.Generate (Salt_IV);
       Manager.Random.Generate (Sign);
 
-      Buffer.Pos := WH_KEY_LIST_START + IO.Block_Index (Slot) * WH_SLOT_SIZE - WH_SLOT_SIZE;
-      Buf.Data (Buffer.Pos .. Buffer.Pos + WH_KEY_SIZE - 1) := (others => 0);
+      Buffer.Pos := Key_Position (Slot);
+      Buf.Data (Buffer.Pos + 1 .. Buffer.Pos + WH_KEY_SIZE) := (others => 0);
       Marshallers.Put_Unsigned_32 (Buffer, WH_KEY_PBKDF2);
       Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Lock_Key.Length));
       Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Counter_Key));
@@ -316,7 +317,7 @@ package body Keystore.Keys is
       Save (Buffer, Lock_Key, Lock_IV, Config.Key, Hmac);
 
       Util.Encoders.HMAC.SHA256.Finish (Hmac, Result);
-      Buf.Data (Buffer.Pos .. Buffer.Pos + Result'Length - 1) := Result;
+      Buf.Data (Buffer.Pos + 1 .. Buffer.Pos + Result'Length) := Result;
 
       Stream.Write (Cipher  => Manager.Crypt.Cipher,
                     Sign    => Manager.Crypt.Sign,
@@ -332,8 +333,8 @@ package body Keystore.Keys is
                         Stream   : in out IO.Wallet_Stream'Class) is
       Buf : constant Buffers.Buffer_Accessor := Buffer.Buffer.Data.Value;
    begin
-      Buffer.Pos := WH_KEY_LIST_START + IO.Block_Index (Slot) * WH_SLOT_SIZE - WH_SLOT_SIZE;
-      Buf.Data (Buffer.Pos .. Buffer.Pos + WH_KEY_SIZE - 1) := (others => 0);
+      Buffer.Pos := Key_Position (Slot);
+      Buf.Data (Buffer.Pos + 1 .. Buffer.Pos + WH_KEY_SIZE) := (others => 0);
 
       Stream.Write (Cipher  => Manager.Crypt.Cipher,
                     Sign    => Manager.Crypt.Sign,
@@ -359,7 +360,7 @@ package body Keystore.Keys is
                    Sign         => Manager.Crypt.Sign,
                    Decrypt_Size => Size,
                    Into         => Buffer.Buffer);
-      Buffer.Pos := IO.BT_HEADER_START;
+      Buffer.Pos := IO.BT_HEADER_START - 1;
       if Marshallers.Get_Unsigned_16 (Buffer) /= IO.BT_WALLET_HEADER then
          Keystore.Logs.Warn (Log, "Invalid wallet block header BN{0}", Manager.Header_Block);
          raise Invalid_Block;
@@ -415,7 +416,7 @@ package body Keystore.Keys is
       Load (Manager, Block, Ident, Buffer, Root, Stream);
 
       for Slot in Key_Slot'Range loop
-         Buffer.Pos := WH_KEY_LIST_START + IO.Block_Index (Slot) * WH_SLOT_SIZE - WH_SLOT_SIZE;
+         Buffer.Pos := Key_Position (Slot);
          Value := Marshallers.Get_Unsigned_32 (Buffer);
          if Value = WH_KEY_PBKDF2 then
             Value := Marshallers.Get_Unsigned_32 (Buffer);
@@ -498,7 +499,7 @@ package body Keystore.Keys is
       function Find_Free_Slot return Key_Slot is
       begin
          for Slot in Key_Slot'Range loop
-            Buffer.Pos := WH_KEY_LIST_START + IO.Block_Index (Slot) * WH_SLOT_SIZE - WH_SLOT_SIZE;
+            Buffer.Pos := Key_Position (Slot);
             Value := Marshallers.Get_Unsigned_32 (Buffer);
             if Value = 0 then
                return Slot;
@@ -512,7 +513,7 @@ package body Keystore.Keys is
       Load (Manager, Block, Ident, Buffer, Root, Stream);
 
       for Slot in Key_Slot'Range loop
-         Buffer.Pos := WH_KEY_LIST_START + IO.Block_Index (Slot) * WH_SLOT_SIZE - WH_SLOT_SIZE;
+         Buffer.Pos := Key_Position (Slot);
          Value := Marshallers.Get_Unsigned_32 (Buffer);
          if Value = WH_KEY_PBKDF2 then
             Value := Marshallers.Get_Unsigned_32 (Buffer);
