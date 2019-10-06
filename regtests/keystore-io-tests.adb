@@ -82,7 +82,7 @@ package body Keystore.IO.Tests is
                       Sign         => Sign,
                       Decrypt_Size => Size,
                       Into         => Buffer.Buffer);
-         Buffer.Pos := IO.BT_HEADER_START;
+         Buffer.Pos := IO.BT_HEADER_START - 1;
          Util.Tests.Assert_Equals (T, BT_WALLET_HEADER,
                                    Integer (Marshallers.Get_Unsigned_16 (Buffer)),
                                    "Invalid wallet header tag");
@@ -191,7 +191,7 @@ package body Keystore.IO.Tests is
                       Decrypt_Size => Size,
                       Into         => Buffer.Buffer);
 
-         Buffer.Pos := IO.BT_HEADER_START;
+         Buffer.Pos := IO.BT_HEADER_START - 1;
          Util.Tests.Assert_Equals (T, BT_WALLET_HEADER,
                                    Integer (Marshallers.Get_Unsigned_16 (Buffer)),
                                    "Invalid wallet header tag");
@@ -220,7 +220,7 @@ package body Keystore.IO.Tests is
                          Decrypt_Size => Size,
                          Into         => Buffer.Buffer);
 
-            Buffer.Pos := IO.BT_HEADER_START;
+            Buffer.Pos := IO.BT_HEADER_START - 1;
             Util.Tests.Assert_Equals (T, BT_WALLET_DATA,
                                       Integer (Marshallers.Get_Unsigned_16 (Buffer)),
                                       "Invalid wallet header tag");
@@ -237,7 +237,7 @@ package body Keystore.IO.Tests is
                                       Integer (Marshallers.Get_Unsigned_32 (Buffer)),
                                       "Invalid PAD 0");
             Util.Tests.Assert_Equals (T, I mod 255,
-                                      Integer (Buffer.Buffer.Data.Value.Data (Buffer.Pos)),
+                                      Integer (Buffer.Buffer.Data.Value.Data (Buffer.Pos + 1)),
                                       "Invalid number extracted from block");
             Util.Tests.Assert_Equals (T, I mod 255,
                                       Integer (Buffer.Buffer.Data.Value.Data (Buffer.Pos + 123)),
