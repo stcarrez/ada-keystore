@@ -18,6 +18,7 @@
 with Ada.IO_Exceptions;
 with Ada.Exceptions;
 with Ada.Calendar.Formatting;
+with Interfaces;
 
 with Util.Log.Loggers;
 
@@ -35,6 +36,7 @@ package body AKT.Windows is
 
    use type Glib.Gint;
    use type Gtk.Tree_View.Gtk_Tree_View;
+   use type Interfaces.Unsigned_64;
 
    --  The logger
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Windows");
@@ -192,7 +194,7 @@ package body AKT.Windows is
             Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
                                 1, Keystore.Entry_Type'Image (Item.Kind));
             Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
-                                2, Natural'Image (Item.Size));
+                                2, Interfaces.Unsigned_64'Image (Item.Size));
             Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
                                 3, Ada.Calendar.Formatting.Image (Item.Create_Date));
             if Item.Size < 1024 then
