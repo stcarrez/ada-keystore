@@ -25,7 +25,7 @@ private package Keystore.Repository.Data is
 
    --  Start offset of the data entry descriptor in the data block.
    function Data_Entry_Offset (Index : in Natural) return IO.Block_Index is
-      (IO.BT_DATA_START + Stream_Element_Offset (Index * DATA_ENTRY_SIZE) - DATA_ENTRY_SIZE);
+      (IO.BT_DATA_START + Stream_Element_Offset (Index * DATA_ENTRY_SIZE) - DATA_ENTRY_SIZE - 1);
 
    --  Write the data in one or several blocks.
    procedure Add_Data (Manager     : in out Wallet_Repository;
