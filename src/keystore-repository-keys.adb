@@ -47,6 +47,7 @@ package body Keystore.Repository.Keys is
             Iterator.Current.Pos := Offset;
             Iterator.Key_Count := Count;
             Iterator.Count := Count;
+            Iterator.Key_Last_Pos := Offset - Key_Slot_Size (Count);
             return;
          end if;
 
@@ -64,6 +65,7 @@ package body Keystore.Repository.Keys is
       Iterator.Key_Pos := IO.Block_Index'Last;
       Iterator.Key_Count := 0;
       Iterator.Key_Header_Pos := IO.Block_Index'Last;
+      Iterator.Key_Last_Pos := IO.Block_Index'Last;
       Iterator.Count := 0;
       Iterator.Item := Item;
       Iterator.Data_Size := 0;
@@ -154,9 +156,9 @@ package body Keystore.Repository.Keys is
       Key_Pos := Iterator.Directory.Key_Pos;
       if Key_Pos < Key_Start_Pos then
          Buf.Data (Key_Pos + Del_Size .. Key_Start_Pos + Del_Size - 1)
-           := Buf.Data (Key_Pos .. Key_Start_Pos - 1);
+           := Buf.Data (Key_Pos + 1 .. Key_Start_Pos);
       end if;
-      Buf.Data (Key_Pos .. Key_Pos + Del_Size - 1) := (others => 0);
+      Buf.Data (Key_Pos + 1 .. Key_Pos + Del_Size) := (others => 0);
 
       Iterator.Directory.Key_Pos := Key_Pos + Del_Size;
       if Iterator.Directory.Count > 0 or Iterator.Directory.Key_Pos < IO.Block_Index'Last then
@@ -234,7 +236,7 @@ package body Keystore.Repository.Keys is
          Iterator.Key_Header_Pos := Iterator.Directory.Key_Pos - DATA_KEY_HEADER_SIZE;
          Iterator.Directory.Available := Iterator.Directory.Available - DATA_KEY_HEADER_SIZE;
          Iterator.Directory.Key_Pos := Iterator.Key_Header_Pos;
-         Iterator.Key_Last_Pos := Iterator.Directory.Key_Pos;
+         Iterator.Key_Last_Pos := Iterator.Key_Header_Pos;
          Iterator.Current.Pos := Iterator.Key_Header_Pos;
          Iterator.Key_Count := 0;
          Marshallers.Put_Unsigned_32 (Iterator.Current,
@@ -251,16 +253,18 @@ package body Keystore.Repository.Keys is
          Key_Start := Iterator.Directory.Key_Pos;
          Key_Last := Iterator.Key_Last_Pos;
          if Key_Last /= Key_Start then
-            Buf.Data (Key_Start - DATA_KEY_ENTRY_SIZE .. Key_Last - 1)
-              := Buf.Data (Key_Start .. Key_Last - 1);
+            Buf.Data (Key_Start - DATA_KEY_ENTRY_SIZE .. Key_Last - DATA_KEY_ENTRY_SIZE)
+              := Buf.Data (Key_Start .. Key_Last);
          end if;
 
          --  Grow the key slot area by one key slot.
-         Iterator.Key_Last_Pos := Iterator.Key_Last_Pos - DATA_KEY_ENTRY_SIZE;
-         Iterator.Directory.Key_Pos := Key_Start - DATA_KEY_ENTRY_SIZE;
+         Key_Last := Key_Last - DATA_KEY_ENTRY_SIZE;
+         Key_Start := Key_Start - DATA_KEY_ENTRY_SIZE;
+         Iterator.Key_Last_Pos := Key_Last;
+         Iterator.Directory.Key_Pos := Key_Start;
          Iterator.Directory.Available := Iterator.Directory.Available - DATA_KEY_ENTRY_SIZE;
-         Iterator.Current.Pos := IO.BT_DATA_START + 4;
-         Marshallers.Put_Block_Index (Iterator.Current, Iterator.Directory.Key_Pos);
+         Iterator.Current.Pos := IO.BT_DATA_START + 4 - 1;
+         Marshallers.Put_Block_Index (Iterator.Current, Key_Start);
 
          --  Insert the new data key.
          Iterator.Key_Count := Iterator.Key_Count + 1;
