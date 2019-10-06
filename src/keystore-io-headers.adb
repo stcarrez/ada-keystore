@@ -74,7 +74,7 @@ package body Keystore.IO.Headers is
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.IO.Headers");
 
    function Get_Storage_Offset (Index : in Natural) return Block_Index is
-      (Block_Index'Last - STORAGE_SLOT_LENGTH * Stream_Element_Offset (Index));
+      (Block_Index'Last - STORAGE_SLOT_LENGTH * Stream_Element_Offset (Index) - 1);
 
    function Get_Header_Data_Size (Header : in Wallet_Header) return Buffer_Size;
 
@@ -92,8 +92,7 @@ package body Keystore.IO.Headers is
    begin
       Header.Buffer := Buffers.Allocate ((Storage, HEADER_BLOCK_NUM));
       Buffer.Buffer := Header.Buffer;
-      Buffer.Pos := Buffers.Block_Type'First;
-      Marshallers.Put_Unsigned_32 (Buffer, MAGIC_1);
+      Marshallers.Set_Header (Buffer, MAGIC_1);
       Marshallers.Put_Unsigned_32 (Buffer, MAGIC_2);
       Marshallers.Put_Unsigned_32 (Buffer, MAGIC_3);
       Marshallers.Put_Unsigned_16 (Buffer, VERSION_1);
@@ -119,10 +118,9 @@ package body Keystore.IO.Headers is
       Storage_Count : Interfaces.Unsigned_32;
    begin
       Buffer.Buffer := Header.Buffer;
-      Buffer.Pos := Buffers.Block_Type'First;
 
       --  Verify values found in header block.
-      Value := Marshallers.Get_Unsigned_32 (Buffer);
+      Value := Marshallers.Get_Header (Buffer);
       if Value /= MAGIC_1 then
          Log.Warn ("Header magic 1 is invalid:{0}",
                    Interfaces.Unsigned_32'Image (Value));
@@ -210,14 +208,14 @@ package body Keystore.IO.Headers is
             Status : Interfaces.Unsigned_16;
          begin
             Buffer.Pos := Get_Storage_Offset (I);
-            S.Pos := Buffer.Pos;
+            S.Pos := Buffer.Pos + 1;
             S.Identifier := Storage_Identifier (Marshallers.Get_Unsigned_32 (Buffer));
             S.Kind := Marshallers.Get_Unsigned_16 (Buffer);
             Status := Marshallers.Get_Unsigned_16 (Buffer);
             S.Readonly := Status > 0;
             S.Sealed := Status > 0;
             S.Max_Block := Natural (Marshallers.Get_Unsigned_32 (Buffer));
-            S.HMAC := Buf.Data (Buffer.Pos .. Buffer.Pos + 32 - 1);
+            S.HMAC := Buf.Data (Buffer.Pos + 1 .. Buffer.Pos + 32);
             Process (S);
          end;
       end loop;
@@ -243,7 +241,7 @@ package body Keystore.IO.Headers is
                                Index  : in Header_Slot_Index_Type) is
       Size    : Buffer_Size;
    begin
-      Buffer.Pos := HEADER_DATA_POS + 2;
+      Buffer.Pos := HEADER_DATA_POS + 2 - 1;
 
       --  Skip entries until we reach the correct slot.
       for I in 1 .. Index - 1 loop
@@ -258,7 +256,7 @@ package body Keystore.IO.Headers is
       Size    : Buffer_Size;
    begin
       Buffer.Buffer := Header.Buffer;
-      Buffer.Pos := HEADER_DATA_POS + 2;
+      Buffer.Pos := HEADER_DATA_POS + 2 - 1;
       for I in 1 .. Header.Data_Count loop
          Size := Marshallers.Get_Buffer_Size (Buffer);
          Marshallers.Skip (Buffer, Size + 2);
@@ -319,7 +317,7 @@ package body Keystore.IO.Headers is
       if Index > Header.Data_Count then
          Header.Data_Count := Index;
       end if;
-      Buffer.Pos := HEADER_DATA_POS;
+      Buffer.Pos := HEADER_DATA_POS - 1;
       Marshallers.Put_Unsigned_16 (Buffer, Interfaces.Unsigned_16 (Header.Data_Count));
    end Set_Header_Data;
 
@@ -375,7 +373,7 @@ package body Keystore.IO.Headers is
       Marshallers.Put_Unsigned_16 (Buffer, 0);
       Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Max_Block));
 
-      Buffer.Pos := STORAGE_COUNT_POS;
+      Buffer.Pos := STORAGE_COUNT_POS - 1;
       Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Header.Storage_Count));
    end Add_Storage;
 
