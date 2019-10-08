@@ -9,29 +9,29 @@
 # TL;DR
 
 AKT is a tool to store protect your sensitive information and documents by
-encypting them in secure keystore.
+encrypting them in secure keystore (AES-256, HMAC-256).
 
-- Create the keystore and protect it with your gpg key
+Create the keystore and protect it with your gpg key
 ```
    akt -f secure.akt create --gpg <keyid>
 ```
 
-- Store a small content
+Store a small content
 ```
    akt -f secure.akt set bank.password 012345
 ```
 
-- Store a file:
+Store a file:
 ```
    akt -f secure.akt set -f contract.doc
 ```
 
-- Edit a content with your $EDITOR:
+Edit a content with your $EDITOR:
 ```
    akt -f secure.akt edit bank.password
 ```
 
-- Get a content:
+Get a content:
 ```
    akt -f secure.akt get bank.password
    akt -f secure.akt extract contract.doc > contract.doc
