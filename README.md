@@ -6,6 +6,39 @@
 ![Commits](https://img.shields.io/github/commits-since/stcarrez/ada-keystore/0.1.0.svg)
 ![semver](https://img.shields.io/badge/semver-2.0.0-blue.svg?cacheSeconds=2592000)
 
+# TL;DR
+
+AKT is a tool to store protect your sensitive information and documents by
+encypting them in secure keystore.
+
+- Create the keystore and protect it with your gpg key
+```
+   akt -f secure.akt create --gpg <keyid>
+```
+
+- Store a small content
+```
+   akt -f secure.akt set bank.password 012345
+```
+
+- Store a file:
+```
+   akt -f secure.akt set -f contract.doc
+```
+
+- Edit a content with your $EDITOR:
+```
+   akt -f secure.akt edit bank.password
+```
+
+- Get a content:
+```
+   akt -f secure.akt get bank.password
+   akt -f secure.akt extract contract.doc > contract.doc
+```
+
+# Overview
+
 Ada Keystore is a library and tool to store information in secure wallets
 and protect the stored information by encrypting the content.
 It is necessary to know one of the wallet password to access its content.
