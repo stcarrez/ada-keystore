@@ -95,6 +95,8 @@ package body AKT.Callbacks is
                                 Handler      => AKT.Callbacks.On_Tool_Unlock'Access);
       Builder.Register_Handler (Handler_Name => "tool-save",
                                 Handler      => AKT.Callbacks.On_Tool_Save'Access);
+      Builder.Register_Handler (Handler_Name => "tool-add",
+                                Handler      => AKT.Callbacks.On_Tool_Add'Access);
       Builder.Register_Handler (Handler_Name => "dialog-password-ok",
                                 Handler      => AKT.Callbacks.On_Dialog_Password_Ok'Access);
    end Initialize;
@@ -168,6 +170,15 @@ package body AKT.Callbacks is
       end if;
       Chooser.Show;
    end On_Menu_Open;
+
+   --  ------------------------------
+   --  Callback executed when the "tool-add" action is executed from the toolbar.
+   --  ------------------------------
+   procedure On_Tool_Add (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
+   begin
+      App.Save_Current;
+      App.Refresh_Toolbar;
+   end On_Tool_Add;
 
    --  ------------------------------
    --  Callback executed when the "tool-save" action is executed from the toolbar.
