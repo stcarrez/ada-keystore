@@ -22,6 +22,7 @@ with Gtk.GEntry;
 with Gtk.File_Filter;
 with Gtk.File_Chooser;
 with Gtk.File_Chooser_Dialog;
+with Gtk.Spin_Button;
 with Gtk.Window;
 
 with Util.Log.Loggers;
@@ -29,6 +30,7 @@ with Util.Log.Loggers;
 with Keystore;
 package body AKT.Callbacks is
 
+   use type Gtk.Spin_Button.Gtk_Spin_Button;
    use type Gtk.GEntry.Gtk_Entry;
    use type Gtk.Widget.Gtk_Widget;
 
@@ -36,6 +38,18 @@ package body AKT.Callbacks is
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Callbacks");
 
    App : AKT.Windows.Application_Access;
+
+   function Get_Widget (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class;
+                        Name   : in String) return Gtk.Widget.Gtk_Widget is
+      (Gtk.Widget.Gtk_Widget (Object.Get_Object (Name)));
+
+   function Get_Entry (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class;
+                       Name   : in String) return Gtk.GEntry.Gtk_Entry is
+      (Gtk.GEntry.Gtk_Entry (Object.Get_Object (Name)));
+
+   function Get_Spin_Button (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class;
+                             Name   : in String) return Gtk.Spin_Button.Gtk_Spin_Button is
+      (Gtk.Spin_Button.Gtk_Spin_Button (Object.Get_Object (Name)));
 
    --  ------------------------------
    --  Initialize and register the callbacks.
@@ -49,7 +63,7 @@ package body AKT.Callbacks is
       Builder.Register_Handler (Handler_Name => "menu-quit",
                                 Handler      => AKT.Callbacks.On_Menu_Quit'Access);
 
-      --  Open file from menu and dialog
+      --  Open file from menu and dialog.
       Builder.Register_Handler (Handler_Name => "menu-open",
                                 Handler      => AKT.Callbacks.On_Menu_Open'Access);
       Builder.Register_Handler (Handler_Name => "open-file",
@@ -57,10 +71,14 @@ package body AKT.Callbacks is
       Builder.Register_Handler (Handler_Name => "cancel-open-file",
                                 Handler      => AKT.Callbacks.On_Cancel_Open_File'Access);
 
+      --  Create file from menu and dialog.
       Builder.Register_Handler (Handler_Name => "menu-new",
-                                Handler      => AKT.Callbacks.On_Menu_Open'Access);
-      Builder.Register_Handler (Handler_Name => "menu-create",
-                                Handler      => AKT.Callbacks.On_Menu_Create'Access);
+                                Handler      => AKT.Callbacks.On_Menu_New'Access);
+      Builder.Register_Handler (Handler_Name => "create-file",
+                                Handler      => AKT.Callbacks.On_Create_File'Access);
+      Builder.Register_Handler (Handler_Name => "cancel-create-file",
+                                Handler      => AKT.Callbacks.On_Cancel_Create_File'Access);
+
       Builder.Register_Handler (Handler_Name => "window-close",
                                 Handler      => AKT.Callbacks.On_Close_Window'Access);
       Builder.Register_Handler (Handler_Name => "about",
@@ -94,26 +112,44 @@ package body AKT.Callbacks is
    --  Callback executed when the "about" action is executed from the menu.
    --  ------------------------------
    procedure On_Menu_About (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
-      About : constant Gtk.Widget.Gtk_Widget :=
-        Gtk.Widget.Gtk_Widget (Object.Get_Object ("about"));
+      About : constant Gtk.Widget.Gtk_Widget := Get_Widget (Object, "about");
    begin
       About.Show;
    end On_Menu_About;
 
-   --  Callback executed when the "menu-create" action is executed from the file menu.
-   procedure On_Menu_Create (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
+   --  ------------------------------
+   --  Callback executed when the "menu-new" action is executed from the file menu.
+   --  ------------------------------
+   procedure On_Menu_New (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
+      Chooser : constant Gtk.Widget.Gtk_Widget := Get_Widget (Object, "create_file_chooser");
+      Filter  : Gtk.File_Filter.Gtk_File_Filter;
+      File_Chooser : Gtk.File_Chooser.Gtk_File_Chooser;
    begin
-      null;
-   end On_Menu_Create;
+      if Chooser /= null then
+         File_Chooser := Gtk.File_Chooser_Dialog."+"
+           (Gtk.File_Chooser_Dialog.Gtk_File_Chooser_Dialog (Chooser));
+
+         Gtk.File_Filter.Gtk_New (Filter);
+         Gtk.File_Filter.Add_Pattern (Filter, "*.akt");
+         Gtk.File_Filter.Set_Name (Filter, "Keystore Files");
+         Gtk.File_Chooser.Add_Filter (File_Chooser, Filter);
+
+         Gtk.File_Filter.Gtk_New (Filter);
+         Gtk.File_Filter.Add_Pattern (Filter, "*");
+         Gtk.File_Filter.Set_Name (Filter, "All Files");
+         Gtk.File_Chooser.Add_Filter (File_Chooser, Filter);
+
+      end if;
+      Chooser.Show;
+   end On_Menu_New;
 
    --  ------------------------------
    --  Callback executed when the "menu-open" action is executed from the file menu.
    --  ------------------------------
    procedure On_Menu_Open (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
-      Chooser : constant Gtk.Widget.Gtk_Widget
-        := Gtk.Widget.Gtk_Widget (Object.Get_Object ("open_file_chooser"));
-      File_Chooser : Gtk.File_Chooser.Gtk_File_Chooser;
+      Chooser : constant Gtk.Widget.Gtk_Widget := Get_Widget (Object, "open_file_chooser");
       Filter  : Gtk.File_Filter.Gtk_File_Filter;
+      File_Chooser : Gtk.File_Chooser.Gtk_File_Chooser;
    begin
       if Chooser /= null then
          File_Chooser := Gtk.File_Chooser_Dialog."+"
@@ -165,10 +201,8 @@ package body AKT.Callbacks is
    --  Callback executed when the "tool-unlock" action is executed from the toolbar.
    --  ------------------------------
    procedure On_Tool_Unlock (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
-      Password_Dialog : constant Gtk.Widget.Gtk_Widget
-        := Gtk.Widget.Gtk_Widget (Object.Get_Object ("password_dialog"));
-      Widget : constant Gtk.Widget.Gtk_Widget
-        := Gtk.Widget.Gtk_Widget (Object.Get_Object ("main"));
+      Password_Dialog : constant Gtk.Widget.Gtk_Widget := Get_Widget (Object, "password_dialog");
+      Widget          : constant Gtk.Widget.Gtk_Widget := Get_Widget (Object, "main");
    begin
       if App.Is_Locked and then Password_Dialog /= null then
          Gtk.Window.Set_Transient_For (Gtk.Window.Gtk_Window (Password_Dialog),
@@ -181,13 +215,12 @@ package body AKT.Callbacks is
    --  Callback executed when the "open-file" action is executed from the open_file dialog.
    --  ------------------------------
    procedure On_Open_File (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
-      Chooser : constant Gtk.Widget.Gtk_Widget
-        := Gtk.Widget.Gtk_Widget (Object.Get_Object ("open_file_chooser"));
+      Chooser  : constant Gtk.Widget.Gtk_Widget := Get_Widget (Object, "open_file_chooser");
+      Password : constant Gtk.GEntry.Gtk_Entry := Get_Entry (Object, "open_file_password");
+      Filename : constant Gtk.GEntry.Gtk_Entry := Get_Entry (Object, "open_file_name");
       File_Chooser : Gtk.File_Chooser.Gtk_File_Chooser;
-      Password : constant Gtk.GEntry.Gtk_Entry
-        := Gtk.GEntry.Gtk_Entry (Object.Get_Object ("open_file_password"));
    begin
-      if Chooser /= null and Password /= null then
+      if Chooser /= null and Password /= null and Filename /= null then
          if Gtk.GEntry.Get_Text (Password) = "" then
             App.Message ("Password is empty");
          else
@@ -205,11 +238,45 @@ package body AKT.Callbacks is
    --  Callback executed when the "cancel-open-file" action is executed from the open_file dialog.
    --  ------------------------------
    procedure On_Cancel_Open_File (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
-      Chooser : constant Gtk.Widget.Gtk_Widget :=
-        Gtk.Widget.Gtk_Widget (Object.Get_Object ("open_file_chooser"));
+      Chooser : constant Gtk.Widget.Gtk_Widget := Get_Widget (Object, "open_file_chooser");
    begin
       Chooser.Hide;
    end On_Cancel_Open_File;
+
+   --  ------------------------------
+   --  Callback executed when the "create-file" action is executed from the open_file dialog.
+   --  ------------------------------
+   procedure On_Create_File (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
+      Chooser  : constant Gtk.Widget.Gtk_Widget := Get_Widget (Object, "create_file_chooser");
+      Password : constant Gtk.GEntry.Gtk_Entry := Get_Entry (Object, "create_file_password");
+      Filename : constant Gtk.GEntry.Gtk_Entry := Get_Entry (Object, "create_file_name");
+      Count    : constant Gtk.Spin_Button.Gtk_Spin_Button := Get_Spin_Button (Object, "split_data_count");
+      File_Chooser : Gtk.File_Chooser.Gtk_File_Chooser;
+   begin
+      if Chooser /= null and Password /= null then
+         if Gtk.GEntry.Get_Text (Password) = "" then
+            App.Message ("Password is empty");
+         else
+            Chooser.Hide;
+            File_Chooser := Gtk.File_Chooser_Dialog."+"
+              (Gtk.File_Chooser_Dialog.Gtk_File_Chooser_Dialog (Chooser));
+            Log.Info ("Selected file {0}", Gtk.File_Chooser.Get_Filename (File_Chooser));
+            App.Create_File (Path     => Gtk.GEntry.Get_Text (Filename),
+                             Storage_Count => Natural (Count.Get_Value_As_Int),
+                             Password => Keystore.Create (Gtk.GEntry.Get_Text (Password)));
+         end if;
+      end if;
+   end On_Create_File;
+
+   --  ------------------------------
+   --  Callback executed when the "cancel-create-file" action is executed
+   --  from the open_file dialog.
+   --  ------------------------------
+   procedure On_Cancel_Create_File (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
+      Chooser : constant Gtk.Widget.Gtk_Widget := Get_Widget (Object, "create_file_chooser");
+   begin
+      Chooser.Hide;
+   end On_Cancel_Create_File;
 
    --  ------------------------------
    --  Callback executed when the "delete-event" action is executed from the main window.
@@ -226,8 +293,7 @@ package body AKT.Callbacks is
    --  Callback executed when the "close-about" action is executed from the about box.
    --  ------------------------------
    procedure On_Close_About (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
-      About : constant Gtk.Widget.Gtk_Widget :=
-        Gtk.Widget.Gtk_Widget (Object.Get_Object ("about"));
+      About : constant Gtk.Widget.Gtk_Widget := Get_Widget (Object, "about");
    begin
       About.Hide;
    end On_Close_About;
@@ -236,8 +302,7 @@ package body AKT.Callbacks is
    --  Callback executed when the "close-password" action is executed from the password dialog.
    --  ------------------------------
    procedure On_Close_Password (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
-      Password_Dialog : constant Gtk.Widget.Gtk_Widget
-        := Gtk.Widget.Gtk_Widget (Object.Get_Object ("password_dialog"));
+      Password_Dialog : constant Gtk.Widget.Gtk_Widget := Get_Widget (Object, "password_dialog");
    begin
       if Password_Dialog /= null then
          Password_Dialog.Hide;
@@ -248,10 +313,8 @@ package body AKT.Callbacks is
    --  Callback executed when the "dialog-password-ok" action is executed from the password dialog.
    --  ------------------------------
    procedure On_Dialog_Password_Ok (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
-      Password_Dialog : constant Gtk.Widget.Gtk_Widget
-        := Gtk.Widget.Gtk_Widget (Object.Get_Object ("password_dialog"));
-      Password : constant Gtk.GEntry.Gtk_Entry
-        := Gtk.GEntry.Gtk_Entry (Object.Get_Object ("password"));
+      Password_Dialog : constant Gtk.Widget.Gtk_Widget := Get_Widget (Object, "password_dialog");
+      Password : constant Gtk.GEntry.Gtk_Entry := Get_Entry (Object, "password");
    begin
       if Password_Dialog /= null and Password /= null then
          if Gtk.GEntry.Get_Text (Password) = "" then
