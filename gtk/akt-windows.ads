@@ -19,6 +19,7 @@ with Ada.Finalization;
 with Gtk.Widget;
 with Gtkada.Builder;
 with Keystore.Files;
+with Util.Log.Loggers;
 private with Ada.Strings.Unbounded;
 private with Gtk.Scrolled_Window;
 private with Gtk.Frame;
@@ -34,6 +35,9 @@ private with Gtk.Text_View;
 package AKT.Windows is
 
    Initialize_Error : exception;
+
+   --  The logger
+   Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Windows");
 
    type Application_Type is limited new Ada.Finalization.Limited_Controlled with private;
    type Application_Access is access all Application_Type;
