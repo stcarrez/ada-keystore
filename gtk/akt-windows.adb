@@ -31,12 +31,15 @@ with Gtk.Label;
 with Gtk.Enums;
 with Gtk.Tree_View_Column;
 with Gtk.Text_Iter;
+with Gtk.Tool_Item;
 
 with AKT.Callbacks;
 package body AKT.Windows is
 
+   use Ada.Strings.Unbounded;
    use type Glib.Gint;
    use type Gtk.Tree_View.Gtk_Tree_View;
+   use type Gtk.Widget.Gtk_Widget;
    use type Interfaces.Unsigned_64;
 
    --  The logger
@@ -113,8 +116,11 @@ package body AKT.Windows is
          Application.Wallet.Close;
       end if;
 
+      Application.Path := To_Unbounded_String (Path);
       Application.Message ("Loading " & Path);
       Application.Wallet.Open (Path => Path, Password => Password);
+      Application.Locked := False;
+      Application.Refresh_Toolbar;
 
       Application.Message ("Opened " & Path);
 
@@ -287,6 +293,7 @@ package body AKT.Windows is
          Application.List_Keystore;
          Application.Wallet.Close;
       end if;
+      Application.Refresh_Toolbar;
    end Lock;
 
    --  ------------------------------
@@ -295,7 +302,10 @@ package body AKT.Windows is
    procedure Unlock (Application : in out Application_Type;
                      Password    : in Keystore.Secret_Key) is
    begin
-      null;
+      if Application.Locked then
+         Application.Open_File (Path     => To_String (Application.Path),
+                                Password => Password);
+      end if;
    end Unlock;
 
    --  ------------------------------
@@ -305,6 +315,14 @@ package body AKT.Windows is
    begin
       return Application.Locked;
    end Is_Locked;
+
+   --  ------------------------------
+   --  Return True if the keystore is open.
+   --  ------------------------------
+   function Is_Open (Application : in Application_Type) return Boolean is
+   begin
+      return Application.Wallet.Is_Open;
+   end Is_Open;
 
    --  ------------------------------
    --  Set the UI label with the given value.
@@ -332,6 +350,35 @@ package body AKT.Windows is
    begin
       Msg := Gtk.Status_Bar.Push (Application.Status, 1, Message);
    end Message;
+
+   procedure Refresh_Toolbar (Application : in out Application_Type) is
+      Unlock_Button : constant Gtk.Widget.Gtk_Widget
+        := Gtk.Widget.Gtk_Widget (Application.Builder.Get_Object ("tool_unlock_button"));
+      Lock_Button : constant Gtk.Widget.Gtk_Widget
+        := Gtk.Widget.Gtk_Widget (Application.Builder.Get_Object ("tool_lock_button"));
+      Edit_Button : constant Gtk.Widget.Gtk_Widget
+        := Gtk.Widget.Gtk_Widget (Application.Builder.Get_Object ("tool_edit_button"));
+      Save_Button : constant Gtk.Widget.Gtk_Widget
+        := Gtk.Widget.Gtk_Widget (Application.Builder.Get_Object ("tool_save_button"));
+      Item : Gtk.Tool_Item.Gtk_Tool_Item;
+   begin
+      if Lock_Button /= null then
+         Item := Gtk.Tool_Item.Gtk_Tool_Item (Lock_Button);
+         Item.Set_Visible_Horizontal (not Application.Is_Locked and Application.Is_Open);
+      end if;
+      if Unlock_Button /= null then
+         Item := Gtk.Tool_Item.Gtk_Tool_Item (Unlock_Button);
+         Item.Set_Visible_Horizontal (Application.Is_Locked);
+      end if;
+      if Edit_Button /= null then
+         Item := Gtk.Tool_Item.Gtk_Tool_Item (Edit_Button);
+         Item.Set_Visible_Horizontal (Application.Is_Open and not Application.Editing);
+      end if;
+      if Save_Button /= null then
+         Item := Gtk.Tool_Item.Gtk_Tool_Item (Save_Button);
+         Item.Set_Visible_Horizontal (Application.Is_Open and Application.Editing);
+      end if;
+   end Refresh_Toolbar;
 
    procedure Main (Application : in out Application_Type) is
       pragma Unreferenced (Application);
