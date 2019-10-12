@@ -16,6 +16,7 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Ada.Text_IO;
+with Ada.Directories;
 with Ada.Streams.Stream_IO;
 with Util.Streams.Files;
 package body AKT.Commands.Set is
@@ -32,22 +33,26 @@ package body AKT.Commands.Set is
                       Context   : in out Context_Type) is
    begin
       if Command.File /= null and then Command.File'Length > 0 then
-         if Args.Get_Count /= 1 then
-            AKT.Commands.Usage (Args, Context, Name);
-         else
-            declare
-               File    : Util.Streams.Files.File_Stream;
-            begin
-               File.Open (Mode => Ada.Streams.Stream_IO.In_File,
-                          Name => Command.File.all);
-               --  Open keystore with workers because we expect possibly big data.
-               Context.Open_Keystore (Use_Worker => True);
+         declare
+            File    : Util.Streams.Files.File_Stream;
+         begin
+            File.Open (Mode => Ada.Streams.Stream_IO.In_File,
+                       Name => Command.File.all);
+
+            --  Open keystore with workers because we expect possibly big data.
+            Context.Open_Keystore (Use_Worker => True);
+            if Args.Get_Count = 1 then
                Context.Wallet.Set (Name  => Args.Get_Argument (1),
                                    Kind  => Keystore.T_STRING,
                                    Input => File);
-
-            end;
-         end if;
+            elsif Args.Get_Count = 0 then
+               Context.Wallet.Set (Name  => Ada.Directories.Simple_Name (Command.File.all),
+                                   Kind  => Keystore.T_STRING,
+                                   Input => File);
+            else
+               AKT.Commands.Usage (Args, Context, Name);
+            end if;
+         end;
 
       elsif Args.Get_Count /= 2 then
          AKT.Commands.Usage (Args, Context, Name);
@@ -84,7 +89,7 @@ package body AKT.Commands.Set is
    begin
       Ada.Text_IO.Put_Line ("set: insert or update a value in the keystore");
       Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: akt set <name> [<value> | -f <file>]");
+      Ada.Text_IO.Put_Line ("Usage: akt set [<name> <value> | -f <file>]");
       Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("  The set command is used to store a content in the wallet.");
       Ada.Text_IO.Put_Line ("  The content is either passed as argument or read from a file.");
