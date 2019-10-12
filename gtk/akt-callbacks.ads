@@ -36,6 +36,9 @@ package AKT.Callbacks is
    --  Callback executed when the "menu-open" action is executed from the file menu.
    procedure On_Menu_Open (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class);
 
+   --  Callback executed when the "tool-add" action is executed from the toolbar.
+   procedure On_Tool_Add (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class);
+
    --  Callback executed when the "tool-save" action is executed from the toolbar.
    procedure On_Tool_Save (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class);
 
