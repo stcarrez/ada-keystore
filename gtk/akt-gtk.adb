@@ -24,11 +24,16 @@ procedure AKT.Gtk is
    Application : aliased AKT.Windows.Application_Type;
 begin
    AKT.Configure_Logs (Debug   => False,
-                       Verbose => True);
+                       Verbose => False);
    Application.Initialize_Widget (Main);
    Application.Main;
 
 exception
    when AKT.Windows.Initialize_Error =>
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+
+   when E : others =>
+      AKT.Windows.Log.Error ("Error while starting", E, Trace => True);
+      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+
 end AKT.Gtk;
