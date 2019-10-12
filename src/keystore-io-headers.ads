@@ -33,11 +33,11 @@ package Keystore.IO.Headers is
    type Wallet_Header is limited record
       UUID            : UUID_Type;
       Identifier      : Storage_Identifier;
-      Version         : Natural;
-      Block_Size      : Natural;
-      Data_Count      : Keystore.Header_Slot_Count_Type;
+      Version         : Natural := 0;
+      Block_Size      : Natural := 0;
+      Data_Count      : Keystore.Header_Slot_Count_Type := 0;
       Header_Last_Pos : Block_Index;
-      Storage_Count   : Natural;
+      Storage_Count   : Natural := 0;
       HMAC            : Util.Encoders.SHA256.Hash_Array;
       Buffer          : Keystore.Buffers.Storage_Buffer;
    end record;
