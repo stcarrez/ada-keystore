@@ -42,9 +42,6 @@ package body AKT.Windows is
    use type Gtk.Widget.Gtk_Widget;
    use type Interfaces.Unsigned_64;
 
-   --  The logger
-   Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Windows");
-
    --  ------------------------------
    --  Initialize the target instance.
    --  ------------------------------
@@ -177,10 +174,10 @@ package body AKT.Windows is
       Application.Selection := Gtk.Tree_View.Get_Selection (Application.Tree);
       Gtk.Tree_Selection.Set_Mode (Application.Selection, Gtk.Enums.Selection_Single);
 
-      Add_Column ("Name", 1);
+      Add_Column ("Date", 1);
       Add_Column ("Type", 2);
       Add_Column ("Size", 3);
-      Add_Column ("Date", 4);
+      Add_Column ("Name", 4);
       Add_Column ("Content", 5);
 
       if Application.Editing then
@@ -199,24 +196,24 @@ package body AKT.Windows is
 
             if Application.Locked then
                Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
-                                   0, "xxxxxxxx");
+                                   0, Ada.Calendar.Formatting.Image (Item.Create_Date));
                Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
                                    1, Keystore.Entry_Type'Image (Item.Kind));
                Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
                                    2, Interfaces.Unsigned_64'Image (Item.Size));
                Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
-                                   3, Ada.Calendar.Formatting.Image (Item.Create_Date));
+                                   3, "xxxxxxxx");
                Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
                                       4, "XXXXXXXXXXX");
             else
                Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
-                                   0, Name);
+                                   0, Ada.Calendar.Formatting.Image (Item.Create_Date));
                Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
                                    1, Keystore.Entry_Type'Image (Item.Kind));
                Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
                                    2, Interfaces.Unsigned_64'Image (Item.Size));
                Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
-                                   3, Ada.Calendar.Formatting.Image (Item.Create_Date));
+                                   3, Name);
                if Item.Size < 1024 then
                   Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
                                       4, Application.Wallet.Get (Name));
