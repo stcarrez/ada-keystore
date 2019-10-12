@@ -22,7 +22,7 @@ with Gtk.GEntry;
 with Gtk.File_Filter;
 with Gtk.File_Chooser;
 with Gtk.File_Chooser_Dialog;
-with Gtk.Tool_Item;
+with Gtk.Window;
 
 with Util.Log.Loggers;
 
@@ -36,9 +36,6 @@ package body AKT.Callbacks is
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Callbacks");
 
    App : AKT.Windows.Application_Access;
-
-   procedure Set_Lock_Button (Object  : access Gtkada.Builder.Gtkada_Builder_Record'Class;
-                              Visible : in Boolean);
 
    --  ------------------------------
    --  Initialize and register the callbacks.
@@ -80,6 +77,8 @@ package body AKT.Callbacks is
                                 Handler      => AKT.Callbacks.On_Tool_Unlock'Access);
       Builder.Register_Handler (Handler_Name => "tool-save",
                                 Handler      => AKT.Callbacks.On_Tool_Save'Access);
+      Builder.Register_Handler (Handler_Name => "dialog-password-ok",
+                                Handler      => AKT.Callbacks.On_Dialog_Password_Ok'Access);
    end Initialize;
 
    --  ------------------------------
@@ -140,6 +139,7 @@ package body AKT.Callbacks is
    procedure On_Tool_Save (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
    begin
       App.Save_Current;
+      App.Refresh_Toolbar;
    end On_Tool_Save;
 
    --  ------------------------------
@@ -148,6 +148,7 @@ package body AKT.Callbacks is
    procedure On_Tool_Edit (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
    begin
       App.Edit_Current;
+      App.Refresh_Toolbar;
    end On_Tool_Edit;
 
    --  ------------------------------
@@ -155,7 +156,6 @@ package body AKT.Callbacks is
    --  ------------------------------
    procedure On_Tool_Lock (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
    begin
-      Set_Lock_Button (Object, False);
       if not App.Is_Locked then
          App.Lock;
       end if;
@@ -165,32 +165,17 @@ package body AKT.Callbacks is
    --  Callback executed when the "tool-unlock" action is executed from the toolbar.
    --  ------------------------------
    procedure On_Tool_Unlock (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
+      Password_Dialog : constant Gtk.Widget.Gtk_Widget
+        := Gtk.Widget.Gtk_Widget (Object.Get_Object ("password_dialog"));
+      Widget : constant Gtk.Widget.Gtk_Widget
+        := Gtk.Widget.Gtk_Widget (Object.Get_Object ("main"));
    begin
-      Set_Lock_Button (Object, True);
-      if not App.Is_Locked then
-         App.Lock;
-      else
-         null;
+      if App.Is_Locked and then Password_Dialog /= null then
+         Gtk.Window.Set_Transient_For (Gtk.Window.Gtk_Window (Password_Dialog),
+                                       Gtk.Window.Gtk_Window (Widget));
+         Password_Dialog.Show;
       end if;
    end On_Tool_Unlock;
-
-   procedure Set_Lock_Button (Object  : access Gtkada.Builder.Gtkada_Builder_Record'Class;
-                              Visible : in Boolean) is
-      Unlock_Button : constant Gtk.Widget.Gtk_Widget
-        := Gtk.Widget.Gtk_Widget (Object.Get_Object ("tool_unlock_button"));
-      Lock_Button : constant Gtk.Widget.Gtk_Widget
-        := Gtk.Widget.Gtk_Widget (Object.Get_Object ("tool_lock_button"));
-      Item : Gtk.Tool_Item.Gtk_Tool_Item;
-   begin
-      if Lock_Button /= null then
-         Item := Gtk.Tool_Item.Gtk_Tool_Item (Lock_Button);
-         Item.Set_Visible_Horizontal (Visible);
-      end if;
-      if Unlock_Button /= null then
-         Item := Gtk.Tool_Item.Gtk_Tool_Item (Unlock_Button);
-         Item.Set_Visible_Horizontal (not Visible);
-      end if;
-   end Set_Lock_Button;
 
    --  ------------------------------
    --  Callback executed when the "open-file" action is executed from the open_file dialog.
@@ -251,8 +236,32 @@ package body AKT.Callbacks is
    --  Callback executed when the "close-password" action is executed from the password dialog.
    --  ------------------------------
    procedure On_Close_Password (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
+      Password_Dialog : constant Gtk.Widget.Gtk_Widget
+        := Gtk.Widget.Gtk_Widget (Object.Get_Object ("password_dialog"));
    begin
-      null;
+      if Password_Dialog /= null then
+         Password_Dialog.Hide;
+      end if;
    end On_Close_Password;
+
+   --  ------------------------------
+   --  Callback executed when the "dialog-password-ok" action is executed from the password dialog.
+   --  ------------------------------
+   procedure On_Dialog_Password_Ok (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
+      Password_Dialog : constant Gtk.Widget.Gtk_Widget
+        := Gtk.Widget.Gtk_Widget (Object.Get_Object ("password_dialog"));
+      Password : constant Gtk.GEntry.Gtk_Entry
+        := Gtk.GEntry.Gtk_Entry (Object.Get_Object ("password"));
+   begin
+      if Password_Dialog /= null and Password /= null then
+         if Gtk.GEntry.Get_Text (Password) = "" then
+            App.Message ("Password is empty");
+         else
+            Password_Dialog.Hide;
+
+            App.Unlock (Password => Keystore.Create (Gtk.GEntry.Get_Text (Password)));
+         end if;
+      end if;
+   end On_Dialog_Password_Ok;
 
 end AKT.Callbacks;
