@@ -214,8 +214,9 @@ package body AKT.Windows is
       Add_Column ("Date", 1);
       Add_Column ("Type", 2);
       Add_Column ("Size", 3);
-      Add_Column ("Name", 4);
-      Add_Column ("Content", 5);
+      Add_Column ("Keys", 4);
+      Add_Column ("Name", 5);
+      Add_Column ("Content", 6);
 
       if Application.Editing then
          Application.Viewport.Remove (Application.Editor);
@@ -239,9 +240,11 @@ package body AKT.Windows is
                Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
                                    2, Interfaces.Unsigned_64'Image (Item.Size));
                Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
-                                   3, "xxxxxxxx");
+                                   3, Natural'Image (Item.Block_Count));
                Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
-                                      4, "XXXXXXXXXXX");
+                                   4, "xxxxxxxx");
+               Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
+                                   5, "XXXXXXXXXXX");
             else
                Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
                                    0, Ada.Calendar.Formatting.Image (Item.Create_Date));
@@ -250,10 +253,12 @@ package body AKT.Windows is
                Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
                                    2, Interfaces.Unsigned_64'Image (Item.Size));
                Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
-                                   3, Name);
+                                   3, Natural'Image (Item.Block_Count));
+               Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
+                                   4, Name);
                if Item.Size < 1024 then
                   Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
-                                      4, Application.Wallet.Get (Name));
+                                      5, Application.Wallet.Get (Name));
                end if;
             end if;
          end;
