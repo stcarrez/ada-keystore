@@ -75,11 +75,16 @@ package AKT.Windows is
    --  Return True if the keystore is locked.
    function Is_Locked (Application : in Application_Type) return Boolean;
 
+   --  Return True if the keystore is open.
+   function Is_Open (Application : in Application_Type) return Boolean;
+
    procedure Main (Application : in out Application_Type);
 
    --  Report a message in the status area.
    procedure Message (Application : in out Application_Type;
                       Message     : in String);
+
+   procedure Refresh_Toolbar (Application : in out Application_Type);
 
 private
 
@@ -94,6 +99,7 @@ private
       Chooser     : Gtk.Widget.Gtk_Widget;
       Status      : Gtk.Status_Bar.Gtk_Status_Bar;
       Wallet      : Keystore.Files.Wallet_File;
+      Path        : Ada.Strings.Unbounded.Unbounded_String;
       Frame       : Gtk.Frame.Gtk_Frame;
       Scrolled    : Gtk.Scrolled_Window.Gtk_Scrolled_Window;
       Viewport    : Gtk.Viewport.Gtk_Viewport;
