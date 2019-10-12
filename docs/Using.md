@@ -27,8 +27,13 @@ by providing the password you entered.  To add something, use:
 
 To store a file, use the following command:
 ```
+   akt -f secure.akt set -f contract.doc
+```
+and you may also associated the file with another name with the command:
+```
    akt -f secure.akt set my-contract -f contract.doc
 ```
+
 
 If you want to retrieve a value, you can use one of:
 ```

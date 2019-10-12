@@ -3,8 +3,8 @@ The `Keystore` package provides operations to store information in secure wallet
 protect the stored information by encrypting the content.  It is necessary to know one
 of the wallet password to access its content.  Wallets are protected by a master key
 using AES-256 and the wallet master key is protected by a user password.  The wallet
-defines up to 8 slots that identify a password key that is able to unlock the master key.
-To open a wallet, it is necessary to unlock one of the 8 slots by providing the correct
+defines up to 7 slots that identify a password key that is able to unlock the master key.
+To open a wallet, it is necessary to unlock one of the 7 slots by providing the correct
 password.  Wallet key slots are protected by the user's password and the PBKDF2-HMAC-256
 algorithm, a random salt, a random counter and they are encrypted using AES-256.
 

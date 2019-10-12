@@ -23,8 +23,6 @@ and you may use:
   * `--enable-gtk` to enable building the Gtk tool,
   * `--enable-shared` to enable the build of shared libraries,
   * `--disable-static` to disable the build of static libraries,
-  * `--with-xmlada=PATH` to control the installation path of [XML/Ada](http://libre.adacore.com/libre/tools/xmlada/),
-  * `--with-aws=PATH` to control the installation path of [AWS](http://libre.adacore.com/libre/tools/aws/),
   * `--with-ada-util=PATH` to control the installation path of [Ada Utility Library](https://github.com/stcarrez/ada-util),
   * `--with-gtkada=PATH` to control the installation path of [Gtk Ada Library](https://github.com/AdaCore/GtkAda),
   * `--help` to get a detailed list of supported options.
