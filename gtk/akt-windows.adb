@@ -20,8 +20,6 @@ with Ada.Exceptions;
 with Ada.Calendar.Formatting;
 with Interfaces;
 
-with Util.Log.Loggers;
-
 with Glib.Error;
 with Glib.Unicode;
 with Glib.Object;
@@ -137,6 +135,45 @@ package body AKT.Windows is
                               & Ada.Exceptions.Exception_Message (E));
 
    end Open_File;
+
+   procedure Create_File (Application   : in out Application_Type;
+                          Path          : in String;
+                          Storage_Count : in Natural;
+                          Password      : in Keystore.Secret_Key) is
+      Config : Keystore.Wallet_Config := Keystore.Secure_Config;
+   begin
+      Config.Overwrite := True;
+      if Storage_Count > 0 then
+         Config.Storage_Count := Storage_Count;
+      end if;
+
+      --  Close the current wallet if necessary.
+      if Application.Wallet.Is_Open then
+         Application.Wallet.Close;
+      end if;
+
+      Application.Path := To_Unbounded_String (Path);
+      Application.Message ("Creating " & Path);
+      Keystore.Files.Create (Container => Application.Wallet,
+                             Path      => Path,
+                             Password  => Password,
+                             Config    => Config,
+                             Data_Path => "");
+      Application.Locked := False;
+      Application.Refresh_Toolbar;
+
+      Application.Message ("Created " & Path);
+
+      Application.List_Keystore;
+   exception
+      when Keystore.Invalid_Keystore | Ada.IO_Exceptions.End_Error =>
+         Application.Message ("File is not a keystore");
+
+      when E : others =>
+         Log.Error ("Exception", E, True);
+         Application.Message ("Internal error");
+
+   end Create_File;
 
    procedure List_Keystore (Application : in out Application_Type) is
 
