@@ -58,6 +58,11 @@ package AKT.Windows is
                         Path        : in String;
                         Password    : in Keystore.Secret_Key);
 
+   procedure Create_File (Application   : in out Application_Type;
+                          Path          : in String;
+                          Storage_Count : in Natural;
+                          Password      : in Keystore.Secret_Key);
+
    --  Set the UI label with the given value.
    procedure Set_Label (Application : in Application_Type;
                         Name   : in String;
