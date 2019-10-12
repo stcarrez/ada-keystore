@@ -181,13 +181,13 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
-              <object class="GtkToolButton" id="tool_save_button">
+              <object class="GtkToolButton" id="tool_add_button">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="is_important">True</property>
-                <property name="label" translatable="yes">Save</property>
+                <property name="label" translatable="yes">Add</property>
                 <property name="use_underline">True</property>
-                <signal name="clicked" handler="tool-save" swapped="no"/>
+                <signal name="clicked" handler="tool-add" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -202,6 +202,20 @@
                 <property name="label" translatable="yes">Edit</property>
                 <property name="use_underline">True</property>
                 <signal name="clicked" handler="tool-edit" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="homogeneous">True</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkToolButton" id="tool_save_button">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="is_important">True</property>
+                <property name="label" translatable="yes">Save</property>
+                <property name="use_underline">True</property>
+                <signal name="clicked" handler="tool-save" swapped="no"/>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -407,12 +421,12 @@
               </object>
               <packing>
                 <property name="x">16</property>
-                <property name="y">10</property>
+                <property name="y">60</property>
               </packing>
             </child>
             <child>
               <object class="GtkEntry" id="open_file_password">
-                <property name="width_request">400</property>
+                <property name="width_request">500</property>
                 <property name="height_request">40</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -420,7 +434,32 @@
                 <property name="invisible_char">●</property>
               </object>
               <packing>
-                <property name="x">186</property>
+                <property name="x">200</property>
+                <property name="y">60</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label3">
+                <property name="width_request">100</property>
+                <property name="height_request">40</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Filename</property>
+              </object>
+              <packing>
+                <property name="x">16</property>
+                <property name="y">10</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="open_file_name">
+                <property name="width_request">500</property>
+                <property name="height_request">40</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+              </object>
+              <packing>
+                <property name="x">200</property>
                 <property name="y">10</property>
               </packing>
             </child>
@@ -522,6 +561,189 @@
             <property name="expand">True</property>
             <property name="fill">True</property>
             <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkAdjustment" id="storage_count_adj">
+    <property name="lower">1</property>
+    <property name="upper">50</property>
+    <property name="value">1</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkFileChooserDialog" id="create_file_chooser">
+    <property name="can_focus">False</property>
+    <property name="border_width">5</property>
+    <property name="title" translatable="yes">Open keystore file</property>
+    <property name="role">GtkFileChooserDialog</property>
+    <property name="type_hint">normal</property>
+    <property name="transient_for">main</property>
+    <property name="filter">filefilter1</property>
+    <child internal-child="vbox">
+      <object class="GtkBox" id="filechooserdialog-vbox3">
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child internal-child="action_area">
+          <object class="GtkButtonBox" id="filechooserdialog-action_area3">
+            <property name="can_focus">False</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="create_file_create_button">
+                <property name="label" translatable="yes">Create</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="activate" handler="create-file" swapped="no"/>
+                <signal name="clicked" handler="create-file" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="create_file_cancel_button">
+                <property name="label" translatable="yes">Cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <signal name="activate" handler="cancel-create-file" swapped="no"/>
+                <signal name="clicked" handler="cancel-create-file" swapped="no"/>
+              </object>
+              <packing>
+                <property name="expand">True</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkFixed" id="fixed3">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <child>
+              <object class="GtkLabel" id="label4">
+                <property name="width_request">50</property>
+                <property name="height_request">40</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Password</property>
+              </object>
+              <packing>
+                <property name="x">5</property>
+                <property name="y">110</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="create_file_password">
+                <property name="width_request">500</property>
+                <property name="height_request">40</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="visibility">False</property>
+                <property name="invisible_char">●</property>
+              </object>
+              <packing>
+                <property name="x">220</property>
+                <property name="y">110</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkComboBox" id="create_password_method">
+                <property name="width_request">500</property>
+                <property name="height_request">40</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+              </object>
+              <packing>
+                <property name="x">220</property>
+                <property name="y">60</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label5">
+                <property name="width_request">50</property>
+                <property name="height_request">40</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Password  method</property>
+              </object>
+              <packing>
+                <property name="x">5</property>
+                <property name="y">60</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label6">
+                <property name="width_request">50</property>
+                <property name="height_request">40</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Filename</property>
+              </object>
+              <packing>
+                <property name="x">5</property>
+                <property name="y">10</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkEntry" id="create_file_name">
+                <property name="width_request">500</property>
+                <property name="height_request">40</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+              </object>
+              <packing>
+                <property name="x">220</property>
+                <property name="y">10</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkSpinButton" id="split_data_count">
+                <property name="width_request">100</property>
+                <property name="height_request">40</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="text" translatable="yes">10</property>
+                <property name="input_purpose">digits</property>
+                <property name="adjustment">storage_count_adj</property>
+                <property name="climb_rate">1</property>
+                <property name="numeric">True</property>
+              </object>
+              <packing>
+                <property name="x">220</property>
+                <property name="y">160</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label7">
+                <property name="width_request">100</property>
+                <property name="height_request">40</property>
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="label" translatable="yes">Number of data files</property>
+              </object>
+              <packing>
+                <property name="x">5</property>
+                <property name="y">160</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">2</property>
           </packing>
         </child>
       </object>
