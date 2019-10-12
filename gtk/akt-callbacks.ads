@@ -64,4 +64,7 @@ package AKT.Callbacks is
    --  Callback executed when the "close-password" action is executed from the password dialog.
    procedure On_Close_Password (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class);
 
+   --  Callback executed when the "dialog-password-ok" action is executed from the password dialog.
+   procedure On_Dialog_Password_Ok (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class);
+
 end AKT.Callbacks;
