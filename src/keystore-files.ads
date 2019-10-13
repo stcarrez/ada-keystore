@@ -188,9 +188,18 @@ package Keystore.Files is
                   Output    : in out Util.Streams.Output_Stream'Class) with
      Pre => Container.Is_Open;
 
-   --  Get the list of entries contained in the wallet.
+   --  Get the list of entries contained in the wallet that correspond to the optional filter.
    overriding
    procedure List (Container : in out Wallet_File;
+                   Filter    : in Filter_Type := (others => True);
+                   Content   : out Entry_Map) with
+     Pre => Container.Is_Open;
+
+   --  Get the list of entries contained in the wallet that correspond to the optiona filter
+   --  and whose name matches the pattern.
+   procedure List (Container : in out Wallet_File;
+                   Pattern   : in GNAT.Regpat.Pattern_Matcher;
+                   Filter    : in Filter_Type := (others => True);
                    Content   : out Entry_Map) with
      Pre => Container.Is_Open;
 
