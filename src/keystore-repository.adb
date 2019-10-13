@@ -404,19 +404,43 @@ package body Keystore.Repository is
       end;
    end Get_Data;
 
-   --  Get the list of entries contained in the wallet.
+   --  ------------------------------
+   --  Get the list of entries contained in the wallet that correspond to the optional filter.
+   --  ------------------------------
    procedure List (Repository : in out Wallet_Repository;
+                   Filter     : in Filter_Type;
                    Content    : out Entry_Map) is
       Value : Entry_Info;
    begin
       for Item of Repository.Map loop
-         Value.Size := Item.Size;
-         Value.Kind := Item.Kind;
-         Value.Create_Date := Item.Create_Date;
-         Value.Update_Date := Item.Update_Date;
-         Value.Block_Count := Natural (Item.Data_Blocks.Length);
-         Content.Include (Key      => Item.Name,
-                          New_Item => Value);
+         if Filter (Item.Kind) then
+            Value.Size := Item.Size;
+            Value.Kind := Item.Kind;
+            Value.Create_Date := Item.Create_Date;
+            Value.Update_Date := Item.Update_Date;
+            Value.Block_Count := Natural (Item.Data_Blocks.Length);
+            Content.Include (Key      => Item.Name,
+                             New_Item => Value);
+         end if;
+      end loop;
+   end List;
+
+   procedure List (Repository : in out Wallet_Repository;
+                   Pattern    : in GNAT.Regpat.Pattern_Matcher;
+                   Filter     : in Filter_Type;
+                   Content    : out Entry_Map) is
+      Value : Entry_Info;
+   begin
+      for Item of Repository.Map loop
+         if Filter (Item.Kind) and then GNAT.Regpat.Match (Pattern, Item.Name) then
+            Value.Size := Item.Size;
+            Value.Kind := Item.Kind;
+            Value.Create_Date := Item.Create_Date;
+            Value.Update_Date := Item.Update_Date;
+            Value.Block_Count := Natural (Item.Data_Blocks.Length);
+            Content.Include (Key      => Item.Name,
+                             New_Item => Value);
+         end if;
       end loop;
    end List;
 
