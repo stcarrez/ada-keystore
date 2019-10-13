@@ -109,8 +109,13 @@ package body Keystore.IO is
 
          Buf.Data (Buf.Data'First .. BT_DATA_START - 1)
            := Data (Data'First .. BT_DATA_START - 1);
-         Log.Info ("Decrypt {0} .. {1}", Stream_Element_Offset'Image (BT_DATA_START),
-                   Stream_Element_Offset'Image (Last_Pos));
+
+         if Log.Get_Level >= Util.Log.INFO_LEVEL then
+            Log.Info ("Read block{0} decrypt {1} .. {2}",
+                      Buffers.To_String (Into.Block),
+                      Stream_Element_Offset'Image (BT_DATA_START),
+                      Stream_Element_Offset'Image (Last_Pos));
+         end if;
 
          --  Decrypt the Size bytes
          Decipher.Transform (Data    => Data (BT_DATA_START .. Last_Pos),
@@ -154,8 +159,6 @@ package body Keystore.IO is
       end Read;
 
    begin
-      Keystore.Logs.Debug (Log, "Read block{0}", Into.Block);
-
       Stream.Read (Into.Block, Read'Access);
    end Read;
 
@@ -178,8 +181,12 @@ package body Keystore.IO is
          Last_Pos : constant Stream_Element_Offset := BT_DATA_START + Encrypt_Size - 1;
          Buf      : constant Buffers.Buffer_Accessor := From.Data.Value;
       begin
-         Log.Info ("Encrypt {0} .. {1}", Stream_Element_Offset'Image (BT_DATA_START),
-                   Stream_Element_Offset'Image (Last_Pos));
+         if Log.Get_Level >= Util.Log.INFO_LEVEL then
+            Log.Info ("Write block{0} encrypt {1} .. {2}",
+                      Buffers.To_String (From.Block),
+                      Stream_Element_Offset'Image (BT_DATA_START),
+                      Stream_Element_Offset'Image (Last_Pos));
+         end if;
 
          Put_Encrypt_Size (Buf.Data, Encrypt_Size);
 
