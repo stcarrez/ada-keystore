@@ -87,7 +87,12 @@ private package Keystore.Containers is
 
       procedure Delete (Name     : in String);
 
-      procedure List (Content    : out Entry_Map);
+      procedure List (Filter  : in Filter_Type;
+                      Content : out Entry_Map);
+
+      procedure List (Pattern : in GNAT.Regpat.Pattern_Matcher;
+                      Filter  : in Filter_Type;
+                      Content : out Entry_Map);
 
       procedure Get_Stats (Stats : out Wallet_Stats);
 
