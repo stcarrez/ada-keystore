@@ -174,7 +174,7 @@ package body Keystore.Files.Tests is
                end if;
 
                --  Block 3 is read only if we need the repository and datacontent.
-               W.List (Items);
+               W.List (Content => Items);
 
                W.Set ("no-corruption-detected", W.Get ("list-1"));
                T.Fail ("No corruption detected block" & IO.Block_Number'Image (Block)
@@ -330,7 +330,7 @@ package body Keystore.Files.Tests is
 
    begin
       W.Open (Path => Path, Password => Password);
-      W.List (Items);
+      W.List (Content => Items);
       Verify_Entry ("list-1", 63);
       Verify_Entry ("list-2", 64);
       Verify_Entry ("list-3", 39);
@@ -795,7 +795,7 @@ package body Keystore.Files.Tests is
          end loop;
          Util.Measures.Report (S, "Keystore.Add", 10_000);
       end;
-      W.List (Items);
+      W.List (Content => Items);
       Util.Tests.Assert_Equals (T, 10_000, Natural (Items.Length),
                                 "Invalid number of items in keystore");
    end Test_Perf_Add;
