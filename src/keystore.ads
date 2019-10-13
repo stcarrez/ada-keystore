@@ -19,9 +19,9 @@ with Util.Encoders;
 with Util.Streams;
 with Ada.Streams;
 with Ada.Calendar;
-with Ada.Strings.Hash;
 with Ada.Containers.Indefinite_Ordered_Maps;
 with Interfaces;
+with GNAT.Regpat;
 private with Ada.Exceptions;
 private with Ada.Finalization;
 private with Util.Executors;
@@ -108,6 +108,8 @@ package Keystore is
 
    --  Identifies the type of data stored for a named entry in the wallet.
    type Entry_Type is (T_INVALID, T_STRING, T_FILE, T_DIRECTORY, T_BINARY, T_WALLET);
+
+   type Filter_Type is array (Entry_Type) of Boolean;
 
    --  Defines the key operation mode.
    type Mode_Type is (KEY_ADD, KEY_REPLACE, KEY_REMOVE, KEY_REMOVE_LAST);
@@ -313,8 +315,17 @@ package Keystore is
                   Output    : in out Util.Streams.Output_Stream'Class) is abstract with
      Pre'Class => Container.Is_Open;
 
-   --  Get the list of entries contained in the wallet.
+   --  Get the list of entries contained in the wallet that correspond to the optional filter.
    procedure List (Container : in out Wallet;
+                   Filter    : in Filter_Type := (others => True);
+                   Content   : out Entry_Map) is abstract with
+     Pre'Class => Container.Is_Open;
+
+   --  Get the list of entries contained in the wallet that correspond to the optiona filter
+   --  and whose name matches the pattern.
+   procedure List (Container : in out Wallet;
+                   Pattern   : in GNAT.Regpat.Pattern_Matcher;
+                   Filter    : in Filter_Type := (others => True);
                    Content   : out Entry_Map) is abstract with
      Pre'Class => Container.Is_Open;
 
