@@ -94,6 +94,12 @@ package body Keystore.Marshallers is
          when T_WALLET =>
             Put_Unsigned_16 (Into, 3);
 
+         when T_FILE =>
+            Put_Unsigned_16 (Into, 4);
+
+         when T_DIRECTORY =>
+            Put_Unsigned_16 (Into, 5);
+
       end case;
    end Put_Kind;
 
@@ -268,6 +274,12 @@ package body Keystore.Marshallers is
 
          when 3 =>
             return T_WALLET;
+
+         when 4 =>
+            return T_FILE;
+
+         when 5 =>
+            return T_DIRECTORY;
 
          when others =>
             return T_INVALID;
