@@ -19,6 +19,7 @@ with Ada.Text_IO;
 with Ada.Directories;
 with Ada.Streams.Stream_IO;
 with Util.Streams.Files;
+with Keystore.Tools;
 package body AKT.Commands.Set is
 
    use GNAT.Strings;
@@ -31,8 +32,30 @@ package body AKT.Commands.Set is
                       Name      : in String;
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
+      function Accept_File (Ent : in Keystore.Tools.Directory_Entry_Type) return Boolean;
+
+      function Accept_File (Ent : in Keystore.Tools.Directory_Entry_Type) return Boolean is
+      begin
+         Ada.Text_IO.Put_Line (Ada.Directories.Full_Name (Ent));
+         return True;
+      end Accept_File;
+
    begin
-      if Command.File /= null and then Command.File'Length > 0 then
+      if Command.Dir /= null and then Command.Dir'Length > 0 then
+         if Args.Get_Count /= 0 then
+            AKT.Commands.Usage (Args, Context, Name);
+            return;
+         end if;
+
+         --  Open keystore with workers because we expect possibly big data.
+         Context.Open_Keystore (Use_Worker => True);
+         Keystore.Tools.Store (Wallet  => Context.Wallet,
+                               Path    => Command.Dir.all,
+                               Prefix  => Ada.Directories.Simple_Name (Command.Dir.all) & '/',
+                               Pattern => "*",
+                               Filter  => Accept_File'Access);
+
+      elsif Command.File /= null and then Command.File'Length > 0 then
          declare
             File    : Util.Streams.Files.File_Stream;
          begin
@@ -77,6 +100,8 @@ package body AKT.Commands.Set is
    begin
       GC.Define_Switch (Config, Command.File'Access,
                         "-f:", "--file=", "Define the path of the file to read");
+      GC.Define_Switch (Config, Command.Dir'Access,
+                        "-r:", "--recursive=", "Read and store files recursively");
    end Setup;
 
    --  ------------------------------
@@ -89,7 +114,7 @@ package body AKT.Commands.Set is
    begin
       Ada.Text_IO.Put_Line ("set: insert or update a value in the keystore");
       Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: akt set [<name> <value> | -f <file>]");
+      Ada.Text_IO.Put_Line ("Usage: akt set [<name> <value> | -f <file> | -r <dir>]");
       Ada.Text_IO.New_Line;
       Ada.Text_IO.Put_Line ("  The set command is used to store a content in the wallet.");
       Ada.Text_IO.Put_Line ("  The content is either passed as argument or read from a file.");
