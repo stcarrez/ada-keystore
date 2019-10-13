@@ -42,6 +42,7 @@ private
 
    type Command_Type is new AKT.Commands.Drivers.Command_Type with record
       File : aliased GNAT.Strings.String_Access;
+      Dir  : aliased GNAT.Strings.String_Access;
    end record;
 
 end AKT.Commands.Set;
