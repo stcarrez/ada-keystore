@@ -107,7 +107,7 @@ package Keystore is
    type State_Type is (S_INVALID, S_PROTECTED, S_OPEN, S_CLOSED);
 
    --  Identifies the type of data stored for a named entry in the wallet.
-   type Entry_Type is (T_INVALID, T_STRING, T_BINARY, T_WALLET);
+   type Entry_Type is (T_INVALID, T_STRING, T_FILE, T_DIRECTORY, T_BINARY, T_WALLET);
 
    --  Defines the key operation mode.
    type Mode_Type is (KEY_ADD, KEY_REPLACE, KEY_REMOVE, KEY_REMOVE_LAST);
