@@ -307,13 +307,26 @@ package body Keystore.Files is
    end Get;
 
    --  ------------------------------
-   --  Get the list of entries contained in the wallet.
+   --  Get the list of entries contained in the wallet that correspond to the optional filter.
    --  ------------------------------
    overriding
    procedure List (Container : in out Wallet_File;
+                   Filter    : in Filter_Type := (others => True);
                    Content   : out Entry_Map) is
    begin
-      Container.Container.List (Content);
+      Container.Container.List (Filter, Content);
+   end List;
+
+   --  ------------------------------
+   --  Get the list of entries contained in the wallet that correspond to the optiona filter
+   --  and whose name matches the pattern.
+   --  ------------------------------
+   procedure List (Container : in out Wallet_File;
+                   Pattern   : in GNAT.Regpat.Pattern_Matcher;
+                   Filter    : in Filter_Type := (others => True);
+                   Content   : out Entry_Map) is
+   begin
+      Container.Container.List (Pattern, Filter, Content);
    end List;
 
    overriding
