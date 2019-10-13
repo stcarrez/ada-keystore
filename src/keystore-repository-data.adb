@@ -232,7 +232,7 @@ package body Keystore.Repository.Data is
                           End_Of_Stream : out Boolean;
                           Offset        : in out Interfaces.Unsigned_64) is
       Work        : Workers.Data_Work_Access;
-      Size        : IO.Buffer_Size;
+      Size        : IO.Buffer_Size := 0;
       Data_Offset : Stream_Element_Offset := Stream_Element_Offset (Offset);
    begin
       Workers.Initialize_Queue (Manager);
