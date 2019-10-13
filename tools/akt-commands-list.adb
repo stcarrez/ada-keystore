@@ -34,7 +34,7 @@ package body AKT.Commands.List is
       Iter : Keystore.Entry_Cursor;
    begin
       Context.Open_Keystore;
-      Context.Wallet.List (List);
+      Context.Wallet.List (Content => List);
       Iter := List.First;
       while Keystore.Entry_Maps.Has_Element (Iter) loop
          declare
