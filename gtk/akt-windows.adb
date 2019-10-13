@@ -181,7 +181,7 @@ package body AKT.Windows is
 
       List  : Keystore.Entry_Map;
       Iter  : Keystore.Entry_Cursor;
-      Types : constant Glib.GType_Array (0 .. 4) := (others => Glib.GType_String);
+      Types : constant Glib.GType_Array (0 .. 5) := (others => Glib.GType_String);
 
       procedure Add_Column (Name : in String; Column_Id : in Glib.Gint) is
          Col : Gtk.Tree_View_Column.Gtk_Tree_View_Column;
@@ -196,6 +196,19 @@ package body AKT.Windows is
          Col.Set_Sizing (Gtk.Tree_View_Column.Tree_View_Column_Autosize);
          Col.Add_Attribute (Application.Col_Text, "text", Column_Id - 1);
       end Add_Column;
+
+      procedure Set_Content (Name : in String) is
+         Data  : constant String := Application.Wallet.Get (Name);
+         Valid : Boolean;
+         Pos   : Natural;
+      begin
+         Glib.Unicode.UTF8_Validate (Data, Valid, Pos);
+         if Valid then
+            Gtk.Tree_Store.Set (Application.List, Application.Current_Row, 5, Data);
+         else
+            Gtk.Tree_Store.Set (Application.List, Application.Current_Row, 5, "--");
+         end if;
+      end Set_Content;
 
    begin
       Gtk.Status_Bar.Remove_All (Application.Status, 1);
@@ -257,8 +270,10 @@ package body AKT.Windows is
                Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
                                    4, Name);
                if Item.Size < 1024 then
+                  Set_Content (Name);
+               else
                   Gtk.Tree_Store.Set (Application.List, Application.Current_Row,
-                                      5, Application.Wallet.Get (Name));
+                                      5, "--");
                end if;
             end if;
          end;
