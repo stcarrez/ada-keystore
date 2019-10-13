@@ -211,7 +211,11 @@ package body Keystore.Repository.Entries is
                end if;
             end loop;
          end;
-         Directory.Available := Directory.Key_Pos - Directory.Last_Pos;
+         if Directory.Last_Pos + 4 < Directory.Key_Pos then
+            Directory.Available := Directory.Key_Pos - Directory.Last_Pos - 4;
+         else
+            Directory.Available := 0;
+         end if;
          Directory.Ready := True;
       end if;
 
