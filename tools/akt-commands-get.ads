@@ -41,6 +41,8 @@ private package AKT.Commands.Get is
 private
 
    type Command_Type is new AKT.Commands.Drivers.Command_Type with record
+      Output     : aliased GNAT.Strings.String_Access;
+      Dir        : aliased GNAT.Strings.String_Access;
       No_Newline : aliased Boolean := False;
    end record;
 
