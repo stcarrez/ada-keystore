@@ -116,8 +116,14 @@ private package Keystore.Repository is
                        Name       : in String;
                        Output     : in out Util.Streams.Output_Stream'Class);
 
-   --  Get the list of entries contained in the wallet.
+   --  Get the list of entries contained in the wallet that correspond to the optional filter.
    procedure List (Repository : in out Wallet_Repository;
+                   Filter     : in Filter_Type;
+                   Content    : out Entry_Map);
+
+   procedure List (Repository : in out Wallet_Repository;
+                   Pattern    : in GNAT.Regpat.Pattern_Matcher;
+                   Filter     : in Filter_Type;
                    Content    : out Entry_Map);
 
    --  Get the keystore UUID.
