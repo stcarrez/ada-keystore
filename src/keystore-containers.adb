@@ -155,9 +155,17 @@ package body Keystore.Containers is
          Keystore.Repository.Get_Data (Repository, Name, Output);
       end Get_Data;
 
-      procedure List (Content : out Entry_Map) is
+      procedure List (Filter  : in Filter_Type;
+                      Content : out Entry_Map) is
       begin
-         Keystore.Repository.List (Repository, Content);
+         Keystore.Repository.List (Repository, Filter, Content);
+      end List;
+
+      procedure List (Pattern : in GNAT.Regpat.Pattern_Matcher;
+                      Filter  : in Filter_Type;
+                      Content : out Entry_Map) is
+      begin
+         Keystore.Repository.List (Repository, Pattern, Filter, Content);
       end List;
 
       procedure Get_Stats (Stats : out Wallet_Stats) is
