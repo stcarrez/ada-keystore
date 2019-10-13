@@ -1,6 +1,6 @@
 .\"
 .\"
-.TH AKT 1 "Sep 29, 2019" "Ada Keystore Tool"
+.TH AKT 1 "Oct 13, 2019" "Ada Keystore Tool"
 .SH NAME
 akt - Ada Keystore Tool
 .SH SYNOPSIS
@@ -203,7 +203,7 @@ command is then used to decrypt that and be able to unlock the keystore.
 .\"
 .SS The set command
 .RS 0
-akt \fBset\fR { \fIname\fR \fIvalue\fR } | { -f \fIfile\fR [\fIname\fR] }
+akt \fBset\fR { \fIname\fR \fIvalue\fR } | { -f \fIfile\fR [\fIname\fR] } | { -r \fIdirectory\fR }
 .RE
 .PP
 The
@@ -211,8 +211,14 @@ The
 command is used to store a content in the wallet.  The content is either
 passed as argument or it can be read from a file by using the
 .I -f
-option.  In that case, when the name is not specified, the basename
-of the file is used.
+or
+.I -r
+options.  In that case, when the name is not specified, the basename
+of the file is used.  The
+.I -r
+option indicates a directory path that is scanned recursively for files.
+Files are stored by using their relative path to the basename of the
+directory path.
 .\"
 .\"
 .SS The store command
