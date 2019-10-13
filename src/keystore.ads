@@ -20,7 +20,7 @@ with Util.Streams;
 with Ada.Streams;
 with Ada.Calendar;
 with Ada.Strings.Hash;
-with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Containers.Indefinite_Ordered_Maps;
 with Interfaces;
 private with Ada.Exceptions;
 private with Ada.Finalization;
@@ -145,11 +145,8 @@ package Keystore is
    end record;
 
    package Entry_Maps is
-     new Ada.Containers.Indefinite_Hashed_Maps (Key_Type        => String,
-                                                Element_Type    => Entry_Info,
-                                                Hash            => Ada.Strings.Hash,
-                                                Equivalent_Keys => "=",
-                                                "="             => "=");
+     new Ada.Containers.Indefinite_Ordered_Maps (Key_Type        => String,
+                                                 Element_Type    => Entry_Info);
 
    subtype Entry_Map is Entry_Maps.Map;
    subtype Entry_Cursor is Entry_Maps.Cursor;
