@@ -21,9 +21,10 @@ Store a small content:
    akt -f secure.akt set bank.password 012345
 ```
 
-Store a file or a tar file:
+Store a file, files in a directory or a tar file:
 ```
    akt -f secure.akt set -f contract.doc
+   akt -f secure.akt set -r directory
    tar czf - . | akt -f secure.akt store backup
 ```
 
