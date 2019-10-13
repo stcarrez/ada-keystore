@@ -214,7 +214,7 @@ package body AKT.Windows is
       Gtk.Status_Bar.Remove_All (Application.Status, 1);
 
       --  <name> <type> <size> <date> <content>
-      Application.Wallet.List (List);
+      Application.Wallet.List (Content => List);
 
       Gtk.Tree_Store.Gtk_New (Application.List, Types);
       if Application.Tree /= null then
