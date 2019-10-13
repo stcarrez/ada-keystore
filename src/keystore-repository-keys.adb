@@ -218,20 +218,7 @@ package body Keystore.Repository.Keys is
          if Iterator.Directory.Count > 0 then
             Entries.Load_Directory (Manager, Iterator.Directory, Iterator.Current);
          else
-            Iterator.Current.Buffer := Buffers.Allocate (Iterator.Directory.Block);
-
-            --  Prepare the new directory block.
-            --  Fill the new block with random values or with zeros.
-            if Manager.Randomize then
-               Manager.Random.Generate (Iterator.Current.Buffer.Data.Value.Data);
-            else
-               Iterator.Current.Buffer.Data.Value.Data := (others => 0);
-            end if;
-            Marshallers.Set_Header (Into => Iterator.Current,
-                                    Tag  => IO.BT_WALLET_DIRECTORY,
-                                    Id   => Manager.Id);
-            Marshallers.Put_Unsigned_32 (Iterator.Current, 0);
-            Marshallers.Put_Block_Index (Iterator.Current, IO.Block_Index'Last);
+            Iterator.Current.Buffer := Manager.Current.Buffer;
          end if;
          Iterator.Key_Header_Pos := Iterator.Directory.Key_Pos - DATA_KEY_HEADER_SIZE;
          Iterator.Directory.Available := Iterator.Directory.Available - DATA_KEY_HEADER_SIZE;
