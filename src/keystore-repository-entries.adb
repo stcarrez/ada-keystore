@@ -211,7 +211,7 @@ package body Keystore.Repository.Entries is
                end if;
             end loop;
          end;
-         Directory.Available := Directory.Key_Pos - Directory.Last_Pos - 4;
+         Directory.Available := Directory.Key_Pos - Directory.Last_Pos;
          Directory.Ready := True;
       end if;
 
@@ -301,6 +301,22 @@ package body Keystore.Repository.Entries is
 
       Manager.Stream.Allocate (IO.DIRECTORY_BLOCK, Block);
       Initialize_Directory_Block (Manager, Block, Space, Directory);
+      Manager.Current.Buffer := Buffers.Allocate (Block);
+
+      --  Prepare the new directory block.
+      --  Fill the new block with random values or with zeros.
+      if Manager.Randomize then
+         Manager.Random.Generate (Manager.Current.Buffer.Data.Value.Data);
+      else
+         Manager.Current.Buffer.Data.Value.Data := (others => 0);
+      end if;
+      Marshallers.Set_Header (Into => Manager.Current,
+                              Tag  => IO.BT_WALLET_DIRECTORY,
+                              Id   => Manager.Id);
+      Marshallers.Put_Unsigned_32 (Manager.Current, 0);
+      Marshallers.Put_Block_Index (Manager.Current, IO.Block_Index'Last);
+
+      Manager.Modified.Include (Manager.Current.Buffer.Block, Manager.Current.Buffer.Data);
    end Find_Directory_Block;
 
    --  ------------------------------
@@ -359,21 +375,6 @@ package body Keystore.Repository.Entries is
       if Item.Header.Count > 0 then
          --  Find and load the directory block that can hold the new entry.
          Load_Directory (Manager, Item.Header, Manager.Current);
-      else
-         Manager.Current.Buffer := Buffers.Allocate (Item.Header.Block);
-
-         --  Prepare the new directory block.
-         --  Fill the new block with random values or with zeros.
-         if Manager.Randomize then
-            Manager.Random.Generate (Manager.Current.Buffer.Data.Value.Data);
-         else
-            Manager.Current.Buffer.Data.Value.Data := (others => 0);
-         end if;
-         Marshallers.Set_Header (Into => Manager.Current,
-                                 Tag  => IO.BT_WALLET_DIRECTORY,
-                                 Id   => Manager.Id);
-         Marshallers.Put_Unsigned_32 (Manager.Current, 0);
-         Marshallers.Put_Block_Index (Manager.Current, IO.Block_Index'Last);
       end if;
 
       --  Write the new entry.
