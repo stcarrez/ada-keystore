@@ -80,7 +80,9 @@ package body Keystore.Tools is
                   Store (Wallet, Fpath, Prefix);
                end if;
             elsif Name /= "." and then Name /= ".." then
-               Store (Wallet, Fpath, Prefix & Name & '/', Pattern, Filter);
+               if Filter (Ent) then
+                  Store (Wallet, Fpath, Prefix & Name & '/', Pattern, Filter);
+               end if;
             end if;
          end;
       end loop;
