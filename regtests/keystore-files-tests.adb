@@ -28,6 +28,10 @@ with Util.Streams.Buffered;
 with Keystore.IO;
 package body Keystore.Files.Tests is
 
+   use type Ada.Streams.Stream_Element;
+   use type Ada.Streams.Stream_Element_Array;
+   use type Ada.Streams.Stream_Element_Offset;
+
    package Caller is new Util.Test_Caller (Test, "Files");
 
    procedure Add_Tests (Suite : in Util.Tests.Access_Test_Suite) is
@@ -64,6 +68,10 @@ package body Keystore.Files.Tests is
                        Test_Set_From_Larger_Stream'Access);
       Caller.Add_Test (Suite, "Test Keystore.Set_Key",
                        Test_Set_Key'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Get_Header_Data (1)",
+                       Test_Header_Data_1'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Get_Header_Data (10)",
+                       Test_Header_Data_10'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -112,7 +120,6 @@ package body Keystore.Files.Tests is
    --  Test opening a keystore when some blocks are corrupted.
    --  ------------------------------
    procedure Test_Corruption (T : in out Test) is
-      use type IO.Block_Index;
       use type IO.Block_Count;
 
       procedure Corrupt (Block : in IO.Block_Number;
@@ -799,5 +806,85 @@ package body Keystore.Files.Tests is
       Util.Tests.Assert_Equals (T, 10_000, Natural (Items.Length),
                                 "Invalid number of items in keystore");
    end Test_Perf_Add;
+
+   procedure Create_With_Header (T : in out Test;
+                                 Path : in String;
+                                 Password : in Keystore.Secret_Key;
+                                 Count : in Header_Slot_Count_Type) is
+      Config   : Keystore.Wallet_Config := Unsecure_Config;
+      W        : Keystore.Files.Wallet_File;
+      Kind     : Keystore.Header_Slot_Type := 123;
+      Value    : Ada.Streams.Stream_Element := 3;
+   begin
+      Config.Overwrite := True;
+      W.Create (Path => Path, Password => Password, Config => Config);
+      for I in 1 .. Count loop
+         declare
+            D1       : constant Ada.Streams.Stream_Element_Array (10 .. 40) := (others => Value);
+         begin
+            W.Set_Header_Data (I, Kind, D1);
+            Kind := Kind + 1;
+            Value := Value + 1;
+         end;
+      end loop;
+   end Create_With_Header;
+
+   procedure Verify_Header_Data (T : in out Test;
+                                 Path : in String;
+                                 Password : in Keystore.Secret_Key;
+                                 Count : in Header_Slot_Count_Type) is
+      W           : Keystore.Files.Wallet_File;
+      Info        : Keystore.Wallet_Info;
+      Data        : Ada.Streams.Stream_Element_Array (1 .. 256);
+      Kind        : Keystore.Header_Slot_Type;
+      Last        : Ada.Streams.Stream_Element_Offset;
+      Expect_Kind : Keystore.Header_Slot_Type := 123;
+      Value       : Ada.Streams.Stream_Element := 3;
+   begin
+      W.Open (Path => Path, Info => Info);
+      Util.Tests.Assert_Equals (T, Natural (Count), Natural (Info.Header_Count),
+                                "Invalid number of headers in keystore");
+
+      for I in 1 .. Count loop
+         declare
+            D1       : constant Ada.Streams.Stream_Element_Array (10 .. 40) := (others => Value);
+         begin
+            W.Get_Header_Data (I, Kind, Data, Last);
+            Util.Tests.Assert_Equals (T, D1'Length, Natural (Last - Data'First + 1),
+                                      "Invalid size of header data");
+            Util.Tests.Assert_Equals (T, Natural (Expect_Kind), Natural (Kind),
+                                      "Invalid kind for header data");
+            T.Assert (D1 = Data (Data'First .. Last),
+                      "Invalid header data content");
+            Value := Value + 1;
+            Expect_Kind := Expect_Kind + 1;
+         end;
+      end loop;
+
+      W.Get_Header_Data (Count + 1, Kind, Data, Last);
+      Util.Tests.Assert_Equals (T, Natural (SLOT_EMPTY), Natural (Kind),
+                                "Invalid kind for non existing header data");
+      Util.Tests.Assert_Equals (T, 0, Natural (Last),
+                                "Invalid last value");
+   end Verify_Header_Data;
+
+   --  ------------------------------
+   --  Test setting and getting header data.
+   --  ------------------------------
+   procedure Test_Header_Data_1 (T : in out Test) is
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-header.akt");
+      Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
+   begin
+      Create_With_Header (T, Path, Password, 1);
+      Verify_Header_Data (T, Path, Password, 1);
+   end Test_Header_Data_1;
+
+   procedure Test_Header_Data_10 (T : in out Test) is
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-header.akt");
+      Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
+   begin
+      Create_With_Header (T, Path, Password, 10);
+      Verify_Header_Data (T, Path, Password, 10);
+   end Test_Header_Data_10;
 
 end Keystore.Files.Tests;
