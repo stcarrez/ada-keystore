@@ -19,6 +19,7 @@
 with Keystore.Files.Tests;
 with Keystore.IO.Tests;
 with Keystore.Tests;
+with Keystore.Tools.Tests;
 package body Keystore.Testsuite is
 
    Tests : aliased Util.Tests.Test_Suite;
@@ -27,6 +28,7 @@ package body Keystore.Testsuite is
    begin
       Keystore.IO.Tests.Add_Tests (Tests'Access);
       Keystore.Files.Tests.Add_Tests (Tests'Access);
+      Keystore.Tools.Tests.Add_Tests (Tests'Access);
       Keystore.Tests.Add_Tests (Tests'Access);
       return Tests'Access;
    end Suite;
