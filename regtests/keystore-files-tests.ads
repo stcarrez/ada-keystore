@@ -73,4 +73,8 @@ package Keystore.Files.Tests is
                                Name  : in String;
                                Input : in String);
 
+   --  Test setting and getting header data.
+   procedure Test_Header_Data_1 (T : in out Test);
+   procedure Test_Header_Data_10 (T : in out Test);
+
 end Keystore.Files.Tests;
