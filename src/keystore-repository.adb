@@ -357,6 +357,7 @@ package body Keystore.Repository is
       Result.Kind := Item.Kind;
       Result.Create_Date := Item.Create_Date;
       Result.Update_Date := Item.Update_Date;
+      Result.Block_Count := Item.Block_Count;
    end Find;
 
    procedure Get_Data (Repository : in out Wallet_Repository;
@@ -418,7 +419,7 @@ package body Keystore.Repository is
             Value.Kind := Item.Kind;
             Value.Create_Date := Item.Create_Date;
             Value.Update_Date := Item.Update_Date;
-            Value.Block_Count := Natural (Item.Data_Blocks.Length);
+            Value.Block_Count := Item.Block_Count;
             Content.Include (Key      => Item.Name,
                              New_Item => Value);
          end if;
@@ -437,7 +438,7 @@ package body Keystore.Repository is
             Value.Kind := Item.Kind;
             Value.Create_Date := Item.Create_Date;
             Value.Update_Date := Item.Update_Date;
-            Value.Block_Count := Natural (Item.Data_Blocks.Length);
+            Value.Block_Count := Item.Block_Count;
             Content.Include (Key      => Item.Name,
                              New_Item => Value);
          end if;
