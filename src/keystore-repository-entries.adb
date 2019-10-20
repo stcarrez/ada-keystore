@@ -191,6 +191,15 @@ package body Keystore.Repository.Entries is
                Index := Marshallers.Get_Unsigned_32 (Into);
                Count := Marshallers.Get_Unsigned_16 (Into);
 
+               if Index /= 0 then
+                  Pos := Manager.Entry_Indexes.Find (Wallet_Entry_Index (Index));
+                  if Wallet_Indexs.Has_Element (Pos) then
+                     Item := Wallet_Indexs.Element (Pos);
+                     Item.Data_Blocks.Append (Data_Key);
+                     Item.Block_Count := Item.Block_Count + Natural (Count);
+                  end if;
+               end if;
+
                --  Compute sum of sizes of every data block.
                Data_Key.Size := 0;
                while Count > 0 and Offset > Directory.Key_Pos loop
@@ -202,13 +211,6 @@ package body Keystore.Repository.Entries is
                   Count := Count - 1;
                end loop;
 
-               if Index /= 0 then
-                  Pos := Manager.Entry_Indexes.Find (Wallet_Entry_Index (Index));
-                  if Wallet_Indexs.Has_Element (Pos) then
-                     Item := Wallet_Indexs.Element (Pos);
-                     Item.Data_Blocks.Append (Data_Key);
-                  end if;
-               end if;
             end loop;
          end;
          if Directory.Last_Pos + 4 < Directory.Key_Pos then
