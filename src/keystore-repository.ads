@@ -200,6 +200,7 @@ private
       Create_Date  : Ada.Calendar.Time;
       Update_Date  : Ada.Calendar.Time;
       Access_Date  : Ada.Calendar.Time;
+      Block_Count  : Natural := 0;
       Name         : aliased String (1 .. Length);
    end record;
 
