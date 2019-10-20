@@ -151,6 +151,7 @@ package body Keystore.Repository.Keys is
          Iterator.Current.Pos := Mark.Key_Header_Pos + 4;
          Marshallers.Put_Unsigned_16 (Iterator.Current, Mark.Key_Count);
       end if;
+      Iterator.Item.Block_Count := Iterator.Item.Block_Count - Natural (Del_Count);
       Key_Start_Pos := Iterator.Key_Header_Pos - Key_Slot_Size (Iterator.Key_Count);
 
       Key_Pos := Iterator.Directory.Key_Pos;
@@ -264,6 +265,7 @@ package body Keystore.Repository.Keys is
 
          Manager.Modified.Include (Iterator.Current.Buffer.Block, Iterator.Current.Buffer.Data);
 
+         Iterator.Item.Block_Count := Iterator.Item.Block_Count + 1;
          Key_Pos := Iterator.Key_Pos;
          Key_Block := Iterator.Current.Buffer.Block;
       end;
