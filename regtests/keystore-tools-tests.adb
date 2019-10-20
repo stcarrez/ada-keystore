@@ -23,6 +23,7 @@ with Keystore.Files;
 package body Keystore.Tools.Tests is
 
    use Ada.Directories;
+   use type Interfaces.Unsigned_64;
 
    package Caller is new Util.Test_Caller (Test, "Files");
 
@@ -63,6 +64,27 @@ package body Keystore.Tools.Tests is
                                Prefix  => "store/",
                                Pattern => "*",
                                Filter  => Filter'Access);
+      end;
+      declare
+         procedure Check (Name : in String);
+
+         W        : Keystore.Files.Wallet_File;
+
+         procedure Check (Name : in String) is
+            Item     : Keystore.Entry_Info;
+         begin
+            Item := W.Find (Name);
+            T.Assert (Item.Size > 8192, "Invalid item size for " & Name);
+            T.Assert (Item.Size < 128*1024, "Invalid item size for " & Name);
+            T.Assert (Item.Block_Count > 2, "Invalid item for " & Name);
+            T.Assert (Item.Kind = T_FILE, "Invalid item type for " & Name);
+         end Check;
+
+      begin
+         W.Open (Password => Password, Path => Path);
+         Check ("store/src/keystore.ads");
+         Check ("store/src/keystore-repository.ads");
+         Check ("store/obj/b__akt-main.ads");
       end;
    end Test_Store_Directory;
 
