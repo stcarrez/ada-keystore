@@ -197,6 +197,20 @@ And install it:
    make install
 ```
 
+# Docker
+
+A docker container is available for those who want to try AKT without
+installing and building the required Ada packages.
+To use the AKT docker container you can run the following commands:
+
+```
+   docker pull ciceron/ada-keystore
+   docker run -i -t --entrypoint /bin/bash ciceron/ada-keystore
+   root@...:/usr/src# akt -f secure.akt create
+   root@...:/usr/src# akt -f secure.akt set something some-secret
+   root@...:/usr/src# akt -f secure.akt get something
+```
+
 # Documents
 
 * Man page: [akt (1)](https://github.com/stcarrez/ada-keystore/blob/master/docs/akt.md)
