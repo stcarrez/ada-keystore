@@ -1,4 +1,4 @@
-FROM ciceron/ada-awa:latest
+FROM ciceron/ada-util:latest
 
 MAINTAINER Stephane Carrez <Stephane.Carrez@gmail.com>
 
