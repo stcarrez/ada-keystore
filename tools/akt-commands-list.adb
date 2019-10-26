@@ -59,20 +59,4 @@ package body AKT.Commands.List is
       end loop;
    end Execute;
 
-   --  ------------------------------
-   --  Write the help associated with the command.
-   --  ------------------------------
-   overriding
-   procedure Help (Command   : in out Command_Type;
-                   Context   : in out Context_Type) is
-      pragma Unreferenced (Command, Context);
-   begin
-      Ada.Text_IO.Put_Line ("list: list values of the keystore");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: akt list");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("  List the values stored in the keystore with their name,");
-      Ada.Text_IO.Put_Line ("  size, type and creation date.");
-   end Help;
-
 end AKT.Commands.List;
