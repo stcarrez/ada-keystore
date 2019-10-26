@@ -27,9 +27,4 @@ private package AKT.Commands.Store is
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type);
 
-   --  Write the help associated with the command.
-   overriding
-   procedure Help (Command   : in out Command_Type;
-                   Context   : in out Context_Type);
-
 end AKT.Commands.Store;
