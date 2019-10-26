@@ -13,31 +13,31 @@ encrypting them in secure keystore (AES-256, HMAC-256).
 
 Create the keystore and protect it with your gpg key:
 ```
-   akt -f secure.akt create --gpg <keyid>
+   akt create -k secure.akt --gpg <keyid>
 ```
 
 Store a small content:
 ```
-   akt -f secure.akt set bank.password 012345
+   akt set -k secure.akt bank.password 012345
 ```
 
 Store a file, files in a directory or a tar file:
 ```
-   akt -f secure.akt set -f contract.doc
-   akt -f secure.akt set -r directory
-   tar czf - . | akt -f secure.akt store backup
+   akt set -k secure.akt -f contract.doc
+   akt set -k secure.akt -r directory
+   tar czf - . | akt store -k secure.akt backup
 ```
 
 Edit a content with your $EDITOR:
 ```
-   akt -f secure.akt edit bank.password
+   akt edit -k secure.akt bank.password
 ```
 
 Get a content:
 ```
-   akt -f secure.akt get bank.password
-   akt -f secure.akt get -o contract.doc
-   akt -f secure.akt extract backup | tar xzf -
+   akt get -k secure.akt bank.password
+   akt get -k secure.akt -o contract.doc
+   akt extract -k secure.akt backup | tar xzf -
 ```
 
 # Overview
@@ -98,25 +98,25 @@ To create the secure file, use the following command and enter
 your secure password (it is recommended to use a long and complex password):
 
 ```
-   akt -f secure.akt create
+   akt create -k secure.akt
 ```
 
 At this step, the secure file is created and it can only be opened
 by providing the password you entered.  To add something, use:
 
 ```
-   akt -f secure.akt set bank.password 012345
+   akt set -k secure.akt bank.password 012345
 ```
 
 To store a file, use the following command:
 ```
-   akt -f secure.akt set my-contract -f contract.doc
+   akt set -k secure.akt my-contract -f contract.doc
 ```
 
 If you want to retrieve a value, you can use one of:
 ```
-   akt -f secure.akt get bank.password
-   akt -f secure.akt get -n my-contract > file.doc
+   akt set -k secure.akt bank.password
+   akt get -k secure.akt -n my-contract > file.doc
 ```
 
 The `store` and `extract` commands are intended to be used to store
@@ -126,13 +126,13 @@ and extract files produces by other tools such at
 can be stored using the following command:
 
 ```
-   tar czf - . | akt -f secure.akt store backup.tar.gz
+   tar czf - . | akt store -k secure.akt backup.tar.gz
 ```
 
 And it can be extracted by using the following command:
 
 ```
-   akt -f secure.akt extract backup.tar.gz | tar xzf -
+   akt extract -k secure.akt backup.tar.gz | tar xzf -
 ```
 
 ## Advanced usage
@@ -145,13 +145,13 @@ the data blocks are written in one or several storage files located
 in the directory.  To use this, create the keystore as follows:
 
 ```
-   akt -f secure.akt -d data create
+   akt create -k secure.akt -d data
 ```
 
 Then, you can do your backup by using:
 
 ```
-   tar czf - . | akt -f secure.akt -d data store backup.tar.gz
+   tar czf - . | akt store -k secure.akt -d data backup.tar.gz
 ```
 
 The tool will put in `secure.akt` all the encryption keys and it will
@@ -169,7 +169,7 @@ to use the `--gpg` option and giving your own GPG key identifier
 (or your user's name).
 
 ```
-   akt -f secure.akt -d data create --gpg your-gpg-key-id
+   akt create -k secure.akt -d data --gpg your-gpg-key-id
 ```
 
 
@@ -206,9 +206,9 @@ To use the AKT docker container you can run the following commands:
 ```
    docker pull ciceron/ada-keystore
    docker run -i -t --entrypoint /bin/bash ciceron/ada-keystore
-   root@...:/usr/src# akt -f secure.akt create
-   root@...:/usr/src# akt -f secure.akt set something some-secret
-   root@...:/usr/src# akt -f secure.akt get something
+   root@...:/usr/src# akt create -k secure.akt
+   root@...:/usr/src# akt set -k secure.akt something some-secret
+   root@...:/usr/src# akt get -k secure.akt something
 ```
 
 # Documents
