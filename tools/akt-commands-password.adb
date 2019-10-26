@@ -35,6 +35,7 @@ package body AKT.Commands.Password is
       Config : Keystore.Wallet_Config := Keystore.Secure_Config;
       New_Password_Provider : AKT.Passwords.Provider_Access;
    begin
+      Setup_Password_Provider (Context);
       if Command.Counter_Range /= null and then Command.Counter_Range'Length > 0 then
          Parse_Range (Command.Counter_Range.all, Config);
       end if;
@@ -61,6 +62,7 @@ package body AKT.Commands.Password is
 
       package GC renames GNAT.Command_Line;
    begin
+      Setup (Config, Context);
       GC.Define_Switch (Config => Config,
                         Output => Command.Counter_Range'Access,
                         Switch => "-c:",
