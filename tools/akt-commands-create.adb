@@ -32,6 +32,15 @@ package body AKT.Commands.Create is
 
       Config       : Keystore.Wallet_Config := Keystore.Secure_Config;
    begin
+      Setup_Password_Provider (Context);
+
+      --  With a gpg key the initial password is a random bitstring of 256 bytes.
+      --  We don't need a big counter for PBKDF2.
+      if Command.Gpg_User /= null and Command.Gpg_User'Length > 0 then
+         Config.Min_Counter := 1;
+         Config.Max_Counter := 100;
+      end if;
+
       if Command.Counter_Range /= null and then Command.Counter_Range'Length > 0 then
          Parse_Range (Command.Counter_Range.all, Config);
       end if;
@@ -80,10 +89,9 @@ package body AKT.Commands.Create is
    procedure Setup (Command : in out Command_Type;
                     Config  : in out GNAT.Command_Line.Command_Line_Configuration;
                     Context : in out Context_Type) is
-      pragma Unreferenced (Context);
-
       package GC renames GNAT.Command_Line;
    begin
+      Setup (Config, Context);
       GC.Define_Switch (Config => Config,
                         Output => Command.Counter_Range'Access,
                         Switch => "-c:",
@@ -108,34 +116,5 @@ package body AKT.Commands.Create is
                         Argument => "USER",
                         Help   => "Use gpg to protect the keystore access");
    end Setup;
-
-   --  ------------------------------
-   --  Write the help associated with the command.
-   --  ------------------------------
-   overriding
-   procedure Help (Command   : in out Command_Type;
-                   Context   : in out Context_Type) is
-      pragma Unreferenced (Command, Context);
-   begin
-      Ada.Text_IO.Put_Line ("akt create: create the keystore");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: akt create [--counter-range min:max] "
-                            & "[--split COUNT] [--force] [--gpg USER]");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("  The create command is used to create the new keystore file.");
-      Ada.Text_IO.Put_Line ("  By default the PBKDF2 iteration counter is in range"
-                            & " 500000..1000000.");
-      Ada.Text_IO.Put_Line ("  You can change this range by using the `--counter-range` option.");
-      Ada.Text_IO.Put_Line ("  High values provide best password protection at the expense"
-                            & " of speed.");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("  The `--split` option indicates to separate the data blocks");
-      Ada.Text_IO.Put_Line ("  from the encryption keys.  The option defines the number of data");
-      Ada.Text_IO.Put_Line ("  storage files which are created and used by default.");
-
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("  When the `--gpg` option is used, the keystore is protected by");
-      Ada.Text_IO.Put_Line ("  using gpg and one of the user's GPG key.");
-   end Help;
 
 end AKT.Commands.Create;
