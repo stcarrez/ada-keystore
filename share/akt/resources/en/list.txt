@@ -1,0 +1,6 @@
+list: list values of the keystore
+
+Usage: akt list
+
+  List the values stored in the keystore with their name,
+  size, type and creation date.

@@ -1,0 +1,8 @@
+akt get: get a value from the keystore
+
+Usage: get [-n] <name> [...]
+
+  The get command allows to retrieve the value associated with a
+  wallet entry. It retrieves the value for each name passed
+  to the command. By default a newline is emitted after each value.
+  The '-n' option prevents the output of the trailing newline.
