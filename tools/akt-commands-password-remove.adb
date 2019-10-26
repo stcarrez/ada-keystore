@@ -30,6 +30,8 @@ package body AKT.Commands.Password.Remove is
 
       Empty : Keystore.Secret_Key (Length => 1);
    begin
+      Setup_Password_Provider (Context);
+
       if Command.Force then
          Context.Change_Password (New_Password => Empty,
                                   Config       => Keystore.Secure_Config,
@@ -48,32 +50,14 @@ package body AKT.Commands.Password.Remove is
    procedure Setup (Command : in out Command_Type;
                     Config  : in out GNAT.Command_Line.Command_Line_Configuration;
                     Context : in out Context_Type) is
-      pragma Unreferenced (Context);
-
       package GC renames GNAT.Command_Line;
    begin
+      Setup (Config, Context);
       GC.Define_Switch (Config => Config,
                         Output => Command.Force'Access,
                         Switch => "-f",
                         Long_Switch => "--force",
                         Help   => "Force erase of password");
    end Setup;
-
-   --  ------------------------------
-   --  Write the help associated with the command.
-   --  ------------------------------
-   overriding
-   procedure Help (Command   : in out Command_Type;
-                   Context   : in out Context_Type) is
-      pragma Unreferenced (Command, Context);
-   begin
-      Ada.Text_IO.Put_Line ("akt password-remove: remove the password from the wallet key slots");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: akt password-remove [--force]");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("  Erase the password from the wallet master key slots.");
-      Ada.Text_IO.Put_Line ("  Removing the last password makes the keystore unusable");
-      Ada.Text_IO.Put_Line ("  and it is necessary to pass the --force option for that.");
-   end Help;
 
 end AKT.Commands.Password.Remove;
