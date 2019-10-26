@@ -112,10 +112,9 @@ package body AKT.Commands.Get is
    procedure Setup (Command : in out Command_Type;
                     Config  : in out GNAT.Command_Line.Command_Line_Configuration;
                     Context : in out Context_Type) is
-      pragma Unreferenced (Context);
-
       package GC renames GNAT.Command_Line;
    begin
+      Setup (Config, Context);
       GC.Define_Switch (Config, Command.No_Newline'Access,
                         "-n", "", "Do not output the trailing newline");
       GC.Define_Switch (Config, Command.Dir'Access,
@@ -123,23 +122,5 @@ package body AKT.Commands.Get is
       GC.Define_Switch (Config, Command.Output'Access,
                         "-o:", "--output=", "Store the result in the output file or directory");
    end Setup;
-
-   --  ------------------------------
-   --  Write the help associated with the command.
-   --  ------------------------------
-   overriding
-   procedure Help (Command   : in out Command_Type;
-                   Context   : in out Context_Type) is
-      pragma Unreferenced (Command, Context);
-   begin
-      Ada.Text_IO.Put_Line ("akt get: get a value from the keystore");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: get [-n] <name> [...]");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("  The get command allows to retrieve the value associated with a");
-      Ada.Text_IO.Put_Line ("  wallet entry. It retrieves the value for each name passed");
-      Ada.Text_IO.Put_Line ("  to the command. By default a newline is emitted after each value.");
-      Ada.Text_IO.Put_Line ("  The '-n' option prevents the output of the trailing newline.");
-   end Help;
 
 end AKT.Commands.Get;
