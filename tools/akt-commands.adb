@@ -82,6 +82,8 @@ package body AKT.Commands is
    procedure Open_Keystore (Context    : in out Context_Type;
                             Use_Worker : in Boolean := False) is
    begin
+      Setup_Password_Provider (Context);
+
       Context.Wallet.Open (Path => Context.Wallet_File.all,
                            Data_Path => Context.Data_Path.all,
                            Info => Context.Info);
@@ -107,6 +109,7 @@ package body AKT.Commands is
                               Mode         : in Keystore.Mode_Type) is
       Password : constant Keystore.Secret_Key := Context.Provider.Get_Password;
    begin
+
       Context.Wallet.Open (Path => Context.Wallet_File.all,
                            Info => Context.Info);
 
@@ -169,53 +172,6 @@ package body AKT.Commands is
                         Long_Switch => "--zero",
                         Help   => "Erase and fill with zeros instead of random values");
       GC.Define_Switch (Config => Context.Command_Config,
-                        Output => Context.Wallet_File'Access,
-                        Switch => "-f:",
-                        Long_Switch => "--file=",
-                        Argument => "PATH",
-                        Help   => "Defines the path for the wallet file");
-      GC.Define_Switch (Config => Context.Command_Config,
-                        Output => Context.Data_Path'Access,
-                        Switch => "-d:",
-                        Long_Switch => "--data-path=",
-                        Argument => "PATH",
-                        Help   => "The directory which contains the keystore data blocks");
-      GC.Define_Switch (Config => Context.Command_Config,
-                        Output => Context.Password_File'Access,
-                        Long_Switch => "--passfile=",
-                        Argument => "PATH",
-                        Help   => "Read the file that contains the password");
-      GC.Define_Switch (Config => Context.Command_Config,
-                        Output => Context.Unsafe_Password'Access,
-                        Long_Switch => "--passfd=",
-                        Argument => "NUM",
-                        Help   => "Read the password from the pipe with"
-                          & " the given file descriptor");
-      GC.Define_Switch (Config => Context.Command_Config,
-                        Output => Context.Unsafe_Password'Access,
-                        Long_Switch => "--passsocket=",
-                        Help   => "The password is passed within the socket connection");
-      GC.Define_Switch (Config => Context.Command_Config,
-                        Output => Context.Password_Env'Access,
-                        Long_Switch => "--passenv=",
-                        Argument => "NAME",
-                        Help   => "Read the environment variable that contains"
-                        & " the password (not safe)");
-      GC.Define_Switch (Config => Context.Command_Config,
-                        Output => Context.Unsafe_Password'Access,
-                        Switch => "-p:",
-                        Long_Switch => "--password=",
-                        Help   => "The password is passed within the command line (not safe)");
-      GC.Define_Switch (Config => Context.Command_Config,
-                        Output => Context.Password_Askpass'Access,
-                        Long_Switch => "--passask",
-                        Help   => "Run the ssh-askpass command to get the password");
-      GC.Define_Switch (Config => Context.Command_Config,
-                        Output => Context.Password_Command'Access,
-                        Long_Switch => "--passcmd=",
-                        Argument => "COMMAND",
-                        Help   => "Run the command to get the password");
-      GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Worker_Count'Access,
                         Switch => "-t:",
                         Long_Switch => "--thread=",
@@ -249,6 +205,77 @@ package body AKT.Commands is
       Driver.Add_Command ("info", "report information about the keystore", Info_Command'Access);
    end Initialize;
 
+   --  ------------------------------
+   --  Setup the command before parsing the arguments and executing it.
+   --  ------------------------------
+   procedure Setup (Config  : in out GC.Command_Line_Configuration;
+                    Context : in out Context_Type) is
+   begin
+      GC.Define_Switch (Config => Config,
+                        Output => Context.Wallet_File'Access,
+                        Switch => "-k:",
+                        Long_Switch => "--keystore=",
+                        Argument => "PATH",
+                        Help   => "Defines the path for the keystore file");
+      GC.Define_Switch (Config => Config,
+                        Output => Context.Data_Path'Access,
+                        Switch => "-d:",
+                        Long_Switch => "--data-path=",
+                        Argument => "PATH",
+                        Help   => "The directory which contains the keystore data blocks");
+      GC.Define_Switch (Config => Config,
+                        Output => Context.Password_File'Access,
+                        Long_Switch => "--passfile=",
+                        Argument => "PATH",
+                        Help   => "Read the file that contains the password");
+      GC.Define_Switch (Config => Config,
+                        Output => Context.Unsafe_Password'Access,
+                        Long_Switch => "--passfd=",
+                        Argument => "NUM",
+                        Help   => "Read the password from the pipe with"
+                          & " the given file descriptor");
+      GC.Define_Switch (Config => Config,
+                        Output => Context.Unsafe_Password'Access,
+                        Long_Switch => "--passsocket=",
+                        Help   => "The password is passed within the socket connection");
+      GC.Define_Switch (Config => Config,
+                        Output => Context.Password_Env'Access,
+                        Long_Switch => "--passenv=",
+                        Argument => "NAME",
+                        Help   => "Read the environment variable that contains"
+                        & " the password (not safe)");
+      GC.Define_Switch (Config => Config,
+                        Output => Context.Unsafe_Password'Access,
+                        Switch => "-p:",
+                        Long_Switch => "--password=",
+                        Help   => "The password is passed within the command line (not safe)");
+      GC.Define_Switch (Config => Config,
+                        Output => Context.Password_Askpass'Access,
+                        Long_Switch => "--passask",
+                        Help   => "Run the ssh-askpass command to get the password");
+      GC.Define_Switch (Config => Config,
+                        Output => Context.Password_Command'Access,
+                        Long_Switch => "--passcmd=",
+                        Argument => "COMMAND",
+                        Help   => "Run the command to get the password");
+   end Setup;
+
+   procedure Setup_Password_Provider (Context : in out Context_Type) is
+   begin
+      if Context.Password_Askpass then
+         Context.Provider := Passwords.Cmds.Create ("ssh-askpass");
+      elsif Context.Password_Command'Length > 0 then
+         Context.Provider := Passwords.Cmds.Create (Context.Password_Command.all);
+      elsif Context.Password_File'Length > 0 then
+         Context.Provider := Passwords.Files.Create (Context.Password_File.all);
+      elsif Context.Unsafe_Password'Length > 0 then
+         Context.Provider := Passwords.Unsafe.Create (Context.Unsafe_Password.all);
+      else
+         Context.Provider := AKT.Passwords.Input.Create (False);
+         Context.No_Password_Opt := True;
+      end if;
+   end Setup_Password_Provider;
+
    procedure Parse (Context   : in out Context_Type;
                     Arguments : out Util.Commands.Dynamic_Argument_List) is
       use GNAT.Strings;
@@ -263,19 +290,6 @@ package body AKT.Commands is
       if Context.Version then
          Ada.Text_IO.Put_Line (AKT.Configs.RELEASE);
          return;
-      end if;
-
-      if Context.Password_Askpass then
-         Context.Provider := Passwords.Cmds.Create ("ssh-askpass");
-      elsif Context.Password_Command'Length > 0 then
-         Context.Provider := Passwords.Cmds.Create (Context.Password_Command.all);
-      elsif Context.Password_File'Length > 0 then
-         Context.Provider := Passwords.Files.Create (Context.Password_File.all);
-      elsif Context.Unsafe_Password'Length > 0 then
-         Context.Provider := Passwords.Unsafe.Create (Context.Unsafe_Password.all);
-      else
-         Context.Provider := AKT.Passwords.Input.Create (False);
-         Context.No_Password_Opt := True;
       end if;
 
       declare
