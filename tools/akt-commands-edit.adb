@@ -198,29 +198,11 @@ package body AKT.Commands.Edit is
    procedure Setup (Command : in out Command_Type;
                     Config  : in out GNAT.Command_Line.Command_Line_Configuration;
                     Context : in out Context_Type) is
-      pragma Unreferenced (Context);
-
       package GC renames GNAT.Command_Line;
    begin
+      Setup (Config, Context);
       GC.Define_Switch (Config, Command.Editor'Access,
                         "-e:", "--editor=", "Define the editor command to use");
    end Setup;
-
-   --  ------------------------------
-   --  Write the help associated with the command.
-   --  ------------------------------
-   overriding
-   procedure Help (Command   : in out Command_Type;
-                   Context   : in out Context_Type) is
-      pragma Unreferenced (Command, Context);
-   begin
-      Ada.Text_IO.Put_Line ("akt edit: edit the value with an external editor");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: akt edit [-e command] <name>");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("  The edit command can be used to edit the protected wallet entry");
-      Ada.Text_IO.Put_Line ("  by calling the user's preferd editor with the content.");
-      Ada.Text_IO.Put_Line ("  You can use the '-e' option to define the editor command to use.");
-   end Help;
 
 end AKT.Commands.Edit;
