@@ -27,11 +27,6 @@ private package AKT.Commands.Extract is
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type);
 
-   --  Write the help associated with the command.
-   overriding
-   procedure Help (Command   : in out Command_Type;
-                   Context   : in out Context_Type);
-
 private
 
    type Command_Type is new AKT.Commands.Drivers.Command_Type with null record;

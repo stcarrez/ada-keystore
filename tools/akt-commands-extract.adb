@@ -52,21 +52,4 @@ package body AKT.Commands.Extract is
       end if;
    end Execute;
 
-   --  ------------------------------
-   --  Write the help associated with the command.
-   --  ------------------------------
-   overriding
-   procedure Help (Command   : in out Command_Type;
-                   Context   : in out Context_Type) is
-      pragma Unreferenced (Command, Context);
-   begin
-      Ada.Text_IO.Put_Line ("akt extract: get a value from the keystore");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: extract <name>");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("  The extract command allows to retrieve the value associated with");
-      Ada.Text_IO.Put_Line ("  a wallet entry. It only retrieves one value whose name is passed");
-      Ada.Text_IO.Put_Line ("  to the command. This is a shortcut for the `get -n` command.");
-   end Help;
-
 end AKT.Commands.Extract;
