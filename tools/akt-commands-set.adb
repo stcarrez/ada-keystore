@@ -94,31 +94,13 @@ package body AKT.Commands.Set is
    procedure Setup (Command : in out Command_Type;
                     Config  : in out GNAT.Command_Line.Command_Line_Configuration;
                     Context : in out Context_Type) is
-      pragma Unreferenced (Context);
-
       package GC renames GNAT.Command_Line;
    begin
+      Setup (Config, Context);
       GC.Define_Switch (Config, Command.File'Access,
                         "-f:", "--file=", "Define the path of the file to read");
       GC.Define_Switch (Config, Command.Dir'Access,
                         "-r:", "--recursive=", "Read and store files recursively");
    end Setup;
-
-   --  ------------------------------
-   --  Write the help associated with the command.
-   --  ------------------------------
-   overriding
-   procedure Help (Command   : in out Command_Type;
-                   Context   : in out Context_Type) is
-      pragma Unreferenced (Command, Context);
-   begin
-      Ada.Text_IO.Put_Line ("set: insert or update a value in the keystore");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: akt set [<name> <value> | -f <file> | -r <dir>]");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("  The set command is used to store a content in the wallet.");
-      Ada.Text_IO.Put_Line ("  The content is either passed as argument or read from a file.");
-      Ada.Text_IO.Put_Line ("  If the wallet already contains the name, the value is updated.");
-   end Help;
 
 end AKT.Commands.Set;
