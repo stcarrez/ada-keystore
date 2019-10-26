@@ -44,21 +44,4 @@ package body AKT.Commands.Store is
       end if;
    end Execute;
 
-   --  ------------------------------
-   --  Write the help associated with the command.
-   --  ------------------------------
-   overriding
-   procedure Help (Command   : in out Command_Type;
-                   Context   : in out Context_Type) is
-      pragma Unreferenced (Command, Context);
-   begin
-      Ada.Text_IO.Put_Line ("store: read standard input and store the content in the keystore");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: akt store <name>");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("  The store command is intended to be used as a target for a pipe");
-      Ada.Text_IO.Put_Line ("  command.  It reads the standard input and stores the content");
-      Ada.Text_IO.Put_Line ("  which is read in the keystore.");
-   end Help;
-
 end AKT.Commands.Store;
