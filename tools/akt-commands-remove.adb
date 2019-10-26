@@ -40,22 +40,4 @@ package body AKT.Commands.Remove is
       end if;
    end Execute;
 
-   --  ------------------------------
-   --  Write the help associated with the command.
-   --  ------------------------------
-   overriding
-   procedure Help (Command   : in out Command_Type;
-                   Context   : in out Context_Type) is
-      pragma Unreferenced (Command, Context);
-   begin
-      Ada.Text_IO.Put_Line ("akt remove: remove values from the keystore");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("Usage: akt remove <name> [...]");
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put_Line ("  The remove command is used to erase a content from the wallet.");
-      Ada.Text_IO.Put_Line ("  The data blocks that contained the content are cleared.");
-      Ada.Text_IO.Put_Line ("  The secure keys that protect the content are also cleared.");
-      Ada.Text_IO.Put_Line ("  You can erase several values at the same time.");
-   end Help;
-
 end AKT.Commands.Remove;
