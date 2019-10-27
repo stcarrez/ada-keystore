@@ -20,7 +20,13 @@ with Util.Log.Loggers;
 with Util.Encoders.HMAC.SHA256;
 with Keystore.Marshallers;
 
---  The keystore file header block contains clear information signed by an HMAC header.
+--  === Header block ===
+--  The first block of the file is the keystore header block which contains clear
+--  information signed by an HMAC header.  The header block contains the keystore
+--  UUID as well as a short description of each storage data file.  It also contains
+--  some optional header data.
+--
+--  ```
 --  +------------------+
 --  | 41 64 61 00      | 4b = Ada
 --  | 00 9A 72 57      | 4b = 10/12/1815
@@ -52,6 +58,7 @@ with Keystore.Marshallers;
 --  | Storage max bloc | 4b
 --  | Storage HMAC     | 32b = 44b
 --  +------------------+----
+--  ```
 package body Keystore.IO.Headers is
 
    use type Interfaces.Unsigned_16;
