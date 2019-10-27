@@ -1,0 +1,10 @@
+site_name: Ada Keystore
+docs_dir: docs
+pages:
+  - Introduction: index.md
+  - Installation: Installation.md
+  - Using Ada Keystore Tool: Using.md
+  - Programmer's Guide: Keystore_Programming.md
+  - AKT Tool: Keystore_Tool.md
+  - Implementation: Keystore_Design.md
+theme: readthedocs
