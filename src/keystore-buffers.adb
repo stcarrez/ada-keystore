@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---  keystore-io -- IO low level operation for the keystore
+--  keystore-buffers -- Buffer management for the keystore
 --  Copyright (C) 2019 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
