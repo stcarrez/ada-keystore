@@ -28,5 +28,8 @@ keystoreada.gpr
 keystoreada_tools.gpr
 keystoreada_gtk.gpr
 keystoreada_tests.gpr
-
-                                                               
+docs/Keystore_IO_Headers.md
+docs/Keystore_Keys.md
+docs/Keystore_Random.md
+docs/Keystore_Repository_Data.md
+docs/Keystore_Repository_Entries.md
