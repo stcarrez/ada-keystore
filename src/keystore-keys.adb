@@ -23,7 +23,10 @@ with Keystore.Logs;
 with Keystore.Buffers;
 with Keystore.Marshallers;
 
+--  === Master keys ===
 --  Wallet header encrypted with the parent wallet id
+--
+--  ```
 --  +------------------+
 --  | Block HMAC-256   | 32b
 --  +------------------+
@@ -76,7 +79,8 @@ with Keystore.Marshallers;
 --  +------------------+
 --  | PAD 0 / Random   |
 --  +------------------+
-
+--  ```
+--
 package body Keystore.Keys is
 
    use Interfaces;
