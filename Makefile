@@ -72,17 +72,23 @@ KEYSTORE_DOC= \
   pagebreak.tex \
   Using.md \
   pagebreak.tex \
-  Programming.md \
-  Keystore.md \
+  Keystore_Programming.md \
   pagebreak.tex \
-  annex.md \
-  akt.md
+  Keystore_Tool.md \
+  pagebreak.tex \
+  Keystore_Design.md
 
 DOC_OPTIONS=-f markdown -o keystore-book.pdf --listings --number-sections --toc
 HTML_OPTIONS=-f markdown -o keystore-book.html --listings --number-sections --toc --css pandoc.css
 
 docs/keystore-book.pdf: $(KEYSTORE_DOC_DEP) force
 	$(DYNAMO) build-doc -pandoc docs
+	cat docs/Programming.md docs/Keystore.md > docs/Keystore_Programming.md
+	cat docs/Tool.md docs/akt.md > docs/Keystore_Tool.md
+	cat docs/Design.md \
+	    docs/Keystore_IO_Headers.md \
+	    docs/Keystore_Repository_Entries.md \
+		docs/Keystore_Repository_Data.md > docs/Keystore_Design.md
 	cd docs && pandoc $(DOC_OPTIONS) --template=./eisvogel.tex $(KEYSTORE_DOC)
 
 docs/keystore-book.html: docs/keystore-book.pdf force
