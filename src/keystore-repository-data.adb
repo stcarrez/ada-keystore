@@ -20,13 +20,14 @@ with Util.Log.Loggers;
 with Keystore.Logs;
 with Keystore.Repository.Workers;
 
---  Block = 4K, 8K, 16K, 64K, 128K ?
+--  === Data Block ===
 --
 --  Data block start is encrypted with wallet data key, data fragments are
 --  encrypted with their own key.  Loading and saving data blocks occurs exclusively
 --  from the workers package.  The data block can be stored in a separate file so that
 --  the wallet repository and its keys are separate from the data blocks.
 --
+--  ```
 --  +------------------+
 --  | Block HMAC-256   | 32b
 --  +------------------+
@@ -48,7 +49,8 @@ with Keystore.Repository.Workers;
 --  +------------------+
 --  | Data content     |     Encrypted with data entry key
 --  +------------------+-----
-
+--  ```
+--
 package body Keystore.Repository.Data is
 
    use type Interfaces.Unsigned_64;
