@@ -91,9 +91,6 @@ private
    --  Wallet header magic.
    WH_MAGIC          : constant := 16#Ada00Ada#;
 
-   WH_HEADER_SIZE    : constant := 16;
-   WH_HASH_SIZE      : constant := Util.Encoders.SHA256.HASH_SIZE;
-   WH_SALT_SIZE      : constant := 32;
    WH_KEY_SIZE       : constant := Util.Encoders.AES.AES_256_Length;
 
    WH_HEADER_START   : constant IO.Block_Index := IO.BT_DATA_START;
