@@ -21,8 +21,10 @@ with Ada.Unchecked_Deallocation;
 with Keystore.Logs;
 with Keystore.Marshallers;
 
---
+--  === Directory Entries ===
 --  The wallet repository block is encrypted with the wallet directory key.
+--
+--  ```
 --  +------------------+
 --  | Block HMAC-256   | 32b
 --  +------------------+
@@ -63,6 +65,7 @@ with Keystore.Marshallers;
 --  | Data key count   | 2b   | DATA_KEY_HEADER_SIZE = 10b
 --  | Data offset      | 4b   v
 --  +------------------+--
+--  ```
 --
 package body Keystore.Repository.Entries is
 
