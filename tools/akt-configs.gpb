@@ -21,4 +21,10 @@ package AKT.Configs is
    VERSION      : constant String := $VERSION;
    RELEASE      : constant String := "Ada Keystore Tool " & $VERSION;
 
+   --  Initialize the configuration.
+   procedure Initialize (Path : in String);
+
+   --  Get the configuration parameter.
+   function Get (Name : in String) return String;
+
 end AKT.Configs;
