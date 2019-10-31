@@ -20,6 +20,7 @@ with Util.Encoders.AES;
 with Util.Encoders.SHA256;
 with Keystore.IO;
 with Keystore.Random;
+with Keystore.Passwords;
 private package Keystore.Keys is
 
    use type IO.Block_Index;
@@ -53,7 +54,7 @@ private package Keystore.Keys is
    --  Open the key manager and read the wallet header block.  Use the secret key
    --  to decrypt/encrypt the wallet header block.
    procedure Open (Manager  : in out Key_Manager;
-                   Password : in Secret_Key;
+                   Password : in out Keystore.Passwords.Provider'Class;
                    Ident    : in Wallet_Identifier;
                    Block    : in Keystore.IO.Storage_Block;
                    Root     : out Keystore.IO.Storage_Block;
@@ -63,7 +64,7 @@ private package Keystore.Keys is
    --  Open the key manager and read the wallet header block.  Use the secret key
    --  to decrypt/encrypt the wallet header block.
    procedure Create (Manager  : in out Key_Manager;
-                     Password : in Secret_Key;
+                     Password : in out Passwords.Provider'Class;
                      Slot     : in Key_Slot;
                      Ident    : in Wallet_Identifier;
                      Block    : in Keystore.IO.Storage_Block;
@@ -75,8 +76,8 @@ private package Keystore.Keys is
                              Key      : in Secret_Key);
 
    procedure Set_Key (Manager      : in out Key_Manager;
-                      Password     : in Secret_Key;
-                      New_Password : in Secret_Key;
+                      Password     : in out Keystore.Passwords.Provider'Class;
+                      New_Password : in out Keystore.Passwords.Provider'Class;
                       Config       : in Keystore.Wallet_Config;
                       Mode         : in Mode_Type;
                       Ident        : in Wallet_Identifier;
@@ -99,6 +100,9 @@ private
 
    --  Key slot type is using PBKDF2-HMAC-256.
    WH_KEY_PBKDF2     : constant := 16#0001#;
+
+   --  Key slot type is using PBKDF2-HMAC-256 with a GPG2 key.
+   WH_KEY_GPG2       : constant := 16#0002#;
 
    type Key_Manager is limited record
       Id                : Wallet_Identifier;
