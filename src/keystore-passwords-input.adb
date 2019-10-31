@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---  akt-passwords-files -- File based password provider
+--  keystore-passwords-files -- File based password provider
 --  Copyright (C) 2019 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
@@ -17,15 +17,16 @@
 -----------------------------------------------------------------------
 with Ada.Text_IO;
 with Ada.Strings.Unbounded;
-package body AKT.Passwords.Input is
+package body Keystore.Passwords.Input is
 
-   type Provider is limited new AKT.Passwords.Provider with record
+   type Provider is limited new Keystore.Passwords.Provider with record
       Confirm : Boolean := False;
    end record;
 
-   --  Get the password and return it as a secret key.
+   --  Get the password through the Getter operation.
    overriding
-   function Get_Password (From : in Provider) return Keystore.Secret_Key;
+   procedure Get_Password (From   : in Provider;
+                           Getter : not null access procedure (Password : in Secret_Key));
 
    --  ------------------------------
    --  Create a password provider that asks interactively for the password.
@@ -36,10 +37,11 @@ package body AKT.Passwords.Input is
    end Create;
 
    --  ------------------------------
-   --  Get the password and return it as a secret key.
+   --  Get the password through the Getter operation.
    --  ------------------------------
    overriding
-   function Get_Password (From : in Provider) return Keystore.Secret_Key is
+   procedure Get_Password (From   : in Provider;
+                           Getter : not null access procedure (Password : in Secret_Key)) is
       pragma Unreferenced (From);
 
       Content : Ada.Strings.Unbounded.Unbounded_String;
@@ -52,7 +54,7 @@ package body AKT.Passwords.Input is
          Ada.Strings.Unbounded.Append (Content, C);
       end loop;
 
-      return Keystore.Create (Ada.Strings.Unbounded.To_String (Content));
+      Getter (Keystore.Create (Ada.Strings.Unbounded.To_String (Content)));
    end Get_Password;
 
-end AKT.Passwords.Input;
+end Keystore.Passwords.Input;
