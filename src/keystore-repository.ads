@@ -24,6 +24,7 @@ with Ada.Strings.Hash;
 with Util.Encoders.AES;
 with Keystore.IO;
 with Keystore.Keys;
+with Keystore.Passwords;
 with Util.Streams;
 with Interfaces;
 
@@ -41,7 +42,7 @@ private package Keystore.Repository is
    --  IO stream.  The wallet meta data is decrypted using AES-CTR using the given secret
    --  key and initial vector.
    procedure Open (Repository : in out Wallet_Repository;
-                   Password   : in Secret_Key;
+                   Password   : in out Keystore.Passwords.Provider'Class;
                    Ident      : in Wallet_Identifier;
                    Block      : in Keystore.IO.Storage_Block;
                    Keys       : in out Keystore.Keys.Key_Manager;
@@ -54,7 +55,7 @@ private package Keystore.Repository is
                    Stream     : in IO.Wallet_Stream_Access);
 
    procedure Create (Repository : in out Wallet_Repository;
-                     Password   : in Secret_Key;
+                     Password   : in out Keystore.Passwords.Provider'Class;
                      Config     : in Wallet_Config;
                      Block      : in IO.Storage_Block;
                      Ident      : in Wallet_Identifier;
