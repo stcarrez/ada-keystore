@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---  akt-passwords-files -- File based password provider
+--  keystore-passwords-files -- File based password provider
 --  Copyright (C) 2019 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
@@ -21,7 +21,7 @@ with Ada.Strings.Unbounded;
 with Util.Files;
 with Util.Systems.Types;
 with Util.Systems.Os;
-package body AKT.Passwords.Files is
+package body Keystore.Passwords.Files is
 
    --  GNAT 2019 complains about unused use type but gcc 7.4 fails if it not defined (st_mode).
    pragma Warnings (Off);
@@ -29,13 +29,14 @@ package body AKT.Passwords.Files is
    use type Interfaces.C.unsigned_short;
    pragma Warnings (On);
 
-   type Provider (Len : Natural) is limited new AKT.Passwords.Provider with record
+   type Provider (Len : Natural) is limited new Keystore.Passwords.Provider with record
       Path : String (1 .. Len);
    end record;
 
-   --  Get the password and return it as a secret key.
+   --  Get the password through the Getter operation.
    overriding
-   function Get_Password (From : in Provider) return Keystore.Secret_Key;
+   procedure Get_Password (From   : in Provider;
+                           Getter : not null access procedure (Password : in Secret_Key));
 
    --  ------------------------------
    --  Create a password provider that reads the file to build the password.
@@ -46,10 +47,11 @@ package body AKT.Passwords.Files is
    end Create;
 
    --  ------------------------------
-   --  Get the password and return it as a secret key.
+   --  Get the password through the Getter operation.
    --  ------------------------------
    overriding
-   function Get_Password (From : in Provider) return Keystore.Secret_Key is
+   procedure Get_Password (From   : in Provider;
+                           Getter : not null access procedure (Password : in Secret_Key)) is
       Content : Ada.Strings.Unbounded.Unbounded_String;
       Path    : Interfaces.C.Strings.chars_ptr;
       Stat    : aliased Util.Systems.Types.Stat_Type;
@@ -83,7 +85,7 @@ package body AKT.Passwords.Files is
 
       Util.Files.Read_File (Path => From.Path,
                             Into => Content);
-      return Keystore.Create (Ada.Strings.Unbounded.To_String (Content));
+      Getter (Keystore.Create (Ada.Strings.Unbounded.To_String (Content)));
    end Get_Password;
 
-end AKT.Passwords.Files;
+end Keystore.Passwords.Files;
