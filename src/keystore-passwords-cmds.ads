@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---  akt-passwords-cmds -- External command based password provider
+--  keystore-passwords-cmds -- External command based password provider
 --  Copyright (C) 2019 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
@@ -16,9 +16,9 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 
-package AKT.Passwords.Cmds is
+package Keystore.Passwords.Cmds is
 
    --  Create a password provider that reads runs a command to get the password.
    function Create (Command : in String) return Provider_Access;
 
-end AKT.Passwords.Cmds;
+end Keystore.Passwords.Cmds;
