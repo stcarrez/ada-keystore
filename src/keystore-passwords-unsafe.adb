@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---  akt-passwords-unsafe -- Command line based password provider
+--  keystore-passwords-unsafe -- Unsafe password provider
 --  Copyright (C) 2019 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
@@ -15,15 +15,16 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-package body AKT.Passwords.Unsafe is
+package body Keystore.Passwords.Unsafe is
 
-   type Provider (Len : Natural) is limited new AKT.Passwords.Provider with record
+   type Provider (Len : Natural) is limited new Keystore.Passwords.Provider with record
       Password : String (1 .. Len);
    end record;
 
-   --  Get the password and return it as a secret key.
+   --  Get the password through the Getter operation.
    overriding
-   function Get_Password (From : in Provider) return Keystore.Secret_Key;
+   procedure Get_Password (From   : in Provider;
+                           Getter : not null access procedure (Password : in Secret_Key));
 
    --  ------------------------------
    --  Create a unsafe command line base password provider.
@@ -35,13 +36,13 @@ package body AKT.Passwords.Unsafe is
    end Create;
 
    --  ------------------------------
-   --  Get the password and return it as a secret key.
+   --  Get the password through the Getter operation.
    --  ------------------------------
    overriding
-   function Get_Password (From : in Provider) return Keystore.Secret_Key is
-
+   procedure Get_Password (From   : in Provider;
+                           Getter : not null access procedure (Password : in Secret_Key)) is
    begin
-      return Keystore.Create (From.Password);
+      Getter (Keystore.Create (From.Password));
    end Get_Password;
 
-end AKT.Passwords.Unsafe;
+end Keystore.Passwords.Unsafe;
