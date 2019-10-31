@@ -425,7 +425,7 @@ package body Keystore.Tests is
                                  Result, "Wrong message for invalid option");
 
       --  Create keystore with a missing key file.
-      T.Execute (Tool & " create -k " & Path & " --passfile regtests/missing.key",
+      T.Execute (Tool & " create -k " & Path & " --force --passfile regtests/missing.key",
                  Result, 1);
       Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
                                  Result, "Wrong message when command was not found");

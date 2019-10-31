@@ -75,7 +75,7 @@ package body Keystore.Tools.Tests is
          begin
             Item := W.Find (Name);
             T.Assert (Item.Size > 8192, "Invalid item size for " & Name);
-            T.Assert (Item.Size < 128*1024, "Invalid item size for " & Name);
+            T.Assert (Item.Size < 128 * 1024, "Invalid item size for " & Name);
             T.Assert (Item.Block_Count > 2, "Invalid item for " & Name);
             T.Assert (Item.Kind = T_FILE, "Invalid item type for " & Name);
          end Check;

@@ -32,6 +32,14 @@ package body Keystore.Files.Tests is
    use type Ada.Streams.Stream_Element_Array;
    use type Ada.Streams.Stream_Element_Offset;
 
+   procedure Create_With_Header (Path     : in String;
+                                 Password : in Keystore.Secret_Key;
+                                 Count    : in Header_Slot_Count_Type);
+
+   procedure Verify_Header_Data (T     : in out Test;
+                                 Path  : in String;
+                                 Count : in Header_Slot_Count_Type);
+
    package Caller is new Util.Test_Caller (Test, "Files");
 
    procedure Add_Tests (Suite : in Util.Tests.Access_Test_Suite) is
@@ -133,8 +141,6 @@ package body Keystore.Files.Tests is
 
       procedure Corrupt (Block : in IO.Block_Number;
                          Pos   : in IO.Block_Index) is
-         use type Ada.Streams.Stream_Element;
-
          --  Source_File  : IO.Files.Block_IO.File_Type;
          --  Corrupt_File : IO.Files.Block_IO.File_Type;
          Data         : IO.Block_Type;
@@ -807,8 +813,7 @@ package body Keystore.Files.Tests is
                                 "Invalid number of items in keystore");
    end Test_Perf_Add;
 
-   procedure Create_With_Header (T : in out Test;
-                                 Path : in String;
+   procedure Create_With_Header (Path : in String;
                                  Password : in Keystore.Secret_Key;
                                  Count : in Header_Slot_Count_Type) is
       Config   : Keystore.Wallet_Config := Unsecure_Config;
@@ -829,9 +834,8 @@ package body Keystore.Files.Tests is
       end loop;
    end Create_With_Header;
 
-   procedure Verify_Header_Data (T : in out Test;
-                                 Path : in String;
-                                 Password : in Keystore.Secret_Key;
+   procedure Verify_Header_Data (T     : in out Test;
+                                 Path  : in String;
                                  Count : in Header_Slot_Count_Type) is
       W           : Keystore.Files.Wallet_File;
       Info        : Keystore.Wallet_Info;
@@ -875,16 +879,16 @@ package body Keystore.Files.Tests is
       Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-header.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
    begin
-      Create_With_Header (T, Path, Password, 1);
-      Verify_Header_Data (T, Path, Password, 1);
+      Create_With_Header (Path, Password, 1);
+      Verify_Header_Data (T, Path, 1);
    end Test_Header_Data_1;
 
    procedure Test_Header_Data_10 (T : in out Test) is
       Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-header.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
    begin
-      Create_With_Header (T, Path, Password, 10);
-      Verify_Header_Data (T, Path, Password, 10);
+      Create_With_Header (Path, Password, 10);
+      Verify_Header_Data (T, Path, 10);
    end Test_Header_Data_10;
 
 end Keystore.Files.Tests;
