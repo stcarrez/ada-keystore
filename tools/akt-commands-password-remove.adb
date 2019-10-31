@@ -27,17 +27,15 @@ package body AKT.Commands.Password.Remove is
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
       pragma Unreferenced (Name, Args);
-
-      Empty : Keystore.Secret_Key (Length => 1);
    begin
       Setup_Password_Provider (Context);
 
       if Command.Force then
-         Context.Change_Password (New_Password => Empty,
+         Context.Change_Password (New_Password => Context.Provider.all,
                                   Config       => Keystore.Secure_Config,
                                   Mode         => Keystore.KEY_REMOVE_LAST);
       else
-         Context.Change_Password (New_Password => Empty,
+         Context.Change_Password (New_Password => Context.Provider.all,
                                   Config       => Keystore.Secure_Config,
                                   Mode         => Keystore.KEY_REMOVE);
       end if;
