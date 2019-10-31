@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---  akt-passwords -- Password provider
+--  keystore-passwords -- Password provider
 --  Copyright (C) 2019 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
@@ -16,14 +16,23 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 
-with Keystore;
-package AKT.Passwords is
+package Keystore.Passwords is
 
    type Provider is limited interface;
 
    type Provider_Access is access all Provider'Class;
 
-   --  Get the password and return it as a secret key.
-   function Get_Password (From : in Provider) return Keystore.Secret_Key is abstract;
+   --  Get the password through the Getter operation.
+   procedure Get_Password (From   : in Provider;
+                           Getter : not null
+                           access procedure (Password : in Secret_Key)) is abstract;
 
-end AKT.Passwords;
+   type Slot_Provider is limited interface and Provider;
+
+   function Get_Key_Slot (From : in Slot_Provider) return Key_Slot is abstract;
+
+   function Has_Password (From : in Slot_Provider) return Boolean is abstract;
+
+   procedure Next (From : in out Slot_Provider) is abstract;
+
+end Keystore.Passwords;
