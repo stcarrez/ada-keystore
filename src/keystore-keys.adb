@@ -91,7 +91,7 @@ package body Keystore.Keys is
 
    procedure Save_Key (Manager  : in out Key_Manager;
                        Buffer   : in out Marshallers.Marshaller;
-                       Password : in Secret_Key;
+                       Password : in out Keystore.Passwords.Provider'Class;
                        Slot     : in Key_Slot;
                        Config   : in Wallet_Config;
                        Stream   : in out IO.Wallet_Stream'Class);
@@ -109,7 +109,7 @@ package body Keystore.Keys is
 
    function Verify (Manager  : in Key_Manager;
                     Buffer   : in out Marshallers.Marshaller;
-                    Password : in Secret_Key;
+                    Password : in Passwords.Provider'Class;
                     Size     : in Positive;
                     Config   : in out Wallet_Config) return Boolean;
 
@@ -202,9 +202,11 @@ package body Keystore.Keys is
 
    function Verify (Manager  : in Key_Manager;
                     Buffer   : in out Marshallers.Marshaller;
-                    Password : in Secret_Key;
+                    Password : in Passwords.Provider'Class;
                     Size     : in Positive;
                     Config   : in out Wallet_Config) return Boolean is
+      procedure Get_Password (Secret : in Secret_Key);
+
       Buf           : constant Buffers.Buffer_Accessor := Buffer.Buffer.Data.Value;
       Salt_Key      : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
       Salt_IV       : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
@@ -215,6 +217,16 @@ package body Keystore.Keys is
       Hmac          : Util.Encoders.HMAC.SHA256.Context;
       Counter_Key   : Interfaces.Unsigned_32;
       Counter_IV    : Interfaces.Unsigned_32;
+
+      --  Generate a derived key from the password, salt, counter.
+      procedure Get_Password (Secret : in Secret_Key) is
+      begin
+         PBKDF2_HMAC_SHA256 (Password => Secret,
+                             Salt     => Salt_IV,
+                             Counter  => Positive (Counter_IV),
+                             Result   => Lock_IV);
+      end Get_Password;
+
    begin
       Counter_Key := Marshallers.Get_Unsigned_32 (Buffer);
       Counter_IV := Marshallers.Get_Unsigned_32 (Buffer);
@@ -226,12 +238,7 @@ package body Keystore.Keys is
       Marshallers.Get_Secret (Buffer, Salt_IV, Manager.Crypt.Key, Manager.Crypt.IV);
       Marshallers.Get_Secret (Buffer, Sign, Manager.Crypt.Key, Manager.Crypt.IV);
 
-      --  Generate a derived key from the password, salt, counter.
-      PBKDF2_HMAC_SHA256 (Password => Password,
-                          Salt     => Salt_IV,
-                          Counter  => Positive (Counter_IV),
-                          Result   => Lock_IV);
-
+      Password.Get_Password (Get_Password'Access);
       PBKDF2_HMAC_SHA256 (Password => Lock_IV,
                           Salt     => Salt_Key,
                           Counter  => Positive (Counter_Key),
@@ -258,10 +265,11 @@ package body Keystore.Keys is
    --  ------------------------------
    procedure Save_Key (Manager  : in out Key_Manager;
                        Buffer   : in out Marshallers.Marshaller;
-                       Password : in Secret_Key;
+                       Password : in out Keystore.Passwords.Provider'Class;
                        Slot     : in Key_Slot;
                        Config   : in Wallet_Config;
                        Stream   : in out IO.Wallet_Stream'Class) is
+      procedure Get_Password (Secret : in Secret_Key);
 
       Salt_Key    : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
       Salt_IV     : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
@@ -273,6 +281,16 @@ package body Keystore.Keys is
       Hmac        : Util.Encoders.HMAC.SHA256.Context;
       Result      : Util.Encoders.SHA256.Hash_Array;
       Buf         : constant Buffers.Buffer_Accessor := Buffer.Buffer.Data.Value;
+
+      --  Generate a derived key from the password, salt, counter.
+      procedure Get_Password (Secret : in Secret_Key) is
+      begin
+         PBKDF2_HMAC_SHA256 (Password => Secret,
+                             Salt     => Salt_IV,
+                             Counter  => Positive (Counter_IV),
+                             Result   => Lock_IV);
+      end Get_Password;
+
    begin
       Log.Info ("Saving key for wallet {0}", To_String (Config.UUID));
 
@@ -302,12 +320,7 @@ package body Keystore.Keys is
       Marshallers.Put_Secret (Buffer, Salt_IV, Manager.Crypt.Key, Manager.Crypt.IV);
       Marshallers.Put_Secret (Buffer, Sign, Manager.Crypt.Key, Manager.Crypt.IV);
 
-      --  Generate a derived key from the password, salt, counter.
-      PBKDF2_HMAC_SHA256 (Password => Password,
-                          Salt     => Salt_IV,
-                          Counter  => Counter_IV,
-                          Result   => Lock_IV);
-
+      Password.Get_Password (Get_Password'Access);
       PBKDF2_HMAC_SHA256 (Password => Lock_IV,
                           Salt     => Salt_Key,
                           Counter  => Counter_Key,
@@ -407,7 +420,7 @@ package body Keystore.Keys is
    --  Open the key manager and read the wallet header block.  Use the secret key
    --  to decrypt/encrypt the wallet header block.
    procedure Open (Manager  : in out Key_Manager;
-                   Password : in Secret_Key;
+                   Password : in out Keystore.Passwords.Provider'Class;
                    Ident    : in Wallet_Identifier;
                    Block    : in Keystore.IO.Storage_Block;
                    Root     : out Keystore.IO.Storage_Block;
@@ -419,24 +432,41 @@ package body Keystore.Keys is
    begin
       Load (Manager, Block, Ident, Buffer, Root, Stream);
 
-      for Slot in Key_Slot'Range loop
-         Buffer.Pos := Key_Position (Slot);
-         Value := Marshallers.Get_Unsigned_32 (Buffer);
-         if Value = WH_KEY_PBKDF2 then
+      if Password in Keystore.Passwords.Slot_Provider'Class then
+         while Passwords.Slot_Provider'Class (Password).Has_Password loop
+            Buffer.Pos := Key_Position (Passwords.Slot_Provider'Class (Password).Get_Key_Slot);
             Value := Marshallers.Get_Unsigned_32 (Buffer);
-            if Value > 0 and Value <= WH_KEY_SIZE then
-               if Verify (Manager, Buffer, Password, Positive (Value), Config) then
-                  return;
+            if Value = WH_KEY_GPG2 then
+               Value := Marshallers.Get_Unsigned_32 (Buffer);
+               if Value > 0 and Value <= WH_KEY_SIZE then
+                  if Verify (Manager, Buffer, Password, Positive (Value), Config) then
+                     return;
+                  end if;
                end if;
             end if;
-         end if;
-      end loop;
+            Passwords.Slot_Provider'Class (Password).Next;
+         end loop;
+      else
+         for Slot in Key_Slot'Range loop
+            Buffer.Pos := Key_Position (Slot);
+            Value := Marshallers.Get_Unsigned_32 (Buffer);
+            if Value = WH_KEY_PBKDF2 then
+               Value := Marshallers.Get_Unsigned_32 (Buffer);
+               if Value > 0 and Value <= WH_KEY_SIZE then
+                  if Verify (Manager, Buffer, Password, Positive (Value), Config) then
+                     return;
+                  end if;
+               end if;
+            end if;
+         end loop;
+      end if;
+
       Keystore.Logs.Info (Log, "No password match for wallet block{0}", Manager.Header_Block);
       raise Bad_Password;
    end Open;
 
    procedure Create (Manager  : in out Key_Manager;
-                     Password : in Secret_Key;
+                     Password : in out Keystore.Passwords.Provider'Class;
                      Slot     : in Key_Slot;
                      Ident    : in Wallet_Identifier;
                      Block    : in Keystore.IO.Storage_Block;
@@ -486,8 +516,8 @@ package body Keystore.Keys is
    end Set_Header_Key;
 
    procedure Set_Key (Manager      : in out Key_Manager;
-                      Password     : in Secret_Key;
-                      New_Password : in Secret_Key;
+                      Password     : in out Keystore.Passwords.Provider'Class;
+                      New_Password : in out Keystore.Passwords.Provider'Class;
                       Config       : in Keystore.Wallet_Config;
                       Mode         : in Mode_Type;
                       Ident        : in Wallet_Identifier;
