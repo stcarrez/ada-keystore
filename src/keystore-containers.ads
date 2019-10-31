@@ -18,6 +18,7 @@
 with Util.Streams;
 with Ada.Streams;
 with Keystore.IO.Refs;
+with Keystore.Passwords;
 with Keystore.Repository;
 
 private package Keystore.Containers is
@@ -29,7 +30,7 @@ private package Keystore.Containers is
                       Block         : in Keystore.IO.Storage_Block;
                       Wallet_Stream : in out Keystore.IO.Refs.Stream_Ref);
 
-      procedure Create (Password      : in Secret_Key;
+      procedure Create (Password      : in out Keystore.Passwords.Provider'Class;
                         Config        : in Wallet_Config;
                         Block         : in IO.Storage_Block;
                         Ident         : in Wallet_Identifier;
@@ -46,10 +47,10 @@ private package Keystore.Containers is
                                  Data      : out Ada.Streams.Stream_Element_Array;
                                  Last      : out Ada.Streams.Stream_Element_Offset);
 
-      procedure Unlock (Password  : in Secret_Key);
+      procedure Unlock (Password  : in out Keystore.Passwords.Provider'Class);
 
-      procedure Set_Key (Password     : in Secret_Key;
-                         New_Password : in Secret_Key;
+      procedure Set_Key (Password     : in out Keystore.Passwords.Provider'Class;
+                         New_Password : in out Keystore.Passwords.Provider'Class;
                          Config       : in Wallet_Config;
                          Mode         : in Mode_Type);
 
