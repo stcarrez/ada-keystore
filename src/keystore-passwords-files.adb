@@ -23,14 +23,18 @@ with Util.Systems.Types;
 with Util.Systems.Os;
 package body Keystore.Passwords.Files is
 
+   use Ada.Strings.Unbounded;
+   subtype Key_Length is Util.Encoders.Key_Length;
+
    --  GNAT 2019 complains about unused use type but gcc 7.4 fails if it not defined (st_mode).
    pragma Warnings (Off);
    use type Interfaces.C.unsigned;
    use type Interfaces.C.unsigned_short;
    pragma Warnings (On);
 
-   type Provider (Len : Natural) is limited new Keystore.Passwords.Provider with record
-      Path : String (1 .. Len);
+   type Provider (Len : Key_Length) is limited
+   new Keystore.Passwords.Provider with record
+      Password : Secret_Key (Length => Len);
    end record;
 
    --  Get the password through the Getter operation.
@@ -42,26 +46,16 @@ package body Keystore.Passwords.Files is
    --  Create a password provider that reads the file to build the password.
    --  ------------------------------
    function Create (Path : in String) return Provider_Access is
-   begin
-      return new Provider '(Len => Path'Length, Path => Path);
-   end Create;
-
-   --  ------------------------------
-   --  Get the password through the Getter operation.
-   --  ------------------------------
-   overriding
-   procedure Get_Password (From   : in Provider;
-                           Getter : not null access procedure (Password : in Secret_Key)) is
-      Content : Ada.Strings.Unbounded.Unbounded_String;
-      Path    : Interfaces.C.Strings.chars_ptr;
+      Content : Unbounded_String;
+      P       : Interfaces.C.Strings.chars_ptr;
       Stat    : aliased Util.Systems.Types.Stat_Type;
       Res     : Integer;
    begin
       --  Verify that the file is readable only by the current user.
-      Path := Interfaces.C.Strings.New_String (From.Path);
-      Res := Util.Systems.Os.Sys_Stat (Path => Path,
+      P := Interfaces.C.Strings.New_String (Path);
+      Res := Util.Systems.Os.Sys_Stat (Path => P,
                                        Stat => Stat'Access);
-      Interfaces.C.Strings.Free (Path);
+      Interfaces.C.Strings.Free (P);
       if Res /= 0 then
          raise Keystore.Bad_Password with "Password file does not exist";
       end if;
@@ -70,10 +64,10 @@ package body Keystore.Passwords.Files is
       end if;
 
       --  Verify that the parent directory is readable only by the current user.
-      Path := Interfaces.C.Strings.New_String (Ada.Directories.Containing_Directory (From.Path));
-      Res := Util.Systems.Os.Sys_Stat (Path => Path,
+      P := Interfaces.C.Strings.New_String (Ada.Directories.Containing_Directory (Path));
+      Res := Util.Systems.Os.Sys_Stat (Path => P,
                                        Stat => Stat'Access);
-      Interfaces.C.Strings.Free (Path);
+      Interfaces.C.Strings.Free (P);
       if Res /= 0 then
          raise Keystore.Bad_Password
          with "Directory that contains password file cannot be checked";
@@ -83,9 +77,21 @@ package body Keystore.Passwords.Files is
          with "Directory that contains password file is not safe";
       end if;
 
-      Util.Files.Read_File (Path => From.Path,
+      Util.Files.Read_File (Path => Path,
                             Into => Content);
-      Getter (Keystore.Create (Ada.Strings.Unbounded.To_String (Content)));
+
+      return new Provider '(Len      => Key_Length (Length (Content)),
+                            Password => Create (To_String (Content)));
+   end Create;
+
+   --  ------------------------------
+   --  Get the password through the Getter operation.
+   --  ------------------------------
+   overriding
+   procedure Get_Password (From   : in Provider;
+                           Getter : not null access procedure (Password : in Secret_Key)) is
+   begin
+      Getter (From.Password);
    end Get_Password;
 
 end Keystore.Passwords.Files;
