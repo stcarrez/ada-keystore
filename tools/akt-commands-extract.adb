@@ -15,7 +15,6 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Ada.Text_IO;
 with Ada.Command_Line;
 with Util.Streams.Raw;
 with Util.Systems.Os;

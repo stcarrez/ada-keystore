@@ -15,7 +15,6 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Ada.Text_IO;
 package body AKT.Commands.Create is
 
    use GNAT.Strings;

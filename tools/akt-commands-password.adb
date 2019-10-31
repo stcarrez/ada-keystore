@@ -58,8 +58,6 @@ package body AKT.Commands.Password is
    procedure Setup (Command : in out Command_Type;
                     Config  : in out GNAT.Command_Line.Command_Line_Configuration;
                     Context : in out Context_Type) is
-      pragma Unreferenced (Context);
-
       package GC renames GNAT.Command_Line;
    begin
       Setup (Config, Context);

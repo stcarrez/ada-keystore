@@ -15,7 +15,6 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Ada.Text_IO;
 with Ada.Directories;
 with Ada.Environment_Variables;
 with Ada.Command_Line;

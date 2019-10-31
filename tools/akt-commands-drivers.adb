@@ -26,6 +26,7 @@ package body AKT.Commands.Drivers is
    procedure Setup (Command : in out Command_Type;
                     Config  : in out GNAT.Command_Line.Command_Line_Configuration;
                     Context : in out Context_Type) is
+      pragma Unreferenced (Command);
    begin
       AKT.Commands.Setup (Config, Context);
    end Setup;
@@ -37,14 +38,10 @@ package body AKT.Commands.Drivers is
    procedure Help (Command   : in out Command_Type;
                    Name      : in String;
                    Context   : in out Context_Type) is
-      procedure Print_Help (Line : in String) is
-      begin
-         Ada.Text_IO.Put_Line (Line);
-      end Print_Help;
-
+      pragma Unreferenced (Command, Context);
    begin
       Util.Files.Read_File (Path    => "share/akt/resources/en/" & Name & ".txt",
-                            Process => Print_Help'Access);
+                            Process => Ada.Text_IO.Put_Line'Access);
    end Help;
 
 end AKT.Commands.Drivers;
