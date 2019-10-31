@@ -16,7 +16,7 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Ada.Streams;
-with AKT.Passwords;
+with Keystore.Passwords;
 with Util.Commands;
 with Keystore;
 private with Util.Log.Loggers;
@@ -46,7 +46,7 @@ package AKT.Commands is
 
    --  Open the keystore file and change the password.
    procedure Change_Password (Context      : in out Context_Type;
-                              New_Password : in Keystore.Secret_Key;
+                              New_Password : in out Keystore.Passwords.Provider'Class;
                               Config       : in Keystore.Wallet_Config;
                               Mode         : in Keystore.Mode_Type);
 
@@ -90,7 +90,7 @@ private
       Wallet            : Keystore.Files.Wallet_File;
       Info              : Keystore.Wallet_Info;
       Workers           : Keystore.Task_Manager_Access;
-      Provider          : AKT.Passwords.Provider_Access;
+      Provider          : Keystore.Passwords.Provider_Access;
       Worker_Count      : aliased Integer := 1;
       Version           : aliased Boolean := False;
       Verbose           : aliased Boolean := False;
