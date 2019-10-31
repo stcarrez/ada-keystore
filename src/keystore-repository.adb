@@ -74,7 +74,7 @@ package body Keystore.Repository is
    --  IO stream.  The wallet meta data is decrypted using AES-CTR using the given secret
    --  key and initial vector.
    procedure Open (Repository : in out Wallet_Repository;
-                   Password   : in Secret_Key;
+                   Password   : in out Keystore.Passwords.Provider'Class;
                    Ident      : in Wallet_Identifier;
                    Block      : in Keystore.IO.Storage_Block;
                    Keys       : in out Keystore.Keys.Key_Manager;
@@ -100,7 +100,7 @@ package body Keystore.Repository is
    end Open;
 
    procedure Create (Repository : in out Wallet_Repository;
-                     Password   : in Secret_Key;
+                     Password   : in out Keystore.Passwords.Provider'Class;
                      Config     : in Wallet_Config;
                      Block      : in IO.Storage_Block;
                      Ident      : in Wallet_Identifier;
