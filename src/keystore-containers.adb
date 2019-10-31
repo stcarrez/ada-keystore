@@ -35,7 +35,7 @@ package body Keystore.Containers is
          State := S_PROTECTED;
       end Open;
 
-      procedure Create (Password      : in Secret_Key;
+      procedure Create (Password      : in out Keystore.Passwords.Provider'Class;
                         Config        : in Wallet_Config;
                         Block         : in IO.Storage_Block;
                         Ident         : in Wallet_Identifier;
@@ -66,7 +66,7 @@ package body Keystore.Containers is
          Stream.Value.Get_Header_Data (Index, Kind, Data, Last);
       end Get_Header_Data;
 
-      procedure Unlock (Password  : in Secret_Key) is
+      procedure Unlock (Password  : in out Keystore.Passwords.Provider'Class) is
          Master : Keystore.Keys.Key_Manager;
       begin
          Keys.Set_Header_Key (Master, Header_Key);
@@ -75,8 +75,8 @@ package body Keystore.Containers is
          State := S_OPEN;
       end Unlock;
 
-      procedure Set_Key (Password     : in Secret_Key;
-                         New_Password : in Secret_Key;
+      procedure Set_Key (Password     : in out Keystore.Passwords.Provider'Class;
+                         New_Password : in out Keystore.Passwords.Provider'Class;
                          Config       : in Wallet_Config;
                          Mode         : in Mode_Type) is
          Master : Keystore.Keys.Key_Manager;
