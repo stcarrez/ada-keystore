@@ -36,10 +36,10 @@ with AKT.Commands.Password.Add;
 with AKT.Commands.Password.Set;
 with AKT.Commands.Password.Remove;
 with AKT.Commands.Info;
-with AKT.Passwords.Input;
-with AKT.Passwords.Files;
-with AKT.Passwords.Unsafe;
-with AKT.Passwords.Cmds;
+with Keystore.Passwords.Input;
+with Keystore.Passwords.Files;
+with Keystore.Passwords.Unsafe;
+with Keystore.Passwords.Cmds;
 package body AKT.Commands is
 
    use Ada.Strings.Unbounded;
@@ -88,7 +88,7 @@ package body AKT.Commands is
                            Data_Path => Context.Data_Path.all,
                            Info => Context.Info);
       if not Context.No_Password_Opt or else Context.Info.Header_Count = 0 then
-         Context.Wallet.Unlock (Context.Provider.Get_Password);
+         Context.Wallet.Unlock (Context.Provider.all);
       else
          Context.GPG.Unlock (Context.Wallet, Context.Info);
       end if;
@@ -104,22 +104,20 @@ package body AKT.Commands is
    --  Open the keystore file and change the password.
    --  ------------------------------
    procedure Change_Password (Context      : in out Context_Type;
-                              New_Password : in Keystore.Secret_Key;
+                              New_Password : in out Keystore.Passwords.Provider'Class;
                               Config       : in Keystore.Wallet_Config;
                               Mode         : in Keystore.Mode_Type) is
-      Password : constant Keystore.Secret_Key := Context.Provider.Get_Password;
    begin
-
       Context.Wallet.Open (Path => Context.Wallet_File.all,
                            Info => Context.Info);
 
       if not Context.No_Password_Opt or else Context.Info.Header_Count = 0 then
-         Context.Wallet.Unlock (Context.Provider.Get_Password);
+         Context.Wallet.Unlock (Context.Provider.all);
       else
          Context.GPG.Unlock (Context.Wallet, Context.Info);
       end if;
 
-      Context.Wallet.Set_Key (Password     => Password,
+      Context.Wallet.Set_Key (Password     => New_Password,
                               New_Password => New_Password,
                               Config       => Config,
                               Mode         => Mode);
@@ -263,22 +261,21 @@ package body AKT.Commands is
    procedure Setup_Password_Provider (Context : in out Context_Type) is
    begin
       if Context.Password_Askpass then
-         Context.Provider := Passwords.Cmds.Create ("ssh-askpass");
+         Context.Provider := Keystore.Passwords.Cmds.Create ("ssh-askpass");
       elsif Context.Password_Command'Length > 0 then
-         Context.Provider := Passwords.Cmds.Create (Context.Password_Command.all);
+         Context.Provider := Keystore.Passwords.Cmds.Create (Context.Password_Command.all);
       elsif Context.Password_File'Length > 0 then
-         Context.Provider := Passwords.Files.Create (Context.Password_File.all);
+         Context.Provider := Keystore.Passwords.Files.Create (Context.Password_File.all);
       elsif Context.Unsafe_Password'Length > 0 then
-         Context.Provider := Passwords.Unsafe.Create (Context.Unsafe_Password.all);
+         Context.Provider := Keystore.Passwords.Unsafe.Create (Context.Unsafe_Password.all);
       else
-         Context.Provider := AKT.Passwords.Input.Create (False);
+         Context.Provider := Keystore.Passwords.Input.Create (False);
          Context.No_Password_Opt := True;
       end if;
    end Setup_Password_Provider;
 
    procedure Parse (Context   : in out Context_Type;
                     Arguments : out Util.Commands.Dynamic_Argument_List) is
-      use GNAT.Strings;
    begin
       GC.Getopt (Config => Context.Command_Config);
       Util.Commands.Parsers.GNAT_Parser.Get_Arguments (Arguments, GC.Get_Argument);
@@ -399,8 +396,8 @@ package body AKT.Commands is
    procedure Finalize (Context : in out Context_Type) is
       use type Keystore.Task_Manager_Access;
       procedure Free is
-        new Ada.Unchecked_Deallocation (Object => AKT.Passwords.Provider'Class,
-                                        Name   => AKT.Passwords.Provider_Access);
+        new Ada.Unchecked_Deallocation (Object => Keystore.Passwords.Provider'Class,
+                                        Name   => Keystore.Passwords.Provider_Access);
       procedure Free is
         new Ada.Unchecked_Deallocation (Object => Keystore.Task_Manager,
                                         Name   => Keystore.Task_Manager_Access);
