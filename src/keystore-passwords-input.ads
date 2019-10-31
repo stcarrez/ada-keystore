@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---  akt-passwords-input -- Interactive based password provider
+--  keystore-passwords-input -- Interactive based password provider
 --  Copyright (C) 2019 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
@@ -15,9 +15,9 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-package AKT.Passwords.Input is
+package Keystore.Passwords.Input is
 
    --  Create a password provider that asks interactively for the password.
    function Create (Confirm : in Boolean) return Provider_Access;
 
-end AKT.Passwords.Input;
+end Keystore.Passwords.Input;
