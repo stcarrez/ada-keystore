@@ -19,6 +19,7 @@ with Util.Encoders.AES;
 with Util.Log.Loggers;
 with Keystore.IO.Refs;
 with Keystore.IO.Files;
+with Keystore.Passwords;
 package body Keystore.Files is
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Files");
@@ -31,20 +32,25 @@ package body Keystore.Files is
                    Password  : in Secret_Key;
                    Path      : in String;
                    Data_Path : in String := "") is
-      use IO.Files;
-      Block         : IO.Storage_Block;
-      Wallet_Stream : IO.Files.Wallet_Stream_Access;
-      Stream        : IO.Refs.Stream_Ref;
-   begin
-      Log.Debug ("Open keystore {0}", Path);
 
-      Block.Storage := IO.DEFAULT_STORAGE_ID;
-      Block.Block := 1;
-      Wallet_Stream := new IO.Files.Wallet_Stream;
-      Stream := IO.Refs.Create (Wallet_Stream.all'Access);
-      Wallet_Stream.Open (Path, Data_Path);
-      Container.Container.Open (1, Block, Stream);
-      Container.Container.Unlock (Password);
+      type Provider is new Keystore.Passwords.Provider with null record;
+
+      overriding
+      procedure Get_Password (From   : in Provider;
+                              Getter : not null access procedure (Password : in Secret_Key));
+      overriding
+      procedure Get_Password (From   : in Provider;
+                              Getter : not null access procedure (Password : in Secret_Key)) is
+      begin
+         Getter (Password);
+      end Get_Password;
+
+      Info              : Wallet_Info;
+      Password_Provider : Provider;
+   begin
+      Container.Open (Path, Data_Path, Info);
+
+      Container.Container.Unlock (Password_Provider);
       Log.Info ("Keystore {0} is opened", Path);
    end Open;
 
@@ -83,6 +89,29 @@ package body Keystore.Files is
                      Path      : in String;
                      Data_Path : in String := "";
                      Config    : in Wallet_Config := Secure_Config) is
+
+      type Provider is new Keystore.Passwords.Provider with null record;
+
+      overriding
+      procedure Get_Password (From   : in Provider;
+                              Getter : not null access procedure (Password : in Secret_Key));
+      overriding
+      procedure Get_Password (From   : in Provider;
+                              Getter : not null access procedure (Password : in Secret_Key)) is
+      begin
+         Getter (Password);
+      end Get_Password;
+
+      Password_Provider : Provider;
+   begin
+      Container.Create (Password_Provider, Path, Data_Path, Config);
+   end Create;
+
+   procedure Create (Container : in out Wallet_File;
+                     Password  : in out Keystore.Passwords.Provider'Class;
+                     Path      : in String;
+                     Data_Path : in String := "";
+                     Config    : in Wallet_Config := Secure_Config) is
       Block         : IO.Storage_Block;
       Wallet_Stream : IO.Files.Wallet_Stream_Access;
       Stream        : IO.Refs.Stream_Ref;
@@ -105,6 +134,26 @@ package body Keystore.Files is
    --  ------------------------------
    procedure Unlock (Container : in out Wallet_File;
                      Password  : in Secret_Key) is
+
+      type Provider is new Keystore.Passwords.Provider with null record;
+
+      overriding
+      procedure Get_Password (From   : in Provider;
+                              Getter : not null access procedure (Password : in Secret_Key));
+      overriding
+      procedure Get_Password (From   : in Provider;
+                              Getter : not null access procedure (Password : in Secret_Key)) is
+      begin
+         Getter (Password);
+      end Get_Password;
+
+      Password_Provider : Provider;
+   begin
+      Container.Container.Unlock (Password_Provider);
+   end Unlock;
+
+   procedure Unlock (Container : in out Wallet_File;
+                     Password  : in out Keystore.Passwords.Provider'Class) is
    begin
       Container.Container.Unlock (Password);
    end Unlock;
@@ -199,6 +248,42 @@ package body Keystore.Files is
                       New_Password : in Secret_Key;
                       Config       : in Wallet_Config;
                       Mode         : in Mode_Type) is
+
+      type Password_Provider is new Keystore.Passwords.Provider with null record;
+
+      overriding
+      procedure Get_Password (From   : in Password_Provider;
+                              Getter : not null access procedure (Password : in Secret_Key));
+      overriding
+      procedure Get_Password (From   : in Password_Provider;
+                              Getter : not null access procedure (Password : in Secret_Key)) is
+      begin
+         Getter (Password);
+      end Get_Password;
+
+      type New_Password_Provider is new Keystore.Passwords.Provider with null record;
+
+      overriding
+      procedure Get_Password (From   : in New_Password_Provider;
+                              Getter : not null access procedure (Password : in Secret_Key));
+      overriding
+      procedure Get_Password (From   : in New_Password_Provider;
+                              Getter : not null access procedure (Password : in Secret_Key)) is
+      begin
+         Getter (New_Password);
+      end Get_Password;
+
+      Password_P     : Password_Provider;
+      New_Password_P : New_Password_Provider;
+   begin
+      Container.Container.Set_Key (Password_P, New_Password_P, Config, Mode);
+   end Set_Key;
+
+   procedure Set_Key (Container    : in out Wallet_File;
+                      Password     : in out Keystore.Passwords.Provider'Class;
+                      New_Passowrd : in out Keystore.Passwords.Provider'Class;
+                      Config       : in Wallet_Config := Secure_Config;
+                      Mode         : in Mode_Type := KEY_REPLACE) is
    begin
       Container.Container.Set_Key (Password, New_Password, Config, Mode);
    end Set_Key;
