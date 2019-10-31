@@ -285,7 +285,7 @@ package body Keystore.Files is
 
    procedure Set_Key (Container    : in out Wallet_File;
                       Password     : in out Keystore.Passwords.Provider'Class;
-                      New_Passowrd : in out Keystore.Passwords.Provider'Class;
+                      New_Password : in out Keystore.Passwords.Provider'Class;
                       Config       : in Wallet_Config := Secure_Config;
                       Mode         : in Mode_Type := KEY_REPLACE) is
    begin
