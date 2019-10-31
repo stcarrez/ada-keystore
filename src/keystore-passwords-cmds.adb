@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---  akt-passwords-cmds -- External command based password provider
+--  keystore-passwords-cmds -- External command based password provider
 --  Copyright (C) 2019 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
@@ -19,15 +19,16 @@ with Ada.Strings.Unbounded;
 with Util.Processes;
 with Util.Streams.Pipes;
 with Util.Streams.Buffered;
-package body AKT.Passwords.Cmds is
+package body Keystore.Passwords.Cmds is
 
-   type Provider (Len : Natural) is limited new AKT.Passwords.Provider with record
+   type Provider (Len : Natural) is limited new Keystore.Passwords.Provider with record
       Command : String (1 .. Len);
    end record;
 
-   --  Get the password and return it as a secret key.
+   --  Get the password through the Getter operation.
    overriding
-   function Get_Password (From : in Provider) return Keystore.Secret_Key;
+   procedure Get_Password (From   : in Provider;
+                           Getter : not null access procedure (Password : in Secret_Key));
 
    --  ------------------------------
    --  Create a password provider that reads runs a command to get the password.
@@ -38,10 +39,11 @@ package body AKT.Passwords.Cmds is
    end Create;
 
    --  ------------------------------
-   --  Get the password and return it as a secret key.
+   --  Get the password through the Getter operation.
    --  ------------------------------
    overriding
-   function Get_Password (From : in Provider) return Keystore.Secret_Key is
+   procedure Get_Password (From   : in Provider;
+                           Getter : not null access procedure (Password : in Secret_Key)) is
       Pipe    : aliased Util.Streams.Pipes.Pipe_Stream;
       Buffer  : Util.Streams.Buffered.Input_Buffer_Stream;
       Content : Ada.Strings.Unbounded.Unbounded_String;
@@ -60,7 +62,7 @@ package body AKT.Passwords.Cmds is
          raise Keystore.Bad_Password with "Operation canceled";
       end if;
 
-      return Keystore.Create (Ada.Strings.Unbounded.To_String (Content));
+      Getter (Keystore.Create (Ada.Strings.Unbounded.To_String (Content)));
    end Get_Password;
 
-end AKT.Passwords.Cmds;
+end Keystore.Passwords.Cmds;
