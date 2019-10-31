@@ -128,6 +128,7 @@ package body Keystore.Keys is
                    Ident    : in Wallet_Identifier;
                    Buffer   : in out IO.Marshaller;
                    Root     : out Keystore.IO.Storage_Block;
+                   UUID     : out UUID_Type;
                    Stream   : in out IO.Wallet_Stream'Class);
 
    --  ------------------------------
@@ -367,10 +368,10 @@ package body Keystore.Keys is
                    Ident    : in Wallet_Identifier;
                    Buffer   : in out IO.Marshaller;
                    Root     : out Keystore.IO.Storage_Block;
+                   UUID     : out UUID_Type;
                    Stream   : in out IO.Wallet_Stream'Class) is
       Value   : Interfaces.Unsigned_32;
       Size    : IO.Block_Index;
-      UUID    : UUID_Type;
    begin
       Buffer.Buffer := Buffers.Allocate (Block);
       Manager.Header_Block := Block;
@@ -430,8 +431,9 @@ package body Keystore.Keys is
 
       Value   : Interfaces.Unsigned_32;
       Buffer  : Marshallers.Marshaller;
+      UUID    : UUID_Type;
    begin
-      Load (Manager, Block, Ident, Buffer, Root, Stream);
+      Load (Manager, Block, Ident, Buffer, Root, UUID, Stream);
 
       if Password in Keystore.Passwords.Slot_Provider'Class then
          while Passwords.Slot_Provider'Class (Password).Has_Password loop
@@ -545,7 +547,7 @@ package body Keystore.Keys is
       end Find_Free_Slot;
 
    begin
-      Load (Manager, Block, Ident, Buffer, Root, Stream);
+      Load (Manager, Block, Ident, Buffer, Root, Local_Config.UUID, Stream);
 
       for Slot in Key_Slot'Range loop
          Buffer.Pos := Key_Position (Slot);
