@@ -15,9 +15,9 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with AKT.Passwords.Files;
-with AKT.Passwords.Unsafe;
-with AKT.Passwords.Input;
+with Keystore.Passwords.Files;
+with Keystore.Passwords.Unsafe;
+with Keystore.Passwords.Input;
 package body AKT.Commands.Password is
 
    use GNAT.Strings;
@@ -33,21 +33,21 @@ package body AKT.Commands.Password is
       pragma Unreferenced (Name, Args);
 
       Config : Keystore.Wallet_Config := Keystore.Secure_Config;
-      New_Password_Provider : AKT.Passwords.Provider_Access;
+      New_Password_Provider : Keystore.Passwords.Provider_Access;
    begin
       Setup_Password_Provider (Context);
       if Command.Counter_Range /= null and then Command.Counter_Range'Length > 0 then
          Parse_Range (Command.Counter_Range.all, Config);
       end if;
       if Command.Password_File'Length > 0 then
-         New_Password_Provider := Passwords.Files.Create (Command.Password_File.all);
-      elsif Context.Unsafe_Password'Length > 0 then
-         New_Password_Provider := Passwords.Unsafe.Create (Command.Unsafe_Password.all);
+         New_Password_Provider := Keystore.Passwords.Files.Create (Command.Password_File.all);
+      elsif Command.Unsafe_Password'Length > 0 then
+         New_Password_Provider := Keystore.Passwords.Unsafe.Create (Command.Unsafe_Password.all);
       else
-         New_Password_Provider := AKT.Passwords.Input.Create (False);
+         New_Password_Provider := Keystore.Passwords.Input.Create (False);
       end if;
 
-      Context.Change_Password (New_Password => New_Password_Provider.Get_Password,
+      Context.Change_Password (New_Password => New_Password_Provider.all,
                                Config       => Config,
                                Mode         => Command.Mode);
    end Execute;
