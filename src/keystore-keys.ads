@@ -17,7 +17,6 @@
 -----------------------------------------------------------------------
 with Interfaces;
 with Util.Encoders.AES;
-with Util.Encoders.SHA256;
 with Keystore.IO;
 with Keystore.Random;
 with Keystore.Passwords;

@@ -318,7 +318,7 @@ package body Keystore.IO.Headers is
       --  Update the header data slot.
       Marshallers.Put_Buffer_Size (Buffer, Data'Length);
       Marshallers.Put_Unsigned_16 (Buffer, Interfaces.Unsigned_16 (Kind));
-      Buf.Data (Buffer.Pos + 1.. Buffer.Pos + Data'Length) := Data;
+      Buf.Data (Buffer.Pos + 1 .. Buffer.Pos + Data'Length) := Data;
 
       --  Update the header data count.
       if Index > Header.Data_Count then

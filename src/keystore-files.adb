@@ -19,7 +19,6 @@ with Util.Encoders.AES;
 with Util.Log.Loggers;
 with Keystore.IO.Refs;
 with Keystore.IO.Files;
-with Keystore.Passwords;
 package body Keystore.Files is
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Files");
@@ -41,6 +40,7 @@ package body Keystore.Files is
       overriding
       procedure Get_Password (From   : in Provider;
                               Getter : not null access procedure (Password : in Secret_Key)) is
+         pragma Unreferenced (From);
       begin
          Getter (Password);
       end Get_Password;
@@ -98,6 +98,7 @@ package body Keystore.Files is
       overriding
       procedure Get_Password (From   : in Provider;
                               Getter : not null access procedure (Password : in Secret_Key)) is
+         pragma Unreferenced (From);
       begin
          Getter (Password);
       end Get_Password;
@@ -143,6 +144,7 @@ package body Keystore.Files is
       overriding
       procedure Get_Password (From   : in Provider;
                               Getter : not null access procedure (Password : in Secret_Key)) is
+         pragma Unreferenced (From);
       begin
          Getter (Password);
       end Get_Password;
@@ -257,6 +259,7 @@ package body Keystore.Files is
       overriding
       procedure Get_Password (From   : in Password_Provider;
                               Getter : not null access procedure (Password : in Secret_Key)) is
+         pragma Unreferenced (From);
       begin
          Getter (Password);
       end Get_Password;
@@ -269,6 +272,7 @@ package body Keystore.Files is
       overriding
       procedure Get_Password (From   : in New_Password_Provider;
                               Getter : not null access procedure (Password : in Secret_Key)) is
+         pragma Unreferenced (From);
       begin
          Getter (New_Password);
       end Get_Password;

@@ -17,6 +17,7 @@
 -----------------------------------------------------------------------
 with Ada.Streams;
 with Util.Log.Loggers;
+with Util.Encoders.SHA256;
 with Util.Encoders.HMAC.SHA256;
 with Util.Encoders.KDF.PBKDF2_HMAC_SHA256;
 with Keystore.Logs;
@@ -287,7 +288,7 @@ package body Keystore.Keys is
       begin
          PBKDF2_HMAC_SHA256 (Password => Secret,
                              Salt     => Salt_IV,
-                             Counter  => Positive (Counter_IV),
+                             Counter  => Counter_IV,
                              Result   => Lock_IV);
       end Get_Password;
 
