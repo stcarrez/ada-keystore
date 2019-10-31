@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---  akt-passwords-unsafe -- Command line based password provider
+--  keystore-passwords-unsafe -- Unsafe password provider
 --  Copyright (C) 2019 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
@@ -15,9 +15,9 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-package AKT.Passwords.Unsafe is
+package Keystore.Passwords.Unsafe is
 
    --  Create a unsafe command line base password provider.
    function Create (Password : in String) return Provider_Access;
 
-end AKT.Passwords.Unsafe;
+end Keystore.Passwords.Unsafe;
