@@ -76,7 +76,7 @@ package body AKT.Commands.Create is
 
       else
          Keystore.Files.Create (Container => Context.Wallet,
-                                Password  => Context.Provider.Get_Password,
+                                Password  => Context.Provider.all,
                                 Path      => Context.Wallet_File.all,
                                 Data_Path => Context.Data_Path.all,
                                 Config    => Config);
