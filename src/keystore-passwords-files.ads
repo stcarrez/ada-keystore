@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---  akt-passwords-files -- File based password provider
+--  keystore-passwords-files -- File based password provider
 --  Copyright (C) 2019 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
@@ -16,9 +16,9 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 
-package AKT.Passwords.Files is
+package Keystore.Passwords.Files is
 
    --  Create a password provider that reads the file to build the password.
    function Create (Path : in String) return Provider_Access;
 
-end AKT.Passwords.Files;
+end Keystore.Passwords.Files;
