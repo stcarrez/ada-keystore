@@ -15,6 +15,7 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
+with Keystore.Passwords;
 private with Keystore.Containers;
 package Keystore.Files is
 
@@ -48,10 +49,23 @@ package Keystore.Files is
      Pre  => not Container.Is_Open,
      Post => Container.Is_Open;
 
+   procedure Create (Container : in out Wallet_File;
+                     Password  : in out Keystore.Passwords.Provider'Class;
+                     Path      : in String;
+                     Data_Path : in String := "";
+                     Config    : in Wallet_Config := Secure_Config) with
+     Pre  => not Container.Is_Open,
+     Post => Container.Is_Open;
+
    --  Unlock the wallet with the password.
    --  Raises the Bad_Password exception if no key slot match the password.
    procedure Unlock (Container : in out Wallet_File;
                      Password  : in Secret_Key) with
+     Pre  => Container.State = S_PROTECTED,
+     Post => Container.Is_Open;
+
+   procedure Unlock (Container : in out Wallet_File;
+                     Password  : in out Keystore.Passwords.Provider'Class) with
      Pre  => Container.State = S_PROTECTED,
      Post => Container.Is_Open;
 
@@ -113,6 +127,13 @@ package Keystore.Files is
                       Config       : in Wallet_Config;
                       Mode         : in Mode_Type) with
      Pre => Container.Is_Open;
+
+   procedure Set_Key (Container    : in out Wallet_File;
+                      Password     : in out Keystore.Passwords.Provider'Class;
+                      New_Password : in out Keystore.Passwords.Provider'Class;
+                      Config       : in Wallet_Config := Secure_Config;
+                      Mode         : in Mode_Type := KEY_REPLACE) with
+     Pre'Class => Container.Is_Open;
 
    --  Return True if the container contains the given named entry.
    overriding
