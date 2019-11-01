@@ -84,7 +84,7 @@ package body Keystore.Repository is
       Repository.Stream := Stream;
       Repository.Next_Id := 1;
       Keystore.Keys.Open (Keys, Password, Ident, Block,
-                          Repository.Root, Repository.Config, Stream.all);
+                          Repository.Root, Repository.Config, null, Stream.all);
       Repository.Workers := Workers.Create (Repository'Unchecked_Access, null, 1).all'Access;
 
       Entries.Load_Complete_Directory (Repository, Repository.Root);
