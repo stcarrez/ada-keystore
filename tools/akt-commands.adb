@@ -114,14 +114,20 @@ package body AKT.Commands is
 
       if not Context.No_Password_Opt or else Context.Info.Header_Count = 0 then
          Context.Wallet.Unlock (Context.Provider.all);
+
+         Context.Wallet.Set_Key (Password     => Context.Provider.all,
+                                 New_Password => New_Password,
+                                 Config       => Config,
+                                 Mode         => Mode);
       else
+         Context.GPG.Load_Secrets (Context.Wallet);
          Context.Wallet.Unlock (Context.GPG);
+         Context.Wallet.Set_Key (Password     => Context.GPG,
+                                 New_Password => New_Password,
+                                 Config       => Config,
+                                 Mode         => Mode);
       end if;
 
-      Context.Wallet.Set_Key (Password     => New_Password,
-                              New_Password => New_Password,
-                              Config       => Config,
-                              Mode         => Mode);
    end Change_Password;
 
    --  ------------------------------
