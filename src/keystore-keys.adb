@@ -314,7 +314,11 @@ package body Keystore.Keys is
 
       Buffer.Pos := Key_Position (Slot);
       Buf.Data (Buffer.Pos + 1 .. Buffer.Pos + WH_KEY_SIZE) := (others => 0);
-      Marshallers.Put_Unsigned_32 (Buffer, WH_KEY_PBKDF2);
+      if Password in Passwords.Slot_Provider'Class then
+         Marshallers.Put_Unsigned_32 (Buffer, WH_KEY_GPG2);
+      else
+         Marshallers.Put_Unsigned_32 (Buffer, WH_KEY_PBKDF2);
+      end if;
       Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Lock_Key.Length));
       Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Counter_Key));
       Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Counter_IV));
