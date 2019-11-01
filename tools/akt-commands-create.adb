@@ -62,16 +62,15 @@ package body AKT.Commands.Create is
 
       if Command.Gpg_User /= null and Command.Gpg_User'Length > 0 then
 
-         Context.Set_GPG_User (Command.Gpg_User.all);
-         Context.Create_GPG_Secret;
+         Context.GPG.Create_Secret;
 
          Keystore.Files.Create (Container => Context.Wallet,
-                                Password  => Context.Get_GPG_Secret,
+                                Password  => Context.GPG,
                                 Path      => Context.Wallet_File.all,
                                 Data_Path => Context.Data_Path.all,
                                 Config    => Config);
 
-         Context.Save_GPG_Secret;
+         Context.GPG.Save_Secret (Command.Gpg_User.all, Context.Wallet);
 
       else
          Keystore.Files.Create (Container => Context.Wallet,
