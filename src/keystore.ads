@@ -69,6 +69,7 @@ private with Util.Executors;
 package Keystore is
 
    subtype Secret_Key is Util.Encoders.Secret_Key;
+   subtype Key_Length is Util.Encoders.Key_Length;
 
    function Create (Password : in String) return Secret_Key
      renames Util.Encoders.Create;
