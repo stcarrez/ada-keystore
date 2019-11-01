@@ -22,7 +22,6 @@ with Util.Encoders.HMAC.SHA256;
 with Util.Encoders.KDF.PBKDF2_HMAC_SHA256;
 with Keystore.Logs;
 with Keystore.Buffers;
-with Keystore.Marshallers;
 
 --  === Master keys ===
 --  Wallet header encrypted with the parent wallet id
@@ -431,26 +430,35 @@ package body Keystore.Keys is
                    Block    : in Keystore.IO.Storage_Block;
                    Root     : out Keystore.IO.Storage_Block;
                    Config   : in out Wallet_Config;
+                   Process  : access procedure (Buffer : in out Marshallers.Marshaller;
+                                                Slot   : in Key_Slot);
                    Stream   : in out IO.Wallet_Stream'Class) is
 
       Value   : Interfaces.Unsigned_32;
       Buffer  : Marshallers.Marshaller;
-      UUID    : UUID_Type;
    begin
-      Load (Manager, Block, Ident, Buffer, Root, UUID, Stream);
+      Load (Manager, Block, Ident, Buffer, Root, Config.UUID, Stream);
 
       if Password in Keystore.Passwords.Slot_Provider'Class then
          while Passwords.Slot_Provider'Class (Password).Has_Password loop
-            Buffer.Pos := Key_Position (Passwords.Slot_Provider'Class (Password).Get_Key_Slot);
-            Value := Marshallers.Get_Unsigned_32 (Buffer);
-            if Value = WH_KEY_GPG2 then
+            declare
+               Slot : constant Key_Slot
+                 := Passwords.Slot_Provider'Class (Password).Get_Key_Slot;
+            begin
+               Buffer.Pos := Key_Position (Slot);
                Value := Marshallers.Get_Unsigned_32 (Buffer);
-               if Value > 0 and Value <= WH_KEY_SIZE then
-                  if Verify (Manager, Buffer, Password, Positive (Value), Config) then
-                     return;
+               if Value = WH_KEY_GPG2 then
+                  Value := Marshallers.Get_Unsigned_32 (Buffer);
+                  if Value > 0 and Value <= WH_KEY_SIZE then
+                     if Verify (Manager, Buffer, Password, Positive (Value), Config) then
+                        if Process /= null then
+                           Process (Buffer, Slot);
+                        end if;
+                        return;
+                     end if;
                   end if;
                end if;
-            end if;
+            end;
             Passwords.Slot_Provider'Class (Password).Next;
          end loop;
       else
@@ -461,6 +469,9 @@ package body Keystore.Keys is
                Value := Marshallers.Get_Unsigned_32 (Buffer);
                if Value > 0 and Value <= WH_KEY_SIZE then
                   if Verify (Manager, Buffer, Password, Positive (Value), Config) then
+                     if Process /= null then
+                        Process (Buffer, Slot);
+                     end if;
                      return;
                   end if;
                end if;
@@ -530,60 +541,55 @@ package body Keystore.Keys is
                       Ident        : in Wallet_Identifier;
                       Block        : in Keystore.IO.Storage_Block;
                       Stream       : in out IO.Wallet_Stream'Class) is
-      function Find_Free_Slot return Key_Slot;
 
-      Buffer       : Marshallers.Marshaller;
+      procedure Process (Buffer : in out Marshallers.Marshaller;
+                         Slot   : in Key_Slot);
+
       Local_Config : Wallet_Config;
       Root         : Keystore.IO.Storage_Block;
-      Value        : Interfaces.Unsigned_32;
 
-      function Find_Free_Slot return Key_Slot is
+      procedure Process (Buffer : in out Marshallers.Marshaller;
+                         Slot   : in Key_Slot) is
+         function Find_Free_Slot return Key_Slot;
+
+         function Find_Free_Slot return Key_Slot is
+            Value : Interfaces.Unsigned_32;
+         begin
+            for Slot in Key_Slot'Range loop
+               Buffer.Pos := Key_Position (Slot);
+               Value := Marshallers.Get_Unsigned_32 (Buffer);
+               if Value = 0 then
+                  return Slot;
+               end if;
+            end loop;
+            Log.Info ("No available free slot to add a new key");
+            raise No_Key_Slot;
+         end Find_Free_Slot;
+
       begin
-         for Slot in Key_Slot'Range loop
-            Buffer.Pos := Key_Position (Slot);
-            Value := Marshallers.Get_Unsigned_32 (Buffer);
-            if Value = 0 then
-               return Slot;
-            end if;
-         end loop;
-         Log.Info ("No available free slot to add a new key");
-         raise No_Key_Slot;
-      end Find_Free_Slot;
+         Local_Config.Min_Counter := Unsigned_32 (Config.Min_Counter);
+         Local_Config.Max_Counter := Unsigned_32 (Config.Max_Counter);
+         case Mode is
+            when KEY_ADD =>
+               Save_Key (Manager, Buffer, New_Password, Find_Free_Slot,
+                         Local_Config, Stream);
+
+            when KEY_REPLACE =>
+               Save_Key (Manager, Buffer, New_Password, Slot, Local_Config, Stream);
+
+            when KEY_REMOVE =>
+               Erase_Key (Manager, Buffer, Slot, Stream);
+
+            when KEY_REMOVE_LAST =>
+               Erase_Key (Manager, Buffer, Slot, Stream);
+
+         end case;
+         return;
+      end Process;
 
    begin
-      Load (Manager, Block, Ident, Buffer, Root, Local_Config.UUID, Stream);
-
-      for Slot in Key_Slot'Range loop
-         Buffer.Pos := Key_Position (Slot);
-         Value := Marshallers.Get_Unsigned_32 (Buffer);
-         if Value = WH_KEY_PBKDF2 then
-            Value := Marshallers.Get_Unsigned_32 (Buffer);
-            if Value > 0 and Value <= WH_KEY_SIZE then
-               if Verify (Manager, Buffer, Password, Positive (Value), Local_Config) then
-                  Local_Config.Min_Counter := Unsigned_32 (Config.Min_Counter);
-                  Local_Config.Max_Counter := Unsigned_32 (Config.Max_Counter);
-                  case Mode is
-                     when KEY_ADD =>
-                        Save_Key (Manager, Buffer, New_Password, Find_Free_Slot,
-                                  Local_Config, Stream);
-
-                     when KEY_REPLACE =>
-                        Save_Key (Manager, Buffer, New_Password, Slot, Local_Config, Stream);
-
-                     when KEY_REMOVE =>
-                        Erase_Key (Manager, Buffer, Slot, Stream);
-
-                     when KEY_REMOVE_LAST =>
-                        Erase_Key (Manager, Buffer, Slot, Stream);
-
-                  end case;
-                  return;
-               end if;
-            end if;
-         end if;
-      end loop;
-      Keystore.Logs.Info (Log, "No password match for wallet block{0}", Manager.Header_Block);
-      raise Bad_Password;
+      Open (Manager, Password, Ident, Block, Root, Local_Config,
+            Process'Access, Stream);
    end Set_Key;
 
 end Keystore.Keys;
