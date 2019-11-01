@@ -90,7 +90,8 @@ package body AKT.Commands is
       if not Context.No_Password_Opt or else Context.Info.Header_Count = 0 then
          Context.Wallet.Unlock (Context.Provider.all);
       else
-         Context.GPG.Unlock (Context.Wallet, Context.Info);
+         Context.GPG.Load_Secrets (Context.Wallet);
+         Context.Wallet.Unlock (Context.GPG);
       end if;
 
       if Use_Worker then
@@ -114,7 +115,7 @@ package body AKT.Commands is
       if not Context.No_Password_Opt or else Context.Info.Header_Count = 0 then
          Context.Wallet.Unlock (Context.Provider.all);
       else
-         Context.GPG.Unlock (Context.Wallet, Context.Info);
+         Context.Wallet.Unlock (Context.GPG);
       end if;
 
       Context.Wallet.Set_Key (Password     => New_Password,
@@ -142,9 +143,6 @@ package body AKT.Commands is
    procedure Initialize (Context : in out Context_Type) is
    begin
       Context.Worker_Count := Positive (System.Multiprocessors.Number_Of_CPUs);
-
-      Context.GPG.Encrypt_Command := To_Unbounded_String (AKT.GPG.ENCRYPT_COMMAND);
-      Context.GPG.Decrypt_Command := To_Unbounded_String (AKT.GPG.DECRYPT_COMMAND);
 
       GC.Set_Usage (Config => Context.Command_Config,
                     Usage  => "[switchs] command [arguments]",
@@ -353,44 +351,6 @@ package body AKT.Commands is
    begin
       return Context.Wallet_File.all;
    end Get_Keystore_Path;
-
-   procedure Set_GPG_User (Context : in out Context_Type;
-                           User    : in String) is
-   begin
-      Append (Context.GPG.Encrypt_Command, " -r ");
-      Append (Context.GPG.Encrypt_Command, User);
-   end Set_GPG_User;
-
-   --  ------------------------------
-   --  Create a new secret for the GPG password protection.
-   --  ------------------------------
-   procedure Create_GPG_Secret (Context : in out Context_Type) is
-   begin
-      Context.GPG.Generate_Secret;
-   end Create_GPG_Secret;
-
-   --  ------------------------------
-   --  Get the GPG secret to unlock the keystore.
-   --  ------------------------------
-   function Get_GPG_Secret (Context : in Context_Type) return Keystore.Secret_Key is
-   begin
-      return Context.GPG.Get_Secret;
-   end Get_GPG_Secret;
-
-   function Encrypt_GPG_Secret (Context : in Context_Type)
-                                return Ada.Streams.Stream_Element_Array is
-   begin
-      return Context.GPG.Encrypt_GPG_Secret;
-   end Encrypt_GPG_Secret;
-
-   --  ------------------------------
-   --  Save the GPG secret by encrypting it using the user's GPG key and storing
-   --  the encrypted data in the keystore data header.
-   --  ------------------------------
-   procedure Save_GPG_Secret (Context : in out Context_Type) is
-   begin
-      Context.GPG.Save_GPG_Secret (Context.Wallet);
-   end Save_GPG_Secret;
 
    overriding
    procedure Finalize (Context : in out Context_Type) is
