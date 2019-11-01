@@ -15,8 +15,8 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Ada.Streams;
 with Keystore.Passwords;
+with Keystore.Passwords.GPG;
 with Util.Commands;
 with Keystore;
 private with Util.Log.Loggers;
@@ -24,7 +24,6 @@ private with Keystore.Files;
 private with Ada.Finalization;
 private with GNAT.Command_Line;
 private with GNAT.Strings;
-private with AKT.GPG;
 package AKT.Commands is
 
    Error : exception;
@@ -64,22 +63,6 @@ package AKT.Commands is
    --  Get the keystore file path.
    function Get_Keystore_Path (Context : in Context_Type) return String;
 
-   procedure Set_GPG_User (Context : in out Context_Type;
-                           User    : in String);
-
-   --  Create a new secret for the GPG password protection.
-   procedure Create_GPG_Secret (Context : in out Context_Type);
-
-   --  Get the GPG secret to unlock the keystore.
-   function Get_GPG_Secret (Context : in Context_Type) return Keystore.Secret_Key;
-
-   function Encrypt_GPG_Secret (Context : in Context_Type)
-                                return Ada.Streams.Stream_Element_Array;
-
-   --  Save the GPG secret by encrypting it using the user's GPG key and storing
-   --  the encrypted data in the keystore data header.
-   procedure Save_GPG_Secret (Context : in out Context_Type);
-
 private
 
    Log     : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Commands");
@@ -106,7 +89,7 @@ private
       Password_Askpass  : aliased Boolean := False;
       No_Password_Opt   : Boolean := False;
       Command_Config    : GC.Command_Line_Configuration;
-      GPG               : AKT.GPG.Context_Type;
+      GPG               : Keystore.Passwords.GPG.Context_Type;
    end record;
 
    --  Initialize the commands.
