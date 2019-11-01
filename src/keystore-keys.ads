@@ -20,6 +20,7 @@ with Util.Encoders.AES;
 with Keystore.IO;
 with Keystore.Random;
 with Keystore.Passwords;
+with Keystore.Marshallers;
 private package Keystore.Keys is
 
    use type IO.Block_Index;
@@ -58,6 +59,8 @@ private package Keystore.Keys is
                    Block    : in Keystore.IO.Storage_Block;
                    Root     : out Keystore.IO.Storage_Block;
                    Config   : in out Wallet_Config;
+                   Process  : access procedure (Buffer : in out Marshallers.Marshaller;
+                                                Slot   : in Key_Slot);
                    Stream   : in out IO.Wallet_Stream'Class);
 
    --  Open the key manager and read the wallet header block.  Use the secret key
