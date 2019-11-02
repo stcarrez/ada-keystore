@@ -47,7 +47,8 @@ private package Keystore.Containers is
                                  Data      : out Ada.Streams.Stream_Element_Array;
                                  Last      : out Ada.Streams.Stream_Element_Offset);
 
-      procedure Unlock (Password  : in out Keystore.Passwords.Provider'Class);
+      procedure Unlock (Password  : in out Keystore.Passwords.Provider'Class;
+                        Slot      : out Key_Slot);
 
       procedure Set_Key (Password     : in out Keystore.Passwords.Provider'Class;
                          New_Password : in out Keystore.Passwords.Provider'Class;
