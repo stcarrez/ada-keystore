@@ -88,6 +88,17 @@ private package Keystore.Keys is
                       Block        : in Keystore.IO.Storage_Block;
                       Stream       : in out IO.Wallet_Stream'Class);
 
+   --  Remove the key from the key slot identified by `Slot`.  The password is necessary to
+   --  make sure a valid password is available.  The `Remove_Current` must be set to remove
+   --  the slot when it corresponds to the used password.
+   procedure Remove_Key (Manager        : in out Key_Manager;
+                         Password       : in out Keystore.Passwords.Provider'Class;
+                         Slot           : in Key_Slot;
+                         Remove_Current : in Boolean;
+                         Ident          : in Wallet_Identifier;
+                         Block          : in Keystore.IO.Storage_Block;
+                         Stream         : in out IO.Wallet_Stream'Class);
+
 private
 
    --  Size of a key slot.
