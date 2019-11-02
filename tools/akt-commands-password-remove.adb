@@ -49,7 +49,7 @@ package body AKT.Commands.Password.Remove is
                       Context   : in out Context_Type) is
       pragma Unreferenced (Name, Args);
 
-      Slot : Keystore.Key_Slot := Get_Slot (Command.Slot.all);
+      Slot : constant Keystore.Key_Slot := Get_Slot (Command.Slot.all);
    begin
       Setup_Password_Provider (Context);
 
@@ -71,6 +71,13 @@ package body AKT.Commands.Password.Remove is
       end if;
 
       Ada.Text_IO.Put_Line ("The password was successfully removed.");
+
+   exception
+      when Keystore.Used_Key_Slot =>
+         AKT.Commands.Log.Error ("Refusing to erase the key slot used by current password.");
+         AKT.Commands.Log.Error ("Use the --force option if you really want to erase this slot.");
+         raise Error;
+
    end Execute;
 
    --  ------------------------------
@@ -86,7 +93,7 @@ package body AKT.Commands.Password.Remove is
                         Output => Command.Force'Access,
                         Switch => "-f",
                         Long_Switch => "--force",
-                        Help   => "Force erase of password");
+                        Help   => "Force erase of password used to unlock the keystore");
       GC.Define_Switch (Config => Config,
                         Output => Command.Slot'Access,
                         Switch => "-s:",
