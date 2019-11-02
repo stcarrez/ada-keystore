@@ -66,12 +66,14 @@ package body Keystore.Containers is
          Stream.Value.Get_Header_Data (Index, Kind, Data, Last);
       end Get_Header_Data;
 
-      procedure Unlock (Password  : in out Keystore.Passwords.Provider'Class) is
+      procedure Unlock (Password  : in out Keystore.Passwords.Provider'Class;
+                        Slot      : out Key_Slot) is
          Master : Keystore.Keys.Key_Manager;
       begin
          Keys.Set_Header_Key (Master, Header_Key);
          Keystore.Repository.Open (Repository, Password, Master_Ident,
                                    Master_Block, Master, Stream.Value);
+         Slot := Repository.Get_Key_Slot;
          State := S_OPEN;
       end Unlock;
 
@@ -170,8 +172,7 @@ package body Keystore.Containers is
 
       procedure Get_Stats (Stats : out Wallet_Stats) is
       begin
-         Stats.UUID := Repository.Get_UUID;
-         Stats.Entry_Count := Repository.Get_Entry_Count;
+         Repository.Fill_Stats (Stats);
       end Get_Stats;
 
       procedure Close is
