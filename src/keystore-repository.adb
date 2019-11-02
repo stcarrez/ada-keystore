@@ -454,6 +454,14 @@ package body Keystore.Repository is
    end Get_UUID;
 
    --  ------------------------------
+   --  Get the key slot number that was used to unlock the keystore.
+   --  ------------------------------
+   function Get_Key_Slot (Repository : in Wallet_Repository) return Key_Slot is
+   begin
+      return Repository.Config.Slot;
+   end Get_Key_Slot;
+
+   --  ------------------------------
    --  Get the number of entries in the wallet.
    --  ------------------------------
    function Get_Entry_Count (Repository : in Wallet_Repository) return Natural is
