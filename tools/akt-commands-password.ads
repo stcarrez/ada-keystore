@@ -41,6 +41,7 @@ private
       Password_File     : aliased GNAT.Strings.String_Access;
       Password_Env      : aliased GNAT.Strings.String_Access;
       Unsafe_Password   : aliased GNAT.Strings.String_Access;
+      Gpg_User          : aliased GNAT.Strings.String_Access;
    end record;
 
 end AKT.Commands.Password;
