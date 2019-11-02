@@ -18,6 +18,27 @@
 with Ada.Text_IO;
 package body AKT.Commands.Password.Remove is
 
+   use type Keystore.Header_Slot_Count_Type;
+
+   function Get_Slot (Value : in String) return Keystore.Key_Slot;
+
+   function Get_Slot (Value : in String) return Keystore.Key_Slot is
+   begin
+      if Value = "" then
+         AKT.Commands.Log.Error ("Missing --slot SLOT option to indicate the key slot to erase");
+         raise Error;
+      end if;
+      begin
+         return Keystore.Key_Slot'Value (Value);
+
+      exception
+         when others =>
+            AKT.Commands.Log.Error ("Invalid key slot number. "
+                                    & "It must be a number in range 1..7.");
+            raise Error;
+      end;
+   end Get_Slot;
+
    --  ------------------------------
    --  Remove the wallet password.
    --  ------------------------------
@@ -27,18 +48,28 @@ package body AKT.Commands.Password.Remove is
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
       pragma Unreferenced (Name, Args);
+
+      Slot : Keystore.Key_Slot := Get_Slot (Command.Slot.all);
    begin
       Setup_Password_Provider (Context);
 
-      if Command.Force then
-         Context.Change_Password (New_Password => Context.Provider.all,
-                                  Config       => Keystore.Secure_Config,
-                                  Mode         => Keystore.KEY_REMOVE_LAST);
+      Context.Wallet.Open (Path => Context.Wallet_File.all,
+                           Info => Context.Info);
+
+      if not Context.No_Password_Opt or else Context.Info.Header_Count = 0 then
+         Context.Wallet.Unlock (Context.Provider.all, Context.Slot);
+
+         Context.Wallet.Remove_Key (Password => Context.Provider.all,
+                                    Slot     => Slot,
+                                    Force    => Command.Force);
       else
-         Context.Change_Password (New_Password => Context.Provider.all,
-                                  Config       => Keystore.Secure_Config,
-                                  Mode         => Keystore.KEY_REMOVE);
+         Context.GPG.Load_Secrets (Context.Wallet);
+         Context.Wallet.Unlock (Context.GPG, Context.Slot);
+         Context.Wallet.Remove_Key (Password => Context.GPG,
+                                    Slot     => Slot,
+                                    Force    => Command.Force);
       end if;
+
       Ada.Text_IO.Put_Line ("The password was successfully removed.");
    end Execute;
 
@@ -56,6 +87,12 @@ package body AKT.Commands.Password.Remove is
                         Switch => "-f",
                         Long_Switch => "--force",
                         Help   => "Force erase of password");
+      GC.Define_Switch (Config => Config,
+                        Output => Command.Slot'Access,
+                        Switch => "-s:",
+                        Long_Switch => "--slot:",
+                        Argument => "SLOT",
+                        Help   => "Defines the key slot to erase (1..7)");
    end Setup;
 
 end AKT.Commands.Password.Remove;
