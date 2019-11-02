@@ -39,17 +39,30 @@ package body AKT.Commands.Password is
       if Command.Counter_Range /= null and then Command.Counter_Range'Length > 0 then
          Parse_Range (Command.Counter_Range.all, Config);
       end if;
-      if Command.Password_File'Length > 0 then
-         New_Password_Provider := Keystore.Passwords.Files.Create (Command.Password_File.all);
-      elsif Command.Unsafe_Password'Length > 0 then
-         New_Password_Provider := Keystore.Passwords.Unsafe.Create (Command.Unsafe_Password.all);
-      else
-         New_Password_Provider := Keystore.Passwords.Input.Create (False);
-      end if;
 
-      Context.Change_Password (New_Password => New_Password_Provider.all,
-                               Config       => Config,
-                               Mode         => Command.Mode);
+      if Command.Gpg_User'Length > 0 then
+         declare
+            GPG : Keystore.Passwords.GPG.Context_Type;
+         begin
+            GPG.Create_Secret;
+            Context.Change_Password (New_Password => GPG,
+                                     Config       => Config,
+                                     Mode         => Command.Mode);
+            GPG.Save_Secret (Command.Gpg_User.all, Context.Wallet);
+         end;
+      else
+         if Command.Password_File'Length > 0 then
+            New_Password_Provider := Keystore.Passwords.Files.Create (Command.Password_File.all);
+         elsif Command.Unsafe_Password'Length > 0 then
+            New_Password_Provider := Keystore.Passwords.Unsafe.Create (Command.Unsafe_Password.all);
+         else
+            New_Password_Provider := Keystore.Passwords.Input.Create (False);
+         end if;
+
+         Context.Change_Password (New_Password => New_Password_Provider.all,
+                                  Config       => Config,
+                                  Mode         => Command.Mode);
+      end if;
    end Execute;
 
    --  ------------------------------
@@ -90,9 +103,14 @@ package body AKT.Commands.Password is
                         & " the password (not safe)");
       GC.Define_Switch (Config => Config,
                         Output => Command.Unsafe_Password'Access,
-                        Switch => "-p:",
                         Long_Switch => "--new-password=",
                         Help   => "The password is passed within the command line (not safe)");
+      GC.Define_Switch (Config => Config,
+                        Output => Command.Gpg_User'Access,
+                        Switch => "-g:",
+                        Long_Switch => "--gpg=",
+                        Argument => "USER",
+                        Help   => "Use gpg to protect the keystore access");
    end Setup;
 
 end AKT.Commands.Password;
