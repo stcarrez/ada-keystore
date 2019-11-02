@@ -536,7 +536,7 @@ package body Keystore.Tests is
                                 "Bad output for password-set command");
 
       --  Remove added password
-      T.Execute (Tool & " password-remove -k " & Path & " -p admin-second",
+      T.Execute (Tool & " password-remove -k " & Path & " -p admin-second --slot 2",
                  Result, 0);
 
       Util.Tests.Assert_Matches (T, "^The password was successfully removed.", Result,
