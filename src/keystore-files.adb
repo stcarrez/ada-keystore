@@ -47,10 +47,11 @@ package body Keystore.Files is
 
       Info              : Wallet_Info;
       Password_Provider : Provider;
+      Slot              : Key_Slot;
    begin
       Container.Open (Path, Data_Path, Info);
 
-      Container.Container.Unlock (Password_Provider);
+      Container.Container.Unlock (Password_Provider, Slot);
       Log.Info ("Keystore {0} is opened", Path);
    end Open;
 
@@ -150,14 +151,16 @@ package body Keystore.Files is
       end Get_Password;
 
       Password_Provider : Provider;
+      Slot              : Key_Slot;
    begin
-      Container.Container.Unlock (Password_Provider);
+      Container.Container.Unlock (Password_Provider, Slot);
    end Unlock;
 
    procedure Unlock (Container : in out Wallet_File;
-                     Password  : in out Keystore.Passwords.Provider'Class) is
+                     Password  : in out Keystore.Passwords.Provider'Class;
+                     Slot      : out Key_Slot) is
    begin
-      Container.Container.Unlock (Password);
+      Container.Container.Unlock (Password, Slot);
    end Unlock;
 
    --  ------------------------------
