@@ -15,8 +15,11 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
+with Ada.Text_IO;
 with Keystore.Verifier;
 package body AKT.Commands.Info is
+
+   use type Keystore.Header_Slot_Count_Type;
 
    --  ------------------------------
    --  List the value entries of the keystore.
@@ -28,9 +31,39 @@ package body AKT.Commands.Info is
                       Context   : in out Context_Type) is
       pragma Unreferenced (Command, Name, Args);
 
-      Path : constant String := Context.Get_Keystore_Path;
+      Path  : constant String := Context.Get_Keystore_Path;
+      Stats : Keystore.Wallet_Stats;
    begin
       Keystore.Verifier.Print_Information (Path);
+      Setup_Password_Provider (Context);
+
+      Context.Wallet.Open (Path => Path,
+                           Data_Path => Context.Data_Path.all,
+                           Info => Context.Info);
+      if Context.No_Password_Opt and Context.Info.Header_Count = 0 then
+         return;
+      end if;
+      if not Context.No_Password_Opt then
+         Context.Wallet.Unlock (Context.Provider.all, Context.Slot);
+      else
+         Context.GPG.Load_Secrets (Context.Wallet);
+         Context.Wallet.Unlock (Context.GPG, Context.Slot);
+      end if;
+
+      Context.Wallet.Get_Stats (Stats);
+      Ada.Text_IO.Put ("Key slots used: ");
+      Ada.Text_IO.Set_Col (29);
+      for Slot in Stats.Keys'Range loop
+         if Stats.Keys (Slot) then
+            Ada.Text_IO.Put (Keystore.Key_Slot'Image (Slot));
+         end if;
+      end loop;
+
+      Ada.Text_IO.New_Line;
+      Ada.Text_IO.Put ("Entry count: ");
+      Ada.Text_IO.Set_Col (29);
+      Ada.Text_IO.Put_Line (Natural'Image (Stats.Entry_Count));
+
    end Execute;
 
 end AKT.Commands.Info;
