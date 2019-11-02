@@ -118,6 +118,9 @@ package Keystore is
    --  Defines the key slot number.
    type Key_Slot is new Positive range 1 .. 7;
 
+   --  Defines which key slot is used.
+   type Key_Slot_Allocation is array (Key_Slot) of Boolean;
+
    type Header_Slot_Count_Type is new Natural range 0 .. 32;
    subtype Header_Slot_Index_Type is Header_Slot_Count_Type range 1 .. Header_Slot_Count_Type'Last;
 
@@ -192,6 +195,7 @@ package Keystore is
 
    type Wallet_Stats is record
       UUID             : UUID_Type;
+      Keys             : Key_Slot_Allocation := (others => False);
       Entry_Count      : Natural := 0;
       Total_Size       : Natural := 0;
       Block_Count      : Natural := 0;
