@@ -462,12 +462,15 @@ package body Keystore.Repository is
    end Get_Key_Slot;
 
    --  ------------------------------
-   --  Get the number of entries in the wallet.
+   --  Get stats information about the wallet (the number of entries, used key slots).
    --  ------------------------------
-   function Get_Entry_Count (Repository : in Wallet_Repository) return Natural is
+   procedure Fill_Stats (Repository : in Wallet_Repository;
+                         Stats      : in out Wallet_Stats) is
    begin
-      return Natural (Repository.Map.Length);
-   end Get_Entry_Count;
+      Stats.UUID := Repository.Config.UUID;
+      Stats.Keys := Repository.Config.Keys;
+      Stats.Entry_Count := Natural (Repository.Map.Length);
+   end Fill_Stats;
 
    procedure Close (Repository : in out Wallet_Repository) is
       Dir   : Wallet_Directory_Entry_Access;
