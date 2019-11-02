@@ -88,6 +88,16 @@ package body Keystore.Containers is
                                 Repository.Get_Identifier, Master_Block, Stream.Value.all);
       end Set_Key;
 
+      procedure Remove_Key (Password : in out Keystore.Passwords.Provider'Class;
+                            Slot     : in Key_Slot;
+                            Force    : in Boolean) is
+         Master : Keystore.Keys.Key_Manager;
+      begin
+         Keys.Set_Header_Key (Master, Header_Key);
+         Keystore.Keys.Remove_Key (Master, Password, Slot, Force,
+                                   Repository.Get_Identifier, Master_Block, Stream.Value.all);
+      end Remove_Key;
+
       function Get_State return State_Type is
       begin
          return State;
