@@ -439,6 +439,13 @@ package body Keystore.Keys is
    begin
       Load (Manager, Block, Ident, Buffer, Root, Config.UUID, Stream);
 
+      --  See which key slot is used.
+      for Slot in Key_Slot'Range loop
+         Buffer.Pos := Key_Position (Slot);
+         Value := Marshallers.Get_Unsigned_32 (Buffer);
+         Config.Keys (Slot) := Value /= 0;
+      end loop;
+
       if Password in Keystore.Passwords.Slot_Provider'Class then
          while Passwords.Slot_Provider'Class (Password).Has_Password loop
             declare
@@ -451,6 +458,7 @@ package body Keystore.Keys is
                   Value := Marshallers.Get_Unsigned_32 (Buffer);
                   if Value > 0 and Value <= WH_KEY_SIZE then
                      if Verify (Manager, Buffer, Password, Positive (Value), Config) then
+                        Config.Slot := Slot;
                         if Process /= null then
                            Process (Buffer, Slot);
                         end if;
@@ -584,12 +592,38 @@ package body Keystore.Keys is
                Erase_Key (Manager, Buffer, Slot, Stream);
 
          end case;
-         return;
       end Process;
 
    begin
       Open (Manager, Password, Ident, Block, Root, Local_Config,
             Process'Access, Stream);
    end Set_Key;
+
+   --  Remove the key from the key slot.
+   procedure Remove_Key (Manager        : in out Key_Manager;
+                         Password       : in out Keystore.Passwords.Provider'Class;
+                         Slot           : in Key_Slot;
+                         Remove_Current : in Boolean;
+                         Ident          : in Wallet_Identifier;
+                         Block          : in Keystore.IO.Storage_Block;
+                         Stream         : in out IO.Wallet_Stream'Class) is
+
+      procedure Process (Buffer : in out Marshallers.Marshaller;
+                         Password_Slot   : in Key_Slot);
+
+      procedure Process (Buffer : in out Marshallers.Marshaller;
+                         Password_Slot   : in Key_Slot) is
+      begin
+         if Slot /= Password_Slot or Remove_Current then
+            Erase_Key (Manager, Buffer, Slot, Stream);
+         end if;
+      end Process;
+
+      Local_Config : Wallet_Config;
+      Root         : Keystore.IO.Storage_Block;
+   begin
+      Open (Manager, Password, Ident, Block, Root, Local_Config,
+            Process'Access, Stream);
+   end Remove_Key;
 
 end Keystore.Keys;
