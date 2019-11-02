@@ -477,6 +477,7 @@ package body Keystore.Keys is
                Value := Marshallers.Get_Unsigned_32 (Buffer);
                if Value > 0 and Value <= WH_KEY_SIZE then
                   if Verify (Manager, Buffer, Password, Positive (Value), Config) then
+                     Config.Slot := Slot;
                      if Process /= null then
                         Process (Buffer, Slot);
                      end if;
