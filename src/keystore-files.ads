@@ -136,6 +136,14 @@ package Keystore.Files is
                       Mode         : in Mode_Type := KEY_REPLACE) with
      Pre'Class => Container.Is_Open;
 
+   --  Remove the key from the key slot identified by `Slot`.  The password is necessary to
+   --  make sure a valid password is available.  The `Remove_Current` must be set to remove
+   --  the slot when it corresponds to the used password.
+   procedure Remove_Key (Container : in out Wallet_File;
+                         Password  : in out Keystore.Passwords.Provider'Class;
+                         Slot      : in Key_Slot;
+                         Force     : in Boolean);
+
    --  Return True if the container contains the given named entry.
    overriding
    function Contains (Container : in Wallet_File;
