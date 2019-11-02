@@ -65,7 +65,8 @@ package Keystore.Files is
      Post => Container.Is_Open;
 
    procedure Unlock (Container : in out Wallet_File;
-                     Password  : in out Keystore.Passwords.Provider'Class) with
+                     Password  : in out Keystore.Passwords.Provider'Class;
+                     Slot      : out Key_Slot) with
      Pre  => Container.State = S_PROTECTED,
      Post => Container.Is_Open;
 
