@@ -18,7 +18,6 @@
 with System.Multiprocessors;
 with Ada.Command_Line;
 with Ada.Text_IO;
-with Ada.Strings.Unbounded;
 with Ada.Unchecked_Deallocation;
 with Util.Strings;
 with Util.Commands.Parsers.GNAT_Parser;
@@ -42,7 +41,6 @@ with Keystore.Passwords.Unsafe;
 with Keystore.Passwords.Cmds;
 package body AKT.Commands is
 
-   use Ada.Strings.Unbounded;
    use type Keystore.Header_Slot_Count_Type;
 
    Help_Command            : aliased AKT.Commands.Drivers.Help_Command_Type;
@@ -88,10 +86,10 @@ package body AKT.Commands is
                            Data_Path => Context.Data_Path.all,
                            Info => Context.Info);
       if not Context.No_Password_Opt or else Context.Info.Header_Count = 0 then
-         Context.Wallet.Unlock (Context.Provider.all);
+         Context.Wallet.Unlock (Context.Provider.all, Context.Slot);
       else
          Context.GPG.Load_Secrets (Context.Wallet);
-         Context.Wallet.Unlock (Context.GPG);
+         Context.Wallet.Unlock (Context.GPG, Context.Slot);
       end if;
 
       if Use_Worker then
@@ -113,7 +111,7 @@ package body AKT.Commands is
                            Info => Context.Info);
 
       if not Context.No_Password_Opt or else Context.Info.Header_Count = 0 then
-         Context.Wallet.Unlock (Context.Provider.all);
+         Context.Wallet.Unlock (Context.Provider.all, Context.Slot);
 
          Context.Wallet.Set_Key (Password     => Context.Provider.all,
                                  New_Password => New_Password,
@@ -121,7 +119,7 @@ package body AKT.Commands is
                                  Mode         => Mode);
       else
          Context.GPG.Load_Secrets (Context.Wallet);
-         Context.Wallet.Unlock (Context.GPG);
+         Context.Wallet.Unlock (Context.GPG, Context.Slot);
          Context.Wallet.Set_Key (Password     => Context.GPG,
                                  New_Password => New_Password,
                                  Config       => Config,
