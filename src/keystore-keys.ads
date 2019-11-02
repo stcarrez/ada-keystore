@@ -42,6 +42,8 @@ private package Keystore.Keys is
 
    type Wallet_Config is limited record
       UUID        : UUID_Type;
+      Keys        : Key_Slot_Allocation := (others => False);
+      Slot        : Key_Slot;
       Data        : Cryptor;
       Dir         : Cryptor;
       Key         : Cryptor;
@@ -63,8 +65,7 @@ private package Keystore.Keys is
                                                 Slot   : in Key_Slot);
                    Stream   : in out IO.Wallet_Stream'Class);
 
-   --  Open the key manager and read the wallet header block.  Use the secret key
-   --  to decrypt/encrypt the wallet header block.
+   --  Create the wallet key block.
    procedure Create (Manager  : in out Key_Manager;
                      Password : in out Passwords.Provider'Class;
                      Slot     : in Key_Slot;
@@ -77,6 +78,7 @@ private package Keystore.Keys is
    procedure Set_Header_Key (Manager  : in out Key_Manager;
                              Key      : in Secret_Key);
 
+   --  Set a new key
    procedure Set_Key (Manager      : in out Key_Manager;
                       Password     : in out Keystore.Passwords.Provider'Class;
                       New_Password : in out Keystore.Passwords.Provider'Class;
