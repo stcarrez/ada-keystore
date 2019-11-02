@@ -130,6 +130,9 @@ private package Keystore.Repository is
    --  Get the keystore UUID.
    function Get_UUID (Repository : in Wallet_Repository) return UUID_Type;
 
+   --  Get the key slot number that was used to unlock the keystore.
+   function Get_Key_Slot (Repository : in Wallet_Repository) return Key_Slot;
+
    --  Get the number of entries in the wallet.
    function Get_Entry_Count (Repository : in Wallet_Repository) return Natural;
 
