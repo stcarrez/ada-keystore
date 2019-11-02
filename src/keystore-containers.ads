@@ -55,6 +55,10 @@ private package Keystore.Containers is
                          Config       : in Wallet_Config;
                          Mode         : in Mode_Type);
 
+      procedure Remove_Key (Password : in out Keystore.Passwords.Provider'Class;
+                            Slot     : in Key_Slot;
+                            Force    : in Boolean);
+
       function Contains (Name   : in String) return Boolean;
 
       procedure Add (Name    : in String;
