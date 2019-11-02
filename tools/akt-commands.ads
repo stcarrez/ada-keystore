@@ -74,6 +74,7 @@ private
       Info              : Keystore.Wallet_Info;
       Workers           : Keystore.Task_Manager_Access;
       Provider          : Keystore.Passwords.Provider_Access;
+      Slot              : Keystore.Key_Slot;
       Worker_Count      : aliased Integer := 1;
       Version           : aliased Boolean := False;
       Verbose           : aliased Boolean := False;
