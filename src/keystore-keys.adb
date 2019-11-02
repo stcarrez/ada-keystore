@@ -621,6 +621,9 @@ package body Keystore.Keys is
       begin
          if Slot /= Password_Slot or Remove_Current then
             Erase_Key (Manager, Buffer, Slot, Stream);
+         else
+            Log.Info ("Refusing to delete key slot used by current password");
+            raise Used_Key_Slot;
          end if;
       end Process;
 
