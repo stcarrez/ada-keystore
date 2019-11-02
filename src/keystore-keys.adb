@@ -600,7 +600,11 @@ package body Keystore.Keys is
             Process'Access, Stream);
    end Set_Key;
 
-   --  Remove the key from the key slot.
+   --  ------------------------------
+   --  Remove the key from the key slot identified by `Slot`.  The password is necessary to
+   --  make sure a valid password is available.  The `Remove_Current` must be set to remove
+   --  the slot when it corresponds to the used password.
+   --  ------------------------------
    procedure Remove_Key (Manager        : in out Key_Manager;
                          Password       : in out Keystore.Passwords.Provider'Class;
                          Slot           : in Key_Slot;
