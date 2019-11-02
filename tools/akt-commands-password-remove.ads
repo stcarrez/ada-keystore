@@ -36,7 +36,8 @@ package AKT.Commands.Password.Remove is
 private
 
    type Command_Type is new AKT.Commands.Drivers.Command_Type with record
-      Force             : aliased Boolean := False;
+      Force    : aliased Boolean := False;
+      Slot     : aliased GNAT.Strings.String_Access;
    end record;
 
 end AKT.Commands.Password.Remove;
