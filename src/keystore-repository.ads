@@ -133,8 +133,9 @@ private package Keystore.Repository is
    --  Get the key slot number that was used to unlock the keystore.
    function Get_Key_Slot (Repository : in Wallet_Repository) return Key_Slot;
 
-   --  Get the number of entries in the wallet.
-   function Get_Entry_Count (Repository : in Wallet_Repository) return Natural;
+   --  Get stats information about the wallet (the number of entries, used key slots).
+   procedure Fill_Stats (Repository : in Wallet_Repository;
+                         Stats      : in out Wallet_Stats);
 
    procedure Set_Work_Manager (Repository : in out Wallet_Repository;
                                Workers    : in Keystore.Task_Manager_Access);
