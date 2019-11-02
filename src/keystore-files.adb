@@ -296,6 +296,19 @@ package body Keystore.Files is
    end Set_Key;
 
    --  ------------------------------
+   --  Remove the key from the key slot identified by `Slot`.  The password is necessary to
+   --  make sure a valid password is available.  The `Remove_Current` must be set to remove
+   --  the slot when it corresponds to the used password.
+   --  ------------------------------
+   procedure Remove_Key (Container : in out Wallet_File;
+                         Password  : in out Keystore.Passwords.Provider'Class;
+                         Slot      : in Key_Slot;
+                         Force     : in Boolean) is
+   begin
+      Container.Container.Remove_Key (Password, Slot, Force);
+   end Remove_Key;
+
+   --  ------------------------------
    --  Return True if the container contains the given named entry.
    --  ------------------------------
    overriding
