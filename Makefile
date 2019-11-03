@@ -20,7 +20,7 @@ tools:  tools/akt-configs.ads
 	$(GNATMAKE) $(GPRFLAGS) -p -P$(NAME)_tools $(MAKE_ARGS)
 
 tools/akt-configs.ads:   Makefile.conf tools/akt-configs.gpb
-	gnatprep -DCONFIG_DIR='"$(config_dir)/base"' -DVERSION='"$(VERSION)"' \
+	gnatprep -DPREFIX='"${prefix}"' -DVERSION='"$(VERSION)"' \
 		  tools/akt-configs.gpb tools/akt-configs.ads
 
 install::
@@ -30,6 +30,8 @@ install::
 	$(INSTALL) docs/akt.1 $(DESTDIR)$(prefix)/share/man/man1/akt.1
 	(cd share && tar --exclude='*~' -cf - .) \
        | (cd $(DESTDIR)$(prefix)/share/ && tar xf -)
+	mkdir -p $(DESTDIR)$(prefix)/share/locale/fr/LC_MESSAGES
+	$(INSTALL) po/fr.mo $(DESTDIR)$(prefix)/share/locale/fr/LC_MESSAGES/akt.mo
 
 ifeq ($(HAVE_GTK),yes)
 build:: gtk
