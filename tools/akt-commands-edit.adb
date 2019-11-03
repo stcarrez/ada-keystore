@@ -59,7 +59,7 @@ package body AKT.Commands.Edit is
                                       Mode  => 8#600#);
       Interfaces.C.Strings.Free (P);
       if Fd < 0 then
-         AKT.Commands.Log.Error ("Cannot create file for the editor");
+         AKT.Commands.Log.Error (-("Cannot create file for the editor"));
          raise Error;
       end if;
       File.Initialize (Fd);
@@ -83,7 +83,7 @@ package body AKT.Commands.Edit is
                                       Mode  => 0);
       Interfaces.C.Strings.Free (P);
       if Fd < 0 then
-         AKT.Commands.Log.Error ("Cannot read the editor's output");
+         AKT.Commands.Log.Error (-("Cannot read the editor's output"));
          raise Error;
       end if;
       File.Initialize (Fd);
@@ -131,7 +131,7 @@ package body AKT.Commands.Edit is
       Result := Util.Systems.Os.Sys_Chmod (P, 8#0700#);
       Interfaces.C.Strings.Free (P);
       if Result /= 0 then
-         AKT.Commands.Log.Error ("Cannot set the permission of {0}", Path);
+         AKT.Commands.Log.Error (-("Cannot set the permission of {0}"), Path);
          raise Error;
       end if;
    end Make_Directory;
@@ -174,7 +174,7 @@ package body AKT.Commands.Edit is
             Util.Processes.Spawn (Proc, Editor & " " & Path);
             Util.Processes.Wait (Proc);
             if Util.Processes.Get_Exit_Status (Proc) /= 0 then
-               AKT.Commands.Log.Error ("Editor exited with status{0}",
+               AKT.Commands.Log.Error (-("Editor exited with status{0}"),
                                        Natural'Image (Util.Processes.Get_Exit_Status (Proc)));
                Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
             else
@@ -201,7 +201,7 @@ package body AKT.Commands.Edit is
    begin
       Setup (Config, Context);
       GC.Define_Switch (Config, Command.Editor'Access,
-                        "-e:", "--editor=", "Define the editor command to use");
+                        "-e:", "--editor=", -("Define the editor command to use"));
    end Setup;
 
 end AKT.Commands.Edit;
