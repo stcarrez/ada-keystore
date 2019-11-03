@@ -41,38 +41,38 @@ exception
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
    when Keystore.Bad_Password =>
-      Log.Error ("Invalid password to unlock the keystore file");
+      Log.Error (-("Invalid password to unlock the keystore file"));
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
    when Keystore.No_Key_Slot =>
-      Log.Error ("There is no available key slot to add the password");
+      Log.Error (-("There is no available key slot to add the password"));
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
    when Keystore.Corrupted =>
-      Log.Error ("The keystore file is corrupted: invalid meta data content");
+      Log.Error (-("The keystore file is corrupted: invalid meta data content"));
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
    when Keystore.Invalid_Block =>
-      Log.Error ("The keystore file is corrupted: invalid data block headers or signature");
+      Log.Error (-("The keystore file is corrupted: invalid data block headers or signature"));
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
    when Keystore.Invalid_Storage =>
-      Log.Error ("The keystore file is corrupted: invalid or missing storage file");
+      Log.Error (-("The keystore file is corrupted: invalid or missing storage file"));
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
    when Keystore.Invalid_Keystore =>
-      Log.Error ("The file is not a keystore");
+      Log.Error (-("The file is not a keystore"));
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
    when AKT.Commands.Error | Util.Commands.Not_Found =>
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
    when E : Ada.IO_Exceptions.Name_Error =>
-      Log.Error ("Cannot access file: {0}", Ada.Exceptions.Exception_Message (E));
+      Log.Error (-("Cannot access file: {0}"), Ada.Exceptions.Exception_Message (E));
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
    when E : others =>
-      Log.Error ("Some internal error occurred", E);
+      Log.Error (-("Some internal error occurred"), E);
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
 end AKT.Main;
