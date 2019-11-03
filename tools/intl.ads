@@ -22,6 +22,8 @@ package Intl is
 
    function "-" (Message : in String) return String is (Gettext (Message));
 
+   function Current_Locale return String;
+
    procedure Initialize (Domain  : in String;
                          Dirname : in String);
 
