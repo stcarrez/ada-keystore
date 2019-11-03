@@ -96,7 +96,7 @@ package body AKT.Commands.Set is
                     Context : in out Context_Type) is
       package GC renames GNAT.Command_Line;
    begin
-      Setup (Config, Context);
+      Drivers.Command_Type (Command).Setup (Config, Context);
       GC.Define_Switch (Config, Command.File'Access,
                         "-f:", "--file=", -("Define the path of the file to read"));
       GC.Define_Switch (Config, Command.Dir'Access,
