@@ -32,8 +32,10 @@ package body AKT.Commands.Drivers is
    procedure Setup (Command : in out Command_Type;
                     Config  : in out GNAT.Command_Line.Command_Line_Configuration;
                     Context : in out Context_Type) is
-      pragma Unreferenced (Command);
    begin
+      GC.Set_Usage (Config => Config,
+                    Usage  => Command.Get_Name & " [arguments]",
+                    Help   => Command.Get_Description);
       AKT.Commands.Setup (Config, Context);
    end Setup;
 
