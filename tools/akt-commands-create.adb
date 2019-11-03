@@ -51,8 +51,8 @@ package body AKT.Commands.Create is
 
          exception
             when others =>
-               AKT.Commands.Log.Error ("Split counter is invalid or out of range: "
-                                      & Command.Storage_Count.all);
+               AKT.Commands.Log.Error (-("Split counter is invalid or out of range: {0}"),
+                                       Command.Storage_Count.all);
                raise Error;
          end;
       end if;
@@ -95,24 +95,24 @@ package body AKT.Commands.Create is
                         Switch => "-c:",
                         Long_Switch => "--counter-range:",
                         Argument => "RANGE",
-                        Help => "Set the range for the PBKDF2 counter");
+                        Help => -("Set the range for the PBKDF2 counter"));
       GC.Define_Switch (Config => Config,
                         Output => Command.Storage_Count'Access,
                         Switch => "-S:",
                         Long_Switch => "--split:",
                         Argument => "COUNT",
-                        Help => "Split the data blocks in COUNT separate files");
+                        Help => -("Split the data blocks in COUNT separate files"));
       GC.Define_Switch (Config => Config,
                         Output => Command.Force'Access,
                         Switch => "-f",
                         Long_Switch => "--force",
-                        Help   => "Force the creation of the keystore");
+                        Help   => -("Force the creation of the keystore"));
       GC.Define_Switch (Config => Config,
                         Output => Command.Gpg_User'Access,
                         Switch => "-g:",
                         Long_Switch => "--gpg=",
                         Argument => "USER",
-                        Help   => "Use gpg to protect the keystore access");
+                        Help   => -("Use gpg to protect the keystore access"));
    end Setup;
 
 end AKT.Commands.Create;
