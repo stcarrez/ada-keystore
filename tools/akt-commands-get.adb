@@ -114,7 +114,7 @@ package body AKT.Commands.Get is
                     Context : in out Context_Type) is
       package GC renames GNAT.Command_Line;
    begin
-      Setup (Config, Context);
+      Drivers.Command_Type (Command).Setup (Config, Context);
       GC.Define_Switch (Config, Command.No_Newline'Access,
                         "-n", "", -("Do not output the trailing newline"));
       GC.Define_Switch (Config, Command.Dir'Access,
