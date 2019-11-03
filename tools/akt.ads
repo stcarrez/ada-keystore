@@ -15,8 +15,10 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-
+with Intl;
 package AKT is
+
+   function "-" (Message : in String) return String is (Intl."-" (Message));
 
 private
 
