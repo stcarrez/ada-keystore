@@ -60,7 +60,7 @@ msgid "Define the path of the file to read"
 msgstr ""
 
 #: akt-commands-password-remove.adb
-msgid "Defines the key slot to erase (1..7"
+msgid "Defines the key slot to erase (1..7)"
 msgstr ""
 
 #: akt-commands.adb
@@ -152,7 +152,7 @@ msgid "Read and store files recursively"
 msgstr ""
 
 #: akt-commands.adb akt-commands-password.adb
-msgid "Read the environment variable that contains the password (not safe"
+msgid "Read the environment variable that contains the password (not safe)"
 msgstr ""
 
 #: akt-commands.adb akt-commands-password.adb
@@ -236,7 +236,7 @@ msgid "The min counter is greater than max counter"
 msgstr ""
 
 #: akt-commands.adb akt-commands-password.adb
-msgid "The password is passed within the command line (not safe"
+msgid "The password is passed within the command line (not safe)"
 msgstr ""
 
 #: akt-commands-password.adb akt-commands.adb

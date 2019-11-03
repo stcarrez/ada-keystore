@@ -61,8 +61,8 @@ msgid "Define the path of the file to read"
 msgstr "Définir le chemin du fichier à lire"
 
 #: akt-commands-password-remove.adb
-msgid "Defines the key slot to erase (1..7"
-msgstr "Définit l'emplacement de la clé à effacer (1..7"
+msgid "Defines the key slot to erase (1..7)"
+msgstr "Définit l'emplacement de la clé à effacer (1..7)"
 
 #: akt-commands.adb
 msgid "Defines the path for the keystore file"
@@ -153,8 +153,8 @@ msgid "Read and store files recursively"
 msgstr "Lire et stocker les fichiers de manière récursive"
 
 #: akt-commands.adb akt-commands-password.adb
-msgid "Read the environment variable that contains the password (not safe"
-msgstr "Lire la variable d’'environnement contenant le mot de passe (non sécurisé"
+msgid "Read the environment variable that contains the password (not safe)"
+msgstr "Lire la variable d’'environnement contenant le mot de passe (non sécurisé)"
 
 #: akt-commands.adb akt-commands-password.adb
 msgid "Read the file that contains the password"
@@ -237,8 +237,8 @@ msgid "The min counter is greater than max counter"
 msgstr "Le compteur mini est supérieur au compteur max"
 
 #: akt-commands.adb akt-commands-password.adb
-msgid "The password is passed within the command line (not safe"
-msgstr "Le mot de passe est passé dans la ligne de commande (non sécurisé"
+msgid "The password is passed within the command line (not safe)"
+msgstr "Le mot de passe est passé dans la ligne de commande (non sécurisé)"
 
 #: akt-commands-password.adb akt-commands.adb
 msgid "The password is passed within the socket connection"
