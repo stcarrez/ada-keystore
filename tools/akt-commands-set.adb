@@ -98,9 +98,9 @@ package body AKT.Commands.Set is
    begin
       Setup (Config, Context);
       GC.Define_Switch (Config, Command.File'Access,
-                        "-f:", "--file=", "Define the path of the file to read");
+                        "-f:", "--file=", -("Define the path of the file to read"));
       GC.Define_Switch (Config, Command.Dir'Access,
-                        "-r:", "--recursive=", "Read and store files recursively");
+                        "-r:", "--recursive=", -("Read and store files recursively"));
    end Setup;
 
 end AKT.Commands.Set;
