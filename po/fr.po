@@ -1,0 +1,287 @@
+# Translation file for AKT
+msgid ""
+msgstr ""
+"Project-Id-Version: akt 0.2.0\n"
+"Report-Msgid-Bugs-To: Stephane.Carrez@gmail.com\n"
+"POT-Creation-Date: 2019-11-02\n"
+"PO-Revision-Date: \n"
+"Last-Translator: Carrez\n"
+"Language-Team: \n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: keystore-tests.adb
+msgid " & Command & "
+msgstr ""
+
+#: akt-commands.adb
+msgid "add a password"
+msgstr "ajouter un mot de passe"
+
+#: akt-commands.adb
+msgid "akt - tool to store and protect your sensitive data"
+msgstr "akt - outil pour stocker et protéger vos données sensibles"
+
+#: akt-main.adb
+msgid "Cannot access file: {0}"
+msgstr "Impossible d'accéder au fichier: {0}"
+
+#: akt-commands-edit.adb
+msgid "Cannot create file for the editor"
+msgstr "Impossible de créer un fichier pour l'éditeur"
+
+#: akt-commands-edit.adb
+msgid "Cannot read the editor's output"
+msgstr "Impossible de lire la sortie de l'éditeur"
+
+#: akt-commands-edit.adb
+msgid "Cannot set the permission of {0}"
+msgstr "Impossible de définir l'autorisation de {0}"
+
+#: akt-commands.adb
+msgid "change the password"
+msgstr "changer le mot de passe"
+
+#: akt-commands.adb
+msgid "Counters must be positive integers."
+msgstr "Les compteurs doivent être des entiers positifs."
+
+#: akt-commands.adb
+msgid "create the keystore"
+msgstr "créer le magasin de clés"
+
+#: akt-commands-edit.adb
+msgid "Define the editor command to use"
+msgstr "Définir la commande d'éditeur à utiliser"
+
+#: akt-commands-set.adb
+msgid "Define the path of the file to read"
+msgstr "Définir le chemin du fichier à lire"
+
+#: akt-commands-password-remove.adb
+msgid "Defines the key slot to erase (1..7"
+msgstr "Définit l'emplacement de la clé à effacer (1..7"
+
+#: akt-commands.adb
+msgid "Defines the path for the keystore file"
+msgstr "Définit le chemin du fichier de clés"
+
+#: akt-commands-get.adb
+msgid "Do not output the trailing newline"
+msgstr "Ne pas afficher le retour à la ligne"
+
+#: akt-commands.adb
+msgid "edit the value with an external editor"
+msgstr "éditer la valeur avec un éditeur externe"
+
+#: akt-commands-edit.adb
+msgid "Editor exited with status{0}"
+msgstr "Éditeur quitté avec le statut {0}"
+
+#: akt-commands.adb
+msgid "Enable debug execution"
+msgstr "Activer l'exécution du débogage"
+
+#: akt-commands.adb
+msgid "Erase and fill with zeros instead of random values"
+msgstr "Effacer et remplir avec des zéros au lieu de valeurs aléatoires"
+
+#: akt-commands-get.adb
+msgid "Extract the files recursively"
+msgstr "Extraire les fichiers de manière récursive"
+
+#: akt-commands-password-remove.adb
+msgid "Force erase of password used to unlock the keystore"
+msgstr "Forcer l'effacement du mot de passe utilisé pour déverrouiller le magasin de clés"
+
+#: akt-commands-create.adb
+msgid "Force the creation of the keystore"
+msgstr "Forcer la création du magasin de clés"
+
+#: akt-commands.adb
+msgid "get a value from the keystore"
+msgstr "obtenir une valeur du magasin de clés"
+
+#: akt-commands.adb
+msgid "insert or update a value in the keystore"
+msgstr "insérer ou mettre à jour une valeur dans le magasin de clés"
+
+#: akt-commands.adb
+msgid "Invalid counter range: {0}"
+msgstr "Plage de compteur non valide: {0}"
+
+#: akt-commands-password-remove.adb
+msgid "Invalid key slot number. It must be a number in range 1..7."
+msgstr "Numéro de l'emplacement de clé non valide. Il doit s'agir d'un numéro compris dans la plage 1..7."
+
+#: akt-main.adb
+msgid "Invalid password to unlock the keystore file"
+msgstr "Mot de passe invalide pour déverrouiller le fichier de clés"
+
+#: akt-commands.adb
+msgid "list values of the keystore"
+msgstr "lister les valeurs du magasin de clés"
+
+#: akt-commands-password-remove.adb
+msgid "Missing --slot SLOT option to indicate the key slot to erase"
+msgstr "Option manquante --slot SLOT pour indiquer l'emplacement de clé à effacer"
+
+#: akt-commands.adb
+msgid "Missing command name to execute."
+msgstr "Nom de commande manquant à exécuter."
+
+#: akt-commands.adb
+msgid "Missing option parameter"
+msgstr "Paramètre d'option manquant"
+
+#: akt-commands.adb
+msgid "Number of threads for the encryption/decryption process"
+msgstr "Nombre de threads pour le processus de cryptage/décryptage"
+
+#: akt-commands.adb
+msgid "print some help"
+msgstr "afficher de l'aide"
+
+#: akt-commands.adb
+msgid "Print the version"
+msgstr "Afficher la version"
+
+#: akt-commands-set.adb
+msgid "Read and store files recursively"
+msgstr "Lire et stocker les fichiers de manière récursive"
+
+#: akt-commands.adb akt-commands-password.adb
+msgid "Read the environment variable that contains the password (not safe"
+msgstr "Lire la variable d’'environnement contenant le mot de passe (non sécurisé"
+
+#: akt-commands.adb akt-commands-password.adb
+msgid "Read the file that contains the password"
+msgstr "Lire un fichier contenant le mot de passe"
+
+#: akt-commands.adb akt-commands-password.adb
+msgid "Read the password from the pipe with the given file descriptor"
+msgstr "Lire le mot de passe du tube avec le descripteur de fichier donné"
+
+#: akt-commands.adb
+msgid "read the standard input and insert or update the content in the keystore"
+msgstr "lire l'entrée standard et insérer ou mettre à jour le contenu dans le magasin de clés"
+
+#: akt-commands-password-remove.adb
+msgid "Refusing to erase the key slot used by current password."
+msgstr "Refuser d'effacer la fente utilisée par le mot de passe actuel."
+
+#: akt-commands.adb
+msgid "remove a password"
+msgstr "supprimer un mot de passe"
+
+#: akt-commands.adb
+msgid "remove values from the keystore"
+msgstr "supprimer les valeurs du magasin de clés"
+
+#: akt-commands.adb
+msgid "report information about the keystore"
+msgstr "donner des informations sur le magasin de clés"
+
+#: akt-commands.adb
+msgid "Run the command to get the password"
+msgstr "Exécuter la commande pour obtenir le mot de passe"
+
+#: akt-commands.adb
+msgid "Run the ssh-askpass command to get the password"
+msgstr "Exécuter la commande ssh-askpass pour obtenir le mot de passe"
+
+#: akt-commands-create.adb akt-commands-password.adb
+msgid "Set the range for the PBKDF2 counter"
+msgstr "Définir la plage pour le compteur PBKDF2"
+
+#: akt-main.adb
+msgid "Some internal error occurred"
+msgstr "Une erreur interne est survenue"
+
+#: akt-commands-create.adb
+msgid "Split counter is invalid or out of range: {0}"
+msgstr "Le compteur de fractionnement est invalide ou hors limites: {0}"
+
+#: akt-commands-create.adb
+msgid "Split the data blocks in COUNT separate files"
+msgstr "Scinder les blocs de données en COUNT fichiers séparés"
+
+#: akt-commands-get.adb
+msgid "Store the result in the output file or directory"
+msgstr "Stocker le résultat dans le fichier ou le répertoire de sortie"
+
+#: akt-commands.adb
+msgid "The directory which contains the keystore data blocks"
+msgstr "Le répertoire contenant les blocs de données du magasin de clés"
+
+#: akt-main.adb
+msgid "The file is not a keystore"
+msgstr "Le fichier n'est pas un magasin de clés"
+
+#: akt-main.adb
+msgid "The keystore file is corrupted: invalid data block headers or signature"
+msgstr "Le fichier de clés est corrompu: en-têtes de blocs de données non valides ou signature"
+
+#: akt-main.adb
+msgid "The keystore file is corrupted: invalid meta data content"
+msgstr "Le fichier de clés est corrompu: contenu de métadonnées non valide"
+
+#: akt-main.adb
+msgid "The keystore file is corrupted: invalid or missing storage file"
+msgstr "Le fichier de clés est corrompu: fichier de stockage non valide ou manquant"
+
+#: akt-commands.adb
+msgid "The min counter is greater than max counter"
+msgstr "Le compteur mini est supérieur au compteur max"
+
+#: akt-commands.adb akt-commands-password.adb
+msgid "The password is passed within the command line (not safe"
+msgstr "Le mot de passe est passé dans la ligne de commande (non sécurisé"
+
+#: akt-commands-password.adb akt-commands.adb
+msgid "The password is passed within the socket connection"
+msgstr "Le mot de passe est passé dans la connexion socket"
+
+#: akt-commands-password-remove.adb
+msgid "The password was successfully removed."
+msgstr "Le mot de passe a été supprimé avec succès."
+
+#: akt-main.adb
+msgid "There is no available key slot to add the password"
+msgstr "Il n'y a pas de slot de clé disponible pour ajouter le mot de passe"
+
+#: akt-commands-create.adb akt-commands-password.adb
+msgid "Use gpg to protect the keystore access"
+msgstr "Utiliser gpg pour protéger l'accès au magasin de clés"
+
+#: akt-commands-password-remove.adb
+msgid "Use the --force option if you really want to erase this slot."
+msgstr "Utilisez l'option --force si vous voulez vraiment effacer cet emplacement."
+
+#: akt-commands.adb
+msgid "Valid format are 'MAX_COUNTER' or 'MIN_COUNTER:MAX_COUNTER'"
+msgstr "Les formats valides sont 'MAX_COUNTER' ou 'MIN_COUNTER: MAX_COUNTER'"
+
+#: akt-commands-extract.adb akt-commands-get.adb
+msgid "Value '{0}' not found"
+msgstr "La valeur '{0}' est introuvable"
+
+#: akt-commands.adb
+msgid "Value is out of range"
+msgstr "La valeur est en dehors des limites"
+
+#: akt-commands.adb
+msgid "Verbose execution mode"
+msgstr "Mode d'exécution détaillé"
+
+#: akt-commands.adb
+msgid "[-V] [-v] [-vv] [-d data-path] <command> [<args>]\n"
+  "where:\n"
+  "  -V           Print the tool version\n"
+  "  -v           Verbose execution mode\n"
+  "  -vv          Debug execution mode\n"
+  "  -d data-path The directory which contains the keystore data blocks"
+msgstr ""
+
