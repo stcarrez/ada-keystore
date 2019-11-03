@@ -146,62 +146,90 @@ package body AKT.Commands is
    overriding
    procedure Initialize (Context : in out Context_Type) is
    begin
+      Intl.Initialize ("akt", AKT.Configs.PREFIX & "/share/locale");
+
       Context.Worker_Count := Positive (System.Multiprocessors.Number_Of_CPUs);
 
       GC.Set_Usage (Config => Context.Command_Config,
                     Usage  => "[switchs] command [arguments]",
-                    Help   => "akt - tool to store and protect your sensitive data");
+                    Help   => -("akt - tool to store and protect your sensitive data"));
       GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Version'Access,
                         Switch => "-V",
                         Long_Switch => "--version",
-                        Help   => "Print the version");
+                        Help   => -("Print the version"));
       GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Verbose'Access,
                         Switch => "-v",
                         Long_Switch => "--verbose",
-                        Help   => "Verbose execution mode");
+                        Help   => -("Verbose execution mode"));
       GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Debug'Access,
                         Switch => "-vv",
                         Long_Switch => "--debug",
-                        Help   => "Enable debug execution");
+                        Help   => -("Enable debug execution"));
       GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Debug'Access,
                         Switch => "-z",
                         Long_Switch => "--zero",
-                        Help   => "Erase and fill with zeros instead of random values");
+                        Help   => -("Erase and fill with zeros instead of random values"));
       GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Worker_Count'Access,
                         Switch => "-t:",
                         Long_Switch => "--thread=",
                         Initial  => Context.Worker_Count,
                         Argument => "COUNT",
-                        Help   => "Number of threads for the encryption/decryption process");
+                        Help   => -("Number of threads for the encryption/decryption process"));
       GC.Initialize_Option_Scan (Stop_At_First_Non_Switch => True);
 
-      Driver.Set_Description ("akt - tool to store and protect your sensitive data");
-      Driver.Set_Usage ("[-V] [-v] [-vv] [-d data-path] " &
+      Driver.Set_Description (-("akt - tool to store and protect your sensitive data"));
+      Driver.Set_Usage (-("[-V] [-v] [-vv] [-d data-path] " &
                           "<command> [<args>]" & ASCII.LF &
                           "where:" & ASCII.LF &
                           "  -V           Print the tool version" & ASCII.LF &
                           "  -v           Verbose execution mode" & ASCII.LF &
                           "  -vv          Debug execution mode" & ASCII.LF &
-                          "  -d data-path The directory which contains the keystore data blocks");
-      Driver.Add_Command ("help", "print some help", Help_Command'Access);
-      Driver.Add_Command ("set", "insert or update a value in the keystore", Set_Command'Access);
-      Driver.Add_Command ("store", "read the standard input and insert or update the"
-                          & " content in the keystore", Store_Command'Access);
-      Driver.Add_Command ("get", "get a value from the keystore", Get_Command'Access);
-      Driver.Add_Command ("extract", "get a value from the keystore", Extract_Command'Access);
-      Driver.Add_Command ("create", "create the keystore", Create_Command'Access);
-      Driver.Add_Command ("list", "list values of the keystore", List_Command'Access);
-      Driver.Add_Command ("remove", "remove values from the keystore", Remove_Command'Access);
-      Driver.Add_Command ("edit", "edit the value with an external editor", Edit_Command'Access);
-      Driver.Add_Command ("password-set", "change the password", Set_Password_Command'Access);
-      Driver.Add_Command ("password-add", "add a password", Add_Password_Command'Access);
-      Driver.Add_Command ("password-remove", "remove a password", Remove_Password_Command'Access);
-      Driver.Add_Command ("info", "report information about the keystore", Info_Command'Access);
+                          "  -d data-path The directory which contains the keystore data blocks"));
+      Driver.Add_Command ("help",
+                          -("print some help"),
+                          Help_Command'Access);
+      Driver.Add_Command ("set",
+                          -("insert or update a value in the keystore"),
+                          Set_Command'Access);
+      Driver.Add_Command ("store",
+                          -("read the standard input and insert or update the"
+                            & " content in the keystore"),
+                          Store_Command'Access);
+      Driver.Add_Command ("get",
+                          -("get a value from the keystore"),
+                          Get_Command'Access);
+      Driver.Add_Command ("extract",
+                          -("get a value from the keystore"),
+                          Extract_Command'Access);
+      Driver.Add_Command ("create",
+                          -("create the keystore"),
+                          Create_Command'Access);
+      Driver.Add_Command ("list",
+                          -("list values of the keystore"),
+                          List_Command'Access);
+      Driver.Add_Command ("remove",
+                          -("remove values from the keystore"),
+                          Remove_Command'Access);
+      Driver.Add_Command ("edit",
+                          -("edit the value with an external editor"),
+                          Edit_Command'Access);
+      Driver.Add_Command ("password-set",
+                          -("change the password"),
+                          Set_Password_Command'Access);
+      Driver.Add_Command ("password-add",
+                          -("add a password"),
+                          Add_Password_Command'Access);
+      Driver.Add_Command ("password-remove",
+                          -("remove a password"),
+                          Remove_Password_Command'Access);
+      Driver.Add_Command ("info",
+                          -("report information about the keystore"),
+                          Info_Command'Access);
    end Initialize;
 
    --  ------------------------------
@@ -215,48 +243,48 @@ package body AKT.Commands is
                         Switch => "-k:",
                         Long_Switch => "--keystore=",
                         Argument => "PATH",
-                        Help   => "Defines the path for the keystore file");
+                        Help   => -("Defines the path for the keystore file"));
       GC.Define_Switch (Config => Config,
                         Output => Context.Data_Path'Access,
                         Switch => "-d:",
                         Long_Switch => "--data-path=",
                         Argument => "PATH",
-                        Help   => "The directory which contains the keystore data blocks");
+                        Help   => -("The directory which contains the keystore data blocks"));
       GC.Define_Switch (Config => Config,
                         Output => Context.Password_File'Access,
                         Long_Switch => "--passfile=",
                         Argument => "PATH",
-                        Help   => "Read the file that contains the password");
+                        Help   => -("Read the file that contains the password"));
       GC.Define_Switch (Config => Config,
                         Output => Context.Unsafe_Password'Access,
                         Long_Switch => "--passfd=",
                         Argument => "NUM",
-                        Help   => "Read the password from the pipe with"
-                          & " the given file descriptor");
+                        Help   => -("Read the password from the pipe with"
+                          & " the given file descriptor"));
       GC.Define_Switch (Config => Config,
                         Output => Context.Unsafe_Password'Access,
                         Long_Switch => "--passsocket=",
-                        Help   => "The password is passed within the socket connection");
+                        Help   => -("The password is passed within the socket connection"));
       GC.Define_Switch (Config => Config,
                         Output => Context.Password_Env'Access,
                         Long_Switch => "--passenv=",
                         Argument => "NAME",
-                        Help   => "Read the environment variable that contains"
-                        & " the password (not safe)");
+                        Help   => -("Read the environment variable that contains"
+                        & " the password (not safe)"));
       GC.Define_Switch (Config => Config,
                         Output => Context.Unsafe_Password'Access,
                         Switch => "-p:",
                         Long_Switch => "--password=",
-                        Help   => "The password is passed within the command line (not safe)");
+                        Help   => -("The password is passed within the command line (not safe)"));
       GC.Define_Switch (Config => Config,
                         Output => Context.Password_Askpass'Access,
                         Long_Switch => "--passask",
-                        Help   => "Run the ssh-askpass command to get the password");
+                        Help   => -("Run the ssh-askpass command to get the password"));
       GC.Define_Switch (Config => Config,
                         Output => Context.Password_Command'Access,
                         Long_Switch => "--passcmd=",
                         Argument => "COMMAND",
-                        Help   => "Run the command to get the password");
+                        Help   => -("Run the command to get the password"));
    end Setup;
 
    procedure Setup_Password_Provider (Context : in out Context_Type) is
@@ -294,7 +322,7 @@ package body AKT.Commands is
          Cmd_Name : constant String := Arguments.Get_Command_Name;
       begin
          if Cmd_Name'Length = 0 then
-            Ada.Text_IO.Put_Line ("Missing command name to execute.");
+            Ada.Text_IO.Put_Line (-("Missing command name to execute."));
             AKT.Commands.Usage (Arguments, Context);
             Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
             return;
@@ -303,7 +331,7 @@ package body AKT.Commands is
 
       exception
          when GNAT.Command_Line.Invalid_Parameter =>
-            AKT.Commands.Log.Error ("Missing option parameter");
+            AKT.Commands.Log.Error (-("Missing option parameter"));
             raise Error;
       end;
 
@@ -325,11 +353,11 @@ package body AKT.Commands is
          end if;
       end if;
       if not (Low in Positive'Range) or not (High in Positive'Range) then
-         AKT.Commands.Log.Error ("Value is out of range");
+         AKT.Commands.Log.Error (-("Value is out of range"));
          raise Error;
       end if;
       if Low > High then
-         AKT.Commands.Log.Error ("The min counter is greater than max counter");
+         AKT.Commands.Log.Error (-("The min counter is greater than max counter"));
          raise Error;
       end if;
       Config.Min_Counter := Positive (Low);
@@ -340,9 +368,10 @@ package body AKT.Commands is
          raise;
 
       when others =>
-         AKT.Commands.Log.Error ("Invalid counter range: " & Value);
-         AKT.Commands.Log.Error ("Valid format are 'MAX_COUNTER' or 'MIN_COUNTER:MAX_COUNTER'");
-         AKT.Commands.Log.Error ("Counters must be positive integers.");
+         AKT.Commands.Log.Error (-("Invalid counter range: {0}"), Value);
+         AKT.Commands.Log.Error (-("Valid format are 'MAX_COUNTER' or "
+                                 & "'MIN_COUNTER:MAX_COUNTER'"));
+         AKT.Commands.Log.Error (-("Counters must be positive integers."));
          raise Error;
 
    end Parse_Range;
