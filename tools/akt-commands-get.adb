@@ -98,7 +98,7 @@ package body AKT.Commands.Get is
 
             exception
                when Keystore.Not_Found =>
-                  AKT.Commands.Log.Error ("Value '{0}' not found", Key);
+                  AKT.Commands.Log.Error (-("Value '{0}' not found"), Key);
                   Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
             end;
@@ -116,11 +116,12 @@ package body AKT.Commands.Get is
    begin
       Setup (Config, Context);
       GC.Define_Switch (Config, Command.No_Newline'Access,
-                        "-n", "", "Do not output the trailing newline");
+                        "-n", "", -("Do not output the trailing newline"));
       GC.Define_Switch (Config, Command.Dir'Access,
-                        "-r:", "--recursive=", "Extract the files recursively");
+                        "-r:", "--recursive=", -("Extract the files recursively"));
       GC.Define_Switch (Config, Command.Output'Access,
-                        "-o:", "--output=", "Store the result in the output file or directory");
+                        "-o:", "--output=",
+                        -("Store the result in the output file or directory"));
    end Setup;
 
 end AKT.Commands.Get;
