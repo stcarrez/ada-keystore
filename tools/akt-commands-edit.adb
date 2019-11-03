@@ -199,9 +199,13 @@ package body AKT.Commands.Edit is
                     Context : in out Context_Type) is
       package GC renames GNAT.Command_Line;
    begin
-      Setup (Config, Context);
-      GC.Define_Switch (Config, Command.Editor'Access,
-                        "-e:", "--editor=", -("Define the editor command to use"));
+      Drivers.Command_Type (Command).Setup (Config, Context);
+      GC.Define_Switch (Config => Config,
+                        Output => Command.Editor'Access,
+                        Switch => "-e:",
+                        Long_Switch => "--editor=",
+                        Argument => "EDITOR",
+                        Help => -("Define the editor command to use"));
    end Setup;
 
 end AKT.Commands.Edit;
