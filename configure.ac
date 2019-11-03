@@ -24,6 +24,14 @@ AC_CHECK_PROG(HAVE_DYNAMO,dynamo,yes)
 AM_GNAT_LIBRARY_PROJECT(keystore)
 AM_GNAT_FIND_ADA_UTIL([Ada Keystore])
 
+AC_MSG_CHECKING([whether NLS is requested])
+dnl Default is enabled NLS
+AC_ARG_ENABLE(nls,
+  [  --disable-nls           do not use Native Language Support],
+  USE_NLS=$enableval, USE_NLS=yes)
+AC_MSG_RESULT($USE_NLS)
+AC_SUBST(USE_NLS)
+
 ##########################################
 # Ada LibSecret library
 ##########################################
