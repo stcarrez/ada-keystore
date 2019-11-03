@@ -22,6 +22,7 @@ private package AKT.Commands.Drivers is
    package Main_Driver is
      new Util.Commands.Drivers (Context_Type  => Context_Type,
                                 Config_Parser => Util.Commands.Parsers.GNAT_Parser.Config_Parser,
+                                Translate     => Intl.Gettext,
                                 Driver_Name   => "akt");
 
    subtype Help_Command_Type is Main_Driver.Help_Command_Type;
