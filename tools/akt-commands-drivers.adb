@@ -16,8 +16,14 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Ada.Text_IO;
+with Ada.Directories;
 with Util.Files;
+with Util.Strings;
+with AKT.Configs;
 package body AKT.Commands.Drivers is
+
+   function Get_Help (Name   : in String;
+                      Locale : in String) return String;
 
    --  ------------------------------
    --  Setup the command before parsing the arguments and executing it.
@@ -31,6 +37,19 @@ package body AKT.Commands.Drivers is
       AKT.Commands.Setup (Config, Context);
    end Setup;
 
+   function Get_Help (Name   : in String;
+                      Locale : in String) return String is
+      Pos : constant Natural := Util.Strings.Index (Locale, '_');
+   begin
+      if Pos > 0 then
+         return AKT.Configs.RESOURCES & Locale (Locale'First .. Pos - 1) & "/" & Name & ".txt";
+      elsif Locale'Length > 0 then
+         return AKT.Configs.RESOURCES & Locale & "/" & Name & ".txt";
+      else
+         return AKT.Configs.RESOURCES & "en/" & Name & ".txt";
+      end if;
+   end Get_Help;
+
    --  ------------------------------
    --  Write the help associated with the command.
    --  ------------------------------
@@ -39,9 +58,16 @@ package body AKT.Commands.Drivers is
                    Name      : in String;
                    Context   : in out Context_Type) is
       pragma Unreferenced (Command, Context);
+
+      Path : constant String := Get_Help (Name, Intl.Current_Locale);
    begin
-      Util.Files.Read_File (Path    => "share/akt/resources/en/" & Name & ".txt",
-                            Process => Ada.Text_IO.Put_Line'Access);
+      if Ada.Directories.Exists (Path) then
+         Util.Files.Read_File (Path    => Path,
+                               Process => Ada.Text_IO.Put_Line'Access);
+      else
+         Util.Files.Read_File (Path    => Get_Help (Name, "en"),
+                               Process => Ada.Text_IO.Put_Line'Access);
+      end if;
    end Help;
 
 end AKT.Commands.Drivers;
