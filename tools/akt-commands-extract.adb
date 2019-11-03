@@ -44,7 +44,7 @@ package body AKT.Commands.Extract is
 
          exception
             when Keystore.Not_Found =>
-               AKT.Commands.Log.Error ("Value '{0}' not found", Key);
+               AKT.Commands.Log.Error (-("Value '{0}' not found"), Key);
                Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
          end;
