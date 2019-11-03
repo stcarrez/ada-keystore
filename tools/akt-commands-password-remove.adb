@@ -90,7 +90,7 @@ package body AKT.Commands.Password.Remove is
                     Context : in out Context_Type) is
       package GC renames GNAT.Command_Line;
    begin
-      Setup (Config, Context);
+      Drivers.Command_Type (Command).Setup (Config, Context);
       GC.Define_Switch (Config => Config,
                         Output => Command.Force'Access,
                         Switch => "-f",
