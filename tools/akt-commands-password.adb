@@ -79,38 +79,38 @@ package body AKT.Commands.Password is
                         Switch => "-c:",
                         Long_Switch => "--counter-range:",
                         Argument => "RANGE",
-                        Help => "Set the range for the PBKDF2 counter");
+                        Help => -("Set the range for the PBKDF2 counter"));
       GC.Define_Switch (Config => Config,
                         Output => Command.Password_File'Access,
                         Long_Switch => "--new-passfile=",
                         Argument => "PATH",
-                        Help   => "Read the file that contains the password");
+                        Help   => -("Read the file that contains the password"));
       GC.Define_Switch (Config => Config,
                         Output => Command.Unsafe_Password'Access,
                         Long_Switch => "--new-passfd=",
                         Argument => "NUM",
-                        Help   => "Read the password from the pipe with"
-                          & " the given file descriptor");
+                        Help   => -("Read the password from the pipe with"
+                          & " the given file descriptor"));
       GC.Define_Switch (Config => Config,
                         Output => Command.Unsafe_Password'Access,
                         Long_Switch => "--new-passsocket=",
-                        Help   => "The password is passed within the socket connection");
+                        Help   => -("The password is passed within the socket connection"));
       GC.Define_Switch (Config => Config,
                         Output => Command.Password_Env'Access,
                         Long_Switch => "--new-passenv=",
                         Argument => "NAME",
-                        Help   => "Read the environment variable that contains"
-                        & " the password (not safe)");
+                        Help   => -("Read the environment variable that contains"
+                        & " the password (not safe)"));
       GC.Define_Switch (Config => Config,
                         Output => Command.Unsafe_Password'Access,
                         Long_Switch => "--new-password=",
-                        Help   => "The password is passed within the command line (not safe)");
+                        Help   => -("The password is passed within the command line (not safe)"));
       GC.Define_Switch (Config => Config,
                         Output => Command.Gpg_User'Access,
                         Switch => "-g:",
                         Long_Switch => "--gpg=",
                         Argument => "USER",
-                        Help   => "Use gpg to protect the keystore access");
+                        Help   => -("Use gpg to protect the keystore access"));
    end Setup;
 
 end AKT.Commands.Password;
