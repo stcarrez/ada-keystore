@@ -589,6 +589,7 @@ HAVE_GTK
 WITH_SECRETADA
 HAVE_SECRETADA
 SECRETADA_DIR
+USE_NLS
 UTIL_DIR
 NR_CPUS
 BUILDS_COVERAGE
@@ -673,6 +674,7 @@ enable_shared
 enable_distrib
 enable_coverage
 with_ada_util
+enable_nls
 enable_gtk
 with_gtkada
 '
@@ -1305,6 +1307,7 @@ Optional Features:
   --enable-shared         Enable the shared libraries (disabled)
   --enable-distrib        build for distribution, optimized and strip symbols (enabled)
   --enable-coverage       build with coverage support -fprofile-arcs -ftest-coverage (disabled)
+  --disable-nls           do not use Native Language Support
   --enable-gtk            enable compilation of Gtk tool (disabled)
 
 Optional Packages:
@@ -2599,6 +2602,19 @@ $as_echo "no" >&6; }
   fi
 
 
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether NLS is requested" >&5
+$as_echo_n "checking whether NLS is requested... " >&6; }
+# Check whether --enable-nls was given.
+if test "${enable_nls+set}" = set; then :
+  enableval=$enable_nls; USE_NLS=$enableval
+else
+  USE_NLS=yes
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $USE_NLS" >&5
+$as_echo "$USE_NLS" >&6; }
 
 
 ##########################################
