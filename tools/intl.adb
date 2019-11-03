@@ -27,7 +27,8 @@ package body Intl is
    procedure Sys_Bindtextdomain (Domain : in String; Dirname : in String)
      with Import => True, Convention => C, Link_Name => "bindtextdomain";
 
-   procedure Sys_Setlocale (Category : in Integer; Locale : in String)
+   function Sys_Setlocale (Category : in Integer; Locale : in String)
+                           return Interfaces.C.Strings.chars_ptr
      with Import => True, Convention => C, Link_Name => "setlocale";
 
    function Gettext (Message : in String) return String is
@@ -36,13 +37,24 @@ package body Intl is
    end Gettext;
 
    LC_ALL : constant Integer := 6;
+   Locale : Interfaces.C.Strings.chars_ptr;
 
    procedure Initialize (Domain  : in String;
                          Dirname : in String) is
    begin
-      Sys_Setlocale (LC_ALL, "" & ASCII.NUL);
+      Locale := Sys_Setlocale (LC_ALL, "" & ASCII.NUL);
       Sys_Textdomain (Domain & ASCII.NUL);
       Sys_Bindtextdomain (Domain & ASCII.NUL, Dirname & ASCII.NUL);
    end Initialize;
+
+   function Current_Locale return String is
+      use type Interfaces.C.Strings.chars_ptr;
+   begin
+      if Locale = Interfaces.C.Strings.Null_Ptr then
+         return "C";
+      else
+         return Interfaces.C.Strings.Value (Locale);
+      end if;
+   end Current_Locale;
 
 end Intl;
