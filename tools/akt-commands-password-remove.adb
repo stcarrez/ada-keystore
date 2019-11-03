@@ -25,7 +25,8 @@ package body AKT.Commands.Password.Remove is
    function Get_Slot (Value : in String) return Keystore.Key_Slot is
    begin
       if Value = "" then
-         AKT.Commands.Log.Error ("Missing --slot SLOT option to indicate the key slot to erase");
+         AKT.Commands.Log.Error (-("Missing --slot SLOT option to indicate "
+                                 & "the key slot to erase"));
          raise Error;
       end if;
       begin
@@ -33,8 +34,8 @@ package body AKT.Commands.Password.Remove is
 
       exception
          when others =>
-            AKT.Commands.Log.Error ("Invalid key slot number. "
-                                    & "It must be a number in range 1..7.");
+            AKT.Commands.Log.Error (-("Invalid key slot number. "
+                                    & "It must be a number in range 1..7."));
             raise Error;
       end;
    end Get_Slot;
@@ -70,12 +71,13 @@ package body AKT.Commands.Password.Remove is
                                     Force    => Command.Force);
       end if;
 
-      Ada.Text_IO.Put_Line ("The password was successfully removed.");
+      Ada.Text_IO.Put_Line (-("The password was successfully removed."));
 
    exception
       when Keystore.Used_Key_Slot =>
-         AKT.Commands.Log.Error ("Refusing to erase the key slot used by current password.");
-         AKT.Commands.Log.Error ("Use the --force option if you really want to erase this slot.");
+         AKT.Commands.Log.Error (-("Refusing to erase the key slot used by current password."));
+         AKT.Commands.Log.Error (-("Use the --force option if you really want "
+                                 & "to erase this slot."));
          raise Error;
 
    end Execute;
@@ -93,13 +95,13 @@ package body AKT.Commands.Password.Remove is
                         Output => Command.Force'Access,
                         Switch => "-f",
                         Long_Switch => "--force",
-                        Help   => "Force erase of password used to unlock the keystore");
+                        Help   => -("Force erase of password used to unlock the keystore"));
       GC.Define_Switch (Config => Config,
                         Output => Command.Slot'Access,
                         Switch => "-s:",
                         Long_Switch => "--slot:",
                         Argument => "SLOT",
-                        Help   => "Defines the key slot to erase (1..7)");
+                        Help   => -("Defines the key slot to erase (1..7)"));
    end Setup;
 
 end AKT.Commands.Password.Remove;
