@@ -46,7 +46,8 @@ private package Keystore.Repository.Keys is
 
    procedure Initialize (Manager  : in out Wallet_Manager;
                          Iterator : in out Data_Key_Iterator;
-                         Item     : in Wallet_Entry_Access);
+                         Item     : in Wallet_Entry_Access) with
+     Pre => not Item.Is_Wallet;
 
    function Has_Data_Key (Iterator : in Data_Key_Iterator) return Boolean;
 
