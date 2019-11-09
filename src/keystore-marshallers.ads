@@ -24,23 +24,13 @@ private package Keystore.Marshallers is
 
    use Ada.Streams;
 
-   --  Data block size defined to a 4K to map system page.
-   Block_Size           : constant := 4096;
-
-   BT_HMAC_HEADER_SIZE  : constant := 32;
    BT_TYPE_HEADER_SIZE  : constant := 16;
-
-   --  Block type magic values.
-   BT_WALLET_UNUSED     : constant := 16#0000#;
-   BT_WALLET_HEADER     : constant := 16#0101#;
-   BT_WALLET_REPOSITORY : constant := 16#0202#;
-   BT_WALLET_DATA       : constant := 16#0303#;
 
    SIZE_U16             : constant := 2;
    SIZE_U32             : constant := 4;
    SIZE_U64             : constant := 8;
    SIZE_DATE            : constant := SIZE_U64;
-   SIZE_HMAC            : constant := BT_HMAC_HEADER_SIZE;
+   SIZE_HMAC            : constant := 32;
    SIZE_KIND            : constant := SIZE_U32;
    SIZE_BLOCK           : constant := SIZE_U32;
    SIZE_SECRET          : constant := 32;
@@ -48,14 +38,13 @@ private package Keystore.Marshallers is
 
    subtype Block_Count is Buffers.Block_Count;
    subtype Block_Number is Buffers.Block_Number;
-   subtype Block_Index is Stream_Element_Offset range 1 .. Block_Size;
+   subtype Block_Index is Buffers.Block_Index;
    subtype Buffer_Size is Buffers.Buffer_Size;
 
    subtype Block_Type is Stream_Element_Array (Block_Index);
 
-   BT_HEADER_START : constant Block_Index := Block_Index'First + BT_HMAC_HEADER_SIZE;
+   BT_HEADER_START : constant Block_Index := Block_Index'First;
    BT_DATA_START   : constant Block_Index := BT_HEADER_START + BT_TYPE_HEADER_SIZE;
-   BT_DATA_LENGTH  : constant Block_Index := Block_Index'Last - BT_DATA_START + 1;
 
    type Marshaller is limited record
       Buffer : Keystore.Buffers.Storage_Buffer;
@@ -121,14 +110,17 @@ private package Keystore.Marshallers is
    procedure Put_HMAC_SHA256 (Into    : in out Marshaller;
                               Key     : in Secret_Key;
                               Content : in Ada.Streams.Stream_Element_Array) with
-     Pre => Into.Pos <= Block_Type'Last - BT_HMAC_HEADER_SIZE;
+     Pre => Into.Pos <= Block_Type'Last - SIZE_HMAC;
 
    procedure Put_UUID (Into  : in out Marshaller;
                        Value : in UUID_Type) with
      Pre => Into.Pos <= Block_Type'Last - 16;
 
    function Get_Header (From  : in out Marshaller) return Interfaces.Unsigned_32 with
-     Pre => From.Pos = Block_Type'First;
+     Post => From.Pos = Block_Type'First + 3;
+
+   function Get_Header_16 (From  : in out Marshaller) return Interfaces.Unsigned_16 with
+     Post => From.Pos = Block_Type'First + 1;
 
    function Get_Unsigned_16 (From  : in out Marshaller) return Interfaces.Unsigned_16 with
      Pre => From.Pos <= Block_Type'Last - 2;
