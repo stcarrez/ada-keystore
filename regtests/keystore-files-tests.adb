@@ -80,6 +80,8 @@ package body Keystore.Files.Tests is
                        Test_Header_Data_1'Access);
       Caller.Add_Test (Suite, "Test Keystore.Get_Header_Data (10)",
                        Test_Header_Data_10'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Add (Wallet)",
+                       Test_Add_Wallet'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -890,5 +892,59 @@ package body Keystore.Files.Tests is
       Create_With_Header (Path, Password, 10);
       Verify_Header_Data (T, Path, 10);
    end Test_Header_Data_10;
+
+   --  ------------------------------
+   --  Test creating a wallet.
+   --  ------------------------------
+   procedure Test_Add_Wallet (T : in out Test) is
+      Path      : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-wallet.akt");
+      Password  : Keystore.Secret_Key := Keystore.Create ("mypassword");
+      Password2 : Keystore.Secret_Key := Keystore.Create ("admin");
+      Config    : Keystore.Wallet_Config := Unsecure_Config;
+   begin
+      Config.Overwrite := True;
+      declare
+         W            : Keystore.Files.Wallet_File;
+         Child_Wallet : Keystore.Files.Wallet_File;
+      begin
+         W.Create (Path => Path, Password => Password, Config => Config);
+         W.Add ("property", "value");
+         T.Assert (W.Contains ("property"), "Property 'property' not contained in wallet");
+
+         W.Add ("wallet", Password2, Child_Wallet);
+         T.Assert (W.Contains ("wallet"), "Wallet 'wallet' not found");
+
+         Child_Wallet.Add ("child-property", "child-value");
+         T.Assert (Child_Wallet.Contains ("child-property"),
+                   "Property 'child-property' not contained in wallet");
+
+         Child_Wallet.Add ("child-2-property", "child-2-value");
+         T.Assert (Child_Wallet.Contains ("child-2-property"),
+                   "Property 'child-2-property' not contained in wallet");
+         Util.Tests.Assert_Equals (T, "child-value",
+                                   Child_Wallet.Get ("child-property"),
+                                   "Property 'child-property' cannot be retrieved from keystore");
+
+      end;
+      declare
+         W            : Keystore.Files.Wallet_File;
+         Child_Wallet : Keystore.Files.Wallet_File;
+      begin
+         W.Open (Path => Path, Password => Password);
+         T.Assert (W.Contains ("property"), "Property 'value' not contained in wallet");
+         T.Assert (not W.Contains ("child-property"),
+                   "Property 'child-property' is contained in parent wallet!");
+
+         W.Open ("wallet", Password2, Child_Wallet);
+         T.Assert (Child_Wallet.Contains ("child-property"),
+                   "Property 'child-property' not contained in wallet");
+         T.Assert (not Child_Wallet.Contains ("property"),
+                   "Property 'property' is contained in child wallet!");
+         Util.Tests.Assert_Equals (T, "child-value",
+                                   Child_Wallet.Get ("child-property"),
+                                   "Property 'child-property' cannot be retrieved from keystore");
+      end;
+
+   end Test_Add_Wallet;
 
 end Keystore.Files.Tests;
