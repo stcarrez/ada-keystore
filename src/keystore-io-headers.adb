@@ -114,10 +114,8 @@ package body Keystore.IO.Headers is
    --  Read the header block and verify its integrity.
    --  ------------------------------
    procedure Read_Header (Header  : in out Wallet_Header) is
-      Buf     : constant Buffers.Buffer_Accessor := Header.Buffer.Data.Value;
-      Context : Util.Encoders.HMAC.SHA256.Context;
-      Buffer  : Keystore.Marshallers.Marshaller;
-      Value   : Interfaces.Unsigned_32;
+      Buffer        : Keystore.Marshallers.Marshaller;
+      Value         : Interfaces.Unsigned_32;
       Value16       : Interfaces.Unsigned_16;
       Storage_Count : Interfaces.Unsigned_32;
    begin
