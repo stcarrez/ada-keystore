@@ -199,10 +199,8 @@ package body Keystore.Repository.Workers is
                         Decrypt_Size => Size,
                         Into         => Data_Block.Buffer);
 
-      Data_Block.Pos := IO.BT_HEADER_START - 1;
-
       --  Check block type.
-      Btype := Marshallers.Get_Unsigned_16 (Data_Block);
+      Btype := Marshallers.Get_Header_16 (Data_Block);
       if Btype /= IO.BT_WALLET_DATA then
          Logs.Error (Log, "Block{0} invalid block type", Data_Block.Buffer.Block);
          Work.Status := DATA_CORRUPTION;
