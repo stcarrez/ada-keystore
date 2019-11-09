@@ -23,12 +23,18 @@ private package Keystore.Buffers is
 
    use Ada.Streams;
 
+   BT_HMAC_HEADER_SIZE  : constant := 32;
+
    --  Data block size defined to a 4K to map system page.
    Block_Size           : constant := 4096;
 
-   subtype Buffer_Size is Stream_Element_Offset range 0 .. Block_Size;
+   BT_DATA_SIZE         : constant := Block_Size - BT_HMAC_HEADER_SIZE;
 
-   subtype Block_Index is Stream_Element_Offset range 1 .. Block_Size;
+   subtype Buffer_Size is Stream_Element_Offset range 0 .. BT_DATA_SIZE;
+
+   subtype Block_Index is Stream_Element_Offset range 1 .. BT_DATA_SIZE;
+
+   subtype IO_Block_Type is Stream_Element_Array (1 .. Block_Size);
 
    subtype Block_Type is Stream_Element_Array (Block_Index);
 
