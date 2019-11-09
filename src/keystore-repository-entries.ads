@@ -32,7 +32,6 @@ private package Keystore.Repository.Entries is
    procedure Add_Entry (Manager : in out Wallet_Manager;
                         Name    : in String;
                         Kind    : in Entry_Type;
-                        Size    : in Interfaces.Unsigned_64;
                         Item    : out Wallet_Entry_Access);
 
    --  Update an existing entry in the wallet directory.
