@@ -199,22 +199,66 @@ package body Keystore.Files is
    --  The children wallet has its own key to protect the named entries it manages.
    procedure Add (Container : in out Wallet_File;
                   Name      : in String;
-                  Password  : in Secret_Key;
+                  Password  : in out Keystore.Passwords.Provider'Class;
                   Wallet    : in out Wallet_File'Class) is
    begin
-      null; --  Wallet.Stream := Container.Stream;
-      --  Container.Container.Add (Name, Password, Wallet.Repository);
+      null;
+      Keystore.Containers.Add_Wallet (Container.Container, Name, Password, Wallet.Container);
+   end Add;
+
+   procedure Add (Container : in out Wallet_File;
+                  Name      : in String;
+                  Password  : in Keystore.Secret_Key;
+                  Wallet    : in out Wallet_File'Class) is
+
+      type Provider is new Keystore.Passwords.Provider with null record;
+
+      overriding
+      procedure Get_Password (From   : in Provider;
+                              Getter : not null access procedure (Password : in Secret_Key));
+      overriding
+      procedure Get_Password (From   : in Provider;
+                              Getter : not null access procedure (Password : in Secret_Key)) is
+         pragma Unreferenced (From);
+      begin
+         Getter (Password);
+      end Get_Password;
+
+      Password_Provider : Provider;
+   begin
+      Container.Add (Name, Password_Provider, Wallet);
    end Add;
 
    --  Load from the container the named children wallet.
    procedure Open (Container : in out Wallet_File;
                    Name      : in String;
-                   Password  : in Secret_Key;
+                   Password  : in out Keystore.Passwords.Provider'Class;
                    Wallet    : in out Wallet_File'Class) is
    begin
-      null;
-      --  Wallet.Stream := Container.Stream;
-      --  Container.Container.Open (Name, Password, Wallet.Repository, Container.Stream.Value.all);
+      Keystore.Containers.Open_Wallet (Container.Container, Name, Password, Wallet.Container);
+   end Open;
+
+   procedure Open (Container : in out Wallet_File;
+                   Name      : in String;
+                   Password  : in Keystore.Secret_Key;
+                   Wallet    : in out Wallet_File'Class) is
+
+      type Provider is new Keystore.Passwords.Provider with null record;
+
+      overriding
+      procedure Get_Password (From   : in Provider;
+                              Getter : not null access procedure (Password : in Secret_Key));
+      overriding
+      procedure Get_Password (From   : in Provider;
+                              Getter : not null access procedure (Password : in Secret_Key)) is
+         pragma Unreferenced (From);
+      begin
+         Getter (Password);
+      end Get_Password;
+
+      Password_Provider : Provider;
+   begin
+      Container.Open (Name, Password_Provider, Wallet);
    end Open;
 
    --  ------------------------------
