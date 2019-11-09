@@ -82,9 +82,8 @@ package body Keystore.IO.Tests is
                       Sign         => Sign,
                       Decrypt_Size => Size,
                       Into         => Buffer.Buffer);
-         Buffer.Pos := IO.BT_HEADER_START - 1;
          Util.Tests.Assert_Equals (T, BT_WALLET_HEADER,
-                                   Integer (Marshallers.Get_Unsigned_16 (Buffer)),
+                                   Integer (Marshallers.Get_Header_16 (Buffer)),
                                    "Invalid wallet header tag");
          Util.Tests.Assert_Equals (T, Natural (Size),
                                    Integer (Marshallers.Get_Unsigned_16 (Buffer)),
@@ -191,9 +190,8 @@ package body Keystore.IO.Tests is
                       Decrypt_Size => Size,
                       Into         => Buffer.Buffer);
 
-         Buffer.Pos := IO.BT_HEADER_START - 1;
          Util.Tests.Assert_Equals (T, BT_WALLET_HEADER,
-                                   Integer (Marshallers.Get_Unsigned_16 (Buffer)),
+                                   Integer (Marshallers.Get_Header_16 (Buffer)),
                                    "Invalid wallet header tag");
          Util.Tests.Assert_Equals (T, Natural (Size),
                                    Integer (Marshallers.Get_Unsigned_16 (Buffer)),
@@ -220,9 +218,8 @@ package body Keystore.IO.Tests is
                          Decrypt_Size => Size,
                          Into         => Buffer.Buffer);
 
-            Buffer.Pos := IO.BT_HEADER_START - 1;
             Util.Tests.Assert_Equals (T, BT_WALLET_DATA,
-                                      Integer (Marshallers.Get_Unsigned_16 (Buffer)),
+                                      Integer (Marshallers.Get_Header_16 (Buffer)),
                                       "Invalid wallet header tag");
             Util.Tests.Assert_Equals (T, Natural (Size),
                                       Integer (Marshallers.Get_Unsigned_16 (Buffer)),
