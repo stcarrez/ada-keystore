@@ -48,11 +48,13 @@ private package Keystore.Repository is
                    Keys       : in out Keystore.Keys.Key_Manager;
                    Stream     : in IO.Wallet_Stream_Access);
 
-   procedure Open (Repository : in out Wallet_Repository;
-                   Name       : in String;
-                   Password   : in Secret_Key;
-                   Wallet     : in out Wallet_Repository;
-                   Stream     : in IO.Wallet_Stream_Access);
+   procedure Open (Repository   : in out Wallet_Repository;
+                   Name         : in String;
+                   Password     : in out Keystore.Passwords.Provider'Class;
+                   Keys         : in out Keystore.Keys.Key_Manager;
+                   Master_Block : in out Keystore.IO.Storage_Block;
+                   Master_Ident : in out Wallet_Identifier;
+                   Wallet       : in out Wallet_Repository);
 
    procedure Create (Repository : in out Wallet_Repository;
                      Password   : in out Keystore.Passwords.Provider'Class;
@@ -74,8 +76,11 @@ private package Keystore.Repository is
 
    procedure Add_Wallet (Repository : in out Wallet_Repository;
                          Name       : in String;
-                         Password   : in Secret_Key;
-                         Wallet     : out Wallet_Repository'Class);
+                         Password   : in out Keystore.Passwords.Provider'Class;
+                         Keys       : in out Keystore.Keys.Key_Manager;
+                         Master_Block : in out Keystore.IO.Storage_Block;
+                         Master_Ident : in out Wallet_Identifier;
+                         Wallet     : in out Wallet_Repository);
 
    procedure Set (Repository : in out Wallet_Repository;
                   Name       : in String;
@@ -191,22 +196,30 @@ private
       Ready      : Boolean := False;
    end record;
 
-   type Wallet_Entry (Length : Natural) is limited record
+   type Wallet_Entry (Length    : Natural;
+                      Is_Wallet : Boolean) is
+   limited record
       --  The block header that contains this entry.
       Header       : Wallet_Directory_Entry_Access;
-      Entry_Offset : IO.Block_Index := IO.Block_Index'First;
-
-      --  List of data key blocks.
-      Data_Blocks  : Wallet_Data_Key_List.List;
-
       Id           : Wallet_Entry_Index;
-      Size         : Interfaces.Unsigned_64 := 0;
       Kind         : Entry_Type := T_INVALID;
       Create_Date  : Ada.Calendar.Time;
       Update_Date  : Ada.Calendar.Time;
       Access_Date  : Ada.Calendar.Time;
-      Block_Count  : Natural := 0;
+      Entry_Offset : IO.Block_Index := IO.Block_Index'First;
       Name         : aliased String (1 .. Length);
+      case Is_Wallet is
+         when True =>
+            Wallet_Id    : Wallet_Identifier;
+            Master       : IO.Block_Number;
+
+         when False =>
+            Size         : Interfaces.Unsigned_64 := 0;
+            Block_Count  : Natural := 0;
+
+            --  List of data key blocks.
+            Data_Blocks  : Wallet_Data_Key_List.List;
+      end case;
    end record;
 
    package Wallet_Directory_List is
@@ -230,8 +243,10 @@ private
    type Wallet_Worker_Access is access all Keystore.Repository.Workers.Wallet_Worker;
 
    type Wallet_Repository is limited new Ada.Finalization.Limited_Controlled with record
+      Parent         : access Wallet_Repository;
       Id             : Wallet_Identifier;
       Next_Id        : Wallet_Entry_Index;
+      Next_Wallet_Id : Wallet_Identifier;
       Directory_List : Wallet_Directory_List.List;
       Randomize      : Boolean := False;
       Root           : IO.Storage_Block;
