@@ -22,8 +22,6 @@ with Keystore.Logs;
 
 --  Generic Block header
 --  +------------------+
---  | Block HMAC-256   | 32b
---  +------------------+
 --  | Block type       | 2b
 --  | Encrypt 1 size   | 2b
 --  | Wallet id        | 4b
@@ -32,10 +30,10 @@ with Keystore.Logs;
 --  +------------------+
 --  | ...AES-CTR...    | B
 --  +------------------+
+--  | Block HMAC-256   | 32b
+--  +------------------+
 --
 --  Free block
---  +------------------+
---  | PAD 0            | 32b
 --  +------------------+
 --  | 00 00 00 00      | 4b
 --  | 00 00 00 00      | 4b
@@ -48,6 +46,8 @@ with Keystore.Logs;
 --  +------------------+
 --  | PAD 0            |
 --  +------------------+
+--  | PAD 0            | 32b
+--  +------------------+
 --
 package body Keystore.IO is
 
@@ -58,7 +58,7 @@ package body Keystore.IO is
    procedure Put_Encrypt_Size (Into  : in out Block_Type;
                                Value : in Block_Index);
 
-   function Get_Decrypt_Size (From : in Block_Type) return Interfaces.Unsigned_16;
+   function Get_Decrypt_Size (From : in IO_Block_Type) return Interfaces.Unsigned_16;
 
    procedure Put_Encrypt_Size (Into  : in out Block_Type;
                                Value : in Block_Index) is
@@ -68,7 +68,7 @@ package body Keystore.IO is
       Into (BT_HEADER_START + 3) := Stream_Element (V and 16#0ff#);
    end Put_Encrypt_Size;
 
-   function Get_Decrypt_Size (From : in Block_Type) return Interfaces.Unsigned_16 is
+   function Get_Decrypt_Size (From : in IO_Block_Type) return Interfaces.Unsigned_16 is
    begin
       return Shift_Left (Unsigned_16 (From (BT_HEADER_START + 2)), 8) or
         Unsigned_16 (From (BT_HEADER_START + 3));
@@ -85,9 +85,9 @@ package body Keystore.IO is
                    Decrypt_Size : out Block_Index;
                    Into         : in out Buffers.Storage_Buffer) is
 
-      procedure Read (Data : in Block_Type);
+      procedure Read (Data : in IO_Block_Type);
 
-      procedure Read (Data : in Block_Type) is
+      procedure Read (Data : in IO_Block_Type) is
          Last      : Stream_Element_Offset;
          Encoded   : Stream_Element_Offset;
          Hash      : Util.Encoders.SHA256.Hash_Array;
@@ -129,7 +129,7 @@ package body Keystore.IO is
             raise Invalid_Block;
          end if;
          if Last_Pos < Buf.Data'Last then
-            Buf.Data (Last_Pos + 1 .. Buf.Data'Last) := Data (Last_Pos + 1 .. Data'Last);
+            Buf.Data (Last_Pos + 1 .. Buf.Data'Last) := Data (Last_Pos + 1 .. Buf.Data'Last);
          end if;
 
          Keystore.Logs.Debug (Log, "Dump block{0} before AES decrypt", Into.Block);
@@ -144,18 +144,14 @@ package body Keystore.IO is
 
          --  Make HMAC-SHA256 signature of the block excluding the block hash mac.
          Util.Encoders.HMAC.SHA256.Set_Key (Context, Sign);
-         Util.Encoders.HMAC.SHA256.Update (Context, Buf.Data (BT_HEADER_START .. Last_Pos));
-         if Last_Pos /= Buf.Data'Last then
-            Util.Encoders.HMAC.SHA256.Update (Context, Buf.Data (Last_Pos + 1 .. Buf.Data'Last));
-         end if;
+         Util.Encoders.HMAC.SHA256.Update (Context, Buf.Data);
          Util.Encoders.HMAC.SHA256.Finish (Context, Hash);
 
          --  Check that the block hash mac matches our hash.
-         if Hash /= Buf.Data (Buf.Data'First .. BT_HMAC_HEADER_SIZE) then
+         if Hash /= Data (BT_HMAC_HEADER_POS .. Data'Last) then
             Keystore.Logs.Warn (Log, "Block{0} HMAC-256 is invalid", Into.Block);
             raise Invalid_Block;
          end if;
-         --  Into.Pos := BT_HEADER_START;
       end Read;
 
    begin
@@ -173,9 +169,9 @@ package body Keystore.IO is
                     Sign         : in Secret_Key;
                     From         : in out Buffers.Storage_Buffer) is
 
-      procedure Write (Data : out Block_Type);
+      procedure Write (Data : out IO_Block_Type);
 
-      procedure Write (Data : out Block_Type) is
+      procedure Write (Data : out IO_Block_Type) is
          Last     : Stream_Element_Offset;
          Encoded  : Stream_Element_Offset;
          Last_Pos : constant Stream_Element_Offset := BT_DATA_START + Encrypt_Size - 1;
@@ -199,8 +195,8 @@ package body Keystore.IO is
          Log.Info ("Last={0} Encoded={0}",
                    Stream_Element_Offset'Image (Last),
                    Stream_Element_Offset'Image (Encoded));
-         if Last_Pos < Data'Last then
-            Data (Last_Pos + 1 .. Data'Last) := Buf.Data (Last_Pos + 1 .. Data'Last);
+         if Last_Pos < Buf.Data'Last then
+            Data (Last_Pos + 1 .. Buf.Data'Last) := Buf.Data (Last_Pos + 1 .. Buf.Data'Last);
          end if;
 
          Keystore.Logs.Debug (Log, "Dump data block{0} before AES and write", From.Block);
@@ -215,8 +211,8 @@ package body Keystore.IO is
 
          --  Make HMAC-SHA256 signature of the block excluding the block hash mac.
          Util.Encoders.HMAC.SHA256.Sign (Key    => Sign,
-                                         Data   => Buf.Data (BT_HEADER_START .. Data'Last),
-                                         Result => Data (Data'First .. BT_HMAC_HEADER_SIZE));
+                                         Data   => Buf.Data,
+                                         Result => Data (BT_HMAC_HEADER_POS .. Data'Last));
       end Write;
 
    begin
