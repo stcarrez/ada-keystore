@@ -136,7 +136,7 @@ private package Keystore.Containers is
       Repository   : Keystore.Repository.Wallet_Repository;
       State        : State_Type := S_INVALID;
       Master_Block : Keystore.IO.Storage_Block;
-      Master_Ident : Wallet_Identifier;
+      Master_Ident : Wallet_Identifier := Wallet_Identifier'First;
    end Wallet_Container;
 
    procedure Open_Wallet (Container : in out Wallet_Container;
