@@ -28,8 +28,6 @@ with Keystore.Buffers;
 --
 --  ```
 --  +------------------+
---  | Block HMAC-256   | 32b
---  +------------------+
 --  | 01 01            | 2b
 --  | Encrypt size     | 2b
 --  | Parent Wallet id | 4b
@@ -78,6 +76,8 @@ with Keystore.Buffers;
 --  | Key slot #7      | 512b
 --  +------------------+
 --  | PAD 0 / Random   |
+--  +------------------+
+--  | Block HMAC-256   | 32b
 --  +------------------+
 --  ```
 --
@@ -382,8 +382,7 @@ package body Keystore.Keys is
                    Sign         => Manager.Crypt.Sign,
                    Decrypt_Size => Size,
                    Into         => Buffer.Buffer);
-      Buffer.Pos := IO.BT_HEADER_START - 1;
-      if Marshallers.Get_Unsigned_16 (Buffer) /= IO.BT_WALLET_HEADER then
+      if Marshallers.Get_Header_16 (Buffer) /= IO.BT_WALLET_HEADER then
          Keystore.Logs.Warn (Log, "Invalid wallet block header BN{0}", Manager.Header_Block);
          raise Invalid_Block;
       end if;
