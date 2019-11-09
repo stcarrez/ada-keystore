@@ -83,6 +83,7 @@ package body Keystore.Repository is
       Repository.Id := Ident;
       Repository.Stream := Stream;
       Repository.Next_Id := 1;
+      Repository.Next_Wallet_Id := Ident + 1;
       Keystore.Keys.Open (Keys, Password, Ident, Block,
                           Repository.Root, Repository.Config, null, Stream.all);
       Repository.Workers := Workers.Create (Repository'Unchecked_Access, null, 1).all'Access;
@@ -92,11 +93,36 @@ package body Keystore.Repository is
 
    procedure Open (Repository : in out Wallet_Repository;
                    Name       : in String;
-                   Password   : in Secret_Key;
-                   Wallet     : in out Wallet_Repository;
-                   Stream     : in IO.Wallet_Stream_Access) is
+                   Password   : in out Keystore.Passwords.Provider'Class;
+                   Keys       : in out Keystore.Keys.Key_Manager;
+                   Master_Block : in out Keystore.IO.Storage_Block;
+                   Master_Ident : in out Wallet_Identifier;
+                   Wallet     : in out Wallet_Repository) is
+      Pos : constant Wallet_Maps.Cursor := Repository.Map.Find (Name);
    begin
-      null;
+      if not Wallet_Maps.Has_Element (Pos) then
+         Log.Info ("Wallet entry '{0}' not found", Name);
+         raise Not_Found;
+      end if;
+      declare
+         Item     : constant Wallet_Entry_Access := Wallet_Maps.Element (Pos);
+      begin
+         if Item.Kind /= T_WALLET then
+            raise Invalid_Keystore;
+         end if;
+         Master_Block := Repository.Root;
+         Master_Block.Block := Item.Master;
+         Master_Ident := Item.Wallet_Id;
+         Wallet.Stream := Repository.Stream;
+         Wallet.Next_Id := 1;
+         Wallet.Id := Item.Wallet_Id;
+         Wallet.Parent := Repository'Unchecked_Access;
+         Keystore.Keys.Open (Keys, Password, Wallet.Id, Master_Block,
+                             Wallet.Root, Wallet.Config, null, Repository.Stream.all);
+         Wallet.Workers := Workers.Create (Wallet'Unchecked_Access, null, 1).all'Access;
+
+         Entries.Load_Complete_Directory (Wallet, Wallet.Root);
+      end;
    end Open;
 
    procedure Create (Repository : in out Wallet_Repository;
@@ -111,6 +137,7 @@ package body Keystore.Repository is
       Stream.Allocate (IO.DIRECTORY_BLOCK, Repository.Root);
       Repository.Id := Ident;
       Repository.Next_Id := 1;
+      Repository.Next_Wallet_Id := Ident + 1;
       Repository.Stream := Stream;
       Repository.Randomize := Config.Randomize;
       Repository.Config.Max_Counter := Interfaces.Unsigned_32 (Config.Max_Counter);
@@ -144,6 +171,7 @@ package body Keystore.Repository is
       Iterator    : Keys.Data_Key_Iterator;
    begin
       Entries.Add_Entry (Repository, Name, Kind, Content'Length, Item);
+      Entries.Update_Entry (Repository, Item, Kind, Content'Length);
 
       if Content'Length > 0 then
          Keys.Initialize (Repository, Iterator, Item);
@@ -165,6 +193,7 @@ package body Keystore.Repository is
       Iterator    : Keys.Data_Key_Iterator;
    begin
       Entries.Add_Entry (Repository, Name, Kind, 1, Item);
+      Entries.Update_Entry (Repository, Item, Kind, 1);
 
       Keys.Initialize (Repository, Iterator, Item);
 
@@ -177,20 +206,48 @@ package body Keystore.Repository is
 
    procedure Add_Wallet (Repository : in out Wallet_Repository;
                          Name       : in String;
-                         Password   : in Secret_Key;
-                         Wallet     : out Wallet_Repository'Class) is
-      pragma Unreferenced (Wallet, Password);
-      Item      : Wallet_Entry_Access;
-      --  Keys      : Keystore.Keys.Key_Manager;
+                         Password   : in out Keystore.Passwords.Provider'Class;
+                         Keys       : in out Keystore.Keys.Key_Manager;
+                         Master_Block : in out Keystore.IO.Storage_Block;
+                         Master_Ident : in out Wallet_Identifier;
+                         Wallet     : in out Wallet_Repository) is
+      Item   : Wallet_Entry_Access;
+      Entry_Block : Wallet_Directory_Entry_Access;
    begin
       Entries.Add_Entry (Repository, Name, T_WALLET, 0, Item);
 
-      --  Repository.Stream.Allocate (IO.MASTER_BLOCK, Item.Block);
-
-      --  Keys.Set_Header_Key
-      --  Repo.Create (Password, 1, IO.Block_Number (Item.Block), Keys, Stream);
-
       --  Repository.Value.Add (Name, Password, Wallet, Stream);
+      Repository.Stream.Allocate (IO.MASTER_BLOCK, Master_Block);
+      Repository.Stream.Allocate (IO.DIRECTORY_BLOCK, Wallet.Root);
+      Item.Master := Master_Block.Block;
+
+      Wallet.Stream := Repository.Stream;
+      Wallet.Next_Id := 1;
+      Wallet.Id := Item.Wallet_Id;
+      Master_Ident := Wallet.Id;
+
+      Entries.Update_Entry (Repository, Item, T_WALLET, 0);
+
+      Keystore.Keys.Create (Keys, Password, 1, Master_Ident, Master_Block, Wallet.Root,
+                            Wallet.Config, Repository.Stream.all);
+
+      --  We need a new wallet directory block.
+      Entries.Initialize_Directory_Block (Wallet, Wallet.Root, 0, Entry_Block);
+      Entries.Save (Repository);
+
+      Wallet.Current.Buffer := Buffers.Allocate (Wallet.Root);
+      Wallet.Current.Buffer.Data.Value.Data := (others => 0);
+      Marshallers.Set_Header (Into => Wallet.Current,
+                              Tag  => IO.BT_WALLET_DIRECTORY,
+                              Id   => Wallet.Id);
+      Marshallers.Put_Unsigned_32 (Wallet.Current, 0);
+      Marshallers.Put_Block_Index (Wallet.Current, IO.Block_Index'Last);
+      Keystore.Keys.Set_IV (Wallet.Config.Dir, Wallet.Root.Block);
+      Repository.Stream.Write (From   => Wallet.Current.Buffer,
+                               Cipher => Wallet.Config.Dir.Cipher,
+                               Sign   => Wallet.Config.Dir.Sign);
+
+      Wallet.Workers := Workers.Create (Wallet'Unchecked_Access, null, 1).all'Access;
    end Add_Wallet;
 
    procedure Set (Repository : in out Wallet_Repository;
@@ -236,6 +293,10 @@ package body Keystore.Repository is
          Iterator : Keys.Data_Key_Iterator;
          Last_Pos : Stream_Element_Offset;
       begin
+         if Item.Is_Wallet then
+            Log.Info ("Data entry '{0}' is a wallet", Name);
+            raise No_Content;
+         end if;
          Item.Kind := Kind;
          Keys.Initialize (Repository, Iterator, Item);
 
@@ -273,6 +334,10 @@ package body Keystore.Repository is
          Iterator      : Keys.Data_Key_Iterator;
          End_Of_Stream : Boolean;
       begin
+         if Item.Is_Wallet then
+            Log.Info ("Data entry '{0}' is a wallet", Name);
+            raise No_Content;
+         end if;
          Item.Kind := Kind;
          Keys.Initialize (Repository, Iterator, Item);
 
@@ -353,11 +418,16 @@ package body Keystore.Repository is
          Log.Error ("Wallet entry {0} is corrupted", Name);
          raise Corrupted;
       end if;
-      Result.Size := Item.Size;
+      if not Item.Is_Wallet then
+         Result.Size := Item.Size;
+         Result.Block_Count := Item.Block_Count;
+      else
+         Result.Size := 0;
+         Result.Block_Count := 0;
+      end if;
       Result.Kind := Item.Kind;
       Result.Create_Date := Item.Create_Date;
       Result.Update_Date := Item.Update_Date;
-      Result.Block_Count := Item.Block_Count;
    end Find;
 
    procedure Get_Data (Repository : in out Wallet_Repository;
@@ -374,6 +444,10 @@ package body Keystore.Repository is
          Item     : constant Wallet_Entry_Access := Wallet_Maps.Element (Pos);
          Iterator : Keys.Data_Key_Iterator;
       begin
+         if Item.Is_Wallet then
+            Log.Info ("Data entry '{0}' is a wallet", Name);
+            raise No_Content;
+         end if;
          Result.Size := Item.Size;
          Result.Kind := Item.Kind;
          Result.Create_Date := Item.Create_Date;
@@ -400,6 +474,10 @@ package body Keystore.Repository is
          Item     : constant Wallet_Entry_Access := Wallet_Maps.Element (Pos);
          Iterator : Keys.Data_Key_Iterator;
       begin
+         if Item.Is_Wallet then
+            Log.Info ("Data entry '{0}' is a wallet", Name);
+            raise No_Content;
+         end if;
          Keys.Initialize (Repository, Iterator, Item);
          Data.Get_Data (Repository, Iterator, Output);
       end;
@@ -415,11 +493,16 @@ package body Keystore.Repository is
    begin
       for Item of Repository.Map loop
          if Filter (Item.Kind) then
-            Value.Size := Item.Size;
+            if not Item.Is_Wallet then
+               Value.Size := Item.Size;
+               Value.Block_Count := Item.Block_Count;
+            else
+               Value.Size := 0;
+               Value.Block_Count := 1;
+            end if;
             Value.Kind := Item.Kind;
             Value.Create_Date := Item.Create_Date;
             Value.Update_Date := Item.Update_Date;
-            Value.Block_Count := Item.Block_Count;
             Content.Include (Key      => Item.Name,
                              New_Item => Value);
          end if;
@@ -434,11 +517,16 @@ package body Keystore.Repository is
    begin
       for Item of Repository.Map loop
          if Filter (Item.Kind) and then GNAT.Regpat.Match (Pattern, Item.Name) then
-            Value.Size := Item.Size;
+            if not Item.Is_Wallet then
+               Value.Size := Item.Size;
+               Value.Block_Count := Item.Block_Count;
+            else
+               Value.Size := 0;
+               Value.Block_Count := 1;
+            end if;
             Value.Kind := Item.Kind;
             Value.Create_Date := Item.Create_Date;
             Value.Update_Date := Item.Update_Date;
-            Value.Block_Count := Item.Block_Count;
             Content.Include (Key      => Item.Name,
                              New_Item => Value);
          end if;
