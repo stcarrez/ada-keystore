@@ -29,8 +29,6 @@ with Keystore.Repository.Workers;
 --
 --  ```
 --  +------------------+
---  | Block HMAC-256   | 32b
---  +------------------+
 --  | 03 03            | 2b
 --  | Encrypt size     | 2b = DATA_ENTRY_SIZE * Nb data fragment
 --  | Wallet id        | 4b
@@ -49,6 +47,8 @@ with Keystore.Repository.Workers;
 --  +------------------+
 --  | Data content     |     Encrypted with data entry key
 --  +------------------+-----
+--  | Block HMAC-256   | 32b
+--  +------------------+
 --  ```
 --
 package body Keystore.Repository.Data is
