@@ -47,14 +47,14 @@ package Keystore.IO.Files is
    procedure Read (Stream  : in out Wallet_Stream;
                    Block   : in Storage_Block;
                    Process : not null access
-                     procedure (Data : in Block_Type));
+                     procedure (Data : in IO_Block_Type));
 
    --  Write in the wallet stream the block identified by the block number.
    overriding
    procedure Write (Stream  : in out Wallet_Stream;
                     Block   : in Storage_Block;
                     Process : not null access
-                      procedure (Data : out Block_Type));
+                      procedure (Data : out IO_Block_Type));
 
    --  Allocate a new block and return the block number in `Block`.
    overriding
@@ -123,12 +123,12 @@ private
       --  call the `Process` procedure with the data block content.
       procedure Read (Block   : in Block_Number;
                       Process : not null access
-                        procedure (Data : in Block_Type));
+                        procedure (Data : in IO_Block_Type));
 
       --  Write in the wallet stream the block identified by the block number.
       procedure Write (Block   : in Block_Number;
                        Process : not null access
-                         procedure (Data : out Block_Type));
+                         procedure (Data : out IO_Block_Type));
 
       --  Allocate a new block and return the block number in `Block`.
       procedure Allocate (Block   : out Block_Number);
@@ -159,7 +159,7 @@ private
       File        : Util.Streams.Raw.Raw_Stream;
       Current_Pos : Util.Systems.Types.off_t;
       Size        : Block_Count;
-      Data        : Block_Type;
+      Data        : IO_Block_Type;
       Free_Blocks : Block_Number_Sets.Set;
       Header      : Wallet_Header;
    end File_Stream;
