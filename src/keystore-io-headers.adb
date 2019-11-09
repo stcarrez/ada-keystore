@@ -34,7 +34,6 @@ with Keystore.Marshallers;
 --  | 00 01            | 2b = Version 1
 --  | 00 01            | 2b = File header length in blocks
 --  +------------------+
---  | Header HMAC-256  | 32b
 --  | Keystore UUID    | 16b
 --  | Storage ID       | 4b
 --  | Block size       | 4b
@@ -58,6 +57,8 @@ with Keystore.Marshallers;
 --  | Storage max bloc | 4b
 --  | Storage HMAC     | 32b = 44b
 --  +------------------+----
+--  | Header HMAC-256  | 32b
+--  +------------------+----
 --  ```
 package body Keystore.IO.Headers is
 
@@ -72,9 +73,7 @@ package body Keystore.IO.Headers is
    VERSION_1           : constant := 1;
 
    --  Header positions and length.
-   HMAC_START          : constant := 1 + 16;
-   HMAC_END            : constant := HMAC_START + 32 - 1;
-   STORAGE_COUNT_POS   : constant := HMAC_END + 1 + 16 + 4 + 4;
+   STORAGE_COUNT_POS   : constant := 1 + 16 + 16 + 4 + 4;
    HEADER_DATA_POS     : constant := STORAGE_COUNT_POS + 4;
    STORAGE_SLOT_LENGTH : constant := 4 + 2 + 2 + 4 + 32;
 
@@ -104,7 +103,6 @@ package body Keystore.IO.Headers is
       Marshallers.Put_Unsigned_32 (Buffer, MAGIC_3);
       Marshallers.Put_Unsigned_16 (Buffer, VERSION_1);
       Marshallers.Put_Unsigned_16 (Buffer, 1);
-      Marshallers.Skip (Buffer, 32);
       Marshallers.Put_UUID (Buffer, UUID);
       Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Storage));
       Marshallers.Put_Unsigned_32 (Buffer, Buffers.Block_Size);
@@ -115,8 +113,7 @@ package body Keystore.IO.Headers is
    --  ------------------------------
    --  Read the header block and verify its integrity.
    --  ------------------------------
-   procedure Read_Header (Header  : in out Wallet_Header;
-                          Sign    : in Secret_Key) is
+   procedure Read_Header (Header  : in out Wallet_Header) is
       Buf     : constant Buffers.Buffer_Accessor := Header.Buffer.Data.Value;
       Context : Util.Encoders.HMAC.SHA256.Context;
       Buffer  : Keystore.Marshallers.Marshaller;
@@ -157,19 +154,6 @@ package body Keystore.IO.Headers is
                    Interfaces.Unsigned_32'Image (Value));
          raise Invalid_Keystore;
       end if;
-
-      --  Verify the header HMAC signature.
-      Util.Encoders.HMAC.SHA256.Set_Key (Context, Sign);
-      Util.Encoders.HMAC.SHA256.Update (Context, Buf.Data (1 .. 16));
-      Util.Encoders.HMAC.SHA256.Update (Context, Buf.Data (HMAC_END + 1 .. Buf.Data'Last));
-      Util.Encoders.HMAC.SHA256.Finish (Context, Header.HMAC);
-      if Buf.Data (HMAC_START .. HMAC_END) /= Header.HMAC then
-         Log.Warn ("Header block HMAC signature is invalid");
-         raise Invalid_Block;
-      end if;
-
-      --  Skip HMAC.
-      Marshallers.Skip (Buffer, 32);
 
       --  Get keystore UUID
       Marshallers.Get_UUID (Buffer, Header.UUID);
@@ -237,11 +221,8 @@ package body Keystore.IO.Headers is
       Context : Util.Encoders.HMAC.SHA256.Context;
    begin
       Util.Encoders.HMAC.SHA256.Set_Key (Context, Sign);
-      Util.Encoders.HMAC.SHA256.Update (Context, Buf.Data (1 .. 16));
-      Util.Encoders.HMAC.SHA256.Update (Context, Buf.Data (HMAC_END + 1 .. Buf.Data'Last));
+      Util.Encoders.HMAC.SHA256.Update (Context, Buf.Data);
       Util.Encoders.HMAC.SHA256.Finish (Context, Header.HMAC);
-
-      Buf.Data (HMAC_START .. HMAC_END) := Header.HMAC;
    end Sign_Header;
 
    procedure Seek_Header_Data (Buffer : in out Keystore.Marshallers.Marshaller;
