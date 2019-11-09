@@ -89,6 +89,9 @@ package Keystore is
    --  Exception raised by Set_Header_Data when the slot index is out of range.
    No_Header_Slot : exception;
 
+   --  Exception raised when trying to get/set an item which is a wallet.
+   No_Content    : exception;
+
    --  The key slot is used (it cannot be erased unless the operation is forced).
    Used_Key_Slot : exception;
 
