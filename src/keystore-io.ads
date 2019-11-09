@@ -50,6 +50,7 @@ private package Keystore.IO is
    subtype Buffer_Size is Buffers.Buffer_Size;
    subtype Block_Index is Buffers.Block_Index;
    subtype Block_Type is Buffers.Block_Type;
+   subtype IO_Block_Type is Buffers.IO_Block_Type;
    subtype Block_Count is Buffers.Block_Count;
    subtype Block_Number is Buffers.Block_Number;
    subtype Storage_Block is Buffers.Storage_Block;
@@ -57,9 +58,10 @@ private package Keystore.IO is
 
    subtype Marshaller is Marshallers.Marshaller;
 
-   BT_HEADER_START : constant Block_Index := Block_Index'First + BT_HMAC_HEADER_SIZE;
-   BT_DATA_START   : constant Block_Index := BT_HEADER_START + BT_TYPE_HEADER_SIZE;
-   BT_DATA_LENGTH  : constant Block_Index := Block_Index'Last - BT_DATA_START + 1;
+   BT_HEADER_START    : constant Block_Index := Block_Index'First;
+   BT_DATA_START      : constant Block_Index := BT_HEADER_START + BT_TYPE_HEADER_SIZE;
+   BT_DATA_LENGTH     : constant Block_Index := Block_Index'Last - BT_DATA_START + 1;
+   BT_HMAC_HEADER_POS : constant Stream_Element_Offset := Block_Index'Last + 1;
 
    HEADER_BLOCK_NUM   : constant Block_Number := 1;
 
@@ -77,13 +79,13 @@ private package Keystore.IO is
    procedure Read (Stream  : in out Wallet_Stream;
                    Block   : in Storage_Block;
                    Process : not null access
-                     procedure (Data : in Block_Type)) is abstract;
+                     procedure (Data : in IO_Block_Type)) is abstract;
 
    --  Write in the wallet stream the block identified by the block number.
    procedure Write (Stream  : in out Wallet_Stream;
                     Block   : in Storage_Block;
                     Process : not null access
-                      procedure (Data : out Block_Type)) is abstract;
+                      procedure (Data : out IO_Block_Type)) is abstract;
 
    --  Allocate a new block and return the block number in `Block`.
    procedure Allocate (Stream  : in out Wallet_Stream;
