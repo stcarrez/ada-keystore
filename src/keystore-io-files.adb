@@ -125,7 +125,7 @@ package body Keystore.IO.Files is
    procedure Read (Stream  : in out Wallet_Stream;
                    Block   : in Storage_Block;
                    Process : not null access
-                     procedure (Data : in Block_Type)) is
+                     procedure (Data : in IO_Block_Type)) is
       File : File_Stream_Access;
    begin
       Stream.Descriptor.Get (Block.Storage, File);
@@ -139,7 +139,7 @@ package body Keystore.IO.Files is
    procedure Write (Stream  : in out Wallet_Stream;
                     Block   : in Storage_Block;
                     Process : not null access
-                      procedure (Data : out Block_Type)) is
+                      procedure (Data : out IO_Block_Type)) is
       File : File_Stream_Access;
    begin
       Stream.Descriptor.Get (Block.Storage, File);
@@ -239,8 +239,18 @@ package body Keystore.IO.Files is
             Buf  : constant Buffers.Buffer_Accessor := Header.Buffer.Data.Value;
             Last : Ada.Streams.Stream_Element_Offset;
          begin
-            File.Read (Buf.Data, Last);
-            Keystore.IO.Headers.Read_Header (Header, Sign);
+            File.Read (Data, Last);
+            if Last /= Data'Last then
+               Log.Warn ("Header block is too short");
+               raise Invalid_Keystore;
+            end if;
+            Buf.Data := Data (Buf.Data'Range);
+            Keystore.IO.Headers.Sign_Header (Header, Sign);
+            if Header.HMAC /= Data (BT_HMAC_HEADER_POS .. Data'Last) then
+               Log.Warn ("Header block HMAC signature is invalid");
+               raise Invalid_Block;
+            end if;
+            Keystore.IO.Headers.Read_Header (Header);
             UUID := Header.UUID;
          end;
       end Open;
@@ -261,6 +271,7 @@ package body Keystore.IO.Files is
             Buf  : constant Buffers.Buffer_Accessor := Header.Buffer.Data.Value;
          begin
             File.Write (Buf.Data);
+            File.Write (Header.HMAC);
          end;
       end Create;
 
@@ -277,7 +288,7 @@ package body Keystore.IO.Files is
       --  call the `Process` procedure with the data block content.
       procedure Read (Block   : in Block_Number;
                       Process : not null access
-                        procedure (Data : in Block_Type)) is
+                        procedure (Data : in IO_Block_Type)) is
          Pos  : constant off_t := Get_Block_Offset (Block);
          Last : Ada.Streams.Stream_Element_Offset;
       begin
@@ -292,7 +303,7 @@ package body Keystore.IO.Files is
       --  Write in the wallet stream the block identified by the block number.
       procedure Write (Block   : in Block_Number;
                        Process : not null access
-                         procedure (Data : out Block_Type)) is
+                         procedure (Data : out IO_Block_Type)) is
          Pos  : constant off_t := Get_Block_Offset (Block);
       begin
          if Pos /= Current_Pos then
@@ -339,6 +350,7 @@ package body Keystore.IO.Files is
          Keystore.IO.Headers.Sign_Header (Header, Sign);
          File.Seek (Pos  => 0, Mode => Util.Systems.Types.SEEK_SET);
          File.Write (Buf.Data);
+         File.Write (Header.HMAC);
          Current_Pos := Block_Size;
       end Save_Header;
 
