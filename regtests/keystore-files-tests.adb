@@ -145,7 +145,7 @@ package body Keystore.Files.Tests is
                          Pos   : in IO.Block_Index) is
          --  Source_File  : IO.Files.Block_IO.File_Type;
          --  Corrupt_File : IO.Files.Block_IO.File_Type;
-         Data         : IO.Block_Type;
+         Data         : IO.IO_Block_Type;
          Last         : Ada.Streams.Stream_Element_Offset;
          Current      : IO.Block_Number := 1;
          Input_File   : Util.Streams.Files.File_Stream;
