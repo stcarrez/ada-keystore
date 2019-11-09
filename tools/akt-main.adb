@@ -48,6 +48,10 @@ exception
       Log.Error (-("There is no available key slot to add the password"));
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
+   when Keystore.No_Content =>
+      Log.Error (-("No content for an item of type wallet"));
+      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+
    when Keystore.Corrupted =>
       Log.Error (-("The keystore file is corrupted: invalid meta data content"));
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
