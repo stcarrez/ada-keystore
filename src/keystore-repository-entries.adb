@@ -26,8 +26,6 @@ with Keystore.Marshallers;
 --
 --  ```
 --  +------------------+
---  | Block HMAC-256   | 32b
---  +------------------+
 --  | 02 02            | 2b
 --  | Encrypt size     | 2b = BT_DATA_LENGTH
 --  | Wallet id        | 4b
@@ -73,6 +71,8 @@ with Keystore.Marshallers;
 --  | Entry ID         | 4b   ^
 --  | Data key count   | 2b   | DATA_KEY_HEADER_SIZE = 10b
 --  | Data offset      | 4b   v
+--  +------------------+
+--  | Block HMAC-256   | 32b
 --  +------------------+--
 --  ```
 --
@@ -122,10 +122,9 @@ package body Keystore.Repository.Entries is
                            Sign         => Manager.Config.Dir.Sign,
                            Decrypt_Size => Size,
                            Into         => Into.Buffer);
-      Into.Pos := IO.BT_HEADER_START - 1;
 
       --  Check block type.
-      Btype := Marshallers.Get_Unsigned_16 (Into);
+      Btype := Marshallers.Get_Header_16 (Into);
       if Btype /= IO.BT_WALLET_DIRECTORY then
          Logs.Error (Log, "Block{0} invalid block type", Directory.Block);
          raise Keystore.Corrupted;
@@ -348,7 +347,6 @@ package body Keystore.Repository.Entries is
    procedure Add_Entry (Manager : in out Wallet_Manager;
                         Name    : in String;
                         Kind    : in Entry_Type;
-                        Size    : in Interfaces.Unsigned_64;
                         Item    : out Wallet_Entry_Access) is
    begin
       if Manager.Map.Contains (Name) then
