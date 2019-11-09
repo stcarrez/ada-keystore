@@ -38,12 +38,21 @@ with Keystore.Marshallers;
 --  | Data key offset  | 2b  Starts at IO.Block_Index'Last, decreasing
 --  +------------------+
 --  | Entry ID         | 4b   ^
---  | Entry type       | 2b   |
+--  | Entry type       | 2b   | = T_STRING, T_BINARY
 --  | Name size        | 2b   |
 --  | Name             | Nb   | DATA_NAME_ENTRY_SIZE + Name'Length
 --  | Create date      | 8b   |
 --  | Update date      | 8b   |
 --  | Entry size       | 8b   v
+--  +------------------+
+--  | Entry ID         | 4b   ^
+--  | Entry type       | 2b   | = T_WALLET
+--  | Name size        | 2b   |
+--  | Name             | Nb   | DATA_NAME_ENTRY_SIZE + Name'Length
+--  | Create date      | 8b   |
+--  | Update date      | 8b   |
+--  | Wallet lid       | 4b   |
+--  | Wallet master ID | 4b   v
 --  +------------------+
 --  | ...              |
 --  +------------------+--
@@ -155,13 +164,18 @@ package body Keystore.Repository.Entries is
                   Len  : constant Natural := Natural (Marshallers.Get_Unsigned_16 (Into));
                   Name : constant String := Marshallers.Get_String (Into, Len);
                begin
-                  Item := new Wallet_Entry (Length => Len);
+                  Item := new Wallet_Entry (Length => Len, Is_Wallet => Kind = T_WALLET);
                   Item.Entry_Offset := Offset;
                   Item.Kind := Kind;
                   Item.Id := Wallet_Entry_Index (Index);
                   Item.Create_Date := Marshallers.Get_Date (Into);
                   Item.Update_Date := Marshallers.Get_Date (Into);
-                  Item.Size := Marshallers.Get_Unsigned_64 (Into);
+                  if Kind = T_WALLET then
+                     Item.Wallet_Id := Wallet_Identifier (Marshallers.Get_Unsigned_32 (Into));
+                     Item.Master := Marshallers.Get_Block_Number (Into);
+                  else
+                     Item.Size := Marshallers.Get_Unsigned_64 (Into);
+                  end if;
                   Item.Header := Directory;
                   Item.Name := Name;
 
@@ -344,12 +358,17 @@ package body Keystore.Repository.Entries is
       Log.Info ("Adding data entry {0}", Name);
 
       --  Create the new wallet entry.
-      Item := new Wallet_Entry (Length => Name'Length);
+      Item := new Wallet_Entry (Length => Name'Length, Is_Wallet => Kind = T_WALLET);
       Item.Name := Name;
       Item.Create_Date := Ada.Calendar.Clock;
       Item.Update_Date := Item.Create_Date;
       Item.Id := Manager.Next_Id;
+      Item.Kind := Kind;
       Manager.Next_Id := Manager.Next_Id + 1;
+      if Item.Is_Wallet then
+         Item.Wallet_Id := Manager.Next_Wallet_Id;
+         Manager.Next_Wallet_Id := Manager.Next_Wallet_Id + 1;
+      end if;
 
       --  Find and load the directory block that can hold the new entry.
       Find_Directory_Block (Manager, Entry_Size (Item), Item.Header);
@@ -364,8 +383,6 @@ package body Keystore.Repository.Entries is
       --  Register it in the local repository.
       Manager.Map.Insert (Name, Item);
       Manager.Entry_Indexes.Insert (Item.Id, Item);
-
-      Update_Entry (Manager, Item, Kind, Size);
    end Add_Entry;
 
    --  ------------------------------
@@ -377,7 +394,9 @@ package body Keystore.Repository.Entries is
                            Size    : in Interfaces.Unsigned_64) is
    begin
       Item.Kind := Kind;
-      Item.Size := Size;
+      if not Item.Is_Wallet then
+         Item.Size := Size;
+      end if;
       Item.Update_Date := Ada.Calendar.Clock;
       Item.Access_Date := Item.Update_Date;
 
@@ -393,7 +412,12 @@ package body Keystore.Repository.Entries is
       Marshallers.Put_String (Manager.Current, Item.Name);
       Marshallers.Put_Date (Manager.Current, Item.Create_Date);
       Marshallers.Put_Date (Manager.Current, Item.Update_Date);
-      Marshallers.Put_Unsigned_64 (Manager.Current, Item.Size);
+      if Item.Is_Wallet then
+         Marshallers.Put_Unsigned_32 (Manager.Current, Interfaces.Unsigned_32 (Item.Wallet_Id));
+         Marshallers.Put_Block_Number (Manager.Current, Item.Master);
+      else
+         Marshallers.Put_Unsigned_64 (Manager.Current, Item.Size);
+      end if;
 
       pragma Assert (Check => Manager.Current.Pos = Item.Entry_Offset + Entry_Size (Item));
 
