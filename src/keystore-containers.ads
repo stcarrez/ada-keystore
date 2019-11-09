@@ -23,12 +23,22 @@ with Keystore.Repository;
 
 private package Keystore.Containers is
 
+   type Wallet_Container;
+
    --  The `Wallet_Container` protects concurrent accesses to the repository.
    protected type Wallet_Container is
 
       procedure Open (Ident         : in Wallet_Identifier;
                       Block         : in Keystore.IO.Storage_Block;
                       Wallet_Stream : in out Keystore.IO.Refs.Stream_Ref);
+
+      procedure Open (Name             : in String;
+                      Password         : in out Keystore.Passwords.Provider'Class;
+                      New_Repo         : in out Keystore.Repository.Wallet_Repository;
+                      New_Stream       : in out IO.Refs.Stream_Ref;
+                      New_State        : in out State_Type;
+                      New_Master_Block : in out Keystore.IO.Storage_Block;
+                      New_Master_Ident : in out Wallet_Identifier);
 
       procedure Create (Password      : in out Keystore.Passwords.Provider'Class;
                         Config        : in Wallet_Config;
@@ -69,6 +79,14 @@ private package Keystore.Containers is
                      Kind    : in Entry_Type;
                      Input   : in out Util.Streams.Input_Stream'Class);
 
+      procedure Add (Name             : in String;
+                     Password         : in out Keystore.Passwords.Provider'Class;
+                     New_Repo         : in out Keystore.Repository.Wallet_Repository;
+                     New_Stream       : in out IO.Refs.Stream_Ref;
+                     New_State        : in out State_Type;
+                     New_Master_Block : in out Keystore.IO.Storage_Block;
+                     New_Master_Ident : in out Wallet_Identifier);
+
       procedure Set (Name    : in String;
                      Kind    : in Entry_Type;
                      Content : in Ada.Streams.Stream_Element_Array);
@@ -106,6 +124,13 @@ private package Keystore.Containers is
 
       procedure Set_Work_Manager (Workers   : in Keystore.Task_Manager_Access);
 
+      procedure Do_Repository (Process : not null access
+                                 procedure (Repo         : in out Repository.Wallet_Repository;
+                                            Stream       : in out IO.Refs.Stream_Ref;
+                                            State        : in out State_Type;
+                                            Master_Block : in out Keystore.IO.Storage_Block;
+                                            Master_Ident : in out Wallet_Identifier));
+
    private
       Stream       : Keystore.IO.Refs.Stream_Ref;
       Repository   : Keystore.Repository.Wallet_Repository;
@@ -113,5 +138,15 @@ private package Keystore.Containers is
       Master_Block : Keystore.IO.Storage_Block;
       Master_Ident : Wallet_Identifier;
    end Wallet_Container;
+
+   procedure Open_Wallet (Container : in out Wallet_Container;
+                          Name      : in String;
+                          Password  : in out Keystore.Passwords.Provider'Class;
+                          Wallet    : in out Wallet_Container);
+
+   procedure Add_Wallet (Container : in out Wallet_Container;
+                         Name      : in String;
+                         Password  : in out Keystore.Passwords.Provider'Class;
+                         Wallet    : in out Wallet_Container);
 
 end Keystore.Containers;
