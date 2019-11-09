@@ -29,9 +29,11 @@ package body Keystore.Marshallers is
    procedure Set_Header (Into : in out Marshaller;
                          Tag  : in Interfaces.Unsigned_16;
                          Id   : in Keystore.Wallet_Identifier) is
+      Buf : constant Buffers.Buffer_Accessor := Into.Buffer.Data.Value;
    begin
-      Into.Pos := BT_HEADER_START - 1;
-      Put_Unsigned_16 (Into, Tag);
+      Into.Pos := Block_Index'First + 1;
+      Buf.Data (Block_Index'First) := Stream_Element (Shift_Right (Tag, 8));
+      Buf.Data (Block_Index'First + 1) := Stream_Element (Tag and 16#0ff#);
       Put_Unsigned_16 (Into, 0);
       Put_Unsigned_32 (Into, Interfaces.Unsigned_32 (Id));
       Put_Unsigned_32 (Into, 0);
@@ -178,7 +180,7 @@ package body Keystore.Marshallers is
       Pos : constant Block_Index := Into.Pos;
       Buf : constant Buffers.Buffer_Accessor := Into.Buffer.Data.Value;
    begin
-      Into.Pos := Into.Pos + BT_HMAC_HEADER_SIZE;
+      Into.Pos := Into.Pos + SIZE_HMAC;
 
       --  Make HMAC-SHA256 signature of the data content before encryption.
       Util.Encoders.HMAC.SHA256.Sign (Key    => Key,
@@ -203,6 +205,14 @@ package body Keystore.Marshallers is
         Shift_Left (Unsigned_32 (Buf.Data (Block_Index'First + 2)), 8) or
         Unsigned_32 (Buf.Data (Block_Index'First + 3));
    end Get_Header;
+
+   function Get_Header_16 (From  : in out Marshaller) return Interfaces.Unsigned_16 is
+      Buf : constant Buffers.Buffer_Accessor := From.Buffer.Data.Value;
+   begin
+      From.Pos := Block_Index'First + 1;
+      return Shift_Left (Unsigned_16 (Buf.Data (Block_Index'First)), 8) or
+        Unsigned_16 (Buf.Data (Block_Index'First + 1));
+   end Get_Header_16;
 
    function Get_Unsigned_16 (From  : in out Marshaller) return Interfaces.Unsigned_16 is
       Pos : constant Block_Index := From.Pos;
