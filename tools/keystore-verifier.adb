@@ -100,9 +100,20 @@ package body Keystore.Verifier is
       declare
          Buf  : constant Buffers.Buffer_Accessor := Header.Buffer.Data.Value;
          Last : Ada.Streams.Stream_Element_Offset;
+         Data : Keystore.IO.IO_Block_Type;
       begin
-         File.Read (Buf.Data, Last);
-         Keystore.IO.Headers.Read_Header (Header, Sign);
+         File.Read (Data, Last);
+         if Last /= Data'Last then
+            Log.Warn ("Header block is too short");
+            raise Invalid_Keystore;
+         end if;
+         Buf.Data := Data (Buf.Data'Range);
+         Keystore.IO.Headers.Sign_Header (Header, Sign);
+         if Header.HMAC /= Data (Keystore.IO.BT_HMAC_HEADER_POS .. Data'Last) then
+            Log.Warn ("Header block HMAC signature is invalid");
+            --  raise Invalid_Block;
+         end if;
+         Keystore.IO.Headers.Read_Header (Header);
       end;
    end Open;
 
