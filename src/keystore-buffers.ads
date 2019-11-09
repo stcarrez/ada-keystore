@@ -45,8 +45,8 @@ private package Keystore.Buffers is
    type Storage_Identifier is new Interfaces.Unsigned_32;
 
    type Storage_Block is record
-      Storage : Storage_Identifier;
-      Block   : Block_Number;
+      Storage : Storage_Identifier := 0;
+      Block   : Block_Number := Block_Number'First;
    end record;
 
    --  Get a printable representation of storage block for the logs.
