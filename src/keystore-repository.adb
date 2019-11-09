@@ -170,7 +170,7 @@ package body Keystore.Repository is
       Data_Offset : Interfaces.Unsigned_64 := 0;
       Iterator    : Keys.Data_Key_Iterator;
    begin
-      Entries.Add_Entry (Repository, Name, Kind, Content'Length, Item);
+      Entries.Add_Entry (Repository, Name, Kind, Item);
       Entries.Update_Entry (Repository, Item, Kind, Content'Length);
 
       if Content'Length > 0 then
@@ -192,7 +192,7 @@ package body Keystore.Repository is
       Data_Offset : Interfaces.Unsigned_64 := 0;
       Iterator    : Keys.Data_Key_Iterator;
    begin
-      Entries.Add_Entry (Repository, Name, Kind, 1, Item);
+      Entries.Add_Entry (Repository, Name, Kind, Item);
       Entries.Update_Entry (Repository, Item, Kind, 1);
 
       Keys.Initialize (Repository, Iterator, Item);
@@ -214,7 +214,7 @@ package body Keystore.Repository is
       Item   : Wallet_Entry_Access;
       Entry_Block : Wallet_Directory_Entry_Access;
    begin
-      Entries.Add_Entry (Repository, Name, T_WALLET, 0, Item);
+      Entries.Add_Entry (Repository, Name, T_WALLET, Item);
 
       --  Repository.Value.Add (Name, Password, Wallet, Stream);
       Repository.Stream.Allocate (IO.MASTER_BLOCK, Master_Block);
