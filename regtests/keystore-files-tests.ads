@@ -77,4 +77,7 @@ package Keystore.Files.Tests is
    procedure Test_Header_Data_1 (T : in out Test);
    procedure Test_Header_Data_10 (T : in out Test);
 
+   --  Test creating a wallet.
+   procedure Test_Add_Wallet (T : in out Test);
+
 end Keystore.Files.Tests;
