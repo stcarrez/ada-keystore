@@ -95,12 +95,26 @@ package Keystore.Files is
    --  The children wallet has its own key to protect the named entries it manages.
    procedure Add (Container : in out Wallet_File;
                   Name      : in String;
-                  Password  : in Secret_Key;
+                  Password  : in out Keystore.Passwords.Provider'Class;
+                  Wallet    : in out Wallet_File'Class) with
+     Pre  => Container.Is_Open and not Wallet.Is_Open,
+     Post => Container.Is_Open and Wallet.Is_Open;
+
+   procedure Add (Container : in out Wallet_File;
+                  Name      : in String;
+                  Password  : in Keystore.Secret_Key;
                   Wallet    : in out Wallet_File'Class) with
      Pre  => Container.Is_Open and not Wallet.Is_Open,
      Post => Container.Is_Open and Wallet.Is_Open;
 
    --  Load from the container the named children wallet.
+   procedure Open (Container : in out Wallet_File;
+                   Name      : in String;
+                   Password  : in out Keystore.Passwords.Provider'Class;
+                   Wallet    : in out Wallet_File'Class) with
+     Pre  => Container.Is_Open and not Wallet.Is_Open,
+     Post => Container.Is_Open and Wallet.Is_Open;
+
    procedure Open (Container : in out Wallet_File;
                    Name      : in String;
                    Password  : in Secret_Key;
