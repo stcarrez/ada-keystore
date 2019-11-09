@@ -49,8 +49,7 @@ package Keystore.IO.Headers is
                            Header  : in out Wallet_Header);
 
    --  Read the header block and verify its integrity.
-   procedure Read_Header (Header  : in out Wallet_Header;
-                          Sign    : in Secret_Key);
+   procedure Read_Header (Header  : in out Wallet_Header);
 
    --  Scan the header block for the storage and call the Process procedure for each
    --  storage information found in the header block.
