@@ -52,13 +52,13 @@ with Keystore.Buffers;
 --  | Salt for iv      | 32b
 --  | Key slot sign    | 32b
 --  | Dir key # 1      | 32b ---
---  | Dir iv # 1       | 32b  ^
+--  | Dir iv # 1       | 16b  ^
 --  | Dir sign # 1     | 32b  |
 --  | Data key # 1     | 32b  |
---  | Data iv # 1      | 32b  | Encrypted by user's password
+--  | Data iv # 1      | 16b  | Encrypted by user's password
 --  | Data sign #1     | 32b  |
 --  | Key key # 1      | 32b  |
---  | Key iv # 1       | 32b  v
+--  | Key iv # 1       | 16b  v
 --  | Key sign #1      | 32b ---
 --  | Slot HMAC-256    | 32b
 --  | PAD 0 / Random   | 80b
