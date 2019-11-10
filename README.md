@@ -9,7 +9,7 @@
 
 # TL;DR
 
-AKT is a tool to store protect your sensitive information and documents by
+AKT is a tool to store and protect your sensitive information and documents by
 encrypting them in secure keystore (AES-256, HMAC-256).
 
 Create the keystore and protect it with your gpg key:
