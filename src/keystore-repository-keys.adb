@@ -285,4 +285,34 @@ package body Keystore.Repository.Keys is
       Manager.Modified.Include (Iterator.Current.Buffer.Block, Iterator.Current.Buffer.Data);
    end Update_Key_Slot;
 
+   procedure Create_Wallet (Manager      : in out Wallet_Repository;
+                            Item         : in Wallet_Entry_Access;
+                            Master_Block : in Keystore.IO.Storage_Block;
+                            Keys         : in out Keystore.Keys.Key_Manager) is
+      Iter      : Data_Key_Iterator;
+      Key_Pos   : IO.Block_Index;
+      Key_Block : IO.Storage_Block;
+   begin
+      Initialize (Manager, Iter, Item);
+
+      Allocate_Key_Slot (Manager, Iter, Master_Block, IO.Buffer_Size'Last, Key_Pos, Key_Block);
+
+      Iter.Current.Pos := Key_Pos;
+      Keystore.Keys.Create_Master_Key (Keys, Iter.Current, Manager.Config.Key);
+   end Create_Wallet;
+
+   procedure Open_Wallet (Manager : in out Wallet_Repository;
+                          Item    : in Wallet_Entry_Access;
+                          Keys    : in out Keystore.Keys.Key_Manager) is
+      Iter : Data_Key_Iterator;
+   begin
+      Initialize (Manager, Iter, Item);
+      Next_Data_Key (Manager, Iter);
+
+      pragma Assert (Has_Data_Key (Iter));
+
+      Iter.Current.Pos := Iter.Key_Pos;
+      Keystore.Keys.Load_Master_Key (Keys, Iter.Current, Manager.Config.Key);
+   end Open_Wallet;
+
 end Keystore.Repository.Keys;
