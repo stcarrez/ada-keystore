@@ -16,7 +16,6 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Keystore.IO;
-with Keystore.Keys;
 with Util.Encoders;
 package body Keystore.Containers is
 
@@ -29,6 +28,7 @@ package body Keystore.Containers is
                       Block         : in Keystore.IO.Storage_Block;
                       Wallet_Stream : in out Keystore.IO.Refs.Stream_Ref) is
       begin
+         Keys.Set_Header_Key (Master, Header_Key);
          Stream := Wallet_Stream;
          Master_Block := Block;
          Master_Ident := Ident;
@@ -40,7 +40,6 @@ package body Keystore.Containers is
                         Block         : in IO.Storage_Block;
                         Ident         : in Wallet_Identifier;
                         Wallet_Stream : in out IO.Refs.Stream_Ref) is
-         Master : Keystore.Keys.Key_Manager;
       begin
          Stream := Wallet_Stream;
          Master_Block := Block;
@@ -68,9 +67,7 @@ package body Keystore.Containers is
 
       procedure Unlock (Password  : in out Keystore.Passwords.Provider'Class;
                         Slot      : out Key_Slot) is
-         Master : Keystore.Keys.Key_Manager;
       begin
-         Keys.Set_Header_Key (Master, Header_Key);
          Keystore.Repository.Open (Repository, Password, Master_Ident,
                                    Master_Block, Master, Stream.Value);
          Slot := Repository.Get_Key_Slot;
@@ -81,9 +78,7 @@ package body Keystore.Containers is
                          New_Password : in out Keystore.Passwords.Provider'Class;
                          Config       : in Wallet_Config;
                          Mode         : in Mode_Type) is
-         Master : Keystore.Keys.Key_Manager;
       begin
-         Keys.Set_Header_Key (Master, Header_Key);
          Keystore.Keys.Set_Key (Master, Password, New_Password, Config, Mode,
                                 Repository.Get_Identifier, Master_Block, Stream.Value.all);
       end Set_Key;
@@ -91,9 +86,7 @@ package body Keystore.Containers is
       procedure Remove_Key (Password : in out Keystore.Passwords.Provider'Class;
                             Slot     : in Key_Slot;
                             Force    : in Boolean) is
-         Master : Keystore.Keys.Key_Manager;
       begin
-         Keys.Set_Header_Key (Master, Header_Key);
          Keystore.Keys.Remove_Key (Master, Password, Slot, Force,
                                    Repository.Get_Identifier, Master_Block, Stream.Value.all);
       end Remove_Key;
@@ -122,46 +115,33 @@ package body Keystore.Containers is
          Keystore.Repository.Add (Repository, Name, Kind, Input);
       end Add;
 
-      procedure Add (Name             : in String;
-                     Password         : in out Keystore.Passwords.Provider'Class;
-                     New_Repo         : in out Keystore.Repository.Wallet_Repository;
-                     New_Stream       : in out IO.Refs.Stream_Ref;
-                     New_State        : in out State_Type;
-                     New_Master_Block : in out Keystore.IO.Storage_Block;
-                     New_Master_Ident : in out Wallet_Identifier) is
-         Master : Keystore.Keys.Key_Manager;
+      procedure Create (Name             : in String;
+                        Password         : in out Keystore.Passwords.Provider'Class;
+                        From_Repo        : in out Keystore.Repository.Wallet_Repository;
+                        From_Stream      : in out IO.Refs.Stream_Ref) is
       begin
-         Keys.Set_Header_Key (Master, Header_Key);
-         Keystore.Repository.Add_Wallet (Repository, Name, Password, Master,
-                                         New_Master_Block, New_Master_Ident, New_Repo);
-         New_Stream := Stream;
-         New_State := State;
-      end Add;
+         Keystore.Repository.Add_Wallet (From_Repo, Name, Password, Master,
+                                         Master_Block, Master_Ident, Repository);
+         Stream := From_Stream;
+         State := S_OPEN;
+      end Create;
 
       procedure Open (Name             : in String;
                       Password         : in out Keystore.Passwords.Provider'Class;
-                      New_Repo         : in out Keystore.Repository.Wallet_Repository;
-                      New_Stream       : in out IO.Refs.Stream_Ref;
-                      New_State        : in out State_Type;
-                      New_Master_Block : in out Keystore.IO.Storage_Block;
-                      New_Master_Ident : in out Wallet_Identifier) is
-         Master : Keystore.Keys.Key_Manager;
+                      From_Repo        : in out Keystore.Repository.Wallet_Repository;
+                      From_Stream      : in out IO.Refs.Stream_Ref) is
       begin
-         Keys.Set_Header_Key (Master, Header_Key);
-         Keystore.Repository.Open (Repository, Name, Password, Master,
-                                   New_Master_Block, New_Master_Ident, New_Repo);
-         New_Stream := Stream;
-         New_State := State;
+         Keystore.Repository.Open (From_Repo, Name, Password, Master,
+                                   Master_Block, Master_Ident, Repository);
+         Stream := From_Stream;
+         State := S_OPEN;
       end Open;
 
       procedure Do_Repository (Process : not null access
                                  procedure (Repo   : in out Keystore.Repository.Wallet_Repository;
-                                            Stream : in out IO.Refs.Stream_Ref;
-                                            State        : in out State_Type;
-                                            Master_Block : in out Keystore.IO.Storage_Block;
-                                            Master_Ident : in out Wallet_Identifier)) is
+                                            Stream : in out IO.Refs.Stream_Ref)) is
       begin
-         Process (Repository, Stream, State, Master_Block, Master_Ident);
+         Process (Repository, Stream);
       end Do_Repository;
 
       procedure Set (Name    : in String;
@@ -246,22 +226,16 @@ package body Keystore.Containers is
                           Password  : in out Keystore.Passwords.Provider'Class;
                           Wallet    : in out Wallet_Container) is
       procedure Add (Repo         : in out Keystore.Repository.Wallet_Repository;
-                     Stream       : in out IO.Refs.Stream_Ref;
-                     State        : in out State_Type;
-                     Master_Block : in out Keystore.IO.Storage_Block;
-                     Master_Ident : in out Wallet_Identifier);
+                     Stream       : in out IO.Refs.Stream_Ref);
 
       procedure Add (Repo         : in out Keystore.Repository.Wallet_Repository;
-                     Stream       : in out IO.Refs.Stream_Ref;
-                     State        : in out State_Type;
-                     Master_Block : in out Keystore.IO.Storage_Block;
-                     Master_Ident : in out Wallet_Identifier) is
+                     Stream       : in out IO.Refs.Stream_Ref) is
       begin
-         Container.Open (Name, Password, Repo, Stream, State, Master_Block, Master_Ident);
+         Wallet.Open (Name, Password, Repo, Stream);
       end Add;
 
    begin
-      Wallet.Do_Repository (Add'Access);
+      Container.Do_Repository (Add'Access);
    end Open_Wallet;
 
    procedure Add_Wallet (Container : in out Wallet_Container;
@@ -269,22 +243,16 @@ package body Keystore.Containers is
                          Password  : in out Keystore.Passwords.Provider'Class;
                          Wallet    : in out Wallet_Container) is
       procedure Add (Repo         : in out Keystore.Repository.Wallet_Repository;
-                     Stream       : in out IO.Refs.Stream_Ref;
-                     State        : in out State_Type;
-                     Master_Block : in out Keystore.IO.Storage_Block;
-                     Master_Ident : in out Wallet_Identifier);
+                     Stream       : in out IO.Refs.Stream_Ref);
 
       procedure Add (Repo         : in out Keystore.Repository.Wallet_Repository;
-                     Stream       : in out IO.Refs.Stream_Ref;
-                     State        : in out State_Type;
-                     Master_Block : in out Keystore.IO.Storage_Block;
-                     Master_Ident : in out Wallet_Identifier) is
+                     Stream       : in out IO.Refs.Stream_Ref) is
       begin
-         Container.Add (Name, Password, Repo, Stream, State, Master_Block, Master_Ident);
+         Wallet.Create (Name, Password, Repo, Stream);
       end Add;
 
    begin
-      Wallet.Do_Repository (Add'Access);
+      Container.Do_Repository (Add'Access);
    end Add_Wallet;
 
 end Keystore.Containers;
