@@ -208,6 +208,11 @@ private
       Access_Date  : Ada.Calendar.Time;
       Entry_Offset : IO.Block_Index := IO.Block_Index'First;
       Name         : aliased String (1 .. Length);
+
+      --  List of data key blocks.
+      Data_Blocks  : Wallet_Data_Key_List.List;
+      Block_Count  : Natural := 0;
+
       case Is_Wallet is
          when True =>
             Wallet_Id    : Wallet_Identifier;
@@ -215,10 +220,7 @@ private
 
          when False =>
             Size         : Interfaces.Unsigned_64 := 0;
-            Block_Count  : Natural := 0;
 
-            --  List of data key blocks.
-            Data_Blocks  : Wallet_Data_Key_List.List;
       end case;
    end record;
 
