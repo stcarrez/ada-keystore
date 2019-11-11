@@ -31,7 +31,6 @@ package body AKT.Configs is
    Log   : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Configs");
 
    function Get_Default_Path return String;
-   procedure Save;
 
    Cfg      : Util.Properties.Manager;
    Cfg_Path : Ada.Strings.Unbounded.Unbounded_String;
@@ -61,6 +60,9 @@ package body AKT.Configs is
       end if;
    end Initialize;
 
+   --  ------------------------------
+   --  Save the configuration.
+   --  ------------------------------
    procedure Save is
       Path : constant String
         := (if Length (Cfg_Path) = 0 then Get_Default_Path else To_String (Cfg_Path));
@@ -92,5 +94,14 @@ package body AKT.Configs is
    begin
       return Cfg.Get (Name);
    end Get;
+
+   --  ------------------------------
+   --  Set the configuration parameter.
+   --  ------------------------------
+   procedure Set (Name  : in String;
+                  Value : in String) is
+   begin
+      Cfg.Set (Name, Value);
+   end Set;
 
 end AKT.Configs;
