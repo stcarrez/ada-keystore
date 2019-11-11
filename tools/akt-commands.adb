@@ -174,6 +174,12 @@ package body AKT.Commands is
                         Long_Switch => "--zero",
                         Help   => -("Erase and fill with zeros instead of random values"));
       GC.Define_Switch (Config => Context.Command_Config,
+                        Output => Context.Config_File'Access,
+                        Switch => "-c:",
+                        Long_Switch => "--config=",
+                        Argument => "PATH",
+                        Help   => -("Defines the path for akt global configuration"));
+      GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Worker_Count'Access,
                         Switch => "-t:",
                         Long_Switch => "--thread=",
@@ -308,6 +314,8 @@ package body AKT.Commands is
    begin
       GC.Getopt (Config => Context.Command_Config);
       Util.Commands.Parsers.GNAT_Parser.Get_Arguments (Arguments, GC.Get_Argument);
+
+      AKT.Configs.Initialize (Context.Config_File.all);
 
       if Context.Debug or Context.Verbose then
          AKT.Configure_Logs (Debug => Context.Debug, Verbose => Context.Verbose);
