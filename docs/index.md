@@ -22,6 +22,8 @@ Because the child wallet has its own master key, it is necessary to known
 the primary password and the child password to unlock the parent wallet
 first and then the child wallet.
 
+![AKT Overview](images/akt-overview.png)
+
 The data is organized in blocks of 4K whose primary content is encrypted
 either by the wallet master key or by the entry keys.  The data block is
 signed by using HMAC-256.  A data block can contain several values but
