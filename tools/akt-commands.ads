@@ -80,6 +80,7 @@ private
       Verbose           : aliased Boolean := False;
       Debug             : aliased Boolean := False;
       Zero              : aliased Boolean := False;
+      Config_File       : aliased GNAT.Strings.String_Access;
       Wallet_File       : aliased GNAT.Strings.String_Access;
       Data_Path         : aliased GNAT.Strings.String_Access;
       Password_File     : aliased GNAT.Strings.String_Access;
