@@ -541,6 +541,41 @@ package body Keystore.Keys is
       Manager.Crypt.Cipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
    end Set_Header_Key;
 
+   --  ------------------------------
+   --  Create a new masker keys for a children wallet and save the new keys in the buffer.
+   --  ------------------------------
+   procedure Create_Master_Key (Manager : in out Key_Manager;
+                                Buffer  : in out Marshallers.Marshaller;
+                                Crypt   : in Cryptor) is
+   begin
+      Manager.Random.Generate (Manager.Crypt.Key);
+      Manager.Random.Generate (Manager.Crypt.IV);
+      Manager.Crypt.Decipher.Set_Key (Manager.Crypt.Key, Util.Encoders.AES.CBC);
+      Manager.Crypt.Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
+      Manager.Crypt.Cipher.Set_Key (Manager.Crypt.Key, Util.Encoders.AES.CBC);
+      Manager.Crypt.Cipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
+      Set_IV (Manager.Crypt, 1);
+      Marshallers.Put_Secret (Buffer, Manager.Crypt.Key, Crypt.Key, Crypt.IV);
+      Marshallers.Put_Secret (Buffer, Manager.Crypt.IV, Crypt.Key, Crypt.IV);
+   end Create_Master_Key;
+
+   --  ------------------------------
+   --  Extract from the buffer the master keys to open the children wallet.
+   --  ------------------------------
+   procedure Load_Master_Key (Manager : in out Key_Manager;
+                              Buffer  : in out Marshallers.Marshaller;
+                              Crypt   : in Cryptor) is
+   begin
+      Marshallers.Get_Secret (Buffer, Manager.Crypt.Key, Crypt.Key, Crypt.IV);
+      Marshallers.Get_Secret (Buffer, Manager.Crypt.IV, Crypt.Key, Crypt.IV);
+
+      Manager.Crypt.Decipher.Set_Key (Manager.Crypt.Key, Util.Encoders.AES.CBC);
+      Manager.Crypt.Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
+      Manager.Crypt.Cipher.Set_Key (Manager.Crypt.Key, Util.Encoders.AES.CBC);
+      Manager.Crypt.Cipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
+      Set_IV (Manager.Crypt, 1);
+   end Load_Master_Key;
+
    procedure Set_Key (Manager      : in out Key_Manager;
                       Password     : in out Keystore.Passwords.Provider'Class;
                       New_Password : in out Keystore.Passwords.Provider'Class;
