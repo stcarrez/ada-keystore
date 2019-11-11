@@ -35,6 +35,7 @@ with AKT.Commands.Password.Add;
 with AKT.Commands.Password.Set;
 with AKT.Commands.Password.Remove;
 with AKT.Commands.Info;
+with AKT.Commands.Config;
 with Keystore.Passwords.Input;
 with Keystore.Passwords.Files;
 with Keystore.Passwords.Unsafe;
@@ -56,6 +57,7 @@ package body AKT.Commands is
    Add_Password_Command    : aliased AKT.Commands.Password.Add.Command_Type;
    Remove_Password_Command : aliased AKT.Commands.Password.Remove.Command_Type;
    Info_Command            : aliased AKT.Commands.Info.Command_Type;
+   Config_Command          : aliased AKT.Commands.Config.Command_Type;
    Driver                  : Drivers.Driver_Type;
 
    --  ------------------------------
@@ -199,6 +201,9 @@ package body AKT.Commands is
       Driver.Add_Command ("help",
                           -("print some help"),
                           Help_Command'Access);
+      Driver.Add_Command ("config",
+                          -("get or set global options"),
+                          Config_Command'Access);
       Driver.Add_Command ("set",
                           -("insert or update a value in the keystore"),
                           Set_Command'Access);
