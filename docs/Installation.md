@@ -8,8 +8,14 @@ Before building the library, you will need:
 
 * [Ada Utility Library](https://github.com/stcarrez/ada-util)
 
-First get, build and install the [XML/Ada](http://libre.adacore.com/libre/tools/xmlada/)
-and then get, build and install the [Ada Utility Library](https://github.com/stcarrez/ada-util).
+First get, build and install the [Ada Utility Library](https://github.com/stcarrez/ada-util).
+
+On Debian systems, you may run the following installation command
+to get a functional GNAT Ada build environment:
+
+```
+sudo apt-get install -y make git gprbuild gnat-7 libxmlada-sax7-dev
+```
 
 ## Configuration
 
@@ -23,6 +29,7 @@ and you may use:
   * `--enable-gtk` to enable building the Gtk tool,
   * `--enable-shared` to enable the build of shared libraries,
   * `--disable-static` to disable the build of static libraries,
+  * `--disable-nls` to disable NLS support,
   * `--with-ada-util=PATH` to control the installation path of [Ada Utility Library](https://github.com/stcarrez/ada-util),
   * `--with-gtkada=PATH` to control the installation path of [Gtk Ada Library](https://github.com/AdaCore/GtkAda),
   * `--help` to get a detailed list of supported options.
@@ -32,6 +39,10 @@ In most cases you will configure with the following command:
 ./configure
 ```
 
+On FreeBSD and NetBSD you have to disable the NLS support:
+```
+./configure --disable-nls
+```
 
 ## Build
 
