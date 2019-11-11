@@ -341,6 +341,7 @@ package body Keystore.Keys is
       Util.Encoders.HMAC.SHA256.Finish (Hmac, Result);
       Buf.Data (Buffer.Pos + 1 .. Buffer.Pos + Result'Length) := Result;
 
+      Set_IV (Manager.Crypt, Buffer.Buffer.Block.Block);
       Stream.Write (Cipher  => Manager.Crypt.Cipher,
                     Sign    => Manager.Crypt.Sign,
                     From    => Buffer.Buffer);
@@ -376,6 +377,7 @@ package body Keystore.Keys is
       Value   : Interfaces.Unsigned_32;
       Size    : IO.Block_Index;
    begin
+      Set_IV (Manager.Crypt, Block.Block);
       Buffer.Buffer := Buffers.Allocate (Block);
       Manager.Header_Block := Block;
       Stream.Read (Decipher     => Manager.Crypt.Decipher,
@@ -554,7 +556,6 @@ package body Keystore.Keys is
       Manager.Crypt.Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
       Manager.Crypt.Cipher.Set_Key (Manager.Crypt.Key, Util.Encoders.AES.CBC);
       Manager.Crypt.Cipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
-      Set_IV (Manager.Crypt, 1);
       Marshallers.Put_Secret (Buffer, Manager.Crypt.Key, Crypt.Key, Crypt.IV);
       Marshallers.Put_Secret (Buffer, Manager.Crypt.IV, Crypt.Key, Crypt.IV);
    end Create_Master_Key;
@@ -573,7 +574,6 @@ package body Keystore.Keys is
       Manager.Crypt.Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
       Manager.Crypt.Cipher.Set_Key (Manager.Crypt.Key, Util.Encoders.AES.CBC);
       Manager.Crypt.Cipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
-      Set_IV (Manager.Crypt, 1);
    end Load_Master_Key;
 
    procedure Set_Key (Manager      : in out Key_Manager;
