@@ -1,6 +1,15 @@
 # Implementation
 
 ## File layouts
+
+The data is organized in blocks of 4K.  The first block is a header
+block used to store various information to identify the storage files.
+Other blocks have a clear 16-byte header and an HMAC-256 signature
+at the end.  Blocks are encrypted either by using the master key,
+the directory key, the data key or a per-data fragment key.
+
+![Keystore blocks overview](images/akt-keystore-blocks.png)
+
 ### Header block
 The first block of the file is the keystore header block which contains clear
 information signed by an HMAC header.  The header block contains the keystore
@@ -15,7 +24,6 @@ some optional header data.
 | 00 01            | 2b = Version 1
 | 00 01            | 2b = File header length in blocks
 +------------------+
-| Header HMAC-256  | 32b
 | Keystore UUID    | 16b
 | Storage ID       | 4b
 | Block size       | 4b
@@ -39,14 +47,14 @@ some optional header data.
 | Storage max bloc | 4b
 | Storage HMAC     | 32b = 44b
 +------------------+----
+| Header HMAC-256  | 32b
++------------------+----
 ```
 
 ### Directory Entries
 The wallet repository block is encrypted with the wallet directory key.
 
 ```
-+------------------+
-| Block HMAC-256   | 32b
 +------------------+
 | 02 02            | 2b
 | Encrypt size     | 2b = BT_DATA_LENGTH
@@ -58,12 +66,21 @@ The wallet repository block is encrypted with the wallet directory key.
 | Data key offset  | 2b  Starts at IO.Block_Index'Last, decreasing
 +------------------+
 | Entry ID         | 4b   ^
-| Entry type       | 2b   |
+| Entry type       | 2b   | = T_STRING, T_BINARY
 | Name size        | 2b   |
 | Name             | Nb   | DATA_NAME_ENTRY_SIZE + Name'Length
 | Create date      | 8b   |
 | Update date      | 8b   |
 | Entry size       | 8b   v
++------------------+
+| Entry ID         | 4b   ^
+| Entry type       | 2b   | = T_WALLET
+| Name size        | 2b   |
+| Name             | Nb   | DATA_NAME_ENTRY_SIZE + Name'Length
+| Create date      | 8b   |
+| Update date      | 8b   |
+| Wallet lid       | 4b   |
+| Wallet master ID | 4b   v
 +------------------+
 | ...              |
 +------------------+--
@@ -84,6 +101,8 @@ The wallet repository block is encrypted with the wallet directory key.
 | Entry ID         | 4b   ^
 | Data key count   | 2b   | DATA_KEY_HEADER_SIZE = 10b
 | Data offset      | 4b   v
++------------------+
+| Block HMAC-256   | 32b
 +------------------+--
 ```
 
@@ -96,8 +115,6 @@ from the workers package.  The data block can be stored in a separate file so th
 the wallet repository and its keys are separate from the data blocks.
 
 ```
-+------------------+
-| Block HMAC-256   | 32b
 +------------------+
 | 03 03            | 2b
 | Encrypt size     | 2b = DATA_ENTRY_SIZE * Nb data fragment
@@ -117,6 +134,8 @@ the wallet repository and its keys are separate from the data blocks.
 +------------------+
 | Data content     |     Encrypted with data entry key
 +------------------+-----
+| Block HMAC-256   | 32b
++------------------+
 ```
 
 
