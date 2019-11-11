@@ -99,6 +99,16 @@ private package Keystore.Keys is
                          Block          : in Keystore.IO.Storage_Block;
                          Stream         : in out IO.Wallet_Stream'Class);
 
+   --  Create a new masker keys for a children wallet and save the new keys in the buffer.
+   procedure Create_Master_Key (Manager : in out Key_Manager;
+                                Buffer  : in out Marshallers.Marshaller;
+                                Crypt   : in Cryptor);
+
+   --  Extract from the buffer the master keys to open the children wallet.
+   procedure Load_Master_Key (Manager : in out Key_Manager;
+                              Buffer  : in out Marshallers.Marshaller;
+                              Crypt   : in Cryptor);
+
 private
 
    --  Size of a key slot.
