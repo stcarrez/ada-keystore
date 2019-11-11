@@ -117,6 +117,7 @@ package body Keystore.Repository is
          Wallet.Next_Id := 1;
          Wallet.Id := Item.Wallet_Id;
          Wallet.Parent := Repository'Unchecked_Access;
+         Keystore.Repository.Keys.Open_Wallet (Repository, Item, Keys);
          Keystore.Keys.Open (Keys, Password, Wallet.Id, Master_Block,
                              Wallet.Root, Wallet.Config, null, Repository.Stream.all);
          Wallet.Workers := Workers.Create (Wallet'Unchecked_Access, null, 1).all'Access;
@@ -228,6 +229,7 @@ package body Keystore.Repository is
 
       Entries.Update_Entry (Repository, Item, T_WALLET, 0);
 
+      Keystore.Repository.Keys.Create_Wallet (Repository, Item, Master_Block, Keys);
       Keystore.Keys.Create (Keys, Password, 1, Master_Ident, Master_Block, Wallet.Root,
                             Wallet.Config, Repository.Stream.all);
 
