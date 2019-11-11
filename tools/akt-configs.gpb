@@ -23,10 +23,21 @@ package AKT.Configs is
    PREFIX    : constant String := $PREFIX;
    RESOURCES : constant String := PREFIX & "/share/akt/resources/";
 
+   FILL_CONFIG        : constant String := "fill-mode";
+   GPG_CRYPT_CONFIG   : constant String := "gpg-crypt";
+   GPG_DECRYPT_CONFIG : constant String := "gpg-decrypt";
+
    --  Initialize the configuration.
    procedure Initialize (Path : in String);
 
    --  Get the configuration parameter.
    function Get (Name : in String) return String;
+
+   --  Set the configuration parameter.
+   procedure Set (Name  : in String;
+                  Value : in String);
+
+   --  Save the configuration.
+   procedure Save;
 
 end AKT.Configs;
