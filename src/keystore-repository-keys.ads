@@ -16,6 +16,7 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Keystore.Marshallers;
+with Keystore.Keys;
 private package Keystore.Repository.Keys is
 
    subtype Key_Count_Type is Interfaces.Unsigned_16 range 0 .. DATA_MAX_KEY_COUNT;
@@ -46,8 +47,7 @@ private package Keystore.Repository.Keys is
 
    procedure Initialize (Manager  : in out Wallet_Manager;
                          Iterator : in out Data_Key_Iterator;
-                         Item     : in Wallet_Entry_Access) with
-     Pre => not Item.Is_Wallet;
+                         Item     : in Wallet_Entry_Access);
 
    function Has_Data_Key (Iterator : in Data_Key_Iterator) return Boolean;
 
@@ -75,6 +75,17 @@ private package Keystore.Repository.Keys is
    procedure Update_Key_Slot (Manager    : in out Wallet_Repository;
                               Iterator   : in out Data_Key_Iterator;
                               Size       : in IO.Buffer_Size);
+
+   procedure Create_Wallet (Manager      : in out Wallet_Repository;
+                            Item         : in Wallet_Entry_Access;
+                            Master_Block : in Keystore.IO.Storage_Block;
+                            Keys         : in out Keystore.Keys.Key_Manager) with
+     Pre => Item.Is_Wallet;
+
+   procedure Open_Wallet (Manager : in out Wallet_Repository;
+                          Item    : in Wallet_Entry_Access;
+                          Keys    : in out Keystore.Keys.Key_Manager) with
+     Pre => Item.Is_Wallet;
 
 private
 
