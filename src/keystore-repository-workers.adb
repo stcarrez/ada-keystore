@@ -17,6 +17,8 @@
 -----------------------------------------------------------------------
 with Interfaces;
 with Util.Log.Loggers;
+with Util.Encoders.SHA256;
+with Util.Encoders.HMAC.SHA256;
 with Ada.IO_Exceptions;
 with Keystore.Logs;
 with Keystore.Buffers;
@@ -278,6 +280,7 @@ package body Keystore.Repository.Workers is
       declare
          Buf      : constant Buffers.Buffer_Accessor := Data_Block.Buffer.Data.Value;
          Last_Pos : constant IO.Block_Index := Work.Buffer_Pos + Work.End_Data - Work.Start_Data;
+         HMAC     : Util.Encoders.SHA256.Hash_Array;
       begin
          Work.Key_Block.Pos := Work.Key_Pos;
          Marshallers.Get_Secret (Work.Key_Block, IV, Work.Manager.Config.Key.Key,
@@ -298,6 +301,17 @@ package body Keystore.Repository.Workers is
          Work.Data_Decipher.Finish (Into => Work.Data (Last + 1 .. Last_Pos),
                                     Last => Last);
 
+         Util.Encoders.HMAC.SHA256.Sign (Key    => Work.Info_Cryptor.Sign,
+                                         Data   => Work.Data (Work.Buffer_Pos .. Last),
+                                         Result => HMAC);
+         if HMAC /= Buf.Data (Data_Block.Pos + 1 .. Data_Block.Pos + IO.SIZE_HMAC) then
+            Log.Error ("Data fragment hmac does not match in block {0}",
+                       Buffers.To_String (Work.Data_Block));
+            Work.Status := DATA_CORRUPTION;
+         else
+            Work.Status := SUCCESS;
+         end if;
+
          if Log.Get_Level >= Util.Log.DEBUG_LEVEL then
             Log.Debug ("Key pos for decrypt at {0}", IO.Block_Index'Image (Work.Key_Pos));
             Log.Debug ("Current pos {0}", IO.Block_Index'Image (Work.Key_Block.Pos));
@@ -308,7 +322,6 @@ package body Keystore.Repository.Workers is
             Log.Debug ("Dump data:");
             Logs.Dump (Log, Work.Data (Work.Buffer_Pos .. Last_Pos));
          end if;
-         Work.Status := SUCCESS;
       end;
 
    exception
