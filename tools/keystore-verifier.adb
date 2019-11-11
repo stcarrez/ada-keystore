@@ -25,14 +25,18 @@ with Util.Streams.Raw;
 with Util.Log.Loggers;
 with Util.Encoders;
 with Keystore.Buffers;
+with Keystore.Marshallers;
 with Keystore.IO.Headers;
 package body Keystore.Verifier is
 
+   use type Interfaces.Unsigned_16;
+   use type Interfaces.Unsigned_32;
    use type Interfaces.C.int;
    use type Ada.Text_IO.Count;
    use Ada.Streams;
    use Util.Systems.Constants;
    use Util.Systems.Types;
+   use type Keystore.Buffers.Block_Count;
 
    function Sys_Error return String;
 
@@ -190,6 +194,63 @@ package body Keystore.Verifier is
          Ada.Text_IO.Put (" bytes ");
          Ada.Text_IO.Put_Line (Extract_Key_Id (Data));
       end loop;
+
+      declare
+         Buf    : constant Buffers.Buffer_Accessor := Header.Buffer.Data.Value;
+         Last   : Ada.Streams.Stream_Element_Offset;
+         Data   : Keystore.IO.IO_Block_Type;
+         Block  : IO.Block_Number := 1;
+         Buffer : Keystore.Marshallers.Marshaller;
+         Btype  : Interfaces.Unsigned_16;
+         Esize  : Interfaces.Unsigned_16;
+         Id     : Interfaces.Unsigned_32;
+         Current_Id   : Interfaces.Unsigned_32 := 0;
+         Current_Type : Interfaces.Unsigned_16;
+         First_Block  : IO.Block_Number := 1;
+
+         procedure Report is
+         begin
+
+            Ada.Text_IO.Put (IO.Block_Number'Image (First_Block));
+            if First_Block + 1 < Block then
+               Ada.Text_IO.Put ("..");
+               Ada.Text_IO.Put (IO.Block_Number'Image (Block - 1));
+            end if;
+            Ada.Text_IO.Put (" Wallet");
+            Ada.Text_IO.Put (Interfaces.Unsigned_32'Image (Current_Id));
+            if Current_Type = IO.BT_WALLET_DIRECTORY then
+               Ada.Text_IO.Put (" Directory");
+            elsif Current_Type = IO.BT_WALLET_HEADER then
+               Ada.Text_IO.Put (" Header");
+            elsif Current_Type = IO.BT_WALLET_DATA then
+               Ada.Text_IO.Put (" Data");
+            else
+               Ada.Text_IO.Put (" Unkown");
+            end if;
+            Ada.Text_IO.New_Line;
+         end Report;
+
+      begin
+         loop
+            File.Read (Data, Last);
+            exit when Last /= Data'Last;
+            Buffer.Buffer := Header.Buffer;
+            Buf.Data := Data (Buf.Data'Range);
+            Btype := Marshallers.Get_Header_16 (Buffer);
+            Esize := Marshallers.Get_Unsigned_16 (Buffer);
+            Id := Marshallers.Get_Unsigned_32 (Buffer);
+            if Btype /= Current_Type or Id /= Current_Id then
+               if Current_Id > 0 then
+                  Report;
+               end if;
+               Current_Id := Id;
+               Current_Type := Btype;
+               First_Block := Block;
+            end if;
+            Block := Block + 1;
+         end loop;
+         Report;
+      end;
    end Print_Information;
 
 end Keystore.Verifier;
