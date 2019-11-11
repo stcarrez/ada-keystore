@@ -20,6 +20,7 @@ with Ada.Streams;
 with Keystore.IO.Refs;
 with Keystore.Passwords;
 with Keystore.Repository;
+with Keystore.Keys;
 
 private package Keystore.Containers is
 
@@ -34,11 +35,8 @@ private package Keystore.Containers is
 
       procedure Open (Name             : in String;
                       Password         : in out Keystore.Passwords.Provider'Class;
-                      New_Repo         : in out Keystore.Repository.Wallet_Repository;
-                      New_Stream       : in out IO.Refs.Stream_Ref;
-                      New_State        : in out State_Type;
-                      New_Master_Block : in out Keystore.IO.Storage_Block;
-                      New_Master_Ident : in out Wallet_Identifier);
+                      From_Repo        : in out Keystore.Repository.Wallet_Repository;
+                      From_Stream      : in out IO.Refs.Stream_Ref);
 
       procedure Create (Password      : in out Keystore.Passwords.Provider'Class;
                         Config        : in Wallet_Config;
@@ -79,13 +77,10 @@ private package Keystore.Containers is
                      Kind    : in Entry_Type;
                      Input   : in out Util.Streams.Input_Stream'Class);
 
-      procedure Add (Name             : in String;
-                     Password         : in out Keystore.Passwords.Provider'Class;
-                     New_Repo         : in out Keystore.Repository.Wallet_Repository;
-                     New_Stream       : in out IO.Refs.Stream_Ref;
-                     New_State        : in out State_Type;
-                     New_Master_Block : in out Keystore.IO.Storage_Block;
-                     New_Master_Ident : in out Wallet_Identifier);
+      procedure Create (Name        : in String;
+                        Password    : in out Keystore.Passwords.Provider'Class;
+                        From_Repo   : in out Keystore.Repository.Wallet_Repository;
+                        From_Stream : in out IO.Refs.Stream_Ref);
 
       procedure Set (Name    : in String;
                      Kind    : in Entry_Type;
@@ -126,13 +121,11 @@ private package Keystore.Containers is
 
       procedure Do_Repository (Process : not null access
                                  procedure (Repo         : in out Repository.Wallet_Repository;
-                                            Stream       : in out IO.Refs.Stream_Ref;
-                                            State        : in out State_Type;
-                                            Master_Block : in out Keystore.IO.Storage_Block;
-                                            Master_Ident : in out Wallet_Identifier));
+                                            Stream       : in out IO.Refs.Stream_Ref));
 
    private
       Stream       : Keystore.IO.Refs.Stream_Ref;
+      Master       : Keystore.Keys.Key_Manager;
       Repository   : Keystore.Repository.Wallet_Repository;
       State        : State_Type := S_INVALID;
       Master_Block : Keystore.IO.Storage_Block;
