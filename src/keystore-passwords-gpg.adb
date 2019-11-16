@@ -87,7 +87,7 @@ package body Keystore.Passwords.GPG is
 
       --  ssb:u:<key-size>:<key-algo>:<key-id>:<create-date>:<expire-date>:::::<e>:
       REGEX : constant String
-        := "^(ssb|sec):u:[1-9][0-9][0-9][0-9]:[0-9]:([0-9a-fA-F]+):[0-9]+:[0-9]+:::::[esa]+::.*";
+        := "^(ssb|sec):u:[1-9][0-9][0-9][0-9]:[0-9]:([0-9a-fA-F]+):[0-9]+:[0-9]?:::::[esa]+::.*";
 
       Pattern : constant GNAT.Regpat.Pattern_Matcher := GNAT.Regpat.Compile (REGEX);
 
