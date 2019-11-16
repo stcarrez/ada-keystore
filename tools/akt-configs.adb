@@ -52,9 +52,13 @@ package body AKT.Configs is
       Def_Path : constant String := Get_Default_Path;
    begin
       if Path'Length > 0 and then Ada.Directories.Exists (Path) then
+         Log.Info ("Loading configuration {0}", Path);
+
          Cfg.Load_Properties (Path);
          Cfg_Path := Ada.Strings.Unbounded.To_Unbounded_String (Path);
       elsif Ada.Directories.Exists (Def_Path) then
+         Log.Info ("Loading user global configuration {0}", Def_Path);
+
          Cfg.Load_Properties (Def_Path);
          Cfg_Path := Ada.Strings.Unbounded.To_Unbounded_String (Def_Path);
       end if;
@@ -69,6 +73,8 @@ package body AKT.Configs is
       Dir  : constant String := Ada.Directories.Containing_Directory (Path);
       P    : Interfaces.C.Strings.chars_ptr;
    begin
+      Log.Info ("Saving configuration {0}", Path);
+
       if not Ada.Directories.Exists (Path) then
          Ada.Directories.Create_Path (Dir);
          P := Interfaces.C.Strings.New_String (Dir);
