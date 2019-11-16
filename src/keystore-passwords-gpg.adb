@@ -109,7 +109,7 @@ package body Keystore.Passwords.GPG is
       Pipe    : aliased Util.Streams.Pipes.Pipe_Stream;
       Reader  : Util.Streams.Texts.Reader_Stream;
    begin
-      Pipe.Open (Command, Util.Processes.READ);
+      Pipe.Open (Command, Util.Processes.READ_ALL);
       Reader.Initialize (Pipe'Access, 4096);
 
       while not Reader.Is_Eof loop
