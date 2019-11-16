@@ -27,6 +27,7 @@ with Util.Encoders;
 with Keystore.Buffers;
 with Keystore.Marshallers;
 with Keystore.IO.Headers;
+with Keystore.Passwords.GPG;
 package body Keystore.Verifier is
 
    use type Interfaces.Unsigned_16;
@@ -44,9 +45,6 @@ package body Keystore.Verifier is
                    File   : in out Util.Streams.Raw.Raw_Stream;
                    Sign   : in Secret_Key;
                    Header : in out Keystore.IO.Headers.Wallet_Header);
-
-   function Get_Le_Long (Data : in Stream_Element_Array) return Interfaces.Unsigned_32;
-   function Extract_Key_Id (Data : in Stream_Element_Array) return String;
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Verifier");
 
@@ -121,42 +119,6 @@ package body Keystore.Verifier is
       end;
    end Open;
 
-   --  Headers of GPG packet.
-   GPG_RSA_2048 : constant Stream_Element_Array (1 .. 4)
-     := (16#85#, 16#01#, 16#0C#, 16#03#);
-   GPG_RSA_3072 : constant Stream_Element_Array (1 .. 4)
-     := (16#85#, 16#01#, 16#8C#, 16#03#);
-   GPG_RSA_3072b : constant Stream_Element_Array (1 .. 4)
-     := (16#85#, 16#02#, 16#0C#, 16#03#);
-   GPG_RSA_4096 : constant Stream_Element_Array (1 .. 4)
-     := (16#85#, 16#04#, 16#0C#, 16#03#);
-
-   function Get_Le_Long (Data : in Stream_Element_Array) return Interfaces.Unsigned_32 is
-      use Interfaces;
-   begin
-      return Shift_Left (Unsigned_32 (Data (Data'First)), 24) or
-        Shift_Left (Unsigned_32 (Data (Data'First + 1)), 16) or
-        Shift_Left (Unsigned_32 (Data (Data'First + 2)), 8) or
-        Unsigned_32 (Data (Data'First + 3));
-   end Get_Le_Long;
-
-   function Extract_Key_Id (Data : in Stream_Element_Array) return String is
-      L1 : Interfaces.Unsigned_32;
-      L2 : Interfaces.Unsigned_32;
-      Encode : constant Util.Encoders.Encoder := Util.Encoders.Create ("hex");
-   begin
-      if Data (Data'First .. Data'First + 3) /= GPG_RSA_2048
-        and Data (Data'First .. Data'First + 3) /= GPG_RSA_3072
-        and Data (Data'First .. Data'First + 3) /= GPG_RSA_3072b
-        and Data (Data'First .. Data'First + 3) /= GPG_RSA_4096
-      then
-         return "";
-      end if;
-      L1 := Get_Le_Long (Data (Data'First + 4 .. Data'Last));
-      L2 := Get_Le_Long (Data (Data'First + 8 .. Data'Last));
-      return "keyid: " & Encode.Encode_Unsigned_32 (L1) & Encode.Encode_Unsigned_32 (L2);
-   end Extract_Key_Id;
-
    procedure Print_Information (Path : in String) is
       Header : Keystore.IO.Headers.Wallet_Header;
       File   : Util.Streams.Raw.Raw_Stream;
@@ -192,7 +154,7 @@ package body Keystore.Verifier is
          Ada.Text_IO.Set_Col (39);
          Ada.Text_IO.Put (Stream_Element_Offset'Image (Last));
          Ada.Text_IO.Put (" bytes ");
-         Ada.Text_IO.Put_Line (Extract_Key_Id (Data));
+         Ada.Text_IO.Put_Line (Keystore.Passwords.GPG.Extract_Key_Id (Data));
       end loop;
 
       declare
