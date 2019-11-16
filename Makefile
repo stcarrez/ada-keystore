@@ -48,11 +48,18 @@ install::
 endif
 
 # Build and run the unit tests
-test:	build
+test:	build stamp-test-setup
+	bin/keystore_harness -t 120 -xml keystore-aunit.xml -config tests.properties
+
+stamp-test-setup:
 	# Apply access constraints to the test key and directory.
 	chmod 600 regtests/files/file.key
 	chmod 700 regtests/files
-	bin/keystore_harness -t 120 -xml keystore-aunit.xml -config tests.properties
+	sh regtests/files/setup-tests.sh
+	touch stamp-test-setup
+
+clean::
+	rm -f stamp-test-setup tests.log
 
 install-samples:
 	$(MKDIR) -p $(samplesdir)/samples
