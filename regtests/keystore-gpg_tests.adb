@@ -50,8 +50,10 @@ package body Keystore.GPG_Tests is
 
    procedure Add_Tests (Suite : in Util.Tests.Access_Test_Suite) is
    begin
-      Caller.Add_Test (Suite, "Test AKT.Commands.Create",
+      Caller.Add_Test (Suite, "Test AKT.Commands.Create (GPG)",
                        Test_Create'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Create (GPG++)",
+                       Test_Create_Multi_User'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -148,5 +150,47 @@ package body Keystore.GPG_Tests is
                                  Result, "list command failed");
 
    end Test_Create;
+
+   --  Test the akt keystore for several users each having their own GPG key.
+   procedure Test_Create_Multi_User (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL2_PATH);
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      if Ada.Directories.Exists (Path) then
+         Ada.Directories.Delete_File (Path);
+      end if;
+
+      --  Create keystore
+      T.Execute (Tool (User_1) & " create -k " & Path & " --gpg akt-user1@ada-unit-test.org " &
+                 "--gpg akt-user2@ada-unit-test.org --gpg akt-user3@ada-unit-test.org",
+                 Result);
+      T.Assert (Ada.Directories.Exists (Path),
+                "Keystore file does not exist");
+
+      --  List content => empty result
+      for User in User_Type'Range loop
+         T.Execute (Tool (User) & " list -k " & Path, Result);
+         Util.Tests.Assert_Equals (T, "", Result,
+                                   "list command failed for " & User_Type'Image (User));
+      end loop;
+
+      --  Set property
+      T.Execute (Tool (User_1) & " set -k " & Path & " testing my-testing-value", Result);
+      Util.Tests.Assert_Equals (T, "", Result, "set command failed");
+
+      --  Get property
+      for User in User_Type'Range loop
+         T.Execute (Tool (User) & " get -k " & Path & " testing", Result);
+         Util.Tests.Assert_Matches (T, "^my-testing-value", Result,
+                                    "get command failed for " & User_Type'Image (User));
+      end loop;
+
+      --  List content => one entry
+      for User in User_Type'Range loop
+         T.Execute (Tool (User) & " list -k " & Path, Result);
+         Util.Tests.Assert_Matches (T, "^testing", Result,
+                                    "list command failed for " & User_Type'Image (User));
+      end loop;
+   end Test_Create_Multi_User;
 
 end Keystore.GPG_Tests;
