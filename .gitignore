@@ -33,3 +33,5 @@ docs/Keystore_Keys.md
 docs/Keystore_Random.md
 docs/Keystore_Repository_Data.md
 docs/Keystore_Repository_Entries.md
+regtests/files/gnupg
+regtests/result/
