@@ -18,6 +18,7 @@
 with Ada.Streams;
 with Ada.Strings.Unbounded;
 with Ada.Finalization;
+with Util.Strings.Sets;
 with Keystore;
 with Keystore.Files;
 package Keystore.Passwords.GPG is
@@ -25,11 +26,19 @@ package Keystore.Passwords.GPG is
    MAX_ENCRYPT_SIZE : constant := 1024;
    MAX_DECRYPT_SIZE : constant := 256;
 
+   LIST_COMMAND    : constant String := "gpg2 --list-secret-keys --with-colons --with-fingerprint";
    ENCRYPT_COMMAND : constant String := "gpg2 --encrypt --batch --yes -r $USER";
    DECRYPT_COMMAND : constant String := "gpg2 --decrypt --batch --yes --quiet";
 
+   --  Extract the Key ID from the data content when it is encrypted by GPG2.
+   function Extract_Key_Id (Data : in Ada.Streams.Stream_Element_Array) return String;
+
    type Context_Type is limited new Ada.Finalization.Limited_Controlled
      and Slot_Provider with private;
+
+   --  Get the list of GPG secret keys that could be capable for decrypting a content for us.
+   procedure List_GPG_Secret_Keys (Context : in out Context_Type;
+                                   List    : in out Util.Strings.Sets.Set);
 
    --  Create a secret to protect the keystore.
    procedure Create_Secret (Context : in out Context_Type);
@@ -83,12 +92,15 @@ private
 
    type Context_Type is limited new Ada.Finalization.Limited_Controlled
      and Slot_Provider with record
-      Current         : Secret_Provider_Access;
-      First           : Secret_Provider_Access;
-      Data            : Ada.Streams.Stream_Element_Array (1 .. MAX_DECRYPT_SIZE);
-      Size            : Ada.Streams.Stream_Element_Offset;
-      Encrypt_Command : Ada.Strings.Unbounded.Unbounded_String;
-      Decrypt_Command : Ada.Strings.Unbounded.Unbounded_String;
+      Current          : Secret_Provider_Access;
+      First            : Secret_Provider_Access;
+      Data             : Ada.Streams.Stream_Element_Array (1 .. MAX_DECRYPT_SIZE);
+      Size             : Ada.Streams.Stream_Element_Offset;
+      Index            : Keystore.Header_Slot_Index_Type := 1;
+      Encrypt_Command  : Ada.Strings.Unbounded.Unbounded_String;
+      Decrypt_Command  : Ada.Strings.Unbounded.Unbounded_String;
+      List_Key_Command : Ada.Strings.Unbounded.Unbounded_String;
+      Valid_Key        : Boolean := False;
    end record;
 
    function Encrypt_GPG_Secret (Context : in Context_Type)
