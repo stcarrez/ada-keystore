@@ -70,6 +70,13 @@ package Keystore.Files is
      Pre  => Container.State = S_PROTECTED,
      Post => Container.Is_Open;
 
+   procedure Unlock (Container       : in out Wallet_File;
+                     Master_Password : in out Keystore.Passwords.Provider'Class;
+                     Password        : in out Keystore.Passwords.Provider'Class;
+                     Slot            : out Key_Slot) with
+     Pre  => Container.State = S_PROTECTED,
+     Post => Container.Is_Open;
+
    --  Close the keystore file.
    procedure Close (Container : in out Wallet_File) with
      Pre  => Container.Is_Open,
