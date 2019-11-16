@@ -24,7 +24,7 @@ package AKT.Configs is
    RESOURCES : constant String := PREFIX & "/share/akt/resources/";
 
    FILL_CONFIG        : constant String := "fill-mode";
-   GPG_CRYPT_CONFIG   : constant String := "gpg-crypt";
+   GPG_CRYPT_CONFIG   : constant String := "gpg-encrypt";
    GPG_DECRYPT_CONFIG : constant String := "gpg-decrypt";
    GPG_LIST_CONFIG    : constant String := "gpg-list-keys";
 
