@@ -79,6 +79,10 @@ package Keystore.Passwords.GPG is
    procedure Set_Decrypt_Command (Into    : in out Context_Type;
                                   Command : in String);
 
+   --  Setup the command to be executed to get the list of available GPG secret keys.
+   procedure Set_List_Key_Command (Into    : in out Context_Type;
+                                   Command : in String);
+
 private
 
    type Secret_Provider;
