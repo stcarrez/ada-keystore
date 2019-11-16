@@ -27,6 +27,9 @@ package Keystore.GPG_Tests is
    --  Test the akt keystore creation.
    procedure Test_Create (T : in out Test);
 
+   --  Test the akt keystore for several users each having their own GPG key.
+   procedure Test_Create_Multi_User (T : in out Test);
+
    procedure Execute (T       : in out Test;
                       Command : in String;
                       Result  : out Ada.Strings.Unbounded.Unbounded_String;
