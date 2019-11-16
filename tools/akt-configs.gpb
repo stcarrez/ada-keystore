@@ -26,6 +26,7 @@ package AKT.Configs is
    FILL_CONFIG        : constant String := "fill-mode";
    GPG_CRYPT_CONFIG   : constant String := "gpg-crypt";
    GPG_DECRYPT_CONFIG : constant String := "gpg-decrypt";
+   GPG_LIST_CONFIG    : constant String := "gpg-list-keys";
 
    --  Initialize the configuration.
    procedure Initialize (Path : in String);
@@ -36,6 +37,9 @@ package AKT.Configs is
    --  Set the configuration parameter.
    procedure Set (Name  : in String;
                   Value : in String);
+
+   --  Returns true if the configuration parameter is defined.
+   function Exists (Name : in String) return Boolean;
 
    --  Save the configuration.
    procedure Save;
