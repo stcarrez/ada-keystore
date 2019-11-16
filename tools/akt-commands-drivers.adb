@@ -17,13 +17,16 @@
 -----------------------------------------------------------------------
 with Ada.Text_IO;
 with Ada.Directories;
+with Ada.Command_Line;
 with Util.Files;
 with Util.Strings;
 with AKT.Configs;
 package body AKT.Commands.Drivers is
 
-   function Get_Help (Name   : in String;
+   function Get_Help (Dir    : in String;
+                      Name   : in String;
                       Locale : in String) return String;
+   function Get_Resources_Directory return String;
 
    --  ------------------------------
    --  Setup the command before parsing the arguments and executing it.
@@ -39,16 +42,31 @@ package body AKT.Commands.Drivers is
       AKT.Commands.Setup (Config, Context);
    end Setup;
 
-   function Get_Help (Name   : in String;
+   function Get_Resources_Directory return String is
+   begin
+      if Ada.Directories.Exists (AKT.Configs.PREFIX & AKT.Configs.RESOURCES) then
+         return AKT.Configs.PREFIX & AKT.Configs.RESOURCES;
+      end if;
+      declare
+         Name : constant String := Ada.Command_Line.Command_Name;
+         Path : constant String := Ada.Directories.Containing_Directory (Name);
+         Dir  : constant String := Ada.Directories.Containing_Directory (Path);
+      begin
+         return Dir & AKT.Configs.RESOURCES;
+      end;
+   end Get_Resources_Directory;
+
+   function Get_Help (Dir    : in String;
+                      Name   : in String;
                       Locale : in String) return String is
       Pos : constant Natural := Util.Strings.Index (Locale, '_');
    begin
       if Pos > 0 then
-         return AKT.Configs.RESOURCES & Locale (Locale'First .. Pos - 1) & "/" & Name & ".txt";
+         return Dir & Locale (Locale'First .. Pos - 1) & "/" & Name & ".txt";
       elsif Locale'Length > 0 then
-         return AKT.Configs.RESOURCES & Locale & "/" & Name & ".txt";
+         return Dir & Locale & "/" & Name & ".txt";
       else
-         return AKT.Configs.RESOURCES & "en/" & Name & ".txt";
+         return Dir & "en/" & Name & ".txt";
       end if;
    end Get_Help;
 
@@ -61,13 +79,14 @@ package body AKT.Commands.Drivers is
                    Context   : in out Context_Type) is
       pragma Unreferenced (Command, Context);
 
-      Path : constant String := Get_Help (Name, Intl.Current_Locale);
+      Dir  : constant String := Get_Resources_Directory;
+      Path : constant String := Get_Help (Dir, Name, Intl.Current_Locale);
    begin
       if Ada.Directories.Exists (Path) then
          Util.Files.Read_File (Path    => Path,
                                Process => Ada.Text_IO.Put_Line'Access);
       else
-         Util.Files.Read_File (Path    => Get_Help (Name, "en"),
+         Util.Files.Read_File (Path    => Get_Help (Dir, Name, "en"),
                                Process => Ada.Text_IO.Put_Line'Access);
       end if;
    end Help;
