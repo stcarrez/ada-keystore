@@ -58,6 +58,10 @@ private package Keystore.Containers is
       procedure Unlock (Password  : in out Keystore.Passwords.Provider'Class;
                         Slot      : out Key_Slot);
 
+      procedure Unlock (Master_Password : in out Keystore.Passwords.Provider'Class;
+                        Password        : in out Keystore.Passwords.Provider'Class;
+                        Slot            : out Key_Slot);
+
       procedure Set_Key (Password     : in out Keystore.Passwords.Provider'Class;
                          New_Password : in out Keystore.Passwords.Provider'Class;
                          Config       : in Wallet_Config;
