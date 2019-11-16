@@ -109,6 +109,10 @@ private package Keystore.Keys is
                               Buffer  : in out Marshallers.Marshaller;
                               Crypt   : in Cryptor);
 
+   --  Set the master key by using the password provider.
+   procedure Set_Master_Key (Manager  : in out Key_Manager;
+                             Password : in out Keystore.Passwords.Provider'Class);
+
 private
 
    --  Size of a key slot.
