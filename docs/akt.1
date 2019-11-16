@@ -157,7 +157,7 @@ sets while launching the command.
 .\"
 .SS The create command
 .RS 0
-akt \fBcreate\fR [--counter-range \fImin\fR:\fImax\fR] [--split \fIcount\fR] [--gpg \fIuser\fP]
+akt \fBcreate\fR [--counter-range \fImin\fR:\fImax\fR] [--split \fIcount\fR] [--gpg \fIuser\fP ...]
 .RE
 .PP
 Create a new keystore and protect it with the password.
@@ -180,6 +180,9 @@ The
 option allows to control the range for the random counter used by PBKDF2
 to generate the encryption key derived from the specified password.
 High values provide a strongest derived key at the expense of speed.
+This option is ignored when the
+.B --gpg
+option is used.
 .PP
 The
 .B --split
