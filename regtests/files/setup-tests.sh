@@ -11,6 +11,8 @@ for USER in $USERS; do
        --batch --gen-key regtests/files/$USER-key-script.gpg
   gpg2 --homedir=$ROOT/$USER --quiet \
        --armor --export akt-$USER@ada-unit-test.org > $ROOT/$USER.asc
+  gpg2 --homedir=$ROOT/$USER --quiet \
+       --export-ownertrust >> $ROOT/ownertrust.asc
 
   # Generate an AKT configuration file for each user
   cat <<EOF > $ROOT/$USER-akt.properties
@@ -26,4 +28,6 @@ gpg2 --homedir=`pwd`/regtests/files/gnupg/user1 --quiet \
      --import regtests/files/gnupg/user2.asc
 gpg2 --homedir=`pwd`/regtests/files/gnupg/user1 --quiet \
      --import regtests/files/gnupg/user3.asc
+gpg2 --homedir=`pwd`/regtests/files/gnupg/user1 --quiet \
+     --import-ownertrust regtests/files/gnupg/ownertrust.asc
 
