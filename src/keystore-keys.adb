@@ -576,6 +576,23 @@ package body Keystore.Keys is
       Manager.Crypt.Cipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
    end Load_Master_Key;
 
+   --  ------------------------------
+   --  Set the master key by using the password provider.
+   --  ------------------------------
+   procedure Set_Master_Key (Manager  : in out Key_Manager;
+                             Password : in out Keystore.Passwords.Provider'Class) is
+      procedure Get_Password (Secret : in Secret_Key);
+      procedure Get_Password (Secret : in Secret_Key) is
+      begin
+         Manager.Crypt.Decipher.Set_Key (Secret, Util.Encoders.AES.CBC);
+         Manager.Crypt.Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
+         Manager.Crypt.Cipher.Set_Key (Secret, Util.Encoders.AES.CBC);
+         Manager.Crypt.Cipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
+      end Get_Password;
+   begin
+      Password.Get_Password (Get_Password'Access);
+   end Set_Master_Key;
+
    procedure Set_Key (Manager      : in out Key_Manager;
                       Password     : in out Keystore.Passwords.Provider'Class;
                       New_Password : in out Keystore.Passwords.Provider'Class;
