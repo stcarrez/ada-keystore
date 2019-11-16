@@ -1,11 +1,11 @@
 .\"
 .\"
-.TH AKT 1 "Oct 13, 2019" "Ada Keystore Tool"
+.TH AKT 1 "Nov 16, 2019" "Ada Keystore Tool"
 .SH NAME
-akt - Ada Keystore Tool
+akt - Tool to protect your sensitive data with secure storage
 .SH SYNOPSIS
 .B akt
-[ -v ] [-vv] [-V] [ -f
+[ -v ] [-vv] [-V] [ -t
 .I file
 ] [ -d
 .I dir
@@ -98,7 +98,7 @@ Enable the verbose mode.
 -vv
 Enable debugging output.
 .TP 5
--f file
+-k file
 .br
 Specifies the path of the keystore file to open.
 .TP 5
@@ -178,8 +178,8 @@ When none of these options are passed, the password is asked interactively.
 The
 .B --counter-range
 option allows to control the range for the random counter used by PBKDF2
-to generate the encryption key derived from the specified password.  High values
-provide a strongest derived key at the expense of speed.
+to generate the encryption key derived from the specified password.
+High values provide a strongest derived key at the expense of speed.
 .PP
 The
 .B --split
@@ -196,10 +196,14 @@ When the keystore password is protected by the user's GPG key,
 a random password is generated to protect the keystore.
 The
 .IR gpg2 (1)
-command is used to encrypt that password and save it in the keystore
-header.  The
+command is used to encrypt that password using the user's public key
+and save it in the keystore header.  The
 .IR gpg2 (1)
-command is then used to decrypt that and be able to unlock the keystore.
+command is then used to decrypt that and be able to unlock the keystore
+provided that the user's private key is known.  When using the
+.B --gpg
+option, it is possible to protect the keystore for several users, thus
+being able to share the secure file with each of them.
 .\"
 .SS The set command
 .RS 0
