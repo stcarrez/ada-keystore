@@ -163,6 +163,14 @@ package body Keystore.Files is
       Container.Container.Unlock (Password, Slot);
    end Unlock;
 
+   procedure Unlock (Container       : in out Wallet_File;
+                     Master_Password : in out Keystore.Passwords.Provider'Class;
+                     Password        : in out Keystore.Passwords.Provider'Class;
+                     Slot            : out Key_Slot) is
+   begin
+      Container.Container.Unlock (Master_Password, Password, Slot);
+   end Unlock;
+
    --  ------------------------------
    --  Close the keystore file.
    --  ------------------------------
