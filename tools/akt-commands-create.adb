@@ -15,9 +15,18 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
+with Util.Strings.Sets;
 package body AKT.Commands.Create is
 
    use GNAT.Strings;
+
+   GPG_List : Util.Strings.Sets.Set;
+
+   procedure Collect_GPG_User (Switch : in String;
+                               Value  : in String) is
+   begin
+      GPG_List.Include (Value);
+   end Collect_GPG_User;
 
    --  ------------------------------
    --  Create the keystore file.
@@ -35,7 +44,7 @@ package body AKT.Commands.Create is
 
       --  With a gpg key the initial password is a random bitstring of 256 bytes.
       --  We don't need a big counter for PBKDF2.
-      if Command.Gpg_User /= null and Command.Gpg_User'Length > 0 then
+      if not GPG_List.Is_Empty then
          Config.Min_Counter := 1;
          Config.Max_Counter := 100;
       end if;
@@ -60,7 +69,7 @@ package body AKT.Commands.Create is
          Config.Storage_Count := 10;
       end if;
 
-      if Command.Gpg_User /= null and Command.Gpg_User'Length > 0 then
+      if not GPG_List.Is_Empty then
 
          Context.GPG.Create_Secret;
 
@@ -70,7 +79,9 @@ package body AKT.Commands.Create is
                                 Data_Path => Context.Data_Path.all,
                                 Config    => Config);
 
-         Context.GPG.Save_Secret (Command.Gpg_User.all, Context.Wallet);
+         for Gpg_User of GPG_List loop
+            Context.GPG.Save_Secret (Gpg_User, Context.Wallet);
+         end loop;
 
       else
          Keystore.Files.Create (Container => Context.Wallet,
@@ -108,7 +119,7 @@ package body AKT.Commands.Create is
                         Long_Switch => "--force",
                         Help   => -("Force the creation of the keystore"));
       GC.Define_Switch (Config => Config,
-                        Output => Command.Gpg_User'Access,
+                        Callback => Collect_GPG_User'Access,
                         Switch => "-g:",
                         Long_Switch => "--gpg=",
                         Argument => "USER",
