@@ -321,6 +321,15 @@ package body AKT.Commands is
       Util.Commands.Parsers.GNAT_Parser.Get_Arguments (Arguments, GC.Get_Argument);
 
       AKT.Configs.Initialize (Context.Config_File.all);
+      if AKT.Configs.Exists (AKT.Configs.GPG_CRYPT_CONFIG) then
+         Context.GPG.Set_Encrypt_Command (AKT.Configs.Get (AKT.Configs.GPG_CRYPT_CONFIG));
+      end if;
+      if AKT.Configs.Exists (AKT.Configs.GPG_DECRYPT_CONFIG) then
+         Context.GPG.Set_Decrypt_Command (AKT.Configs.Get (AKT.Configs.GPG_DECRYPT_CONFIG));
+      end if;
+      if AKT.Configs.Exists (AKT.Configs.GPG_LIST_CONFIG) then
+         Context.GPG.Set_Decrypt_Command (AKT.Configs.Get (AKT.Configs.GPG_LIST_CONFIG));
+      end if;
 
       if Context.Debug or Context.Verbose then
          AKT.Configure_Logs (Debug => Context.Debug, Verbose => Context.Verbose);
