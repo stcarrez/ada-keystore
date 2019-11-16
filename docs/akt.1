@@ -380,6 +380,45 @@ They do not contain any encryption key.  The data storage files use the
 .B .dkt
 file extension.
 .\"
+.SH CONFIGURATION
+The
+.I akt
+global configuration file contains several configuration properties
+which are used to customize several commands.  These properties can
+be modified with the
+.B config
+command.
+.\"
+.SS gpg-crypt
+This property defines the
+.IR gpg2 (1)
+command to be used to encrypt a content.  The content to encrypt is
+passed in the standard input and the encrypted content is read from
+the standard output.  The GPG key parameter can be retrieved
+by using the
+.I $USER
+pattern.
+.\"
+.SS gpg-decrypt
+This property defines the
+.IR gpg2 (1)
+command to be used to decrypt a content.  The content to decrypt is
+passed in the standard input and the decrypted content is read from
+the standard output.
+.\"
+.SS gpg-list-keys
+This property defines the
+.IR gpg2 (1)
+command to be used to retrieve the list of available secret keys.
+This command is executed when the keystore file is protected by a
+GPG key to identify the possible GPG Key ids that
+are capable of decrypting it.
+.\"
+.SS fill-zero
+This property controls whether
+.I akt
+must fill unused data areas with zeros or with random bytes.
+.\"
 .SH SEE ALSO
 \fIeditor(1)\fR, \fIupdate-alternative(1)\fR, \fIssh-askpass(1)\fR,
 \fIgpg2(1)\fR
