@@ -12,9 +12,9 @@
 AKT is a tool to store and protect your sensitive information and documents by
 encrypting them in secure keystore (AES-256, HMAC-256).
 
-Create the keystore and protect it with your gpg key:
+Create the keystore and protect it with a gpg public key:
 ```
-   akt create -k secure.akt --gpg <keyid>
+   akt create -k secure.akt --gpg <keyid> ...
 ```
 
 Store a small content:
@@ -173,6 +173,15 @@ to use the `--gpg` option and giving your own GPG key identifier
    akt create -k secure.akt -d data --gpg your-gpg-key-id
 ```
 
+You can also share the keystore with someone else provided you know
+and trust the foreign public key.  To do that, you can create the keystore
+and defined the GPG key for each user you want to share the keystore:
+
+```
+   akt create -k secure.akt -d data --gpg user1-key user2-key user3-key
+```
+
+To unlock the keystore, GPG will use the private key.
 
 # Building Ada Keystore
 
@@ -214,7 +223,7 @@ To use the AKT docker container you can run the following commands:
 
 # Documents
 
-* [Ada Keystore Guide](https://ada-keystore.readthedocs.io/en/latest/)
+* [Ada Keystore Guide](https://ada-keystore.readthedocs.io/en/latest/) [PDF](https://github.com/stcarrez/ada-keystore/blob/master/docs/keystore-book.pdf)
 * Man page: [akt (1)](https://github.com/stcarrez/ada-keystore/blob/master/docs/akt.md)
 
 # References
