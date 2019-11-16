@@ -62,6 +62,10 @@ package body AKT.Configs is
          Cfg.Load_Properties (Def_Path);
          Cfg_Path := Ada.Strings.Unbounded.To_Unbounded_String (Def_Path);
       end if;
+
+      if Path'Length > 0 then
+         Cfg_Path := Ada.Strings.Unbounded.To_Unbounded_String (Path);
+      end if;
    end Initialize;
 
    --  ------------------------------
