@@ -104,4 +104,12 @@ package body AKT.Configs is
       Cfg.Set (Name, Value);
    end Set;
 
+   --  ------------------------------
+   --  Returns true if the configuration parameter is defined.
+   --  ------------------------------
+   function Exists (Name : in String) return Boolean is
+   begin
+      return Cfg.Exists (Name);
+   end Exists;
+
 end AKT.Configs;
