@@ -1,0 +1,12 @@
+config: get or set global options
+
+Usage: akt config name value
+
+  Configure a global option for akt.  The following configuration
+  properties are recognized:
+  
+  gpg-encrypt     GPG2 command to run to encrypt a secret
+  gpg-decrypt     GPG2 command to run to decrypt a secret
+  gpg-list-keys   GPG2 command to run to get the available private keys
+  fill-zero       When set to 'yes' fill space with zero instead of random
+
