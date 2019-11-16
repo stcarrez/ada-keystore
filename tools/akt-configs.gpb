@@ -21,7 +21,7 @@ package AKT.Configs is
    VERSION   : constant String := $VERSION;
    RELEASE   : constant String := "Ada Keystore Tool " & $VERSION;
    PREFIX    : constant String := $PREFIX;
-   RESOURCES : constant String := PREFIX & "/share/akt/resources/";
+   RESOURCES : constant String := "/share/akt/resources/";
 
    FILL_CONFIG        : constant String := "fill-mode";
    GPG_CRYPT_CONFIG   : constant String := "gpg-encrypt";
