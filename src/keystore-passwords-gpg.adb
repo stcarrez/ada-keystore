@@ -271,38 +271,6 @@ package body Keystore.Passwords.GPG is
    end Get_Encrypt_Command;
 
    --  ------------------------------
-   --  Encrypt the data array using GPG2 private key.
-   --  ------------------------------
-   function Encrypt_GPG_Secret (Context : in Context_Type)
-                                return Ada.Streams.Stream_Element_Array is
-      Proc   : Util.Processes.Process;
-      Result : Ada.Streams.Stream_Element_Array (1 .. MAX_ENCRYPT_SIZE);
-      Last   : Ada.Streams.Stream_Element_Offset := 0;
-      Last2  : Ada.Streams.Stream_Element_Offset;
-      Cmd    : constant String := To_String (Context.Encrypt_Command);
-   begin
-      Log.Info ("Encrypt GPG secret using {0}", Cmd);
-
-      Util.Processes.Spawn (Proc    => Proc,
-                            Command => Cmd,
-                            Mode    => Util.Processes.READ_WRITE);
-
-      Util.Processes.Get_Input_Stream (Proc).Write (Context.Data);
-      Util.Processes.Get_Input_Stream (Proc).Close;
-      while Last < Result'Last loop
-         Util.Processes.Get_Output_Stream (Proc).Read (Result (Last + 1 .. Result'Last), Last2);
-         exit when Last2 = Last;
-         Last := Last2;
-      end loop;
-
-      Util.Processes.Wait (Proc);
-      if Util.Processes.Get_Exit_Status (Proc) /= 0 or Last <= 1 then
-         return Result (1 .. 0);
-      end if;
-      return Result (1 .. Last);
-   end Encrypt_GPG_Secret;
-
-   --  ------------------------------
    --  Decrypt the data array that was encrypted using GPG2.
    --  ------------------------------
    procedure Decrypt_GPG_Secret (Context : in out Context_Type;
