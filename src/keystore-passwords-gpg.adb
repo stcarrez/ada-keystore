@@ -356,6 +356,15 @@ package body Keystore.Passwords.GPG is
       Into.Decrypt_Command := To_Unbounded_String (Command);
    end Set_Decrypt_Command;
 
+   --  ------------------------------
+   --  Setup the command to be executed to get the list of available GPG secret keys.
+   --  ------------------------------
+   procedure Set_List_Key_Command (Into    : in out Context_Type;
+                                   Command : in String) is
+   begin
+      Into.List_Key_Command := To_Unbounded_String (Command);
+   end Set_List_Key_Command;
+
    overriding
    procedure Initialize (Context : in out Context_Type) is
    begin
