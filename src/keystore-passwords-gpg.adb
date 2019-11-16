@@ -17,17 +17,111 @@
 -----------------------------------------------------------------------
 with Ada.Unchecked_Deallocation;
 with Ada.Strings.Fixed;
+with GNAT.Regpat;
 with Util.Streams;
 with Util.Log.Loggers;
 with Util.Encoders;
 with Util.Processes;
+with Util.Streams.Texts;
+with Util.Streams.Pipes;
 with Keystore.Random;
 package body Keystore.Passwords.GPG is
 
+   use Ada.Streams;
    use Ada.Strings.Unbounded;
-   use type Ada.Streams.Stream_Element_Offset;
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Passwords.GPG");
+
+   function Get_Le_Long (Data : in Ada.Streams.Stream_Element_Array)
+                         return Interfaces.Unsigned_32;
+
+   --  Headers of GPG packet.
+   GPG_RSA_2048 : constant Ada.Streams.Stream_Element_Array (1 .. 4)
+     := (16#85#, 16#01#, 16#0C#, 16#03#);
+   GPG_RSA_3072 : constant Ada.Streams.Stream_Element_Array (1 .. 4)
+     := (16#85#, 16#01#, 16#8C#, 16#03#);
+   GPG_RSA_3072b : constant Ada.Streams.Stream_Element_Array (1 .. 4)
+     := (16#85#, 16#02#, 16#0C#, 16#03#);
+   GPG_RSA_4096 : constant Ada.Streams.Stream_Element_Array (1 .. 4)
+     := (16#85#, 16#04#, 16#0C#, 16#03#);
+
+   function Get_Le_Long (Data : in Ada.Streams.Stream_Element_Array)
+                         return Interfaces.Unsigned_32 is
+      use Interfaces;
+   begin
+      return Shift_Left (Unsigned_32 (Data (Data'First)), 24) or
+        Shift_Left (Unsigned_32 (Data (Data'First + 1)), 16) or
+        Shift_Left (Unsigned_32 (Data (Data'First + 2)), 8) or
+        Unsigned_32 (Data (Data'First + 3));
+   end Get_Le_Long;
+
+   --  ------------------------------
+   --  Extract the Key ID from the data content when it is encrypted by GPG2.
+   --  ------------------------------
+   function Extract_Key_Id (Data : in Ada.Streams.Stream_Element_Array) return String is
+      L1 : Interfaces.Unsigned_32;
+      L2 : Interfaces.Unsigned_32;
+      Encode : constant Util.Encoders.Encoder := Util.Encoders.Create ("hex");
+   begin
+      if Data'Length < 16 then
+         return "";
+      end if;
+      if Data (Data'First .. Data'First + 3) /= GPG_RSA_2048
+        and Data (Data'First .. Data'First + 3) /= GPG_RSA_3072
+        and Data (Data'First .. Data'First + 3) /= GPG_RSA_3072b
+        and Data (Data'First .. Data'First + 3) /= GPG_RSA_4096
+      then
+         return "";
+      end if;
+      L1 := Get_Le_Long (Data (Data'First + 4 .. Data'Last));
+      L2 := Get_Le_Long (Data (Data'First + 8 .. Data'Last));
+      return Encode.Encode_Unsigned_32 (L1) & Encode.Encode_Unsigned_32 (L2);
+   end Extract_Key_Id;
+
+   --  ------------------------------
+   --  Get the list of GPG secret keys that could be capable for decrypting a content for us.
+   --  ------------------------------
+   procedure List_GPG_Secret_Keys (Context : in out Context_Type;
+                                   List    : in out Util.Strings.Sets.Set) is
+      procedure Parse (Line : in String);
+
+      --  ssb:u:<key-size>:<key-algo>:<key-id>:<create-date>:<expire-date>:::::<e>:
+      REGEX : constant String
+        := "^(ssb|sec):u:[1-9][0-9][0-9][0-9]:[0-9]:([0-9a-fA-F]+):[0-9]+:[0-9]+:::::[esa]+::.*";
+
+      Pattern : constant GNAT.Regpat.Pattern_Matcher := GNAT.Regpat.Compile (REGEX);
+
+      procedure Parse (Line : in String) is
+         Matches : GNAT.Regpat.Match_Array (0 .. 2);
+      begin
+         if not GNAT.Regpat.Match (Pattern, Line) then
+            return;
+         end if;
+         GNAT.Regpat.Match (Pattern, Line, Matches);
+         List.Include (Line (Matches (2).First .. Matches (2).Last));
+
+      exception
+         when others =>
+            Log.Debug ("Unkown line: {0}", Line);
+      end Parse;
+
+      Command : constant String := To_String (Context.List_Key_Command);
+      Pipe    : aliased Util.Streams.Pipes.Pipe_Stream;
+      Reader  : Util.Streams.Texts.Reader_Stream;
+   begin
+      Pipe.Open (Command, Util.Processes.READ);
+      Reader.Initialize (Pipe'Access, 4096);
+
+      while not Reader.Is_Eof loop
+         declare
+            Line : Ada.Strings.Unbounded.Unbounded_String;
+         begin
+            Reader.Read_Line (Line);
+            Parse (To_String (Line));
+         end;
+      end loop;
+      Pipe.Close;
+   end List_GPG_Secret_Keys;
 
    --  ------------------------------
    --  Create a secret to protect the keystore.
@@ -78,7 +172,9 @@ package body Keystore.Passwords.GPG is
          raise Keystore.Bad_Password;
       end if;
 
-      Keystore.Files.Set_Header_Data (Wallet, 1, Keystore.SLOT_KEY_GPG2, Result (1 .. Last));
+      Keystore.Files.Set_Header_Data (Wallet, Context.Index,
+                                      Keystore.SLOT_KEY_GPG2, Result (1 .. Last));
+      Context.Index := Context.Index + 1;
    end Save_Secret;
 
    --  ------------------------------
@@ -89,12 +185,23 @@ package body Keystore.Passwords.GPG is
       Data : Ada.Streams.Stream_Element_Array (1 .. MAX_ENCRYPT_SIZE);
       Last : Ada.Streams.Stream_Element_Offset;
       Kind : Keystore.Header_Slot_Type;
+      List : Util.Strings.Sets.Set;
    begin
+      --  Get the list of known secret keys.
+      Context.List_GPG_Secret_Keys (List);
+
       for Index in Header_Slot_Index_Type'Range loop
          Wallet.Get_Header_Data (Index, Kind, Data, Last);
          exit when Last < Data'First;
          if Kind = Keystore.SLOT_KEY_GPG2 then
-            Context.Decrypt_GPG_Secret (Data (Data'First .. Last));
+            declare
+               Key_Id : constant String := Extract_Key_Id (Data (Data'First .. Last));
+            begin
+               if List.Contains (Key_Id) then
+                  Context.Decrypt_GPG_Secret (Data (Data'First .. Last));
+                  exit when Context.Valid_Key;
+               end if;
+            end;
          end if;
       end loop;
       Context.Current := Context.First;
@@ -220,15 +327,14 @@ package body Keystore.Passwords.GPG is
       end loop;
 
       Util.Processes.Wait (Proc);
-      if Util.Processes.Get_Exit_Status (Proc) /= 0 or Last <= 1 then
-         return;
+      Context.Valid_Key := Util.Processes.Get_Exit_Status (Proc) = 0 and Last > 1;
+      if Context.Valid_Key then
+         Context.First := new Secret_Provider '(Len    => Last,
+                                                Slot   => 1,
+                                                Next   => Context.First,
+                                                others => <>);
+         Util.Encoders.Create (Context.Data (1 .. Last), Context.First.Secret);
       end if;
-
-      Context.First := new Secret_Provider '(Len    => Last,
-                                             Slot   => 1,
-                                             Next   => Context.First,
-                                             others => <>);
-      Util.Encoders.Create (Context.Data (1 .. Last), Context.First.Secret);
       Context.Data := (others => 0);
    end Decrypt_GPG_Secret;
 
@@ -255,6 +361,7 @@ package body Keystore.Passwords.GPG is
    begin
       Context.Encrypt_Command := To_Unbounded_String (ENCRYPT_COMMAND);
       Context.Decrypt_Command := To_Unbounded_String (DECRYPT_COMMAND);
+      Context.List_Key_Command := To_Unbounded_String (LIST_COMMAND);
    end Initialize;
 
    overriding
