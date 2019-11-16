@@ -37,10 +37,11 @@ package body Keystore.Tests is
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Tool");
 
-   TEST_TOOL_PATH  : constant String := "regtests/result/test-tool.akt";
-   TEST_TOOL2_PATH : constant String := "regtests/result/test-tool-2.akt";
-   TEST_TOOL3_PATH : constant String := "regtests/result/test-tool-3.akt";
-   DATA_TOOL3_PATH : constant String := "regtests/result/test-tool-3";
+   TEST_CONFIG_PATH : constant String := "regtests/result/test-config.properties";
+   TEST_TOOL_PATH   : constant String := "regtests/result/test-tool.akt";
+   TEST_TOOL2_PATH  : constant String := "regtests/result/test-tool-2.akt";
+   TEST_TOOL3_PATH  : constant String := "regtests/result/test-tool-3.akt";
+   DATA_TOOL3_PATH  : constant String := "regtests/result/test-tool-3";
 
    function Tool return String;
    function Compare (Path1 : in String;
@@ -68,6 +69,7 @@ package body Keystore.Tests is
    procedure Test_Tool_Help_Remove_Password is new Test_Help_Command ("password-remove");
    procedure Test_Tool_Help_Store is new Test_Help_Command ("store");
    procedure Test_Tool_Help_Extract is new Test_Help_Command ("extract");
+   procedure Test_Tool_Help_Config is new Test_Help_Command ("config");
 
    procedure Add_Tests (Suite : in Util.Tests.Access_Test_Suite) is
    begin
@@ -109,6 +111,8 @@ package body Keystore.Tests is
                        Test_Tool_Help_Store'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Extract (help)",
                              Test_Tool_Help_Extract'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Config (help)",
+                       Test_Tool_Help_Config'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Edit",
                        Test_Tool_Edit'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Get (error)",
@@ -121,6 +125,8 @@ package body Keystore.Tests is
                        Test_Tool_Password_Set'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Create (separate data)",
                        Test_Tool_Separate_Data'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Config",
+                       Test_Tool_Set_Config'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -603,5 +609,25 @@ package body Keystore.Tests is
                        "data-bin-akt", "bin/akt");
 
    end Test_Tool_Separate_Data;
+
+   --  ------------------------------
+   --  Test the akt config command.
+   --  ------------------------------
+   procedure Test_Tool_Set_Config (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_CONFIG_PATH);
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      if Ada.Directories.Exists (Path) then
+         Ada.Directories.Delete_File (Path);
+      end if;
+
+      T.Execute (Tool & " --config " & Path & " config fill-zero no",
+                 Result, 0);
+      Util.Tests.Assert_Equals (T, "", Result,
+                                "Bad output for config command");
+      T.Assert (Ada.Directories.Exists (Path),
+                "Config file '" & Path & "' does not exist after test");
+
+   end Test_Tool_Set_Config;
 
 end Keystore.Tests;
