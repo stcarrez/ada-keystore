@@ -107,9 +107,6 @@ private
       Valid_Key        : Boolean := False;
    end record;
 
-   function Encrypt_GPG_Secret (Context : in Context_Type)
-                                return Ada.Streams.Stream_Element_Array;
-
    procedure Decrypt_GPG_Secret (Context : in out Context_Type;
                                  Data    : in Ada.Streams.Stream_Element_Array);
 
