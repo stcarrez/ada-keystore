@@ -151,7 +151,9 @@ package body Keystore.GPG_Tests is
 
    end Test_Create;
 
+   --  ------------------------------
    --  Test the akt keystore for several users each having their own GPG key.
+   --  ------------------------------
    procedure Test_Create_Multi_User (T : in out Test) is
       Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL2_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
@@ -162,7 +164,7 @@ package body Keystore.GPG_Tests is
 
       --  Create keystore
       T.Execute (Tool (User_1) & " create -k " & Path & " --gpg akt-user1@ada-unit-test.org " &
-                 "--gpg akt-user2@ada-unit-test.org --gpg akt-user3@ada-unit-test.org",
+                 "akt-user2@ada-unit-test.org akt-user3@ada-unit-test.org",
                  Result);
       T.Assert (Ada.Directories.Exists (Path),
                 "Keystore file does not exist");
