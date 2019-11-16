@@ -39,7 +39,7 @@ private
       Force         : aliased Boolean := False;
       Counter_Range : aliased GNAT.Strings.String_Access;
       Storage_Count : aliased GNAT.Strings.String_Access;
-      Gpg_User      : aliased GNAT.Strings.String_Access;
+      Gpg_Mode      : aliased Boolean := False;
    end record;
 
 end AKT.Commands.Create;
