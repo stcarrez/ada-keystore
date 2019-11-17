@@ -35,4 +35,9 @@ package Keystore.Passwords is
 
    procedure Next (From : in out Slot_Provider) is abstract;
 
+   --  Get the key and IV through the Getter operation.
+   procedure Get_Key (From   : in Slot_Provider;
+                      Getter : not null access procedure (Key : in Secret_Key;
+                                                          IV  : in Secret_Key)) is abstract;
+
 end Keystore.Passwords;
