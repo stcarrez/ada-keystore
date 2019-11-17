@@ -87,7 +87,7 @@ package body Keystore.Passwords.GPG is
 
       --  ssb:u:<key-size>:<key-algo>:<key-id>:<create-date>:<expire-date>:::::<e>:
       REGEX : constant String
-        := "^(ssb|sec):u:[1-9][0-9][0-9][0-9]:[0-9]:([0-9a-fA-F]+):[0-9]+:[0-9]?:::::[esa]+::.*";
+        := "^(ssb|sec):u:[1-9][0-9][0-9][0-9]:[0-9]:([0-9a-fA-F]+):[0-9]+:[0-9]*:::::[esa]+::.*";
 
       Pattern : constant GNAT.Regpat.Pattern_Matcher := GNAT.Regpat.Compile (REGEX);
 
@@ -126,18 +126,27 @@ package body Keystore.Passwords.GPG is
    --  ------------------------------
    --  Create a secret to protect the keystore.
    --  ------------------------------
-   procedure Create_Secret (Context : in out Context_Type) is
-      Rand : Keystore.Random.Generator;
-      P    : Secret_Provider_Access;
+   procedure Create_Secret (Context : in out Context_Type;
+                            Data    : in Ada.Streams.Stream_Element_Array) is
+      P : Secret_Provider_Access;
    begin
-      Rand.Generate (Context.Data);
-      P := new Secret_Provider '(Len    => Context.Data'Length,
-                                 Slot   => 1,
+      P := new Secret_Provider '(Slot   => 1,
                                  Next   => Context.First,
                                  others => <>);
       Context.First := P;
-      Util.Encoders.Create (Context.Data, P.Secret);
+      Util.Encoders.Create (Data (1 .. IO.SIZE_SECRET), P.Key);
+      Util.Encoders.Create (Data (IO.SIZE_SECRET + 1 .. IO.SIZE_SECRET + IO.SIZE_IV), P.IV);
       Context.Current := P;
+   end Create_Secret;
+
+   --  ------------------------------
+   --  Create a secret to protect the keystore.
+   --  ------------------------------
+   procedure Create_Secret (Context : in out Context_Type) is
+      Rand : Keystore.Random.Generator;
+   begin
+      Rand.Generate (Context.Data);
+      Context.Create_Secret (Context.Data);
    end Create_Secret;
 
    --  ------------------------------
@@ -215,8 +224,20 @@ package body Keystore.Passwords.GPG is
                            Getter : not null
                            access procedure (Password : in Secret_Key)) is
    begin
-      Getter (From.Current.Secret);
+      Getter (From.Current.Key);
    end Get_Password;
+
+   --  ------------------------------
+   --  Get the key and IV through the Getter operation.
+   --  ------------------------------
+   overriding
+   procedure Get_Key (From   : in Context_Type;
+                      Getter : not null
+                      access procedure (Key : in Secret_Key;
+                                        IV  : in Secret_Key)) is
+   begin
+      Getter (From.Current.Key, From.Current.IV);
+   end Get_Key;
 
    --  ------------------------------
    --  Get the key slot number associated with the GPG password.
@@ -297,11 +318,7 @@ package body Keystore.Passwords.GPG is
       Util.Processes.Wait (Proc);
       Context.Valid_Key := Util.Processes.Get_Exit_Status (Proc) = 0 and Last > 1;
       if Context.Valid_Key then
-         Context.First := new Secret_Provider '(Len    => Last,
-                                                Slot   => 1,
-                                                Next   => Context.First,
-                                                others => <>);
-         Util.Encoders.Create (Context.Data (1 .. Last), Context.First.Secret);
+         Context.Create_Secret (Context.Data);
       end if;
       Context.Data := (others => 0);
    end Decrypt_GPG_Secret;
