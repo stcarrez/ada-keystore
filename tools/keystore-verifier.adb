@@ -158,16 +158,18 @@ package body Keystore.Verifier is
       end loop;
 
       declare
+         procedure Report;
+
          Buf    : constant Buffers.Buffer_Accessor := Header.Buffer.Data.Value;
          Last   : Ada.Streams.Stream_Element_Offset;
          Data   : Keystore.IO.IO_Block_Type;
          Block  : IO.Block_Number := 1;
          Buffer : Keystore.Marshallers.Marshaller;
          Btype  : Interfaces.Unsigned_16;
-         Esize  : Interfaces.Unsigned_16;
+         Esize  : Interfaces.Unsigned_16 with Unreferenced;
          Id     : Interfaces.Unsigned_32;
          Current_Id   : Interfaces.Unsigned_32 := 0;
-         Current_Type : Interfaces.Unsigned_16;
+         Current_Type : Interfaces.Unsigned_16 := 0;
          First_Block  : IO.Block_Number := 1;
 
          procedure Report is
