@@ -15,20 +15,8 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Ada.Text_IO;
-with Ada.Command_Line;
-with Ada.Streams.Stream_IO;
-with Ada.Directories;
-with Util.Streams.Raw;
-with Util.Systems.Os;
-with Util.Files;
-with Util.Streams.Files;
-with GNAT.Regpat;
-with GNAT.Command_Line;
 with AKT.Configs;
 package body AKT.Commands.Config is
-
-   use GNAT.Strings;
 
    --  ------------------------------
    --  Get a value from the keystore.
@@ -38,6 +26,7 @@ package body AKT.Commands.Config is
                       Name      : in String;
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
+      pragma Unreferenced (Command);
    begin
       if Args.Get_Count = 0 then
          AKT.Commands.Usage (Args, Context, Name);
@@ -52,23 +41,5 @@ package body AKT.Commands.Config is
          AKT.Configs.Save;
       end if;
    end Execute;
-
-   --  ------------------------------
-   --  Setup the command before parsing the arguments and executing it.
-   --  ------------------------------
-   procedure Setup (Command : in out Command_Type;
-                    Config  : in out GNAT.Command_Line.Command_Line_Configuration;
-                    Context : in out Context_Type) is
-      package GC renames GNAT.Command_Line;
-   begin
-      Drivers.Command_Type (Command).Setup (Config, Context);
-      GC.Define_Switch (Config, Command.No_Newline'Access,
-                        "-n", "", -("Do not output the trailing newline"));
-      GC.Define_Switch (Config, Command.Dir'Access,
-                        "-r:", "--recursive=", -("Extract the files recursively"));
-      GC.Define_Switch (Config, Command.Output'Access,
-                        "-o:", "--output=",
-                        -("Store the result in the output file or directory"));
-   end Setup;
 
 end AKT.Commands.Config;
