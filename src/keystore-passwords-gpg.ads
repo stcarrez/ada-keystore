@@ -21,6 +21,7 @@ with Ada.Finalization;
 with Util.Strings.Sets;
 with Keystore;
 with Keystore.Files;
+private with Keystore.IO;
 package Keystore.Passwords.GPG is
 
    MAX_ENCRYPT_SIZE : constant := 1024;
@@ -71,6 +72,12 @@ package Keystore.Passwords.GPG is
    overriding
    procedure Next (From : in out Context_Type);
 
+   --  Get the key and IV through the Getter operation.
+   overriding
+   procedure Get_Key (From   : in Context_Type;
+                      Getter : not null access procedure (Key : in Secret_Key;
+                                                          IV  : in Secret_Key));
+
    --  Setup the command to be executed to encrypt the secret with GPG2.
    procedure Set_Encrypt_Command (Into    : in out Context_Type;
                                   Command : in String);
@@ -88,10 +95,11 @@ private
    type Secret_Provider;
    type Secret_Provider_Access is access all Secret_Provider;
 
-   type Secret_Provider (Len : Key_Length) is limited record
+   type Secret_Provider is limited record
       Next   : Secret_Provider_Access;
       Slot   : Key_Slot;
-      Secret : Secret_Key (Length => Len);
+      Key    : Secret_Key (Length => IO.SIZE_SECRET);
+      IV     : Secret_Key (Length => IO.SIZE_IV);
    end record;
 
    type Context_Type is limited new Ada.Finalization.Limited_Controlled
@@ -106,6 +114,9 @@ private
       List_Key_Command : Ada.Strings.Unbounded.Unbounded_String;
       Valid_Key        : Boolean := False;
    end record;
+
+   procedure Create_Secret (Context : in out Context_Type;
+                            Data    : in Ada.Streams.Stream_Element_Array);
 
    procedure Decrypt_GPG_Secret (Context : in out Context_Type;
                                  Data    : in Ada.Streams.Stream_Element_Array);
