@@ -43,6 +43,8 @@ package body Keystore.GPG_Tests is
                        Test_Create'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Create (GPG++)",
                        Test_Create_Multi_User'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Info (GPG)",
+                       Test_Info'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -183,5 +185,31 @@ package body Keystore.GPG_Tests is
                                     "list command failed for " & User_Type'Image (User));
       end loop;
    end Test_Create_Multi_User;
+
+   --  ------------------------------
+   --  Test the akt info command on the GPG protected keystore.
+   --  ------------------------------
+   procedure Test_Info (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL2_PATH);
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      --  Get info about the keystore file.
+      for User in User_Type'Range loop
+         T.Execute (Tool (User) & " info -k " & Path, Result);
+
+         Util.Tests.Assert_Matches (T, " 1 Kind.*2.*[0-9]+ .* [0-9A-F]+", Result,
+                                    "info command failed for " & User_Type'Image (User));
+         Util.Tests.Assert_Matches (T, " 2 Kind.*2.*[0-9]+ .* [0-9A-F]+", Result,
+                                    "info command failed for " & User_Type'Image (User));
+         Util.Tests.Assert_Matches (T, " 3 Kind.*2.*[0-9]+ .* [0-9A-F]+", Result,
+                                    "info command failed for " & User_Type'Image (User));
+         Util.Tests.Assert_Matches (T, "Entry count: +1", Result,
+                                    "invalid number of entries for " &
+                                      User_Type'Image (User));
+         Util.Tests.Assert_Matches (T, "Key slots used: +3", Result,
+                                    "invalid number of used key slots for " &
+                                      User_Type'Image (User));
+      end loop;
+   end Test_Info;
 
 end Keystore.GPG_Tests;
