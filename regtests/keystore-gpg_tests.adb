@@ -18,29 +18,18 @@
 
 with Ada.Text_IO;
 with Ada.Directories;
-with Ada.Streams.Stream_IO;
-with Ada.Environment_Variables;
-with Util.Files;
 with Util.Test_Caller;
 with Util.Encoders.AES;
 with Util.Log.Loggers;
 with Util.Processes;
 with Util.Streams.Buffered;
 with Util.Streams.Pipes;
-with Util.Streams.Texts;
-with Util.Streams.Files;
 package body Keystore.GPG_Tests is
-
-   use type Ada.Directories.File_Size;
-   use type Ada.Streams.Stream_Element_Offset;
-   use type Ada.Streams.Stream_Element_Array;
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.GPG_Tests");
 
    TEST_TOOL_PATH  : constant String := "regtests/result/test-gpg-1.akt";
    TEST_TOOL2_PATH : constant String := "regtests/result/test-gpg-2.akt";
-   TEST_TOOL3_PATH : constant String := "regtests/result/test-tool-3.akt";
-   DATA_TOOL3_PATH : constant String := "regtests/result/test-tool-3";
 
    type User_Type is (User_1, User_2, User_3);
 
