@@ -107,11 +107,17 @@ package body Keystore.Keys is
                       Crypt    : in out Cryptor;
                       Hmac     : in out Util.Encoders.HMAC.SHA256.Context);
 
-   function Verify (Manager  : in Key_Manager;
-                    Buffer   : in out Marshallers.Marshaller;
-                    Password : in Passwords.Provider'Class;
-                    Size     : in Positive;
-                    Config   : in out Wallet_Config) return Boolean;
+   function Verify_GPG (Manager  : in Key_Manager;
+                        Buffer   : in out Marshallers.Marshaller;
+                        Password : in Passwords.Slot_Provider'Class;
+                        Size     : in Positive;
+                        Config   : in out Wallet_Config) return Boolean;
+
+   function Verify_PBKDF2 (Manager  : in Key_Manager;
+                           Buffer   : in out Marshallers.Marshaller;
+                           Password : in Passwords.Provider'Class;
+                           Size     : in Positive;
+                           Config   : in out Wallet_Config) return Boolean;
 
    procedure Generate (Manager : in out Key_Manager;
                        Crypt   : in out Cryptor);
@@ -201,11 +207,46 @@ package body Keystore.Keys is
       Util.Encoders.HMAC.SHA256.Update (Hmac, Crypt.Sign);
    end Save;
 
-   function Verify (Manager  : in Key_Manager;
-                    Buffer   : in out Marshallers.Marshaller;
-                    Password : in Passwords.Provider'Class;
-                    Size     : in Positive;
-                    Config   : in out Wallet_Config) return Boolean is
+   function Verify_GPG (Manager  : in Key_Manager;
+                        Buffer   : in out Marshallers.Marshaller;
+                        Password : in Passwords.Slot_Provider'Class;
+                        Size     : in Positive;
+                        Config   : in out Wallet_Config) return Boolean is
+      procedure Get_Password (Key : in Secret_Key;
+                              IV  : in Secret_Key);
+
+      Buf           : constant Buffers.Buffer_Accessor := Buffer.Buffer.Data.Value;
+      Sign          : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
+      Result        : Util.Encoders.SHA256.Hash_Array;
+      Hmac          : Util.Encoders.HMAC.SHA256.Context;
+
+      --  Get the directory encryption key and IV.
+      procedure Get_Password (Key : in Secret_Key;
+                              IV  : in Secret_Key) is
+      begin
+         Extract (Buffer, Key, IV, Config.Dir, Hmac);
+         Extract (Buffer, Key, IV, Config.Data, Hmac);
+         Extract (Buffer, Key, IV, Config.Key, Hmac);
+      end Get_Password;
+
+   begin
+      Marshallers.Get_Secret (Buffer, Sign, Manager.Crypt.Key, Manager.Crypt.IV);
+
+      --  Build a signature from the master key and the wallet salt.
+      Util.Encoders.HMAC.SHA256.Set_Key (Hmac, Sign);
+
+      Password.Get_Key (Get_Password'Access);
+
+      Util.Encoders.HMAC.SHA256.Finish (Hmac, Result);
+
+      return Result = Buf.Data (Buffer.Pos + 1 .. Buffer.Pos + Result'Length);
+   end Verify_GPG;
+
+   function Verify_PBKDF2 (Manager  : in Key_Manager;
+                           Buffer   : in out Marshallers.Marshaller;
+                           Password : in Passwords.Provider'Class;
+                           Size     : in Positive;
+                           Config   : in out Wallet_Config) return Boolean is
       procedure Get_Password (Secret : in Secret_Key);
 
       Buf           : constant Buffers.Buffer_Accessor := Buffer.Buffer.Data.Value;
@@ -256,7 +297,7 @@ package body Keystore.Keys is
       Util.Encoders.HMAC.SHA256.Finish (Hmac, Result);
 
       return Result = Buf.Data (Buffer.Pos + 1 .. Buffer.Pos + Result'Length);
-   end Verify;
+   end Verify_PBKDF2;
 
    --  ------------------------------
    --  Save the wallet config encryption keys in the key slot and protect that
@@ -270,73 +311,96 @@ package body Keystore.Keys is
                        Slot     : in Key_Slot;
                        Config   : in Wallet_Config;
                        Stream   : in out IO.Wallet_Stream'Class) is
-      procedure Get_Password (Secret : in Secret_Key);
 
-      Salt_Key    : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
-      Salt_IV     : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
       Sign        : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
-      Lock_Key    : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
-      Lock_IV     : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
-      Counter_Key : Positive;
-      Counter_IV  : Positive;
       Hmac        : Util.Encoders.HMAC.SHA256.Context;
       Result      : Util.Encoders.SHA256.Hash_Array;
       Buf         : constant Buffers.Buffer_Accessor := Buffer.Buffer.Data.Value;
 
-      --  Generate a derived key from the password, salt, counter.
-      procedure Get_Password (Secret : in Secret_Key) is
+      procedure Save_PBKDF2_Key is
+         procedure Get_Password (Secret : in Secret_Key);
+
+         Lock_Key    : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
+         Lock_IV     : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
+         Salt_Key    : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
+         Salt_IV     : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
+         Counter_Key : Positive;
+         Counter_IV  : Positive;
+
+         --  Generate a derived key from the password, salt, counter.
+         procedure Get_Password (Secret : in Secret_Key) is
+         begin
+            PBKDF2_HMAC_SHA256 (Password => Secret,
+                                Salt     => Salt_IV,
+                                Counter  => Counter_IV,
+                                Result   => Lock_IV);
+         end Get_Password;
+
       begin
-         PBKDF2_HMAC_SHA256 (Password => Secret,
-                             Salt     => Salt_IV,
-                             Counter  => Counter_IV,
-                             Result   => Lock_IV);
-      end Get_Password;
+         --  Make a first random counter in range 100_000 .. 1_148_575.
+         Counter_Key := 1 + Natural (Manager.Random.Generate mod Config.Max_Counter);
+         if Counter_Key < Positive (Config.Min_Counter) then
+            Counter_Key := Positive (Config.Min_Counter);
+         end if;
+
+         --  Make a second random counter in range 100_000 .. 372_140.
+         Counter_IV := 1 + Natural (Manager.Random.Generate mod Config.Max_Counter);
+         if Counter_IV < Positive (Config.Min_Counter) then
+            Counter_IV := Positive (Config.Min_Counter);
+         end if;
+         Manager.Random.Generate (Salt_Key);
+         Manager.Random.Generate (Salt_IV);
+
+         Marshallers.Put_Unsigned_32 (Buffer, WH_KEY_PBKDF2);
+         Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Lock_Key.Length));
+         Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Counter_Key));
+         Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Counter_IV));
+         Marshallers.Put_Secret (Buffer, Salt_Key, Manager.Crypt.Key, Manager.Crypt.IV);
+         Marshallers.Put_Secret (Buffer, Salt_IV, Manager.Crypt.Key, Manager.Crypt.IV);
+         Marshallers.Put_Secret (Buffer, Sign, Manager.Crypt.Key, Manager.Crypt.IV);
+
+         Password.Get_Password (Get_Password'Access);
+         PBKDF2_HMAC_SHA256 (Password => Lock_IV,
+                             Salt     => Salt_Key,
+                             Counter  => Counter_Key,
+                             Result   => Lock_Key);
+
+         Save (Buffer, Lock_Key, Lock_IV, Config.Dir, Hmac);
+         Save (Buffer, Lock_Key, Lock_IV, Config.Data, Hmac);
+         Save (Buffer, Lock_Key, Lock_IV, Config.Key, Hmac);
+      end Save_PBKDF2_Key;
+
+      procedure Save_GPG_Key (Password : in out Keystore.Passwords.Slot_Provider'Class) is
+         procedure Get_Key (Key : in Secret_Key;
+                            IV  : in Secret_Key) is
+         begin
+            Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Key.Length));
+            Marshallers.Put_Secret (Buffer, Sign, Manager.Crypt.Key, Manager.Crypt.IV);
+            Save (Buffer, Key, IV, Config.Dir, Hmac);
+            Save (Buffer, Key, IV, Config.Data, Hmac);
+            Save (Buffer, Key, IV, Config.Key, Hmac);
+         end Get_Key;
+      begin
+         Marshallers.Put_Unsigned_32 (Buffer, WH_KEY_GPG2);
+         Password.Get_Key (Get_Key'Access);
+      end Save_GPG_Key;
 
    begin
       Log.Info ("Saving key for wallet {0}", To_String (Config.UUID));
 
-      --  Make a first random counter in range 100_000 .. 1_148_575.
-      Counter_Key := 1 + Natural (Manager.Random.Generate mod Config.Max_Counter);
-      if Counter_Key < Positive (Config.Min_Counter) then
-         Counter_Key := Positive (Config.Min_Counter);
-      end if;
-
-      --  Make a second random counter in range 100_000 .. 372_140.
-      Counter_IV := 1 + Natural (Manager.Random.Generate mod Config.Max_Counter);
-      if Counter_IV < Positive (Config.Min_Counter) then
-         Counter_IV := Positive (Config.Min_Counter);
-      end if;
-
-      Manager.Random.Generate (Salt_Key);
-      Manager.Random.Generate (Salt_IV);
       Manager.Random.Generate (Sign);
-
-      Buffer.Pos := Key_Position (Slot);
-      Buf.Data (Buffer.Pos + 1 .. Buffer.Pos + WH_KEY_SIZE) := (others => 0);
-      if Password in Passwords.Slot_Provider'Class then
-         Marshallers.Put_Unsigned_32 (Buffer, WH_KEY_GPG2);
-      else
-         Marshallers.Put_Unsigned_32 (Buffer, WH_KEY_PBKDF2);
-      end if;
-      Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Lock_Key.Length));
-      Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Counter_Key));
-      Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Counter_IV));
-      Marshallers.Put_Secret (Buffer, Salt_Key, Manager.Crypt.Key, Manager.Crypt.IV);
-      Marshallers.Put_Secret (Buffer, Salt_IV, Manager.Crypt.Key, Manager.Crypt.IV);
-      Marshallers.Put_Secret (Buffer, Sign, Manager.Crypt.Key, Manager.Crypt.IV);
-
-      Password.Get_Password (Get_Password'Access);
-      PBKDF2_HMAC_SHA256 (Password => Lock_IV,
-                          Salt     => Salt_Key,
-                          Counter  => Counter_Key,
-                          Result   => Lock_Key);
 
       --  Build a signature from the lock key.
       Util.Encoders.HMAC.SHA256.Set_Key (Hmac, Sign);
 
-      Save (Buffer, Lock_Key, Lock_IV, Config.Dir, Hmac);
-      Save (Buffer, Lock_Key, Lock_IV, Config.Data, Hmac);
-      Save (Buffer, Lock_Key, Lock_IV, Config.Key, Hmac);
+      Buffer.Pos := Key_Position (Slot);
+      Buf.Data (Buffer.Pos + 1 .. Buffer.Pos + WH_KEY_SIZE) := (others => 0);
+
+      if Password in Keystore.Passwords.Slot_Provider'Class then
+         Save_GPG_Key (Keystore.Passwords.Slot_Provider'Class (Password));
+      else
+         Save_PBKDF2_Key;
+      end if;
 
       Util.Encoders.HMAC.SHA256.Finish (Hmac, Result);
       Buf.Data (Buffer.Pos + 1 .. Buffer.Pos + Result'Length) := Result;
@@ -434,9 +498,39 @@ package body Keystore.Keys is
                    Process  : access procedure (Buffer : in out Marshallers.Marshaller;
                                                 Slot   : in Key_Slot);
                    Stream   : in out IO.Wallet_Stream'Class) is
+      procedure Open (Password : in out Keystore.Passwords.Slot_Provider'Class);
 
       Value   : Interfaces.Unsigned_32;
       Buffer  : Marshallers.Marshaller;
+
+      procedure Open (Password : in out Keystore.Passwords.Slot_Provider'Class) is
+      begin
+         while Password.Has_Password loop
+            declare
+               Slot : constant Key_Slot := Password.Get_Key_Slot;
+            begin
+               Buffer.Pos := Key_Position (Slot);
+               Value := Marshallers.Get_Unsigned_32 (Buffer);
+               if Value = WH_KEY_GPG2 then
+                  Value := Marshallers.Get_Unsigned_32 (Buffer);
+                  if Value > 0 and Value <= WH_KEY_SIZE then
+                     if Verify_GPG (Manager, Buffer, Password, Positive (Value), Config) then
+                        Config.Slot := Slot;
+                        if Process /= null then
+                           Process (Buffer, Slot);
+                        end if;
+                        return;
+                     end if;
+                  end if;
+               end if;
+            end;
+            Password.Next;
+         end loop;
+
+         Keystore.Logs.Info (Log, "No password match for wallet block{0}", Manager.Header_Block);
+         raise Bad_Password;
+      end Open;
+
    begin
       Load (Manager, Block, Ident, Buffer, Root, Config.UUID, Stream);
 
@@ -448,28 +542,7 @@ package body Keystore.Keys is
       end loop;
 
       if Password in Keystore.Passwords.Slot_Provider'Class then
-         while Passwords.Slot_Provider'Class (Password).Has_Password loop
-            declare
-               Slot : constant Key_Slot
-                 := Passwords.Slot_Provider'Class (Password).Get_Key_Slot;
-            begin
-               Buffer.Pos := Key_Position (Slot);
-               Value := Marshallers.Get_Unsigned_32 (Buffer);
-               if Value = WH_KEY_GPG2 then
-                  Value := Marshallers.Get_Unsigned_32 (Buffer);
-                  if Value > 0 and Value <= WH_KEY_SIZE then
-                     if Verify (Manager, Buffer, Password, Positive (Value), Config) then
-                        Config.Slot := Slot;
-                        if Process /= null then
-                           Process (Buffer, Slot);
-                        end if;
-                        return;
-                     end if;
-                  end if;
-               end if;
-            end;
-            Passwords.Slot_Provider'Class (Password).Next;
-         end loop;
+         Open (Keystore.Passwords.Slot_Provider'Class (Password));
       else
          for Slot in Key_Slot'Range loop
             Buffer.Pos := Key_Position (Slot);
@@ -477,7 +550,7 @@ package body Keystore.Keys is
             if Value = WH_KEY_PBKDF2 then
                Value := Marshallers.Get_Unsigned_32 (Buffer);
                if Value > 0 and Value <= WH_KEY_SIZE then
-                  if Verify (Manager, Buffer, Password, Positive (Value), Config) then
+                  if Verify_PBKDF2 (Manager, Buffer, Password, Positive (Value), Config) then
                      Config.Slot := Slot;
                      if Process /= null then
                         Process (Buffer, Slot);
@@ -487,10 +560,10 @@ package body Keystore.Keys is
                end if;
             end if;
          end loop;
-      end if;
 
-      Keystore.Logs.Info (Log, "No password match for wallet block{0}", Manager.Header_Block);
-      raise Bad_Password;
+         Keystore.Logs.Info (Log, "No password match for wallet block{0}", Manager.Header_Block);
+         raise Bad_Password;
+      end if;
    end Open;
 
    procedure Create (Manager  : in out Key_Manager;
