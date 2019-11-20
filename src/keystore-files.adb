@@ -31,27 +31,19 @@ package body Keystore.Files is
                    Password  : in Secret_Key;
                    Path      : in String;
                    Data_Path : in String := "") is
+      procedure Process (Provider : in out Keystore.Passwords.Provider'Class);
 
-      type Provider is new Keystore.Passwords.Provider with null record;
-
-      overriding
-      procedure Get_Password (From   : in Provider;
-                              Getter : not null access procedure (Password : in Secret_Key));
-      overriding
-      procedure Get_Password (From   : in Provider;
-                              Getter : not null access procedure (Password : in Secret_Key)) is
-         pragma Unreferenced (From);
+      procedure Process (Provider : in out Keystore.Passwords.Provider'Class) is
+         Slot  : Key_Slot;
       begin
-         Getter (Password);
-      end Get_Password;
+         Container.Container.Unlock (Provider, Slot);
+      end Process;
 
-      Info              : Wallet_Info;
-      Password_Provider : Provider;
-      Slot              : Key_Slot;
+      Info     : Wallet_Info;
    begin
       Container.Open (Path, Data_Path, Info);
+      Keystore.Passwords.To_Provider (Password, Process'Access);
 
-      Container.Container.Unlock (Password_Provider, Slot);
       Log.Info ("Keystore {0} is opened", Path);
    end Open;
 
@@ -90,23 +82,15 @@ package body Keystore.Files is
                      Path      : in String;
                      Data_Path : in String := "";
                      Config    : in Wallet_Config := Secure_Config) is
+      procedure Process (Provider : in out Keystore.Passwords.Provider'Class);
 
-      type Provider is new Keystore.Passwords.Provider with null record;
-
-      overriding
-      procedure Get_Password (From   : in Provider;
-                              Getter : not null access procedure (Password : in Secret_Key));
-      overriding
-      procedure Get_Password (From   : in Provider;
-                              Getter : not null access procedure (Password : in Secret_Key)) is
-         pragma Unreferenced (From);
+      procedure Process (Provider : in out Keystore.Passwords.Provider'Class) is
       begin
-         Getter (Password);
-      end Get_Password;
+         Container.Create (Provider, Path, Data_Path, Config);
+      end Process;
 
-      Password_Provider : Provider;
    begin
-      Container.Create (Password_Provider, Path, Data_Path, Config);
+      Keystore.Passwords.To_Provider (Password, Process'Access);
    end Create;
 
    procedure Create (Container : in out Wallet_File;
@@ -136,24 +120,16 @@ package body Keystore.Files is
    --  ------------------------------
    procedure Unlock (Container : in out Wallet_File;
                      Password  : in Secret_Key) is
+      procedure Process (Provider : in out Keystore.Passwords.Provider'Class);
 
-      type Provider is new Keystore.Passwords.Provider with null record;
-
-      overriding
-      procedure Get_Password (From   : in Provider;
-                              Getter : not null access procedure (Password : in Secret_Key));
-      overriding
-      procedure Get_Password (From   : in Provider;
-                              Getter : not null access procedure (Password : in Secret_Key)) is
-         pragma Unreferenced (From);
+      procedure Process (Provider : in out Keystore.Passwords.Provider'Class) is
+         Slot  : Key_Slot;
       begin
-         Getter (Password);
-      end Get_Password;
+         Container.Container.Unlock (Provider, Slot);
+      end Process;
 
-      Password_Provider : Provider;
-      Slot              : Key_Slot;
    begin
-      Container.Container.Unlock (Password_Provider, Slot);
+      Keystore.Passwords.To_Provider (Password, Process'Access);
    end Unlock;
 
    procedure Unlock (Container : in out Wallet_File;
@@ -218,23 +194,15 @@ package body Keystore.Files is
                   Name      : in String;
                   Password  : in Keystore.Secret_Key;
                   Wallet    : in out Wallet_File'Class) is
+      procedure Process (Provider : in out Keystore.Passwords.Provider'Class);
 
-      type Provider is new Keystore.Passwords.Provider with null record;
-
-      overriding
-      procedure Get_Password (From   : in Provider;
-                              Getter : not null access procedure (Password : in Secret_Key));
-      overriding
-      procedure Get_Password (From   : in Provider;
-                              Getter : not null access procedure (Password : in Secret_Key)) is
-         pragma Unreferenced (From);
+      procedure Process (Provider : in out Keystore.Passwords.Provider'Class) is
       begin
-         Getter (Password);
-      end Get_Password;
+         Container.Add (Name, Provider, Wallet);
+      end Process;
 
-      Password_Provider : Provider;
    begin
-      Container.Add (Name, Password_Provider, Wallet);
+      Keystore.Passwords.To_Provider (Password, Process'Access);
    end Add;
 
    --  Load from the container the named children wallet.
@@ -250,23 +218,15 @@ package body Keystore.Files is
                    Name      : in String;
                    Password  : in Keystore.Secret_Key;
                    Wallet    : in out Wallet_File'Class) is
+      procedure Process (Provider : in out Keystore.Passwords.Provider'Class);
 
-      type Provider is new Keystore.Passwords.Provider with null record;
-
-      overriding
-      procedure Get_Password (From   : in Provider;
-                              Getter : not null access procedure (Password : in Secret_Key));
-      overriding
-      procedure Get_Password (From   : in Provider;
-                              Getter : not null access procedure (Password : in Secret_Key)) is
-         pragma Unreferenced (From);
+      procedure Process (Provider : in out Keystore.Passwords.Provider'Class) is
       begin
-         Getter (Password);
-      end Get_Password;
+         Container.Open (Name, Provider, Wallet);
+      end Process;
 
-      Password_Provider : Provider;
    begin
-      Container.Open (Name, Password_Provider, Wallet);
+      Keystore.Passwords.To_Provider (Password, Process'Access);
    end Open;
 
    --  ------------------------------
@@ -305,37 +265,22 @@ package body Keystore.Files is
                       New_Password : in Secret_Key;
                       Config       : in Wallet_Config;
                       Mode         : in Mode_Type) is
+      procedure Process (Provider : in out Keystore.Passwords.Provider'Class);
 
-      type Password_Provider is new Keystore.Passwords.Provider with null record;
+      procedure Process (Provider : in out Keystore.Passwords.Provider'Class) is
+         procedure Process_New (New_Provider : in out Keystore.Passwords.Provider'Class);
 
-      overriding
-      procedure Get_Password (From   : in Password_Provider;
-                              Getter : not null access procedure (Password : in Secret_Key));
-      overriding
-      procedure Get_Password (From   : in Password_Provider;
-                              Getter : not null access procedure (Password : in Secret_Key)) is
-         pragma Unreferenced (From);
+         procedure Process_New (New_Provider : in out Keystore.Passwords.Provider'Class) is
+         begin
+            Container.Container.Set_Key (Provider, New_Provider, Config, Mode);
+         end Process_New;
+
       begin
-         Getter (Password);
-      end Get_Password;
+         Keystore.Passwords.To_Provider (New_Password, Process_New'Access);
+      end Process;
 
-      type New_Password_Provider is new Keystore.Passwords.Provider with null record;
-
-      overriding
-      procedure Get_Password (From   : in New_Password_Provider;
-                              Getter : not null access procedure (Password : in Secret_Key));
-      overriding
-      procedure Get_Password (From   : in New_Password_Provider;
-                              Getter : not null access procedure (Password : in Secret_Key)) is
-         pragma Unreferenced (From);
-      begin
-         Getter (New_Password);
-      end Get_Password;
-
-      Password_P     : Password_Provider;
-      New_Password_P : New_Password_Provider;
    begin
-      Container.Container.Set_Key (Password_P, New_Password_P, Config, Mode);
+      Keystore.Passwords.To_Provider (Password, Process'Access);
    end Set_Key;
 
    procedure Set_Key (Container    : in out Wallet_File;
