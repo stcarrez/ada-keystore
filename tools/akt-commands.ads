@@ -69,6 +69,8 @@ private
 
    package GC renames GNAT.Command_Line;
 
+   procedure Initialize (Context : in out Keystore.Passwords.GPG.Context_Type);
+
    type Context_Type is limited new Ada.Finalization.Limited_Controlled with record
       Wallet            : Keystore.Files.Wallet_File;
       Info              : Keystore.Wallet_Info;
