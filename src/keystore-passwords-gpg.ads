@@ -48,6 +48,7 @@ package Keystore.Passwords.GPG is
    --  the encrypted data in the keystore data header.
    procedure Save_Secret (Context : in out Context_Type;
                           User    : in String;
+                          Index   : in Keystore.Header_Slot_Index_Type;
                           Wallet  : in out Keystore.Files.Wallet_File);
 
    --  Load the GPG secrets stored in the keystore header.
@@ -62,7 +63,7 @@ package Keystore.Passwords.GPG is
 
    --  Get the key slot number associated with the GPG password.
    overriding
-   function Get_Key_Slot (From : in Context_Type) return Key_Slot;
+   function Get_Tag (From : in Context_Type) return Tag_Type;
 
    --  Returns true if the provider has a GPG password.
    overriding
@@ -97,7 +98,7 @@ private
 
    type Secret_Provider is limited record
       Next   : Secret_Provider_Access;
-      Slot   : Key_Slot;
+      Tag    : Tag_Type;
       Key    : Secret_Key (Length => IO.SIZE_SECRET);
       IV     : Secret_Key (Length => IO.SIZE_IV);
    end record;
