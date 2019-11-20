@@ -110,7 +110,6 @@ package body Keystore.Keys is
    function Verify_GPG (Manager  : in Key_Manager;
                         Buffer   : in out Marshallers.Marshaller;
                         Password : in Passwords.Slot_Provider'Class;
-                        Size     : in Positive;
                         Config   : in out Wallet_Config) return Boolean;
 
    function Verify_PBKDF2 (Manager  : in Key_Manager;
@@ -210,7 +209,6 @@ package body Keystore.Keys is
    function Verify_GPG (Manager  : in Key_Manager;
                         Buffer   : in out Marshallers.Marshaller;
                         Password : in Passwords.Slot_Provider'Class;
-                        Size     : in Positive;
                         Config   : in out Wallet_Config) return Boolean is
       procedure Get_Password (Key : in Secret_Key;
                               IV  : in Secret_Key);
@@ -311,6 +309,8 @@ package body Keystore.Keys is
                        Slot     : in Key_Slot;
                        Config   : in Wallet_Config;
                        Stream   : in out IO.Wallet_Stream'Class) is
+      procedure Save_GPG_Key (Password : in out Keystore.Passwords.Slot_Provider'Class);
+      procedure Save_PBKDF2_Key;
 
       Sign        : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
       Hmac        : Util.Encoders.HMAC.SHA256.Context;
@@ -371,10 +371,14 @@ package body Keystore.Keys is
       end Save_PBKDF2_Key;
 
       procedure Save_GPG_Key (Password : in out Keystore.Passwords.Slot_Provider'Class) is
+
+         procedure Get_Key (Key : in Secret_Key;
+                            IV  : in Secret_Key);
+
          procedure Get_Key (Key : in Secret_Key;
                             IV  : in Secret_Key) is
          begin
-            Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Key.Length));
+            Marshallers.Put_Unsigned_32 (Buffer, Password.Get_Tag);
             Marshallers.Put_Secret (Buffer, Sign, Manager.Crypt.Key, Manager.Crypt.IV);
             Save (Buffer, Key, IV, Config.Dir, Hmac);
             Save (Buffer, Key, IV, Config.Data, Hmac);
@@ -506,15 +510,13 @@ package body Keystore.Keys is
       procedure Open (Password : in out Keystore.Passwords.Slot_Provider'Class) is
       begin
          while Password.Has_Password loop
-            declare
-               Slot : constant Key_Slot := Password.Get_Key_Slot;
-            begin
+            for Slot in Key_Slot'Range loop
                Buffer.Pos := Key_Position (Slot);
                Value := Marshallers.Get_Unsigned_32 (Buffer);
                if Value = WH_KEY_GPG2 then
                   Value := Marshallers.Get_Unsigned_32 (Buffer);
-                  if Value > 0 and Value <= WH_KEY_SIZE then
-                     if Verify_GPG (Manager, Buffer, Password, Positive (Value), Config) then
+                  if Value = Password.Get_Tag then
+                     if Verify_GPG (Manager, Buffer, Password, Config) then
                         Config.Slot := Slot;
                         if Process /= null then
                            Process (Buffer, Slot);
@@ -523,7 +525,7 @@ package body Keystore.Keys is
                      end if;
                   end if;
                end if;
-            end;
+            end loop;
             Password.Next;
          end loop;
 
