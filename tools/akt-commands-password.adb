@@ -44,11 +44,12 @@ package body AKT.Commands.Password is
          declare
             GPG : Keystore.Passwords.GPG.Context_Type;
          begin
+            AKT.Commands.Initialize (GPG);
             GPG.Create_Secret;
             Context.Change_Password (New_Password => GPG,
                                      Config       => Config,
                                      Mode         => Command.Mode);
-            GPG.Save_Secret (Command.Gpg_User.all, Context.Wallet);
+            GPG.Save_Secret (Command.Gpg_User.all, 2, Context.Wallet);
          end;
       else
          if Command.Password_File'Length > 0 then
