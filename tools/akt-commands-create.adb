@@ -69,9 +69,18 @@ package body AKT.Commands.Create is
                                 Path      => Context.Wallet_File.all,
                                 Data_Path => Context.Data_Path.all,
                                 Config    => Config);
+         Context.GPG.Save_Secret (Args.Get_Argument (1), 1, Context.Wallet);
 
-         for I in 1 .. Args.Get_Count loop
-            Context.GPG.Save_Secret (Args.Get_Argument (I), Context.Wallet);
+         for I in 2 .. Args.Get_Count loop
+            declare
+               GPG2 : Keystore.Passwords.GPG.Context_Type;
+            begin
+               AKT.Commands.Initialize (GPG2);
+               GPG2.Create_Secret;
+               Context.Wallet.Set_Key (Context.GPG, GPG2, Config, Keystore.KEY_ADD);
+               GPG2.Save_Secret (Args.Get_Argument (I), Keystore.Header_Slot_Index_Type (I),
+                                 Context.Wallet);
+            end;
          end loop;
 
       else
