@@ -206,7 +206,7 @@ package body Keystore.GPG_Tests is
          Util.Tests.Assert_Matches (T, "Entry count: +1", Result,
                                     "invalid number of entries for " &
                                       User_Type'Image (User));
-         Util.Tests.Assert_Matches (T, "Key slots used: +3", Result,
+         Util.Tests.Assert_Matches (T, "Key slots used: *1 2 3", Result,
                                     "invalid number of used key slots for " &
                                       User_Type'Image (User));
       end loop;
