@@ -27,9 +27,11 @@ package Keystore.Passwords is
                            Getter : not null
                            access procedure (Password : in Secret_Key)) is abstract;
 
+   subtype Tag_Type is Interfaces.Unsigned_32;
+
    type Slot_Provider is limited interface and Provider;
 
-   function Get_Key_Slot (From : in Slot_Provider) return Key_Slot is abstract;
+   function Get_Tag (From : in Slot_Provider) return Tag_Type is abstract;
 
    function Has_Password (From : in Slot_Provider) return Boolean is abstract;
 
@@ -39,5 +41,8 @@ package Keystore.Passwords is
    procedure Get_Key (From   : in Slot_Provider;
                       Getter : not null access procedure (Key : in Secret_Key;
                                                           IV  : in Secret_Key)) is abstract;
+
+   procedure To_Provider (Secret  : in Secret_Key;
+                          Process : not null access procedure (P : in out Provider'Class));
 
 end Keystore.Passwords;
