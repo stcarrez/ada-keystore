@@ -41,6 +41,7 @@ package AKT.Commands is
    --  When `Use_Worker` is set, a workers of N tasks is created and assigned to the keystore
    --  for the decryption and encryption process.
    procedure Open_Keystore (Context    : in out Context_Type;
+                            Args       : in Argument_List'Class;
                             Use_Worker : in Boolean := False);
 
    --  Open the keystore file and change the password.
@@ -61,7 +62,8 @@ package AKT.Commands is
                           Config : in out Keystore.Wallet_Config);
 
    --  Get the keystore file path.
-   function Get_Keystore_Path (Context : in Context_Type) return String;
+   function Get_Keystore_Path (Context : in out Context_Type;
+                               Args    : in Argument_List'Class) return String;
 
 private
 
@@ -93,6 +95,7 @@ private
       Password_Askpass  : aliased Boolean := False;
       No_Password_Opt   : Boolean := False;
       Command_Config    : GC.Command_Line_Configuration;
+      First_Arg         : Positive := 1;
       GPG               : Keystore.Passwords.GPG.Context_Type;
    end record;
 
