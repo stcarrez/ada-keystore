@@ -27,11 +27,11 @@ package body AKT.Commands.Remove is
                       Context   : in out Context_Type) is
       pragma Unreferenced (Command);
    begin
-      if Args.Get_Count = 0 then
+      Context.Open_Keystore (Args);
+      if Args.Get_Count < Context.First_Arg then
          AKT.Commands.Usage (Args, Context, Name);
       else
-         Context.Open_Keystore;
-         for I in 1 .. Args.Get_Count loop
+         for I in Context.First_Arg .. Args.Get_Count loop
             if Context.Wallet.Contains (Args.Get_Argument (I)) then
                Context.Wallet.Delete (Args.Get_Argument (I));
             end if;
