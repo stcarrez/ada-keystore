@@ -145,11 +145,11 @@ package body AKT.Commands.Edit is
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
    begin
-      if Args.Get_Count /= 1 then
+      Context.Open_Keystore (Args);
+      if Args.Get_Count /= Context.First_Arg then
          AKT.Commands.Usage (Args, Context, Name);
 
       else
-         Context.Open_Keystore;
          declare
             Dir    : constant String := Command.Get_Directory (Context);
             Path   : constant String := Util.Files.Compose (Dir, "VALUE.txt");
