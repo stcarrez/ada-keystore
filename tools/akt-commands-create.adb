@@ -29,16 +29,10 @@ package body AKT.Commands.Create is
                       Context   : in out Context_Type) is
       pragma Unreferenced (Name);
 
-      Config       : Keystore.Wallet_Config := Keystore.Secure_Config;
+      Config  : Keystore.Wallet_Config := Keystore.Secure_Config;
+      Path    : constant String := Context.Get_Keystore_Path (Args);
    begin
       Setup_Password_Provider (Context);
-
-      --  With a gpg key the initial password is a random bitstring of 256 bytes.
-      --  We don't need a big counter for PBKDF2.
-      if Command.Gpg_Mode then
-         Config.Min_Counter := 1;
-         Config.Max_Counter := 100;
-      end if;
 
       if Command.Counter_Range /= null and then Command.Counter_Range'Length > 0 then
          Parse_Range (Command.Counter_Range.all, Config);
@@ -66,7 +60,7 @@ package body AKT.Commands.Create is
 
          Keystore.Files.Create (Container => Context.Wallet,
                                 Password  => Context.GPG,
-                                Path      => Context.Wallet_File.all,
+                                Path      => Path,
                                 Data_Path => Context.Data_Path.all,
                                 Config    => Config);
          Context.GPG.Save_Secret (Args.Get_Argument (1), 1, Context.Wallet);
@@ -86,7 +80,7 @@ package body AKT.Commands.Create is
       else
          Keystore.Files.Create (Container => Context.Wallet,
                                 Password  => Context.Provider.all,
-                                Path      => Context.Wallet_File.all,
+                                Path      => Path,
                                 Data_Path => Context.Data_Path.all,
                                 Config    => Config);
       end if;
