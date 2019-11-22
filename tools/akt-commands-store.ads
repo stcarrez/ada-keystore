@@ -18,7 +18,7 @@
 with AKT.Commands.Drivers;
 private package AKT.Commands.Store is
 
-   type Command_Type is new AKT.Commands.Drivers.Command_Type with null record;
+   type Command_Type is new AKT.Commands.Drivers.Command_Type with private;
 
    --  Insert a new value in the keystore.
    overriding
@@ -26,5 +26,17 @@ private package AKT.Commands.Store is
                       Name      : in String;
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type);
+
+   --  Setup the command before parsing the arguments and executing it.
+   overriding
+   procedure Setup (Command : in out Command_Type;
+                    Config  : in out GNAT.Command_Line.Command_Line_Configuration;
+                    Context : in out Context_Type);
+
+private
+
+   type Command_Type is new AKT.Commands.Drivers.Command_Type with record
+      Use_Stdin : aliased Boolean := False;
+   end record;
 
 end AKT.Commands.Store;
