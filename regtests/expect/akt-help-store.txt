@@ -1,6 +1,7 @@
 store: read standard input and store the content in the keystore
 
-Usage: akt store <name>
+Usage: akt store <keystore>.akt [-r] <files> <directories>
+       akt store <keystore>.akt -- name
 
   The store command is intended to be used as a target for a pipe
   command.  It reads the standard input and stores the content
