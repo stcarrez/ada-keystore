@@ -80,13 +80,15 @@ package body AKT.Commands is
    --  for the decryption and encryption process.
    --  ------------------------------
    procedure Open_Keystore (Context    : in out Context_Type;
+                            Args       : in Argument_List'Class;
                             Use_Worker : in Boolean := False) is
    begin
       Setup_Password_Provider (Context);
 
-      Context.Wallet.Open (Path => Context.Wallet_File.all,
+      Context.Wallet.Open (Path      => Context.Get_Keystore_Path (Args),
                            Data_Path => Context.Data_Path.all,
-                           Info => Context.Info);
+                           Info      => Context.Info);
+
       if not Context.No_Password_Opt or else Context.Info.Header_Count = 0 then
          Context.Wallet.Unlock (Context.Provider.all, Context.Slot);
       else
@@ -406,9 +408,18 @@ package body AKT.Commands is
    --  ------------------------------
    --  Get the keystore file path.
    --  ------------------------------
-   function Get_Keystore_Path (Context : in Context_Type) return String is
+   function Get_Keystore_Path (Context : in out Context_Type;
+                               Args    : in Argument_List'Class) return String is
    begin
-      return Context.Wallet_File.all;
+      if Context.Wallet_File'Length > 0 then
+         Context.First_Arg := 1;
+         return Context.Wallet_File.all;
+      elsif Args.Get_Count > 0 then
+         Context.First_Arg := 2;
+         return Args.Get_Argument (1);
+      else
+         raise No_Keystore_File;
+      end if;
    end Get_Keystore_Path;
 
    overriding
