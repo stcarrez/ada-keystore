@@ -28,12 +28,12 @@ package body AKT.Commands.List is
                       Name      : in String;
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
-      pragma Unreferenced (Command, Name, Args);
+      pragma Unreferenced (Command, Name);
 
       List : Keystore.Entry_Map;
       Iter : Keystore.Entry_Cursor;
    begin
-      Context.Open_Keystore;
+      Context.Open_Keystore (Args);
       Context.Wallet.List (Content => List);
       Iter := List.First;
       while Keystore.Entry_Maps.Has_Element (Iter) loop
