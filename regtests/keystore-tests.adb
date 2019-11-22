@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---  keystore-tests -- Tests for keystore IO
+--  keystore-tests -- Tests for akt command
 --  Copyright (C) 2019 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
@@ -209,9 +209,9 @@ package body Keystore.Tests is
       Output_Path : constant String := Util.Tests.Get_Test_Path ("regtests/result/" & Name);
       Result      : Ada.Strings.Unbounded.Unbounded_String;
    begin
-      T.Execute (Tool & " store " & Command & " " & Name & " < " & Path, Result);
+      T.Execute (Tool & " store " & Command & " -- " & Name & " < " & Path, Result);
 
-      T.Execute (Tool & " extract " & Command & " " & Name & " > " & Output_Path, Result);
+      T.Execute (Tool & " extract " & Command & " -- " & Name & " > " & Output_Path, Result);
 
       T.Assert (Compare (Path, Output_Path),
                 "store+extract invalid for " & Name);
@@ -240,29 +240,29 @@ package body Keystore.Tests is
       end if;
 
       --  Create keystore
-      T.Execute (Tool & " create -k " & Path & " -p admin --counter-range 10:100", Result);
+      T.Execute (Tool & " create " & Path & " -p admin --counter-range 10:100", Result);
       Util.Tests.Assert_Equals (T, "", Result, "create command failed");
       T.Assert (Ada.Directories.Exists (Path),
                 "Keystore file does not exist");
 
       --  List content => empty result
-      T.Execute (Tool & " list -k " & Path & " -p admin", Result);
+      T.Execute (Tool & " list " & Path & " -p admin", Result);
       Util.Tests.Assert_Equals (T, "", Result, "list command failed");
 
       --  Set property
-      T.Execute (Tool & " set -k " & Path & " -p admin testing my-testing-value", Result);
+      T.Execute (Tool & " set " & Path & " -p admin testing my-testing-value", Result);
       Util.Tests.Assert_Equals (T, "", Result, "set command failed");
 
       --  Get property
-      T.Execute (Tool & " get -k " & Path & " -p admin testing", Result);
+      T.Execute (Tool & " get " & Path & " -p admin testing", Result);
       Util.Tests.Assert_Matches (T, "^my-testing-value", Result, "get command failed");
 
       --  List content => one entry
-      T.Execute (Tool & " list -k " & Path & " -p admin", Result);
+      T.Execute (Tool & " list " & Path & " -p admin", Result);
       Util.Tests.Assert_Matches (T, "^testing", Result, "list command failed");
 
       --  Open keystore with invalid password
-      T.Execute (Tool & " list -k " & Path & " -p admin2", Result, 1);
+      T.Execute (Tool & " list " & Path & " -p admin2", Result, 1);
       Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
                                  Result, "list command failed");
 
@@ -315,11 +315,11 @@ package body Keystore.Tests is
       Util.Tests.Assert_Equals (T, "", Result, "set command failed");
 
       --  Remove property
-      T.Execute (Tool & " remove -k " & Path & " -p admin "
+      T.Execute (Tool & " remove " & Path & " -p admin "
                  & "testing", Result);
       Util.Tests.Assert_Equals (T, "", Result, "remove command failed");
 
-      T.Execute (Tool & " remove -k " & Path & " -p admin", Result, 1);
+      T.Execute (Tool & " remove " & Path & " -p admin", Result, 1);
 
    end Test_Tool_Set_Remove;
 
@@ -342,8 +342,8 @@ package body Keystore.Tests is
                 "Keystore file does not exist");
 
       --  Set property with configure file (128K file or more).
-      T.Execute (Tool & " set -k " & Path & " -p admin "
-                 & "-f configure configure", Result);
+      T.Execute (Tool & " store -k " & Path & " -p admin "
+                 & "configure", Result);
       Util.Tests.Assert_Equals (T, "", Result, "set command failed");
 
       Size := Ada.Directories.Size (Path);
@@ -372,12 +372,12 @@ package body Keystore.Tests is
       Test_Tool_Create (T);
 
       --  Set property
-      T.Execute (Tool & " set -k " & Path & " -p admin "
-                 & "testing -f LICENSE.txt", Result);
-      Util.Tests.Assert_Equals (T, "", Result, "set -f <file> command failed");
+      T.Execute (Tool & " store " & Path & " -p admin "
+                 & "LICENSE.txt", Result);
+      Util.Tests.Assert_Equals (T, "", Result, "store <file> command failed");
 
       --  Get the property
-      T.Execute (Tool & " get -k " & Path & " -p admin testing", Result);
+      T.Execute (Tool & " get -k " & Path & " -p admin LICENSE.txt", Result);
       Util.Files.Write_File (Path    => Path2,
                              Content => Result);
 
@@ -497,8 +497,8 @@ package body Keystore.Tests is
       Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
-      T.Execute (Tool & " store -k " & Path & " -p admin store-extract < bin/akt", Result, 0);
-      T.Execute (Tool & " extract -k " & Path & " -p admin store-extract > regtests/result/akt",
+      T.Execute (Tool & " store -k " & Path & " -p admin -- store-extract < bin/akt", Result, 0);
+      T.Execute (Tool & " extract -k " & Path & " -p admin -- store-extract > regtests/result/akt",
                  Result, 0);
 
       --  Check extract command with invalid value
