@@ -15,12 +15,18 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
+with Ada.Text_IO;
 with Ada.Command_Line;
+with Ada.Directories;
+with Ada.Streams.Stream_IO;
+with GNAT.Regpat;
 with Util.Streams.Raw;
 with Util.Systems.Os;
+with Util.Files;
+with Util.Streams.Files;
 package body AKT.Commands.Extract is
 
-   Output : Util.Streams.Raw.Raw_Stream;
+   use GNAT.Strings;
 
    --  ------------------------------
    --  Get a value from the keystore.
@@ -30,25 +36,124 @@ package body AKT.Commands.Extract is
                       Name      : in String;
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
-      pragma Unreferenced (Command);
+
+      Output : Util.Streams.Raw.Raw_Stream;
+
+      procedure Extract_Directory (Path   : in String;
+                                   Output : in String);
+
+      procedure Extract_File (Name   : in String;
+                              Output : in String) is
+         Target : constant String
+           := Util.Files.Compose ((if Output = "" then "." else Output), Name);
+         Dir    : constant String
+           := Ada.Directories.Containing_Directory (Target);
+         File   : Util.Streams.Files.File_Stream;
+      begin
+         Ada.Directories.Create_Path (Dir);
+         File.Create (Mode => Ada.Streams.Stream_IO.Out_File,
+                      Name => Target);
+         Context.Wallet.Get (Name   => Name,
+                             Output => File);
+
+      exception
+         when Keystore.Not_Found =>
+            AKT.Commands.Log.Error (-("Value '{0}' not found"), Name);
+            Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+
+      end Extract_File;
+
+      procedure Extract_Directory (Path   : in String;
+                                   Output : in String) is
+         Pattern : constant GNAT.Regpat.Pattern_Matcher := GNAT.Regpat.Compile (Path & "/.*");
+         List : Keystore.Entry_Map;
+         Iter : Keystore.Entry_Cursor;
+      begin
+         Context.Wallet.List (Pattern => Pattern,
+                              Filter  => (Keystore.T_FILE => True, others => False),
+                              Content => List);
+         if List.Is_Empty then
+            AKT.Commands.Log.Error (-("Value '{0}' not found"), Path);
+            Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+            return;
+         end if;
+
+         Iter := List.First;
+         while Keystore.Entry_Maps.Has_Element (Iter) loop
+            declare
+               Name   : constant String := Keystore.Entry_Maps.Key (Iter);
+               Target : constant String := Util.Files.Compose (Output, Name);
+               Dir    : constant String := Ada.Directories.Containing_Directory (Target);
+            begin
+               Ada.Text_IO.Put_Line ("Extract " & Name);
+               Extract_File (Name, Output);
+
+            end;
+            Keystore.Entry_Maps.Next (Iter);
+         end loop;
+      end Extract_Directory;
+
+      procedure Extract_Standard_Output (Name : in String) is
+      begin
+         Context.Wallet.Get (Name, Output);
+
+      exception
+         when Keystore.Not_Found =>
+            AKT.Commands.Log.Error (-("Value '{0}' not found"), Name);
+            Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+
+      end Extract_Standard_Output;
+
+      Pos : Positive;
    begin
-      if Args.Get_Count /= 1 then
-         AKT.Commands.Usage (Args, Context, Name);
-      else
-         Context.Open_Keystore (Use_Worker => True);
+      Context.Open_Keystore (Args, Use_Worker => True);
+
+      if Command.Use_Stdout then
          Output.Initialize (File => Util.Systems.Os.STDOUT_FILENO);
-         declare
-            Key : constant String := Args.Get_Argument (1);
-         begin
-            Context.Wallet.Get (Key, Output);
 
-         exception
-            when Keystore.Not_Found =>
-               AKT.Commands.Log.Error (-("Value '{0}' not found"), Key);
-               Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
-
-         end;
+         for I in Context.First_Arg .. Args.Get_Count loop
+            Extract_Standard_Output (Args.Get_Argument (I));
+         end loop;
       end if;
+      if Command.Output'Length > 0 then
+         null;
+      end if;
+      Pos := Context.First_Arg;
+      while Pos <= Args.Get_Count loop
+         declare
+            Name : constant String := Args.Get_Argument (Pos);
+         begin
+            if Name = "--" then
+               Pos := Pos + 1;
+               Extract_Standard_Output (Args.Get_Argument (Pos));
+
+            elsif Context.Wallet.Contains (Name) then
+               Extract_File (Name, Command.Output.all);
+
+            else
+               Extract_Directory (Name, Command.Output.all);
+            end if;
+         end;
+         Pos := Pos + 1;
+      end loop;
    end Execute;
+
+   --  ------------------------------
+   --  Setup the command before parsing the arguments and executing it.
+   --  ------------------------------
+   procedure Setup (Command : in out Command_Type;
+                    Config  : in out GNAT.Command_Line.Command_Line_Configuration;
+                    Context : in out Context_Type) is
+      package GC renames GNAT.Command_Line;
+   begin
+      Drivers.Command_Type (Command).Setup (Config, Context);
+      GC.Define_Switch (Config, Command.Output'Access,
+                        "-o:", "--output=",
+                        -("Store the result in the output file or directory"));
+      GC.Define_Switch (Config => Config,
+                        Output => Command.Use_Stdout'Access,
+                        Switch => "--",
+                        Help => -("Use the standard input to read the content"));
+   end Setup;
 
 end AKT.Commands.Extract;
