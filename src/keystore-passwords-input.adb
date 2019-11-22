@@ -53,7 +53,9 @@ package body Keystore.Passwords.Input is
          exit when C < ' ';
          Ada.Strings.Unbounded.Append (Content, C);
       end loop;
-
+      if Ada.Strings.Unbounded.Length (Content) = 0 then
+         raise Keystore.Bad_Password with "Empty password given";
+      end if;
       Getter (Keystore.Create (Ada.Strings.Unbounded.To_String (Content)));
    end Get_Password;
 
