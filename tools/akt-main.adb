@@ -40,6 +40,10 @@ exception
    when GNAT.Command_Line.Exit_From_Command_Line | GNAT.Command_Line.Invalid_Switch =>
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
+   when No_Keystore_File =>
+      Log.Error (-("Missing the keystore file name"));
+      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+
    when Keystore.Bad_Password =>
       Log.Error (-("Invalid password to unlock the keystore file"));
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
