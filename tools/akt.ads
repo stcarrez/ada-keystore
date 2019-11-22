@@ -20,6 +20,8 @@ package AKT is
 
    function "-" (Message : in String) return String is (Intl."-" (Message));
 
+   No_Keystore_File : exception;
+
 private
 
    --  Configure the logs.
