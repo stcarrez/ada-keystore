@@ -29,9 +29,9 @@ package body AKT.Commands.Info is
                       Name      : in String;
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
-      pragma Unreferenced (Command, Name, Args);
+      pragma Unreferenced (Command, Name);
 
-      Path  : constant String := Context.Get_Keystore_Path;
+      Path  : constant String := Context.Get_Keystore_Path (Args);
       Stats : Keystore.Wallet_Stats;
    begin
       Keystore.Verifier.Print_Information (Path);
