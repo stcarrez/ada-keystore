@@ -24,6 +24,7 @@ package body AKT is
    --  Configure the logs.
    --  ------------------------------
    procedure Configure_Logs (Debug   : in Boolean;
+                             Dump    : in Boolean;
                              Verbose : in Boolean) is
       Log_Config  : Util.Properties.Manager;
    begin
@@ -36,23 +37,28 @@ package body AKT is
       Log_Config.Set ("log4j.logger.Util.Events", "ERROR");
       Log_Config.Set ("log4j.logger.Keystore", "ERROR");
       Log_Config.Set ("log4j.logger.AKT", "ERROR");
-      if Verbose or Debug then
+      if Verbose or Debug or Dump then
          Log_Config.Set ("log4j.logger.Util", "WARN");
-         Log_Config.Set ("log4j.logger.Util.Processes", "INFO");
          Log_Config.Set ("log4j.logger.AKT", "INFO");
+         Log_Config.Set ("log4j.logger.Keystore.IO", "WARN");
          Log_Config.Set ("log4j.logger.Keystore", "INFO");
          Log_Config.Set ("log4j.rootCategory", "INFO,console,verbose");
          Log_Config.Set ("log4j.appender.verbose", "Console");
          Log_Config.Set ("log4j.appender.verbose.level", "INFO");
          Log_Config.Set ("log4j.appender.verbose.layout", "level-message");
       end if;
-      if Debug then
+      if Debug or Dump then
+         Log_Config.Set ("log4j.logger.Util.Processes", "INFO");
          Log_Config.Set ("log4j.logger.AKT", "DEBUG");
+         Log_Config.Set ("log4j.logger.Keystore.IO", "INFO");
          Log_Config.Set ("log4j.logger.Keystore", "DEBUG");
          Log_Config.Set ("log4j.rootCategory", "DEBUG,console,debug");
          Log_Config.Set ("log4j.appender.debug", "Console");
          Log_Config.Set ("log4j.appender.debug.level", "DEBUG");
          Log_Config.Set ("log4j.appender.debug.layout", "full");
+      end if;
+      if Dump then
+         Log_Config.Set ("log4j.logger.Keystore.IO", "DEBUG");
       end if;
 
       Util.Log.Loggers.Initialize (Log_Config);
