@@ -128,6 +128,8 @@ package body Keystore.Passwords.GPG is
       Pipe    : aliased Util.Streams.Pipes.Pipe_Stream;
       Reader  : Util.Streams.Texts.Reader_Stream;
    begin
+      Log.Info ("Looking for GPG secrets using {0}", Command);
+
       Pipe.Open (Command, Util.Processes.READ_ALL);
       Reader.Initialize (Pipe'Access, 4096);
 
