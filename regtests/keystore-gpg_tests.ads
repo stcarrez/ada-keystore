@@ -33,6 +33,9 @@ package Keystore.GPG_Tests is
    --  Test the akt info command on the GPG protected keystore.
    procedure Test_Info (T : in out Test);
 
+   --  Test the akt password-add command to add a GPG key to a keystore.
+   procedure Test_Add_Password (T : in out Test);
+
    procedure Execute (T       : in out Test;
                       Command : in String;
                       Result  : out Ada.Strings.Unbounded.Unbounded_String;
