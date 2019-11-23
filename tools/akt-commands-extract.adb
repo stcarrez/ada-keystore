@@ -123,11 +123,7 @@ package body AKT.Commands.Extract is
          declare
             Name : constant String := Args.Get_Argument (Pos);
          begin
-            if Name = "--" then
-               Pos := Pos + 1;
-               Extract_Standard_Output (Args.Get_Argument (Pos));
-
-            elsif Context.Wallet.Contains (Name) then
+            if Context.Wallet.Contains (Name) then
                Extract_File (Name, Command.Output.all);
 
             else
