@@ -1,0 +1,5 @@
+akt info: give information about the keystore
+
+Usage: info <keystore>.akt
+
+  Read the keystore file and print the information about it.
