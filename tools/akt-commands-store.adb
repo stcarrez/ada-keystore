@@ -16,10 +16,10 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Ada.Text_IO;
-with Util.Systems.Os;
-with Util.Streams.Raw;
 with Ada.Directories;
 with Ada.Streams.Stream_IO;
+with Util.Systems.Os;
+with Util.Streams.Raw;
 with Util.Streams.Files;
 with Keystore.Tools;
 package body AKT.Commands.Store is
@@ -87,30 +87,29 @@ package body AKT.Commands.Store is
          end if;
 
          Insert_Standard_Input (Args.Get_Argument (Context.First_Arg));
-         return;
+      else
+         for I in Context.First_Arg .. Args.Get_Count loop
+            declare
+               Name : constant String := Args.Get_Argument (I);
+            begin
+               if not Ada.Directories.Exists (Name) then
+                  AKT.Commands.Log.Error (-("{0} does not exist"), Name);
+                  raise Error;
+
+               elsif Ada.Directories.Kind (Name) = Ada.Directories.Ordinary_File then
+                  Insert_File (Name);
+
+               elsif Ada.Directories.Kind (Name) = Ada.Directories.Directory then
+                  Insert_Directory (Name);
+
+               else
+                  AKT.Commands.Log.Error (-("{0} is not a regular file nor a directory"), Name);
+                  raise Error;
+
+               end if;
+            end;
+         end loop;
       end if;
-
-      for I in Context.First_Arg .. Args.Get_Count loop
-         declare
-            Name : constant String := Args.Get_Argument (I);
-         begin
-            if not Ada.Directories.Exists (Name) then
-               AKT.Commands.Log.Error (-("{0} does not exist"), Name);
-               raise Error;
-
-            elsif Ada.Directories.Kind (Name) = Ada.Directories.Ordinary_File then
-               Insert_File (Name);
-
-            elsif Ada.Directories.Kind (Name) = Ada.Directories.Directory then
-               Insert_Directory (Name);
-
-            else
-               AKT.Commands.Log.Error (-("{0} is not a regular file nor a directory"), Name);
-               raise Error;
-
-            end if;
-         end;
-      end loop;
    end Execute;
 
    --  ------------------------------
