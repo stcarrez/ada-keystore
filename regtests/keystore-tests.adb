@@ -501,6 +501,7 @@ package body Keystore.Tests is
       Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
+      T.Execute (Tool & " create -k " & Path & " -p admin -c 1:10 --force", Result, 0);
       T.Execute (Tool & " store -k " & Path & " -p admin -- store-extract < bin/akt", Result, 0);
       T.Execute (Tool & " extract -k " & Path & " -p admin -- store-extract > regtests/result/akt",
                  Result, 0);
@@ -525,6 +526,7 @@ package body Keystore.Tests is
       Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
+      T.Execute (Tool & " create " & Path & " -p admin -c 1:10 --force", Result, 0);
       T.Execute (Tool & " store " & Path & " -p admin obj bin", Result, 0);
       T.Execute (Tool & " extract " & Path & " -p admin -o regtests/result/extract bin",
                  Result, 0);
@@ -553,7 +555,13 @@ package body Keystore.Tests is
       Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
-      T.Execute (Tool & " store " & Path & " -p admim --", Result, 1);
+      T.Execute (Tool & " create " & Path & " -p admin -c 1:10 --force", Result, 0);
+
+      T.Execute (Tool & " store " & Path & " -p admin --", Result, 1);
+
+      T.Execute (Tool & " store " & Path & " -p admin this-file-does-not-exist", Result, 1);
+
+      T.Execute (Tool & " store " & Path & " -p admin /dev/null", Result, 1);
    end Test_Tool_Store_Error;
 
    --  ------------------------------
