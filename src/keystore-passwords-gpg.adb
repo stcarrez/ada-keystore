@@ -36,14 +36,8 @@ package body Keystore.Passwords.GPG is
                          return Interfaces.Unsigned_32;
 
    --  Headers of GPG packet.
-   GPG_RSA_2048 : constant Ada.Streams.Stream_Element_Array (1 .. 4)
-     := (16#85#, 16#01#, 16#0C#, 16#03#);
-   GPG_RSA_3072 : constant Ada.Streams.Stream_Element_Array (1 .. 4)
-     := (16#85#, 16#01#, 16#8C#, 16#03#);
-   GPG_RSA_3072b : constant Ada.Streams.Stream_Element_Array (1 .. 4)
-     := (16#85#, 16#02#, 16#0C#, 16#03#);
-   GPG_RSA_4096 : constant Ada.Streams.Stream_Element_Array (1 .. 4)
-     := (16#85#, 16#04#, 16#0C#, 16#03#);
+   GPG_OLD_TAG_1 : constant Ada.Streams.Stream_Element := 16#85#;
+   GPG_NEW_VERSION : constant Ada.Streams.Stream_Element := 16#03#;
 
    function Get_Unsigned_32 (Data : in Stream_Element_Array) return Interfaces.Unsigned_32 is
       use Interfaces;
@@ -85,13 +79,16 @@ package body Keystore.Passwords.GPG is
       if Data'Length < 16 then
          return "";
       end if;
-      if Data (Data'First + 4 .. Data'First + 7) /= GPG_RSA_2048
-        and Data (Data'First + 4 .. Data'First + 7) /= GPG_RSA_3072
-        and Data (Data'First + 4 .. Data'First + 7) /= GPG_RSA_3072b
-        and Data (Data'First + 4 .. Data'First + 7) /= GPG_RSA_4096
-      then
+      if Data (Data'First + 4) /= GPG_OLD_TAG_1 then
          return "";
       end if;
+      if Data (Data'First + 7) /= GPG_NEW_VERSION then
+         return "";
+      end if;
+      if Data (Data'First + 5) > 4 then
+         return "";
+      end if;
+
       L1 := Get_Le_Long (Data (Data'First + 4 + 4 .. Data'Last));
       L2 := Get_Le_Long (Data (Data'First + 8 + 4 .. Data'Last));
       return Encode.Encode_Unsigned_32 (L1) & Encode.Encode_Unsigned_32 (L2);
