@@ -115,12 +115,14 @@ package body Keystore.Tests is
                        Test_Tool_Help_Config'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Edit",
                        Test_Tool_Edit'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Store+Extract",
+                       Test_Tool_Store_Extract'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Store+Extract (Dir tree)",
+                       Test_Tool_Store_Extract_Tree'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Get (error)",
                        Test_Tool_Get_Error'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Get (interactive password)",
                        Test_Tool_Interactive_Password'Access);
-      Caller.Add_Test (Suite, "Test AKT.Commands.Store+Extract",
-                       Test_Tool_Store_Extract'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Password",
                        Test_Tool_Password_Set'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Create (separate data)",
@@ -512,8 +514,35 @@ package body Keystore.Tests is
                  Result, 1);
       Util.Tests.Assert_Matches (T, "Usage: akt ", Result,
                                  "Expecting usage print for extract command");
-
    end Test_Tool_Store_Extract;
+
+   --  ------------------------------
+   --  Test the akt store and akt extract commands.
+   --  ------------------------------
+   procedure Test_Tool_Store_Extract_Tree (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " store " & Path & " -p admin obj bin", Result, 0);
+      T.Execute (Tool & " extract " & Path & " -p admin -o regtests/result/extract bin",
+                 Result, 0);
+
+      T.Assert (Compare ("bin/akt", "regtests/result/extract/bin/akt"),
+                "store+extract failed for bin/akt");
+
+      T.Assert (Compare ("bin/keystore_harness", "regtests/result/extract/bin/keystore_harness"),
+                "store+extract failed for bin/keystore_harness");
+
+      T.Execute (Tool & " extract " & Path & " -p admin -o regtests/result/extract-obj obj",
+                 Result, 0);
+
+      T.Assert (Compare ("obj/akt.o", "regtests/result/extract-obj/obj/akt.o"),
+                "store+extract failed for obj/akt.o");
+
+      T.Assert (Compare ("obj/akt-commands.o", "regtests/result/extract-obj/obj/akt-commands.o"),
+                "store+extract failed for obj/akt-commands.o");
+
+   end Test_Tool_Store_Extract_Tree;
 
    --  ------------------------------
    --  Test the akt password-set command.
