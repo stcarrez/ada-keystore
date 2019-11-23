@@ -42,6 +42,7 @@ package body Keystore.Tests is
    TEST_TOOL2_PATH  : constant String := "regtests/result/test-tool-2.akt";
    TEST_TOOL3_PATH  : constant String := "regtests/result/test-tool-3.akt";
    DATA_TOOL3_PATH  : constant String := "regtests/result/test-tool-3";
+   TEST_TOOL4_PATH  : constant String := "regtests/result/test-tool-4.akt";
 
    function Tool return String;
    function Compare (Path1 : in String;
@@ -131,6 +132,8 @@ package body Keystore.Tests is
                        Test_Tool_Separate_Data'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Config",
                        Test_Tool_Set_Config'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Extract (Error)",
+                       Test_Tool_Extract_Error'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -563,6 +566,18 @@ package body Keystore.Tests is
 
       T.Execute (Tool & " store " & Path & " -p admin /dev/null", Result, 1);
    end Test_Tool_Store_Error;
+
+   procedure Test_Tool_Extract_Error (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL4_PATH);
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " create " & Path & " -p admin -c 1:10 --force", Result, 0);
+
+      T.Execute (Tool & " extract " & Path & " -p admin missing", Result, 1);
+
+      T.Execute (Tool & " store " & Path & " -p admin -- missing", Result, 1);
+   end Test_Tool_Extract_Error;
+
 
    --  ------------------------------
    --  Test the akt password-set command.
