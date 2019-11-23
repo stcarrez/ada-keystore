@@ -33,8 +33,15 @@ package body AKT.Commands.Info is
 
       Path  : constant String := Context.Get_Keystore_Path (Args);
       Stats : Keystore.Wallet_Stats;
+      Is_Keystore : Boolean;
    begin
-      Keystore.Verifier.Print_Information (Path);
+      Keystore.Verifier.Print_Information (Path, Is_Keystore);
+
+      --  No need to proceed if this is not a keystore file.
+      if not Is_Keystore then
+         return;
+      end if;
+
       Setup_Password_Provider (Context);
 
       Context.Wallet.Open (Path => Path,
