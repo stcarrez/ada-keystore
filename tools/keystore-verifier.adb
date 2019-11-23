@@ -18,6 +18,7 @@
 with Interfaces.C.Strings;
 with Ada.IO_Exceptions;
 with Ada.Text_IO;
+with Util.Strings;
 with Util.Systems.Os;
 with Util.Systems.Types;
 with Util.Systems.Constants;
@@ -38,13 +39,15 @@ package body Keystore.Verifier is
    use Util.Systems.Constants;
    use Util.Systems.Types;
    use type Keystore.Buffers.Block_Count;
+   use type Keystore.IO.Storage_Identifier;
 
    function Sys_Error return String;
 
    procedure Open (Path   : in String;
                    File   : in out Util.Streams.Raw.Raw_Stream;
                    Sign   : in Secret_Key;
-                   Header : in out Keystore.IO.Headers.Wallet_Header);
+                   Header : in out Keystore.IO.Headers.Wallet_Header;
+                   Is_Keystore : out Boolean);
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Verifier");
 
@@ -55,11 +58,30 @@ package body Keystore.Verifier is
       return Interfaces.C.Strings.Value (Msg);
    end Sys_Error;
 
+   function Get_Storage_Id (Path : in String) return IO.Storage_Identifier is
+      Pos : Natural;
+   begin
+      if Util.Strings.Ends_With (Path, ".dkt") then
+         Pos := Util.Strings.Rindex (Path, '-');
+         if Pos = 0 then
+            return IO.DEFAULT_STORAGE_ID;
+         end if;
+         return IO.Storage_Identifier'Value (Path (Pos + 1 .. Path'Last - 4));
+      else
+         return IO.DEFAULT_STORAGE_ID;
+      end if;
+
+   exception
+      when Constraint_Error =>
+         return IO.DEFAULT_STORAGE_ID;
+   end Get_Storage_Id;
+
    procedure Open (Path   : in String;
                    File   : in out Util.Streams.Raw.Raw_Stream;
                    Sign   : in Secret_Key;
-                   Header : in out Keystore.IO.Headers.Wallet_Header) is
-      Storage_Id : constant IO.Storage_Identifier := IO.DEFAULT_STORAGE_ID;
+                   Header : in out Keystore.IO.Headers.Wallet_Header;
+                   Is_Keystore : out Boolean) is
+      Storage_Id : constant IO.Storage_Identifier := Get_Storage_Id (Path);
       Fd         : Util.Systems.Types.File_Type := Util.Systems.Os.NO_FILE;
       P          : Interfaces.C.Strings.chars_ptr;
       Flags      : Interfaces.C.int;
@@ -116,10 +138,21 @@ package body Keystore.Verifier is
             --  raise Invalid_Block;
          end if;
          Keystore.IO.Headers.Read_Header (Header);
+
+         Is_Keystore := Storage_Id = IO.DEFAULT_STORAGE_ID;
+         Ada.Text_IO.Put ("Type");
+         Ada.Text_IO.Set_Col (30);
+         if not Is_Keystore then
+            Ada.Text_IO.Put ("storage");
+            Ada.Text_IO.Put_Line (IO.Storage_Identifier'Image (Storage_Id));
+         else
+            Ada.Text_IO.Put_Line ("keystore");
+         end if;
       end;
    end Open;
 
-   procedure Print_Information (Path : in String) is
+   procedure Print_Information (Path        : in String;
+                                Is_Keystore : out Boolean) is
       Header : Keystore.IO.Headers.Wallet_Header;
       File   : Util.Streams.Raw.Raw_Stream;
       Sign   : Secret_Key (Length => 32);
@@ -131,7 +164,8 @@ package body Keystore.Verifier is
       Open (Path   => Path,
             File   => File,
             Sign   => Sign,
-            Header => Header);
+            Header => Header,
+            Is_Keystore => Is_Keystore);
 
       Ada.Text_IO.Put ("UUID");
       Ada.Text_IO.Set_Col (30);
@@ -174,7 +208,6 @@ package body Keystore.Verifier is
 
          procedure Report is
          begin
-
             Ada.Text_IO.Put (IO.Block_Number'Image (First_Block));
             if First_Block + 1 < Block then
                Ada.Text_IO.Put ("..");
