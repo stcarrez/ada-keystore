@@ -32,7 +32,7 @@ procedure AKT.Main is
    Context     : AKT.Commands.Context_Type;
    Arguments   : Util.Commands.Dynamic_Argument_List;
 begin
-   AKT.Configure_Logs (Debug => False, Verbose => False);
+   AKT.Configure_Logs (Debug => False, Dump => False, Verbose => False);
 
    AKT.Commands.Parse (Context, Arguments);
 
