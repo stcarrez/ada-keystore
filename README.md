@@ -14,31 +14,33 @@ encrypting them in secure keystore (AES-256, HMAC-256).
 
 Create the keystore and protect it with a gpg public key:
 ```
-   akt create -k secure.akt --gpg <keyid> ...
+   akt create secure.akt --gpg <keyid> ...
 ```
 
 Store a small content:
 ```
-   akt set -k secure.akt bank.password 012345
+   akt set secure.akt bank.password 012345
 ```
 
 Store a file, files in a directory or a tar file:
 ```
-   akt set -k secure.akt -f contract.doc
-   akt set -k secure.akt -r directory
-   tar czf - . | akt store -k secure.akt backup
+   akt store secure.akt notes.txt
+   akt store secure.akt contract.doc
+   akt store secure.akt directory
+   tar czf - . | akt store secure.akt -- backup
 ```
 
 Edit a content with your $EDITOR:
 ```
-   akt edit -k secure.akt bank.password
+   akt edit secure.akt bank.password
+   akt edit secure.akt notes.txt
 ```
 
 Get a content:
 ```
-   akt get -k secure.akt bank.password
-   akt get -k secure.akt -o contract.doc
-   akt extract -k secure.akt backup | tar xzf -
+   akt get secure.akt bank.password
+   akt extract secure.akt contract.doc
+   akt extract secure.akt -- backup | tar xzf -
 ```
 
 # Overview
@@ -51,16 +53,16 @@ bank accounts and even documents.
 
 Wallets are protected by a master key using AES-256 and the wallet
 master key is protected by a user password.
-The wallet defines up to 8 slots that identify
+The wallet defines up to 7 slots that identify
 a password key that is able to unlock the master key.  To open a wallet,
-it is necessary to unlock one of these 8 slots by providing the correct
+it is necessary to unlock one of these 7 slots by providing the correct
 password.  Wallet key slots are protected by the user's password
 and the PBKDF2-HMAC-256 algorithm, a random salt, a random counter
 and they are encrypted using AES-256.
 
 Values stored in the wallet are protected by their own encryption keys
 using AES-256.  A wallet can contain another wallet which is then
-protected by its own encryption keys and passwords (with 8 independent slots).
+protected by its own encryption keys and passwords (with 7 independent slots).
 Because the child wallet has its own master key, it is necessary to known
 the primary password and the child password to unlock the parent wallet
 first and then the child wallet.
@@ -78,17 +80,24 @@ possible to copy the data files on other storages without exposing
 any key used for encryption.  The data storage files use the `.dkt`
 extension and they are activated by using the `-d data-path` option.
 
+![AKT Overview](https://github.com/stcarrez/ada-keystore/wiki/images/akt-overview.png)
+
 # Using Ada Keystore Tool
 
 The `akt` tool is the command line tool that manages the wallet.
 It provides the following commands:
 
+* `config`:   setup some global configuration
 * `create`:   create the keystore
 * `edit`:     edit the value with an external editor
-* `get`:      get a value from the keystore
 * `extract`:  get a value from the keystore
+* `get`:      get a value from the keystore
 * `help`:     print some help
+* `info`:     print information about the keystore
 * `list`:     list values of the keystore
+* `password-add`:      add a password
+* `password-remove`:   remove a password
+* `password-set`:      change the password
 * `remove`:   remove values from the keystore
 * `set`:      insert or update a value in the keystore
 * `store`:    insert or update a value in the keystore
@@ -99,41 +108,41 @@ To create the secure file, use the following command and enter
 your secure password (it is recommended to use a long and complex password):
 
 ```
-   akt create -k secure.akt
+   akt create secure.akt
 ```
 
 At this step, the secure file is created and it can only be opened
 by providing the password you entered.  To add something, use:
 
 ```
-   akt set -k secure.akt bank.password 012345
+   akt set secure.akt bank.password 012345
 ```
 
 To store a file, use the following command:
 ```
-   akt set -k secure.akt my-contract -f contract.doc
+   akt store secure.akt contract.doc
 ```
 
 If you want to retrieve a value, you can use one of:
 ```
-   akt set -k secure.akt bank.password
-   akt get -k secure.akt -n my-contract > file.doc
+   akt get secure.akt bank.password
+   akt extract secure.akt contract.doc
 ```
 
 The `store` and `extract` commands are intended to be used to store
-and extract files produces by other tools such at
+and extract files produced by other tools such at
 .IR tar (1).  For example, the output produced by
 .I tar
 can be stored using the following command:
 
 ```
-   tar czf - . | akt store -k secure.akt backup.tar.gz
+   tar czf - . | akt store secure.akt -- backup.tar.gz
 ```
 
 And it can be extracted by using the following command:
 
 ```
-   akt extract -k secure.akt backup.tar.gz | tar xzf -
+   akt extract secure.akt -- backup.tar.gz | tar xzf -
 ```
 
 ## Advanced usage
@@ -146,13 +155,13 @@ the data blocks are written in one or several storage files located
 in the directory.  To use this, create the keystore as follows:
 
 ```
-   akt create -k secure.akt -d data
+   akt create secure.akt -d data
 ```
 
 Then, you can do your backup by using:
 
 ```
-   tar czf - . | akt store -k secure.akt -d data backup.tar.gz
+   tar czf - . | akt store secure.akt -d data backup.tar.gz
 ```
 
 The tool will put in `secure.akt` all the encryption keys and it will
@@ -170,7 +179,7 @@ to use the `--gpg` option and giving your own GPG key identifier
 (or your user's name).
 
 ```
-   akt create -k secure.akt -d data --gpg your-gpg-key-id
+   akt create secure.akt -d data --gpg your-gpg-key-id
 ```
 
 You can also share the keystore with someone else provided you know
@@ -178,7 +187,7 @@ and trust the foreign public key.  To do that, you can create the keystore
 and defined the GPG key for each user you want to share the keystore:
 
 ```
-   akt create -k secure.akt -d data --gpg user1-key user2-key user3-key
+   akt create secure.akt -d data --gpg user1-key user2-key user3-key
 ```
 
 To unlock the keystore, GPG will use the private key.
@@ -216,9 +225,9 @@ To use the AKT docker container you can run the following commands:
 ```
    docker pull ciceron/ada-keystore
    docker run -i -t --entrypoint /bin/bash ciceron/ada-keystore
-   root@...:/usr/src# akt create -k secure.akt
-   root@...:/usr/src# akt set -k secure.akt something some-secret
-   root@...:/usr/src# akt get -k secure.akt something
+   root@...:/usr/src# akt create secure.akt
+   root@...:/usr/src# akt set secure.akt something some-secret
+   root@...:/usr/src# akt get secure.akt something
 ```
 
 # Documents
