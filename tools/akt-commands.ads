@@ -84,6 +84,7 @@ private
       Version           : aliased Boolean := False;
       Verbose           : aliased Boolean := False;
       Debug             : aliased Boolean := False;
+      Dump              : aliased Boolean := False;
       Zero              : aliased Boolean := False;
       Config_File       : aliased GNAT.Strings.String_Access;
       Wallet_File       : aliased GNAT.Strings.String_Access;
