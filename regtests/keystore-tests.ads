@@ -72,6 +72,9 @@ package Keystore.Tests is
    --  Test the akt config command.
    procedure Test_Tool_Set_Config (T : in out Test);
 
+   --  Test the akt info command on several keystore files.
+   procedure Test_Tool_Info (T : in out Test);
+
    procedure Execute (T       : in out Test;
                       Command : in String;
                       Result  : out Ada.Strings.Unbounded.Unbounded_String;
