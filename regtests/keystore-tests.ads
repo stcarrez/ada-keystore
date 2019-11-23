@@ -56,6 +56,9 @@ package Keystore.Tests is
    procedure Test_Tool_Store_Extract (T : in out Test);
    procedure Test_Tool_Store_Extract_Tree (T : in out Test);
 
+   --  Test the akt store command with errors.
+   procedure Test_Tool_Store_Error (T : in out Test);
+
    --  Test the akt password-set command.
    procedure Test_Tool_Password_Set (T : in out Test);
 
