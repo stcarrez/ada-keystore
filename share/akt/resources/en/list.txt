@@ -1,6 +1,6 @@
-list: list values of the keystore
+akt list: list values of the keystore
 
-Usage: akt list
+Usage: akt list <keystore>.akt
 
   List the values stored in the keystore with their name,
   size, type and creation date.

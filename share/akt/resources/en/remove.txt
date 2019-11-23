@@ -1,6 +1,6 @@
 akt remove: remove values from the keystore
 
-Usage: akt remove <name> [...]
+Usage: akt remove <keystore>.akt <name> [...]
 
   The remove command is used to erase a content from the wallet.
   The data blocks that contained the content are cleared.

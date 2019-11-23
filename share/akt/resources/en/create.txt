@@ -1,6 +1,7 @@
 akt create: create the keystore
 
-Usage: akt create [--counter-range min:max] [--split COUNT] [--force] [--gpg USER]
+Usage: akt create <keystore.akt> [--counter-range min:max]
+              [--split COUNT] [--force] [--gpg USER1 ... USERN]
 
   The create command is used to create the new keystore file.
   By default the PBKDF2 iteration counter is in range 500000..1000000.

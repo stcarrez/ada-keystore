@@ -1,7 +1,6 @@
-akt extract: get a value from the keystore
+akt extract: extract files or directories from the keystore
 
-Usage: extract <name>
+Usage: extract <keystore>.akt <file...>
 
-  The extract command allows to retrieve the value associated with
-  a wallet entry. It only retrieves one value whose name is passed
-  to the command. This is a shortcut for the `get -n` command.
+  The extract command allows to extract content stored in the keystore
+  and save it to a file.
