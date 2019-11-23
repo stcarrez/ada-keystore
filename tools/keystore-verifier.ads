@@ -18,6 +18,7 @@
 
 package Keystore.Verifier is
 
-   procedure Print_Information (Path : in String);
+   procedure Print_Information (Path        : in String;
+                                Is_Keystore : out Boolean);
 
 end Keystore.Verifier;
