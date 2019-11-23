@@ -119,6 +119,8 @@ package body Keystore.Tests is
                        Test_Tool_Store_Extract'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Store+Extract (Dir tree)",
                        Test_Tool_Store_Extract_Tree'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Store (Error)",
+                       Test_Tool_Store_Error'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Get (error)",
                        Test_Tool_Get_Error'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Get (interactive password)",
@@ -543,6 +545,16 @@ package body Keystore.Tests is
                 "store+extract failed for obj/akt-commands.o");
 
    end Test_Tool_Store_Extract_Tree;
+
+   --  ------------------------------
+   --  Test the akt store command with errors.
+   --  ------------------------------
+   procedure Test_Tool_Store_Error (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " store " & Path & " -p admim --", Result, 1);
+   end Test_Tool_Store_Error;
 
    --  ------------------------------
    --  Test the akt password-set command.
