@@ -25,7 +25,7 @@ package body Keystore.Tools.Tests is
    use Ada.Directories;
    use type Interfaces.Unsigned_64;
 
-   package Caller is new Util.Test_Caller (Test, "Files");
+   package Caller is new Util.Test_Caller (Test, "Keystore.Tools");
 
    procedure Add_Tests (Suite : in Util.Tests.Access_Test_Suite) is
    begin
