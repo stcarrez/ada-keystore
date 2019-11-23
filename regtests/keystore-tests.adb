@@ -20,6 +20,7 @@ with Ada.Text_IO;
 with Ada.Directories;
 with Ada.Streams.Stream_IO;
 with Ada.Environment_Variables;
+with GNAT.Regpat;
 with Util.Files;
 with Util.Test_Caller;
 with Util.Encoders.AES;
@@ -137,6 +138,8 @@ package body Keystore.Tests is
                        Test_Tool_Set_Config'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Extract (Error)",
                        Test_Tool_Extract_Error'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Info",
+                       Test_Tool_Info'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -700,5 +703,36 @@ package body Keystore.Tests is
                 "Config file '" & Path & "' does not exist after test");
 
    end Test_Tool_Set_Config;
+
+   --  ------------------------------
+   --  Test the akt info command on several keystore files.
+   --  ------------------------------
+   procedure Test_Tool_Info (T : in out Test) is
+      function Extract_UUID (Content : in String) return String;
+
+      Path    : constant String := Util.Tests.Get_Test_Path (TEST_TOOL3_PATH);
+      Dir     : constant String := Util.Tests.Get_Test_Path (DATA_TOOL3_PATH);
+
+      function Extract_UUID (Content : in String) return String is
+         REGEX   : constant String := ".*UUID +([0-9A-F-]*).*";
+         Pattern : constant GNAT.Regpat.Pattern_Matcher := GNAT.Regpat.Compile (REGEX);
+         Matches : GNAT.Regpat.Match_Array (0 .. 1);
+      begin
+         T.Assert (GNAT.Regpat.Match (Pattern, Content),
+                   "akt info output does not match UUID pattern");
+         GNAT.Regpat.Match (Pattern, Content, Matches);
+         return Content (Matches (1).First .. Matches (1).Last);
+      end Extract_UUID;
+
+      Result  : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " info " & Path & " -p admin", Result, 0);
+
+      declare
+         Id : constant String := Extract_UUID (Ada.Strings.Unbounded.To_String (Result));
+      begin
+         T.Execute (Tool & " info " & Dir & "/" & Id & "-1.dkt -p admin", Result, 0);
+      end;
+   end Test_Tool_Info;
 
 end Keystore.Tests;
