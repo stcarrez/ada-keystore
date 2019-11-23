@@ -26,6 +26,7 @@ private
 
    --  Configure the logs.
    procedure Configure_Logs (Debug   : in Boolean;
+                             Dump    : in Boolean;
                              Verbose : in Boolean);
 
 end AKT;
