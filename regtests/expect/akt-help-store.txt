@@ -1,8 +1,12 @@
-store: read standard input and store the content in the keystore
+akt store: store files, directories or read standard input in the keystore
 
-Usage: akt store <keystore>.akt [-r] <files> <directories>
-       akt store <keystore>.akt -- name
+Usage: akt store <keystore>.akt <files|directories>
+       akt store <keystore>.akt -- <name>
 
-  The store command is intended to be used as a target for a pipe
-  command.  It reads the standard input and stores the content
-  which is read in the keystore.
+  This command can store files or directories recursively in the
+  keystore.  It is possible to store several files and directories
+  at the same time.
+
+  When the -- option is passed, the command accepts only one
+  argument.  It reads the standard input and stores it under the
+  specified name.  It can be used as a target for a pipe command.

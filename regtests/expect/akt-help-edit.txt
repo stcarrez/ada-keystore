@@ -1,7 +1,7 @@
 akt edit: edit the value with an external editor
 
-Usage: akt edit [-e command] <name>
+Usage: akt edit <keystore>.akt [-e command] <name>
 
   The edit command can be used to edit the protected wallet entry
-  by calling the user's preferd editor with the content.
+  by calling the user's prefered editor with the content.
   You can use the '-e' option to define the editor command to use.
