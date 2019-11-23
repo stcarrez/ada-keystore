@@ -46,6 +46,7 @@ package AKT.Commands is
 
    --  Open the keystore file and change the password.
    procedure Change_Password (Context      : in out Context_Type;
+                              Args         : in Argument_List'Class;
                               New_Password : in out Keystore.Passwords.Provider'Class;
                               Config       : in Keystore.Wallet_Config;
                               Mode         : in Keystore.Mode_Type);
