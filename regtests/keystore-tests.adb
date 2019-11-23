@@ -49,7 +49,7 @@ package body Keystore.Tests is
    function Compare (Path1 : in String;
                      Path2 : in String) return Boolean;
 
-   package Caller is new Util.Test_Caller (Test, "AKT");
+   package Caller is new Util.Test_Caller (Test, "AKT.Tools");
 
    generic
       Command : String;
