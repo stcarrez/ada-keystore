@@ -36,7 +36,7 @@ package body Keystore.GPG_Tests is
 
    function Tool (User : in User_Type) return String;
 
-   package Caller is new Util.Test_Caller (Test, "AKT");
+   package Caller is new Util.Test_Caller (Test, "AKT.GPG");
 
    procedure Add_Tests (Suite : in Util.Tests.Access_Test_Suite) is
    begin
