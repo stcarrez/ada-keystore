@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---  keystore-tests -- Tests for keystore tool
+--  keystore-tests -- Tests for akt command
 --  Copyright (C) 2019 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
@@ -54,6 +54,7 @@ package Keystore.Tests is
 
    --  Test the akt store and akt extract commands.
    procedure Test_Tool_Store_Extract (T : in out Test);
+   procedure Test_Tool_Store_Extract_Tree (T : in out Test);
 
    --  Test the akt password-set command.
    procedure Test_Tool_Password_Set (T : in out Test);
