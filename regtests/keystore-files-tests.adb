@@ -40,7 +40,7 @@ package body Keystore.Files.Tests is
                                  Path  : in String;
                                  Count : in Header_Slot_Count_Type);
 
-   package Caller is new Util.Test_Caller (Test, "Files");
+   package Caller is new Util.Test_Caller (Test, "Keystore.Files");
 
    procedure Add_Tests (Suite : in Util.Tests.Access_Test_Suite) is
    begin
