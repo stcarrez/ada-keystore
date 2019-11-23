@@ -175,6 +175,11 @@ package body AKT.Commands is
                         Long_Switch => "--debug",
                         Help   => -("Enable debug execution"));
       GC.Define_Switch (Config => Context.Command_Config,
+                        Output => Context.Dump'Access,
+                        Switch => "-vvv",
+                        Long_Switch => "--debug-dump",
+                        Help   => -("Enable debug dump execution"));
+      GC.Define_Switch (Config => Context.Command_Config,
                         Output => Context.Debug'Access,
                         Switch => "-z",
                         Long_Switch => "--zero",
@@ -337,8 +342,10 @@ package body AKT.Commands is
       GC.Getopt (Config => Context.Command_Config);
       Util.Commands.Parsers.GNAT_Parser.Get_Arguments (Arguments, GC.Get_Argument);
 
-      if Context.Debug or Context.Verbose then
-         AKT.Configure_Logs (Debug => Context.Debug, Verbose => Context.Verbose);
+      if Context.Debug or Context.Verbose or Context.Dump then
+         AKT.Configure_Logs (Debug   => Context.Debug,
+                             Dump    => Context.Dump,
+                             Verbose => Context.Verbose);
       end if;
 
       AKT.Configs.Initialize (Context.Config_File.all);
@@ -353,7 +360,7 @@ package body AKT.Commands is
          Cmd_Name : constant String := Arguments.Get_Command_Name;
       begin
          if Cmd_Name'Length = 0 then
-            Ada.Text_IO.Put_Line (-("Missing command name to execute."));
+            AKT.Commands.Log.Error (-("Missing command name to execute."));
             AKT.Commands.Usage (Arguments, Context);
             Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
             return;
