@@ -445,6 +445,8 @@ package body Keystore.Keys is
       Value   : Interfaces.Unsigned_32;
       Size    : IO.Block_Index;
    begin
+      Keystore.Logs.Info (Log, "Loading master block {0}", Manager.Header_Block);
+
       Set_IV (Manager.Crypt, Block.Block);
       Buffer.Buffer := Buffers.Allocate (Block);
       Manager.Header_Block := Block;
