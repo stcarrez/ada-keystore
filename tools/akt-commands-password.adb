@@ -21,6 +21,7 @@ with Keystore.Passwords.Input;
 package body AKT.Commands.Password is
 
    use GNAT.Strings;
+   use type Keystore.Header_Slot_Count_Type;
 
    --  ------------------------------
    --  Create the keystore file.
@@ -30,7 +31,7 @@ package body AKT.Commands.Password is
                       Name      : in String;
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
-      pragma Unreferenced (Name, Args);
+      pragma Unreferenced (Name);
 
       Config : Keystore.Wallet_Config := Keystore.Secure_Config;
       New_Password_Provider : Keystore.Passwords.Provider_Access;
@@ -46,10 +47,13 @@ package body AKT.Commands.Password is
          begin
             AKT.Commands.Initialize (GPG);
             GPG.Create_Secret;
-            Context.Change_Password (New_Password => GPG,
+            Context.Change_Password (Args         => Args,
+                                     New_Password => GPG,
                                      Config       => Config,
                                      Mode         => Command.Mode);
-            GPG.Save_Secret (Command.Gpg_User.all, 2, Context.Wallet);
+            GPG.Save_Secret (User   => Command.Gpg_User.all,
+                             Index  => Context.Info.Header_Count + 1,
+                             Wallet => Context.Wallet);
          end;
       else
          if Command.Password_File'Length > 0 then
@@ -60,7 +64,8 @@ package body AKT.Commands.Password is
             New_Password_Provider := Keystore.Passwords.Input.Create (False);
          end if;
 
-         Context.Change_Password (New_Password => New_Password_Provider.all,
+         Context.Change_Password (Args         => Args,
+                                  New_Password => New_Password_Provider.all,
                                   Config       => Config,
                                   Mode         => Command.Mode);
       end if;
