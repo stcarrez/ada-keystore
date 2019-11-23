@@ -36,11 +36,15 @@ package body AKT.Commands.Extract is
                       Name      : in String;
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
+      pragma Unreferenced (Name);
 
       Output : Util.Streams.Raw.Raw_Stream;
 
       procedure Extract_Directory (Path   : in String;
                                    Output : in String);
+      procedure Extract_Standard_Output (Name : in String);
+      procedure Extract_File (Name   : in String;
+                              Output : in String);
 
       procedure Extract_File (Name   : in String;
                               Output : in String) is
@@ -66,8 +70,8 @@ package body AKT.Commands.Extract is
       procedure Extract_Directory (Path   : in String;
                                    Output : in String) is
          Pattern : constant GNAT.Regpat.Pattern_Matcher := GNAT.Regpat.Compile (Path & "/.*");
-         List : Keystore.Entry_Map;
-         Iter : Keystore.Entry_Cursor;
+         List    : Keystore.Entry_Map;
+         Iter    : Keystore.Entry_Cursor;
       begin
          Context.Wallet.List (Pattern => Pattern,
                               Filter  => (Keystore.T_FILE => True, others => False),
@@ -82,10 +86,8 @@ package body AKT.Commands.Extract is
          while Keystore.Entry_Maps.Has_Element (Iter) loop
             declare
                Name   : constant String := Keystore.Entry_Maps.Key (Iter);
-               Target : constant String := Util.Files.Compose (Output, Name);
-               Dir    : constant String := Ada.Directories.Containing_Directory (Target);
             begin
-               Ada.Text_IO.Put_Line ("Extract " & Name);
+               Ada.Text_IO.Put_Line (-("Extract ") & Name);
                Extract_File (Name, Output);
 
             end;
@@ -104,9 +106,13 @@ package body AKT.Commands.Extract is
 
       end Extract_Standard_Output;
 
-      Pos : Positive;
    begin
       Context.Open_Keystore (Args, Use_Worker => True);
+
+      if Context.First_Arg > Args.Get_Count then
+         AKT.Commands.Log.Error (-("Missing file or directory to extract"));
+         raise Error;
+      end if;
 
       if Command.Use_Stdout then
          Output.Initialize (File => Util.Systems.Os.STDOUT_FILENO);
@@ -114,24 +120,20 @@ package body AKT.Commands.Extract is
          for I in Context.First_Arg .. Args.Get_Count loop
             Extract_Standard_Output (Args.Get_Argument (I));
          end loop;
-      end if;
-      if Command.Output'Length > 0 then
-         null;
-      end if;
-      Pos := Context.First_Arg;
-      while Pos <= Args.Get_Count loop
-         declare
-            Name : constant String := Args.Get_Argument (Pos);
-         begin
-            if Context.Wallet.Contains (Name) then
-               Extract_File (Name, Command.Output.all);
+      else
+         for I in Context.First_Arg .. Args.Get_Count loop
+            declare
+               Name : constant String := Args.Get_Argument (I);
+            begin
+               if Context.Wallet.Contains (Name) then
+                  Extract_File (Name, Command.Output.all);
 
-            else
-               Extract_Directory (Name, Command.Output.all);
-            end if;
-         end;
-         Pos := Pos + 1;
-      end loop;
+               else
+                  Extract_Directory (Name, Command.Output.all);
+               end if;
+            end;
+         end loop;
+      end if;
    end Execute;
 
    --  ------------------------------
