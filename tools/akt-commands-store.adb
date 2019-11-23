@@ -96,6 +96,7 @@ package body AKT.Commands.Store is
          begin
             if not Ada.Directories.Exists (Name) then
                AKT.Commands.Log.Error (-("{0} does not exist"), Name);
+               raise Error;
 
             elsif Ada.Directories.Kind (Name) = Ada.Directories.Ordinary_File then
                Insert_File (Name);
