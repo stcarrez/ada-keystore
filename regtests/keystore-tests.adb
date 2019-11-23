@@ -575,7 +575,7 @@ package body Keystore.Tests is
 
       T.Execute (Tool & " extract " & Path & " -p admin missing", Result, 1);
 
-      T.Execute (Tool & " store " & Path & " -p admin -- missing", Result, 1);
+      T.Execute (Tool & " extract " & Path & " -p admin -- missing", Result, 1);
    end Test_Tool_Extract_Error;
 
 
