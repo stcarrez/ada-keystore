@@ -573,9 +573,13 @@ package body Keystore.Tests is
    begin
       T.Execute (Tool & " create " & Path & " -p admin -c 1:10 --force", Result, 0);
 
-      T.Execute (Tool & " extract " & Path & " -p admin missing", Result, 1);
+      T.Execute (Tool & " extract " & Path & " -p admin missing-1", Result, 1);
+      Util.Tests.Assert_Matches (T, "^Value 'missing-1' not found", Result,
+                                 "Invalid value for extract command");
 
-      T.Execute (Tool & " extract " & Path & " -p admin -- missing", Result, 1);
+      T.Execute (Tool & " extract " & Path & " -p admin -- missing-2", Result, 1);
+      Util.Tests.Assert_Matches (T, "^Value 'missing-2' not found", Result,
+                                 "Invalid value for extract command");
    end Test_Tool_Extract_Error;
 
 
