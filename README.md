@@ -4,7 +4,7 @@
 [![Test Status](https://img.shields.io/jenkins/t/http/jenkins.vacs.fr/Bionic-Ada-Keystore.svg)](http://jenkins.vacs.fr/job/Bionic-Ada-Keystore/)
 [![Documentation Status](https://readthedocs.org/projects/ada-keystore/badge/?version=latest)](https://ada-keystore.readthedocs.io/en/latest/?badge=latest)
 [![License](http://img.shields.io/badge/license-APACHE2-blue.svg)](LICENSE)
-![Commits](https://img.shields.io/github/commits-since/stcarrez/ada-keystore/0.2.0.svg)
+![Commits](https://img.shields.io/github/commits-since/stcarrez/ada-keystore/0.3.0.svg)
 ![semver](https://img.shields.io/badge/semver-2.0.0-blue.svg?cacheSeconds=2592000)
 
 # TL;DR
@@ -22,7 +22,7 @@ Store a small content:
    akt set secure.akt bank.password 012345
 ```
 
-Store a file, files in a directory or a tar file:
+Store files, directory or a tar file:
 ```
    akt store secure.akt notes.txt
    akt store secure.akt contract.doc
@@ -45,7 +45,7 @@ Get a content:
 
 # Overview
 
-Ada Keystore is a library and tool to store information in secure wallets
+Ada Keystore is a tool and library to store information in secure wallets
 and protect the stored information by encrypting the content.
 It is necessary to know one of the wallet password to access its content.
 Ada Keystore can be used to safely store passwords, credentials,
@@ -67,6 +67,8 @@ Because the child wallet has its own master key, it is necessary to known
 the primary password and the child password to unlock the parent wallet
 first and then the child wallet.
 
+![AKT Overview](https://github.com/stcarrez/ada-keystore/wiki/images/akt-overview.png)
+
 The data is organized in blocks of 4K whose primary content is encrypted
 either by the wallet master key or by the entry keys.  The data block is
 signed by using HMAC-256.  A data block can contain several values but
@@ -79,8 +81,6 @@ the data blocks.  When data blocks are separate from the keys, it is
 possible to copy the data files on other storages without exposing
 any key used for encryption.  The data storage files use the `.dkt`
 extension and they are activated by using the `-d data-path` option.
-
-![AKT Overview](https://github.com/stcarrez/ada-keystore/wiki/images/akt-overview.png)
 
 # Using Ada Keystore Tool
 
@@ -161,7 +161,7 @@ in the directory.  To use this, create the keystore as follows:
 Then, you can do your backup by using:
 
 ```
-   tar czf - . | akt store secure.akt -d data backup.tar.gz
+   tar czf - . | akt store secure.akt -d data -- backup.tar.gz
 ```
 
 The tool will put in `secure.akt` all the encryption keys and it will
@@ -240,4 +240,5 @@ To use the AKT docker container you can run the following commands:
 * [RFC8018: PKCS #5: Password-Based Cryptography Specification Version 2.1](https://tools.ietf.org/html/rfc8018)
 * [Meltem Sönmez Turan, Elaine Barker, William Burr, and Lily Chen. "NIST SP 800-132, Recommendation for Password-Based Key Derivation Part 1: Storage Applications" (PDF). www.nist.gov.](https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-132.pdf)
 * [FIPS PUB 198-1, The Keyed-Hash Message Authentication Code (HMAC)](https://csrc.nist.gov/csrc/media/publications/fips/198/1/final/documents/fips-198-1_final.pdf)
+* [FIPS PUB 197, Advanced Encryption Standard (AES)](http://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197.pdf)
 
