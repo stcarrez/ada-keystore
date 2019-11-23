@@ -170,7 +170,7 @@ package body AKT.Commands.Edit is
 
          begin
             Make_Directory (Dir);
-            Export_Value (Context, Args.Get_Argument (1), Path);
+            Export_Value (Context, Args.Get_Argument (Context.First_Arg), Path);
             Util.Processes.Spawn (Proc, Editor & " " & Path);
             Util.Processes.Wait (Proc);
             if Util.Processes.Get_Exit_Status (Proc) /= 0 then
@@ -178,7 +178,7 @@ package body AKT.Commands.Edit is
                                        Natural'Image (Util.Processes.Get_Exit_Status (Proc)));
                Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
             else
-               Import_Value (Context, Args.Get_Argument (1), Path);
+               Import_Value (Context, Args.Get_Argument (Context.First_Arg), Path);
             end if;
             Cleanup;
 
