@@ -71,6 +71,7 @@ package body Keystore.Tests is
    procedure Test_Tool_Help_Store is new Test_Help_Command ("store");
    procedure Test_Tool_Help_Extract is new Test_Help_Command ("extract");
    procedure Test_Tool_Help_Config is new Test_Help_Command ("config");
+   procedure Test_Tool_Help_Info is new Test_Help_Command ("info");
 
    procedure Add_Tests (Suite : in Util.Tests.Access_Test_Suite) is
    begin
@@ -100,6 +101,8 @@ package body Keystore.Tests is
                        Test_Tool_Help_Set'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Remove (help)",
                        Test_Tool_Help_Remove'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Info (help)",
+                       Test_Tool_Help_Info'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.List (help)",
                        Test_Tool_Help_List'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Password.Add (help)",
@@ -518,7 +521,7 @@ package body Keystore.Tests is
       --  Check extract command with missing parameter
       T.Execute (Tool & " extract -k " & Path & " -p admin",
                  Result, 1);
-      Util.Tests.Assert_Matches (T, "Usage: akt ", Result,
+      Util.Tests.Assert_Matches (T, "Missing file or directory to extract", Result,
                                  "Expecting usage print for extract command");
    end Test_Tool_Store_Extract;
 
