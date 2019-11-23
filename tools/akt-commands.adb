@@ -107,12 +107,14 @@ package body AKT.Commands is
    --  Open the keystore file and change the password.
    --  ------------------------------
    procedure Change_Password (Context      : in out Context_Type;
+                              Args         : in Argument_List'Class;
                               New_Password : in out Keystore.Passwords.Provider'Class;
                               Config       : in Keystore.Wallet_Config;
                               Mode         : in Keystore.Mode_Type) is
    begin
-      Context.Wallet.Open (Path => Context.Wallet_File.all,
-                           Info => Context.Info);
+      Context.Wallet.Open (Path      => Context.Get_Keystore_Path (Args),
+                           Data_Path => Context.Data_Path.all,
+                           Info      => Context.Info);
 
       if not Context.No_Password_Opt or else Context.Info.Header_Count = 0 then
          Context.Wallet.Unlock (Context.Provider.all, Context.Slot);
