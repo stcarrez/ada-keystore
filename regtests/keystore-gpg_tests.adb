@@ -30,6 +30,7 @@ package body Keystore.GPG_Tests is
 
    TEST_TOOL_PATH  : constant String := "regtests/result/test-gpg-1.akt";
    TEST_TOOL2_PATH : constant String := "regtests/result/test-gpg-2.akt";
+   TEST_TOOL3_PATH : constant String := "regtests/result/test-gpg-3.akt";
 
    type User_Type is (User_1, User_2, User_3);
 
@@ -45,6 +46,8 @@ package body Keystore.GPG_Tests is
                        Test_Create_Multi_User'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Info (GPG)",
                        Test_Info'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Password (GPG)",
+                       Test_Add_Password'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -211,5 +214,38 @@ package body Keystore.GPG_Tests is
                                       User_Type'Image (User));
       end loop;
    end Test_Info;
+
+   --  ------------------------------
+   --  Test the akt password-add command to add a GPG key to a keystore.
+   --  ------------------------------
+   procedure Test_Add_Password (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL3_PATH);
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      if Ada.Directories.Exists (Path) then
+         Ada.Directories.Delete_File (Path);
+      end if;
+
+      --  Create keystore with a password
+      T.Execute (Tool (User_1) & " create " & Path & " -p gpg-admin -c 10:100",
+                 Result);
+      T.Assert (Ada.Directories.Exists (Path),
+                "Keystore file does not exist");
+
+      --  Add GPG password for User_2
+      T.Execute (Tool (User_2) & " password-add " & Path &
+                   " -p gpg-admin --gpg akt-user2@ada-unit-test.org",
+                 Result);
+
+      --  Set property from User_2
+      T.Execute (Tool (User_2) & " set " & Path & " testing akt-user2-value", Result);
+      Util.Tests.Assert_Equals (T, "", Result, "set command failed");
+
+      --  Set property from User_1
+      T.Execute (Tool (User_2) & " set " & Path & " -p gpg-admin testing2 akt-user1-value",
+                 Result);
+      Util.Tests.Assert_Equals (T, "", Result, "set command failed");
+
+   end Test_Add_Password;
 
 end Keystore.GPG_Tests;
