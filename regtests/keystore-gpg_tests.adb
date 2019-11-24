@@ -275,6 +275,11 @@ package body Keystore.GPG_Tests is
       Util.Tests.Assert_Matches (T, "^Refusing to erase the key slot",
                                  Result, "password-remove command returned unexpected result");
 
+      T.Execute (Tool (User_1) & " password-remove " & Path & " -p gpg-admin --slot 0",
+                 Result, 1);
+      Util.Tests.Assert_Matches (T, "^Invalid key slot number",
+                                 Result, "password-remove command returned unexpected result");
+
       --  Add again GPG password for User_2
       T.Execute (Tool (User_2) & " password-add " & Path &
                    " -p gpg-admin --gpg akt-user2@ada-unit-test.org",
