@@ -588,7 +588,11 @@ package body Keystore.Keys is
       Manager.Header_Block := Block;
 
       --  Build wallet header.
-      Buffer.Buffer.Data.Value.Data := (others => 0);
+      if Config.Randomize then
+         Manager.Random.Generate (Buffer.Buffer.Data.Value.Data);
+      else
+         Buffer.Buffer.Data.Value.Data := (others => 0);
+      end if;
       Marshallers.Set_Header (Into => Buffer,
                               Tag  => IO.BT_WALLET_HEADER,
                               Id   => Ident);
@@ -599,6 +603,13 @@ package body Keystore.Keys is
 
       --  Write wallet uuid.
       Marshallers.Put_UUID (Buffer, Config.UUID);
+
+      if Config.Randomize then
+         for Slot in Key_Slot'Range loop
+            Buffer.Pos := Key_Position (Slot);
+            Marshallers.Put_Unsigned_32 (Buffer, 0);
+         end loop;
+      end if;
 
       Save_Key (Manager, Buffer, Password, Slot, Config, Stream);
    end Create;
