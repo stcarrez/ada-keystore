@@ -24,20 +24,13 @@ package body AKT.Commands.Password.Remove is
 
    function Get_Slot (Value : in String) return Keystore.Key_Slot is
    begin
-      if Value = "" then
-         AKT.Commands.Log.Error (-("Missing --slot SLOT option to indicate "
-                                 & "the key slot to erase"));
-         raise Error;
-      end if;
-      begin
-         return Keystore.Key_Slot'Value (Value);
+      return Keystore.Key_Slot'Value (Value);
 
-      exception
-         when others =>
-            AKT.Commands.Log.Error (-("Invalid key slot number. "
+   exception
+      when others =>
+         AKT.Commands.Log.Error (-("Invalid key slot number. "
                                     & "It must be a number in range 1..7."));
-            raise Error;
-      end;
+         raise Error;
    end Get_Slot;
 
    --  ------------------------------
