@@ -20,6 +20,8 @@ with Keystore.Passwords.Unsafe;
 with Keystore.Passwords.Input;
 package body AKT.Commands.Password is
 
+   package KP renames Keystore.Passwords;
+
    use GNAT.Strings;
    use type Keystore.Header_Slot_Count_Type;
 
@@ -57,11 +59,11 @@ package body AKT.Commands.Password is
          end;
       else
          if Command.Password_File'Length > 0 then
-            New_Password_Provider := Keystore.Passwords.Files.Create (Command.Password_File.all);
+            New_Password_Provider := KP.Files.Create (Command.Password_File.all);
          elsif Command.Unsafe_Password'Length > 0 then
-            New_Password_Provider := Keystore.Passwords.Unsafe.Create (Command.Unsafe_Password.all);
+            New_Password_Provider := KP.Unsafe.Create (Command.Unsafe_Password.all);
          else
-            New_Password_Provider := Keystore.Passwords.Input.Create (False);
+            New_Password_Provider := KP.Input.Create (False);
          end if;
 
          Context.Change_Password (Args         => Args,
