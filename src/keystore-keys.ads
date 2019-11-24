@@ -49,6 +49,7 @@ private package Keystore.Keys is
       Key         : Cryptor;
       Max_Counter : Interfaces.Unsigned_32 := 300_000;
       Min_Counter : Interfaces.Unsigned_32 := 100_000;
+      Randomize   : Boolean;
    end record;
 
    type Key_Manager is limited private;
