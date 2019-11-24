@@ -48,6 +48,8 @@ package body Keystore.GPG_Tests is
                        Test_Info'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Password (GPG)",
                        Test_Add_Password'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Password.Remove (GPG)",
+                       Test_Remove_Password'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -247,5 +249,27 @@ package body Keystore.GPG_Tests is
       Util.Tests.Assert_Equals (T, "", Result, "set command failed");
 
    end Test_Add_Password;
+
+   --  ------------------------------
+   --  Test the akt password-remove command to remove a GPG key from the keystore.
+   --  ------------------------------
+   procedure Test_Remove_Password (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL3_PATH);
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      Test_Add_Password (T);
+
+      --  Remove GPG key for user2
+      T.Execute (Tool (User_1) & " password-remove " & Path &
+                   " -p gpg-admin --slot 2",
+                 Result);
+
+      --  User_2 must not have access to the keystore
+      T.Execute (Tool (User_2) & " get " & Path & " testing2",
+                 Result, 1);
+      Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
+                                 Result, "get command returned unexpected result");
+
+   end Test_Remove_Password;
 
 end Keystore.GPG_Tests;
