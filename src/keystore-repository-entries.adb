@@ -419,6 +419,10 @@ package body Keystore.Repository.Entries is
 
       pragma Assert (Check => Manager.Current.Pos = Item.Entry_Offset + Entry_Size (Item));
 
+      if Manager.Current.Pos = Item.Header.Last_Pos then
+         Marshallers.Put_Unsigned_32 (Manager.Current, 0);
+      end if;
+
       Manager.Modified.Include (Manager.Current.Buffer.Block, Manager.Current.Buffer.Data);
    end Update_Entry;
 
