@@ -39,6 +39,9 @@ package Keystore.GPG_Tests is
    --  Test the akt password-remove command to remove a GPG key from the keystore.
    procedure Test_Remove_Password (T : in out Test);
 
+   --  Test update content with store command
+   procedure Test_Update_File (T : in out Test);
+
    procedure Execute (T       : in out Test;
                       Command : in String;
                       Result  : out Ada.Strings.Unbounded.Unbounded_String;
