@@ -34,6 +34,9 @@ package body Keystore.Passwords.GPG is
 
    function Get_Le_Long (Data : in Ada.Streams.Stream_Element_Array)
                          return Interfaces.Unsigned_32;
+   function Get_Unsigned_32 (Data : in Stream_Element_Array) return Interfaces.Unsigned_32;
+   procedure Put_Unsigned_32 (Data  : out Stream_Element_Array;
+                              Value : in Interfaces.Unsigned_32);
 
    --  Headers of GPG packet.
    GPG_OLD_TAG_1 : constant Ada.Streams.Stream_Element := 16#85#;
