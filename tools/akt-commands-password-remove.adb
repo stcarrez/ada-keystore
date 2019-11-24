@@ -48,13 +48,14 @@ package body AKT.Commands.Password.Remove is
                       Name      : in String;
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
-      pragma Unreferenced (Name, Args);
+      pragma Unreferenced (Name);
 
-      Slot : constant Keystore.Key_Slot := Get_Slot (Command.Slot.all);
+      Path  : constant String := Context.Get_Keystore_Path (Args);
+      Slot  : constant Keystore.Key_Slot := Get_Slot (Command.Slot.all);
    begin
       Setup_Password_Provider (Context);
 
-      Context.Wallet.Open (Path => Context.Wallet_File.all,
+      Context.Wallet.Open (Path => Path,
                            Info => Context.Info);
 
       if not Context.No_Password_Opt or else Context.Info.Header_Count = 0 then
