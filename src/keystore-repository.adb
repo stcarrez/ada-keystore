@@ -141,6 +141,7 @@ package body Keystore.Repository is
       Repository.Next_Wallet_Id := Ident + 1;
       Repository.Stream := Stream;
       Repository.Randomize := Config.Randomize;
+      Repository.Config.Randomize := Config.Randomize;
       Repository.Config.Max_Counter := Interfaces.Unsigned_32 (Config.Max_Counter);
       Repository.Config.Min_Counter := Interfaces.Unsigned_32 (Config.Min_Counter);
       Keystore.Keys.Create (Keys, Password, 1, Ident, Block, Repository.Root,
