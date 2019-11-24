@@ -42,6 +42,7 @@ package body Keystore.Verifier is
    use type Keystore.IO.Storage_Identifier;
 
    function Sys_Error return String;
+   function Get_Storage_Id (Path : in String) return IO.Storage_Identifier;
 
    procedure Open (Path   : in String;
                    File   : in out Util.Streams.Raw.Raw_Stream;
@@ -81,6 +82,12 @@ package body Keystore.Verifier is
                    Sign   : in Secret_Key;
                    Header : in out Keystore.IO.Headers.Wallet_Header;
                    Is_Keystore : out Boolean) is
+
+      --  Compilation on Windows requires this type visibility but GNAT 2019 complains.
+      pragma Warnings (Off);
+      use type Util.Systems.Types.File_Type;
+      pragma Warnings (On);
+
       Storage_Id : constant IO.Storage_Identifier := Get_Storage_Id (Path);
       Fd         : Util.Systems.Types.File_Type := Util.Systems.Os.NO_FILE;
       P          : Interfaces.C.Strings.chars_ptr;
