@@ -260,8 +260,7 @@ package body Keystore.GPG_Tests is
       Test_Add_Password (T);
 
       --  Remove GPG key for user2
-      T.Execute (Tool (User_1) & " password-remove " & Path &
-                   " -p gpg-admin --slot 2",
+      T.Execute (Tool (User_1) & " password-remove " & Path & " -p gpg-admin --slot 2",
                  Result);
 
       --  User_2 must not have access to the keystore
@@ -269,6 +268,17 @@ package body Keystore.GPG_Tests is
                  Result, 1);
       Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
                                  Result, "get command returned unexpected result");
+
+      --  Try remove current key
+      T.Execute (Tool (User_1) & " password-remove " & Path & " -p gpg-admin --slot 1",
+                 Result, 1);
+      Util.Tests.Assert_Matches (T, "^Refusing to erase the key slot",
+                                 Result, "password-remove command returned unexpected result");
+
+      --  Add again GPG password for User_2
+      T.Execute (Tool (User_2) & " password-add " & Path &
+                   " -p gpg-admin --gpg akt-user2@ada-unit-test.org",
+                 Result);
 
    end Test_Remove_Password;
 
