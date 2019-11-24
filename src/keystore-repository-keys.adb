@@ -137,25 +137,28 @@ package body Keystore.Repository.Keys is
       Key_Start_Pos : IO.Block_Index;
       Next_Iter     : Wallet_Data_Key_List.Cursor;
       Key_Pos       : IO.Block_Index;
-      Del_Count     : Interfaces.Unsigned_16;
+      Del_Count     : Key_Count_Type;
       Del_Size      : IO.Buffer_Size;
+      New_Count     : Key_Count_Type;
    begin
       if Mark.Key_Count = Iterator.Key_Count then
          --  Erase header + all keys
          Del_Count := Iterator.Key_Count;
          Del_Size := Key_Slot_Size (Del_Count) + DATA_KEY_HEADER_SIZE;
+         Key_Start_Pos := Iterator.Key_Header_Pos - Key_Slot_Size (Iterator.Key_Count);
       else
          --  Erase some data keys but not all of them (the entry was updated and truncated).
-         Del_Count := Iterator.Key_Count - Mark.Key_Count;
+         Del_Count := Mark.Key_Count + 1;
          Del_Size := Key_Slot_Size (Del_Count);
          Iterator.Current.Pos := Mark.Key_Header_Pos + 4;
-         Marshallers.Put_Unsigned_16 (Iterator.Current, Mark.Key_Count);
+         New_Count := Iterator.Key_Count - Mark.Key_Count - 1;
+         Marshallers.Put_Unsigned_16 (Iterator.Current, New_Count);
+         Key_Start_Pos := Iterator.Key_Header_Pos - Key_Slot_Size (New_Count);
       end if;
       Iterator.Item.Block_Count := Iterator.Item.Block_Count - Natural (Del_Count);
-      Key_Start_Pos := Iterator.Key_Header_Pos - Key_Slot_Size (Iterator.Key_Count);
 
       Key_Pos := Iterator.Directory.Key_Pos;
-      if Key_Pos < Key_Start_Pos then
+      if Key_Pos + Del_Size < Key_Start_Pos then
          Buf.Data (Key_Pos + Del_Size .. Key_Start_Pos + Del_Size - 1)
            := Buf.Data (Key_Pos + 1 .. Key_Start_Pos);
       end if;
@@ -163,7 +166,7 @@ package body Keystore.Repository.Keys is
 
       Iterator.Directory.Key_Pos := Key_Pos + Del_Size;
       if Iterator.Directory.Count > 0 or Iterator.Directory.Key_Pos < IO.Block_Index'Last then
-         Iterator.Current.Pos := IO.BT_DATA_START + 4;
+         Iterator.Current.Pos := IO.BT_DATA_START + 4 - 1;
          Marshallers.Put_Block_Index (Iterator.Current, Iterator.Directory.Key_Pos);
 
          Manager.Modified.Include (Iterator.Current.Buffer.Block, Iterator.Current.Buffer.Data);
@@ -274,12 +277,15 @@ package body Keystore.Repository.Keys is
    procedure Update_Key_Slot (Manager    : in out Wallet_Repository;
                               Iterator   : in out Data_Key_Iterator;
                               Size       : in IO.Buffer_Size) is
+      Pos : IO.Block_Index;
    begin
       pragma Assert (Iterator.Directory /= null);
 
       if Iterator.Data_Size /= Size then
+         Pos := Iterator.Current.Pos;
          Iterator.Current.Pos := Iterator.Key_Pos - 2;
          Marshallers.Put_Buffer_Size (Iterator.Current, Size);
+         Iterator.Current.Pos := Pos;
       end if;
 
       Manager.Modified.Include (Iterator.Current.Buffer.Block, Iterator.Current.Buffer.Data);
