@@ -50,6 +50,8 @@ package body Keystore.GPG_Tests is
                        Test_Add_Password'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Password.Remove (GPG)",
                        Test_Remove_Password'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Store (Update)",
+                       Test_Update_File'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -286,5 +288,23 @@ package body Keystore.GPG_Tests is
                  Result);
 
    end Test_Remove_Password;
+
+   --  ------------------------------
+   --  Test update content with store command
+   --  ------------------------------
+   procedure Test_Update_File (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL2_PATH);
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool (User_2) & " store " & Path & " LICENSE.txt",
+                 Result);
+
+      T.Execute (Tool (User_2) & " store " & Path & " -- LICENSE.txt < configure",
+                 Result);
+
+      T.Execute (Tool (User_2) & " store " & Path & " -- LICENSE.txt < Makefile",
+                 Result);
+
+   end Test_Update_File;
 
 end Keystore.GPG_Tests;
