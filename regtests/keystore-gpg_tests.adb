@@ -305,6 +305,12 @@ package body Keystore.GPG_Tests is
       T.Execute (Tool (User_2) & " store " & Path & " -- LICENSE.txt < Makefile",
                  Result);
 
+      T.Execute (Tool (User_2) & " store " & Path & " -- LICENSE.txt < bin/akt",
+                 Result);
+
+      T.Execute (Tool (User_2) & " store " & Path & " -- LICENSE.txt < Makefile.conf",
+                 Result);
+
    end Test_Update_File;
 
 end Keystore.GPG_Tests;
