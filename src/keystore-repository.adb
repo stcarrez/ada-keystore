@@ -152,12 +152,19 @@ package body Keystore.Repository is
       Entries.Initialize_Directory_Block (Repository, Repository.Root, 0, Entry_Block);
 
       Repository.Current.Buffer := Buffers.Allocate (Repository.Root);
-      Repository.Current.Buffer.Data.Value.Data := (others => 0);
+
+      --  Fill the root directory block with random values or with zeros.
+      if Repository.Randomize then
+         Repository.Random.Generate (Repository.Current.Buffer.Data.Value.Data);
+      else
+         Repository.Current.Buffer.Data.Value.Data := (others => 0);
+      end if;
       Marshallers.Set_Header (Into => Repository.Current,
                               Tag  => IO.BT_WALLET_DIRECTORY,
                               Id   => Repository.Id);
       Marshallers.Put_Unsigned_32 (Repository.Current, 0);
       Marshallers.Put_Block_Index (Repository.Current, IO.Block_Index'Last);
+      Marshallers.Put_Unsigned_32 (Repository.Current, 0);
       Keystore.Keys.Set_IV (Repository.Config.Dir, Repository.Root.Block);
       Stream.Write (From   => Repository.Current.Buffer,
                     Cipher => Repository.Config.Dir.Cipher,
