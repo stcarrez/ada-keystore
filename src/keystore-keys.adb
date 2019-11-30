@@ -210,8 +210,8 @@ package body Keystore.Keys is
                         Buffer   : in out Marshallers.Marshaller;
                         Password : in Passwords.Slot_Provider'Class;
                         Config   : in out Wallet_Config) return Boolean is
-      procedure Get_Password (Key : in Secret_Key;
-                              IV  : in Secret_Key);
+      procedure Get_Password (Key  : in Secret_Key;
+                              IV   : in Secret_Key);
 
       Buf           : constant Buffers.Buffer_Accessor := Buffer.Buffer.Data.Value;
       Sign          : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
@@ -219,8 +219,8 @@ package body Keystore.Keys is
       Hmac          : Util.Encoders.HMAC.SHA256.Context;
 
       --  Get the directory encryption key and IV.
-      procedure Get_Password (Key : in Secret_Key;
-                              IV  : in Secret_Key) is
+      procedure Get_Password (Key  : in Secret_Key;
+                              IV   : in Secret_Key) is
       begin
          Extract (Buffer, Key, IV, Config.Dir, Hmac);
          Extract (Buffer, Key, IV, Config.Data, Hmac);
@@ -312,7 +312,7 @@ package body Keystore.Keys is
       procedure Save_GPG_Key (Password : in out Keystore.Passwords.Slot_Provider'Class);
       procedure Save_PBKDF2_Key;
 
-      Sign        : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
+      Slot_Sign   : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
       Hmac        : Util.Encoders.HMAC.SHA256.Context;
       Result      : Util.Encoders.SHA256.Hash_Array;
       Buf         : constant Buffers.Buffer_Accessor := Buffer.Buffer.Data.Value;
@@ -357,7 +357,7 @@ package body Keystore.Keys is
          Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Counter_IV));
          Marshallers.Put_Secret (Buffer, Salt_Key, Manager.Crypt.Key, Manager.Crypt.IV);
          Marshallers.Put_Secret (Buffer, Salt_IV, Manager.Crypt.Key, Manager.Crypt.IV);
-         Marshallers.Put_Secret (Buffer, Sign, Manager.Crypt.Key, Manager.Crypt.IV);
+         Marshallers.Put_Secret (Buffer, Slot_Sign, Manager.Crypt.Key, Manager.Crypt.IV);
 
          Password.Get_Password (Get_Password'Access);
          PBKDF2_HMAC_SHA256 (Password => Lock_IV,
@@ -372,14 +372,14 @@ package body Keystore.Keys is
 
       procedure Save_GPG_Key (Password : in out Keystore.Passwords.Slot_Provider'Class) is
 
-         procedure Get_Key (Key : in Secret_Key;
-                            IV  : in Secret_Key);
+         procedure Get_Key (Key  : in Secret_Key;
+                            IV   : in Secret_Key);
 
-         procedure Get_Key (Key : in Secret_Key;
-                            IV  : in Secret_Key) is
+         procedure Get_Key (Key  : in Secret_Key;
+                            IV   : in Secret_Key) is
          begin
             Marshallers.Put_Unsigned_32 (Buffer, Password.Get_Tag);
-            Marshallers.Put_Secret (Buffer, Sign, Manager.Crypt.Key, Manager.Crypt.IV);
+            Marshallers.Put_Secret (Buffer, Slot_Sign, Manager.Crypt.Key, Manager.Crypt.IV);
             Save (Buffer, Key, IV, Config.Dir, Hmac);
             Save (Buffer, Key, IV, Config.Data, Hmac);
             Save (Buffer, Key, IV, Config.Key, Hmac);
@@ -392,10 +392,10 @@ package body Keystore.Keys is
    begin
       Log.Info ("Saving key for wallet {0}", To_String (Config.UUID));
 
-      Manager.Random.Generate (Sign);
+      Manager.Random.Generate (Slot_Sign);
 
       --  Build a signature from the lock key.
-      Util.Encoders.HMAC.SHA256.Set_Key (Hmac, Sign);
+      Util.Encoders.HMAC.SHA256.Set_Key (Hmac, Slot_Sign);
 
       Buffer.Pos := Key_Position (Slot);
       Buf.Data (Buffer.Pos + 1 .. Buffer.Pos + WH_KEY_SIZE) := (others => 0);
@@ -445,7 +445,7 @@ package body Keystore.Keys is
       Value   : Interfaces.Unsigned_32;
       Size    : IO.Block_Index;
    begin
-      Keystore.Logs.Info (Log, "Loading master block {0}", Manager.Header_Block);
+      Keystore.Logs.Info (Log, "Loading master block {0}", Block);
 
       Set_IV (Manager.Crypt, Block.Block);
       Buffer.Buffer := Buffers.Allocate (Block);
@@ -616,18 +616,21 @@ package body Keystore.Keys is
 
    procedure Set_Header_Key (Manager : in out Key_Manager;
                              Key     : in Secret_Key) is
-      Header_Key : Secret_Key (Length => Util.Encoders.AES.AES_256_Length);
    begin
       --  Build the header key by deriving the key we get.
       --  Generate a master key from the random, salt, counter.
       PBKDF2_HMAC_SHA256 (Password => Key,
                           Salt     => Key,
                           Counter  => 1234,
-                          Result   => Header_Key);
+                          Result   => Manager.Crypt.Key);
+      PBKDF2_HMAC_SHA256 (Password => Manager.Crypt.Key,
+                          Salt     => Key,
+                          Counter  => 1234,
+                          Result   => Manager.Crypt.IV);
 
-      Manager.Crypt.Decipher.Set_Key (Header_Key, Util.Encoders.AES.CBC);
+      Manager.Crypt.Decipher.Set_Key (Manager.Crypt.Key, Util.Encoders.AES.CBC);
       Manager.Crypt.Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
-      Manager.Crypt.Cipher.Set_Key (Header_Key, Util.Encoders.AES.CBC);
+      Manager.Crypt.Cipher.Set_Key (Manager.Crypt.Key, Util.Encoders.AES.CBC);
       Manager.Crypt.Cipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
    end Set_Header_Key;
 
@@ -668,17 +671,14 @@ package body Keystore.Keys is
    --  Set the master key by using the password provider.
    --  ------------------------------
    procedure Set_Master_Key (Manager  : in out Key_Manager;
-                             Password : in out Keystore.Passwords.Provider'Class) is
-      procedure Get_Password (Secret : in Secret_Key);
-      procedure Get_Password (Secret : in Secret_Key) is
-      begin
-         Manager.Crypt.Decipher.Set_Key (Secret, Util.Encoders.AES.CBC);
-         Manager.Crypt.Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
-         Manager.Crypt.Cipher.Set_Key (Secret, Util.Encoders.AES.CBC);
-         Manager.Crypt.Cipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
-      end Get_Password;
+                             Password : in out Keystore.Passwords.Signed_Provider'Class) is
    begin
-      Password.Get_Password (Get_Password'Access);
+      Password.Get_Keys (Manager.Crypt.Key, Manager.Crypt.IV, Manager.Crypt.Sign);
+
+      Manager.Crypt.Decipher.Set_Key (Manager.Crypt.Key, Util.Encoders.AES.CBC);
+      Manager.Crypt.Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
+      Manager.Crypt.Cipher.Set_Key (Manager.Crypt.Key, Util.Encoders.AES.CBC);
+      Manager.Crypt.Cipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
    end Set_Master_Key;
 
    procedure Set_Key (Manager      : in out Key_Manager;
