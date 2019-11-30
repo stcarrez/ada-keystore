@@ -57,6 +57,11 @@ package Keystore.Files is
      Pre  => not Container.Is_Open,
      Post => Container.Is_Open;
 
+   --  Set the keystore master key before creating or opening the keystore.
+   procedure Set_Master_Key (Container : in out Wallet_File;
+                             Password  : in out Keystore.Passwords.Signed_Provider'Class) with
+     Pre => not Container.Is_Open;
+
    --  Unlock the wallet with the password.
    --  Raises the Bad_Password exception if no key slot match the password.
    procedure Unlock (Container : in out Wallet_File;
@@ -71,7 +76,7 @@ package Keystore.Files is
      Post => Container.Is_Open;
 
    procedure Unlock (Container       : in out Wallet_File;
-                     Master_Password : in out Keystore.Passwords.Provider'Class;
+                     Master_Password : in out Keystore.Passwords.Signed_Provider'Class;
                      Password        : in out Keystore.Passwords.Provider'Class;
                      Slot            : out Key_Slot) with
      Pre  => Container.State = S_PROTECTED,
