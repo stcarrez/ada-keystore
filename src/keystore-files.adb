@@ -118,7 +118,7 @@ package body Keystore.Files is
    --  Set the keystore master key before creating or opening the keystore.
    --  ------------------------------
    procedure Set_Master_Key (Container : in out Wallet_File;
-                             Password  : in out Keystore.Passwords.Signed_Provider'Class) is
+                             Password  : in out Keystore.Passwords.Keys.Key_Provider'Class) is
    begin
       Container.Container.Set_Master_Key (Password);
    end Set_Master_Key;
@@ -149,7 +149,7 @@ package body Keystore.Files is
    end Unlock;
 
    procedure Unlock (Container       : in out Wallet_File;
-                     Master_Password : in out Keystore.Passwords.Signed_Provider'Class;
+                     Master_Password : in out Keystore.Passwords.Keys.Key_Provider'Class;
                      Password        : in out Keystore.Passwords.Provider'Class;
                      Slot            : out Key_Slot) is
    begin
