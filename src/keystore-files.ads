@@ -15,7 +15,7 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Keystore.Passwords;
+with Keystore.Passwords.Keys;
 private with Keystore.Containers;
 package Keystore.Files is
 
@@ -59,7 +59,7 @@ package Keystore.Files is
 
    --  Set the keystore master key before creating or opening the keystore.
    procedure Set_Master_Key (Container : in out Wallet_File;
-                             Password  : in out Keystore.Passwords.Signed_Provider'Class) with
+                             Password  : in out Keystore.Passwords.Keys.Key_Provider'Class) with
      Pre => not Container.Is_Open;
 
    --  Unlock the wallet with the password.
@@ -76,7 +76,7 @@ package Keystore.Files is
      Post => Container.Is_Open;
 
    procedure Unlock (Container       : in out Wallet_File;
-                     Master_Password : in out Keystore.Passwords.Signed_Provider'Class;
+                     Master_Password : in out Keystore.Passwords.Keys.Key_Provider'Class;
                      Password        : in out Keystore.Passwords.Provider'Class;
                      Slot            : out Key_Slot) with
      Pre  => Container.State = S_PROTECTED,
