@@ -25,6 +25,21 @@ with Util.Processes;
 with Util.Streams.Texts;
 with Util.Streams.Pipes;
 with Keystore.Random;
+
+--  === GPG Header data ===
+--
+--  The GPG encrypted data contains the following information:
+--  ```
+--  +------------------+-----
+--  | TAG              | 4b
+--  +------------------+-----
+--  | Lock Key         | 32b
+--  | Lock IV          | 16b
+--  | Wallet Key       | 32b
+--  | Wallet IV        | 16b
+--  | Wallet Sign      | 32b
+--  +------------------+-----
+--  ```
 package body Keystore.Passwords.GPG is
 
    use Ada.Streams;
@@ -156,9 +171,8 @@ package body Keystore.Passwords.GPG is
                                  Next   => Context.First,
                                  others => <>);
       Context.First := P;
-      Util.Encoders.Create (Data (5 .. 5 + IO.SIZE_SECRET - 1), P.Key);
-      Util.Encoders.Create (Data (IO.SIZE_SECRET + 5 .. 5 + IO.SIZE_SECRET + IO.SIZE_IV - 1),
-                            P.IV);
+      Util.Encoders.Create (Data (POS_LOCK_KEY .. POS_LOCK_KEY_LAST), P.Key);
+      Util.Encoders.Create (Data (POS_LOCK_IV .. POS_LOCK_IV_LAST), P.IV);
       Context.Current := P;
    end Create_Secret;
 
@@ -269,6 +283,20 @@ package body Keystore.Passwords.GPG is
    begin
       Getter (From.Current.Key, From.Current.IV);
    end Get_Key;
+
+   --  ------------------------------
+   --  Get the Key, IV and signature.
+   --  ------------------------------
+   overriding
+   procedure Get_Keys (From : in Context_Type;
+                       Key  : out Secret_Key;
+                       IV   : out Secret_Key;
+                       Sign : out Secret_Key) is
+   begin
+      Util.Encoders.Create (From.Data (POS_WALLET_KEY .. POS_WALLET_KEY_LAST), Key);
+      Util.Encoders.Create (From.Data (POS_WALLET_IV .. POS_WALLET_IV_LAST), IV);
+      Util.Encoders.Create (From.Data (POS_WALLET_SIGN .. POS_WALLET_SIGN_LAST), Sign);
+   end Get_Keys;
 
    --  ------------------------------
    --  Get the key slot number associated with the GPG password.
