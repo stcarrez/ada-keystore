@@ -50,6 +50,11 @@ package body Keystore.Containers is
          State := S_OPEN;
       end Create;
 
+      procedure Set_Master_Key (Password  : in out Keystore.Passwords.Signed_Provider'Class) is
+      begin
+         Keys.Set_Master_Key (Master, Password);
+      end Set_Master_Key;
+
       procedure Set_Header_Data (Index     : in Header_Slot_Index_Type;
                                  Kind      : in Header_Slot_Type;
                                  Data      : in Ada.Streams.Stream_Element_Array) is
@@ -74,7 +79,7 @@ package body Keystore.Containers is
          State := S_OPEN;
       end Unlock;
 
-      procedure Unlock (Master_Password : in out Keystore.Passwords.Provider'Class;
+      procedure Unlock (Master_Password : in out Keystore.Passwords.Signed_Provider'Class;
                         Password        : in out Keystore.Passwords.Provider'Class;
                         Slot            : out Key_Slot) is
       begin
