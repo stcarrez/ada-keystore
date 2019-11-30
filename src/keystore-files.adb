@@ -115,6 +115,15 @@ package body Keystore.Files is
    end Create;
 
    --  ------------------------------
+   --  Set the keystore master key before creating or opening the keystore.
+   --  ------------------------------
+   procedure Set_Master_Key (Container : in out Wallet_File;
+                             Password  : in out Keystore.Passwords.Signed_Provider'Class) is
+   begin
+      Container.Container.Set_Master_Key (Password);
+   end Set_Master_Key;
+
+   --  ------------------------------
    --  Unlock the wallet with the password.
    --  Raises the Bad_Password exception if no key slot match the password.
    --  ------------------------------
@@ -140,7 +149,7 @@ package body Keystore.Files is
    end Unlock;
 
    procedure Unlock (Container       : in out Wallet_File;
-                     Master_Password : in out Keystore.Passwords.Provider'Class;
+                     Master_Password : in out Keystore.Passwords.Signed_Provider'Class;
                      Password        : in out Keystore.Passwords.Provider'Class;
                      Slot            : out Key_Slot) is
    begin
