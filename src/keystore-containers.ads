@@ -18,7 +18,7 @@
 with Util.Streams;
 with Ada.Streams;
 with Keystore.IO.Refs;
-with Keystore.Passwords;
+with Keystore.Passwords.Keys;
 with Keystore.Repository;
 with Keystore.Keys;
 
@@ -44,7 +44,7 @@ private package Keystore.Containers is
                         Ident         : in Wallet_Identifier;
                         Wallet_Stream : in out IO.Refs.Stream_Ref);
 
-      procedure Set_Master_Key (Password  : in out Keystore.Passwords.Signed_Provider'Class);
+      procedure Set_Master_Key (Password  : in out Keystore.Passwords.Keys.Key_Provider'Class);
 
       function Get_State return State_Type;
 
@@ -60,7 +60,7 @@ private package Keystore.Containers is
       procedure Unlock (Password  : in out Keystore.Passwords.Provider'Class;
                         Slot      : out Key_Slot);
 
-      procedure Unlock (Master_Password : in out Keystore.Passwords.Signed_Provider'Class;
+      procedure Unlock (Master_Password : in out Keystore.Passwords.Keys.Key_Provider'Class;
                         Password        : in out Keystore.Passwords.Provider'Class;
                         Slot            : out Key_Slot);
 
