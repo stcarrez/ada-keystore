@@ -50,7 +50,7 @@ package body Keystore.Containers is
          State := S_OPEN;
       end Create;
 
-      procedure Set_Master_Key (Password  : in out Keystore.Passwords.Signed_Provider'Class) is
+      procedure Set_Master_Key (Password  : in out Keystore.Passwords.Keys.Key_Provider'Class) is
       begin
          Keys.Set_Master_Key (Master, Password);
       end Set_Master_Key;
@@ -79,7 +79,7 @@ package body Keystore.Containers is
          State := S_OPEN;
       end Unlock;
 
-      procedure Unlock (Master_Password : in out Keystore.Passwords.Signed_Provider'Class;
+      procedure Unlock (Master_Password : in out Keystore.Passwords.Keys.Key_Provider'Class;
                         Password        : in out Keystore.Passwords.Provider'Class;
                         Slot            : out Key_Slot) is
       begin
