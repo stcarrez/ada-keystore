@@ -79,17 +79,6 @@ package body Keystore.Containers is
          State := S_OPEN;
       end Unlock;
 
-      procedure Unlock (Master_Password : in out Keystore.Passwords.Keys.Key_Provider'Class;
-                        Password        : in out Keystore.Passwords.Provider'Class;
-                        Slot            : out Key_Slot) is
-      begin
-         Keystore.Keys.Set_Master_Key (Master, Master_Password);
-         Keystore.Repository.Open (Repository, Password, Master_Ident,
-                                   Master_Block, Master, Stream.Value);
-         Slot := Repository.Get_Key_Slot;
-         State := S_OPEN;
-      end Unlock;
-
       procedure Set_Key (Password     : in out Keystore.Passwords.Provider'Class;
                          New_Password : in out Keystore.Passwords.Provider'Class;
                          Config       : in Wallet_Config;
