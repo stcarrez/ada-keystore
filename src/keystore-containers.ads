@@ -44,6 +44,8 @@ private package Keystore.Containers is
                         Ident         : in Wallet_Identifier;
                         Wallet_Stream : in out IO.Refs.Stream_Ref);
 
+      procedure Set_Master_Key (Password  : in out Keystore.Passwords.Signed_Provider'Class);
+
       function Get_State return State_Type;
 
       procedure Set_Header_Data (Index     : in Header_Slot_Index_Type;
@@ -58,7 +60,7 @@ private package Keystore.Containers is
       procedure Unlock (Password  : in out Keystore.Passwords.Provider'Class;
                         Slot      : out Key_Slot);
 
-      procedure Unlock (Master_Password : in out Keystore.Passwords.Provider'Class;
+      procedure Unlock (Master_Password : in out Keystore.Passwords.Signed_Provider'Class;
                         Password        : in out Keystore.Passwords.Provider'Class;
                         Slot            : out Key_Slot);
 
