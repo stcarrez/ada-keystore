@@ -21,11 +21,11 @@ with Ada.Finalization;
 with Util.Strings.Sets;
 with Keystore;
 with Keystore.Files;
+with Keystore.Passwords.Keys;
 private with Keystore.IO;
 package Keystore.Passwords.GPG is
 
    MAX_ENCRYPT_SIZE : constant := 1024;
-   MAX_DECRYPT_SIZE : constant := 256;
 
    LIST_COMMAND    : constant String := "gpg2 --list-secret-keys --with-colons --with-fingerprint";
    ENCRYPT_COMMAND : constant String := "gpg2 --encrypt --batch --yes -r $USER";
@@ -35,7 +35,7 @@ package Keystore.Passwords.GPG is
    function Extract_Key_Id (Data : in Ada.Streams.Stream_Element_Array) return String;
 
    type Context_Type is limited new Ada.Finalization.Limited_Controlled
-     and Slot_Provider with private;
+     and Slot_Provider and Keys.Key_Provider with private;
 
    --  Get the list of GPG secret keys that could be capable for decrypting a content for us.
    procedure List_GPG_Secret_Keys (Context : in out Context_Type;
@@ -79,6 +79,13 @@ package Keystore.Passwords.GPG is
                       Getter : not null access procedure (Key : in Secret_Key;
                                                           IV  : in Secret_Key));
 
+   --  Get the Key, IV and signature.
+   overriding
+   procedure Get_Keys (From : in Context_Type;
+                       Key  : out Secret_Key;
+                       IV   : out Secret_Key;
+                       Sign : out Secret_Key);
+
    --  Setup the command to be executed to encrypt the secret with GPG2.
    procedure Set_Encrypt_Command (Into    : in out Context_Type;
                                   Command : in String);
@@ -103,11 +110,28 @@ private
       IV     : Secret_Key (Length => IO.SIZE_IV);
    end record;
 
+   --  Positions of values stored in the GPG encrypted data.
+   POS_TAG              : constant := 1;
+   POS_TAG_LAST         : constant := POS_TAG + 3;
+   POS_LOCK_KEY         : constant := POS_TAG_LAST + 1;
+   POS_LOCK_KEY_LAST    : constant := POS_LOCK_KEY + IO.SIZE_SECRET - 1;
+   POS_LOCK_IV          : constant := POS_LOCK_KEY_LAST + 1;
+   POS_LOCK_IV_LAST     : constant := POS_LOCK_IV + IO.SIZE_IV - 1;
+   POS_WALLET_KEY       : constant := POS_LOCK_IV_LAST + 1;
+   POS_WALLET_KEY_LAST  : constant := POS_WALLET_KEY + IO.SIZE_SECRET - 1;
+   POS_WALLET_IV        : constant := POS_WALLET_KEY_LAST + 1;
+   POS_WALLET_IV_LAST   : constant := POS_WALLET_IV + IO.SIZE_IV - 1;
+   POS_WALLET_SIGN      : constant := POS_WALLET_IV_LAST + 1;
+   POS_WALLET_SIGN_LAST : constant := POS_WALLET_SIGN + IO.SIZE_SECRET - 1;
+   GPG_DATA_SIZE        : constant := 4 + IO.SIZE_SECRET * 3 + IO.SIZE_IV * 2;
+
+   HEADER_KEY_SIZE : constant := IO.SIZE_SECRET + IO.SIZE_IV + IO.SIZE_SECRET;
+
    type Context_Type is limited new Ada.Finalization.Limited_Controlled
-     and Slot_Provider with record
+     and Slot_Provider and Keys.Key_Provider with record
       Current          : Secret_Provider_Access;
       First            : Secret_Provider_Access;
-      Data             : Ada.Streams.Stream_Element_Array (1 .. MAX_DECRYPT_SIZE);
+      Data             : Ada.Streams.Stream_Element_Array (1 .. GPG_DATA_SIZE);
       Size             : Ada.Streams.Stream_Element_Offset;
       Index            : Keystore.Header_Slot_Index_Type := 1;
       Encrypt_Command  : Ada.Strings.Unbounded.Unbounded_String;
