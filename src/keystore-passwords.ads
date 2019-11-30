@@ -27,13 +27,6 @@ package Keystore.Passwords is
                            Getter : not null
                            access procedure (Password : in Secret_Key)) is abstract;
 
-   type Signed_Provider is limited interface;
-
-   procedure Get_Keys (From : in Signed_Provider;
-                       Key  : out Secret_Key;
-                       IV   : out Secret_Key;
-                       Sign : out Secret_Key) is abstract;
-
    subtype Tag_Type is Interfaces.Unsigned_32;
 
    type Slot_Provider is limited interface and Provider;
