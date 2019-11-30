@@ -16,6 +16,7 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Ada.Text_IO;
+with Ada.IO_Exceptions;
 with Ada.Strings.Unbounded;
 package body Keystore.Passwords.Input is
 
@@ -48,11 +49,17 @@ package body Keystore.Passwords.Input is
       C       : Character;
    begin
       Ada.Text_IO.Put_Line ("Enter password:");
-      while not Ada.Text_IO.End_Of_File loop
-         Ada.Text_IO.Get_Immediate (C);
-         exit when C < ' ';
-         Ada.Strings.Unbounded.Append (Content, C);
-      end loop;
+      begin
+         loop
+            Ada.Text_IO.Get_Immediate (C);
+            exit when C < ' ';
+            Ada.Strings.Unbounded.Append (Content, C);
+         end loop;
+
+      exception
+         when Ada.IO_Exceptions.End_Error =>
+            null;
+      end;
       if Ada.Strings.Unbounded.Length (Content) = 0 then
          raise Keystore.Bad_Password with "Empty password given";
       end if;
