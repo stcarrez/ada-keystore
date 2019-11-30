@@ -19,7 +19,7 @@ with Interfaces;
 with Util.Encoders.AES;
 with Keystore.IO;
 with Keystore.Random;
-with Keystore.Passwords;
+with Keystore.Passwords.Keys;
 with Keystore.Marshallers;
 private package Keystore.Keys is
 
@@ -112,7 +112,7 @@ private package Keystore.Keys is
 
    --  Set the master key by using the password provider.
    procedure Set_Master_Key (Manager  : in out Key_Manager;
-                             Password : in out Keystore.Passwords.Signed_Provider'Class);
+                             Password : in out Keystore.Passwords.Keys.Key_Provider'Class);
 
 private
 
