@@ -112,7 +112,7 @@ private package Keystore.Keys is
 
    --  Set the master key by using the password provider.
    procedure Set_Master_Key (Manager  : in out Key_Manager;
-                             Password : in out Keystore.Passwords.Provider'Class);
+                             Password : in out Keystore.Passwords.Signed_Provider'Class);
 
 private
 
