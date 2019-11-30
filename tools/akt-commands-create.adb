@@ -63,9 +63,9 @@ package body AKT.Commands.Create is
                                 Path      => Path,
                                 Data_Path => Context.Data_Path.all,
                                 Config    => Config);
-         Context.GPG.Save_Secret (Args.Get_Argument (1), 1, Context.Wallet);
+         Context.GPG.Save_Secret (Args.Get_Argument (Context.First_Arg), 1, Context.Wallet);
 
-         for I in 2 .. Args.Get_Count loop
+         for I in Context.First_Arg + 1 .. Args.Get_Count loop
             declare
                GPG2 : Keystore.Passwords.GPG.Context_Type;
             begin
