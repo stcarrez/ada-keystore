@@ -208,13 +208,18 @@ package body AKT.Commands is
       GC.Initialize_Option_Scan (Stop_At_First_Non_Switch => True);
 
       Driver.Set_Description (-("akt - tool to store and protect your sensitive data"));
-      Driver.Set_Usage (-("[-V] [-v] [-vv] [-d data-path] " &
+      Driver.Set_Usage (-("[-V] [-v] [-vv] [-vvv] [-c path] [-t count] [-z] " &
                           "<command> [<args>]" & ASCII.LF &
                           "where:" & ASCII.LF &
                           "  -V           Print the tool version" & ASCII.LF &
                           "  -v           Verbose execution mode" & ASCII.LF &
                           "  -vv          Debug execution mode" & ASCII.LF &
-                          "  -d data-path The directory which contains the keystore data blocks"));
+                          "  -vvv         Dump execution mode" & ASCII.LF &
+                          "  -c path      Defines the path for akt " &
+                          "global configuration" & ASCII.LF &
+                          "  -t count     Number of threads for the " &
+                          "encryption/decryption process" & ASCII.LF &
+                          "  -z           Erase and fill with zeros instead of random values"));
       Driver.Add_Command ("help",
                           -("print some help"),
                           Help_Command'Access);
