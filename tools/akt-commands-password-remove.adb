@@ -47,6 +47,7 @@ package body AKT.Commands.Password.Remove is
       Slot  : constant Keystore.Key_Slot := Get_Slot (Command.Slot.all);
    begin
       Setup_Password_Provider (Context);
+      Setup_Key_Provider (Context);
 
       Context.Wallet.Open (Path => Path,
                            Info => Context.Info);
