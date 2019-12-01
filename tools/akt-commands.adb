@@ -85,6 +85,7 @@ package body AKT.Commands is
                             Use_Worker : in Boolean := False) is
    begin
       Setup_Password_Provider (Context);
+      Setup_Key_Provider (Context);
 
       Context.Wallet.Open (Path      => Context.Get_Keystore_Path (Args),
                            Data_Path => Context.Data_Path.all,
@@ -339,11 +340,14 @@ package body AKT.Commands is
          Context.Provider := Keystore.Passwords.Input.Create (False);
          Context.No_Password_Opt := True;
       end if;
+   end Setup_Password_Provider;
 
+   procedure Setup_Key_Provider (Context : in out Context_Type) is
+   begin
       if Context.Wallet_Key_File'Length > 0 then
          Context.Key_Provider := Keystore.Passwords.Files.Create (Context.Wallet_Key_File.all);
       end if;
-   end Setup_Password_Provider;
+   end Setup_Key_Provider;
 
    procedure Initialize (Context : in out Keystore.Passwords.GPG.Context_Type) is
    begin
