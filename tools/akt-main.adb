@@ -64,6 +64,10 @@ exception
       Log.Error (-("The keystore file is corrupted: invalid data block headers or signature"));
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
+   when Keystore.Invalid_Signature =>
+      Log.Error (-("The keystore file is corrupted: invalid signature"));
+      Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+
    when Keystore.Invalid_Storage =>
       Log.Error (-("The keystore file is corrupted: invalid or missing storage file"));
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
