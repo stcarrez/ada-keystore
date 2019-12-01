@@ -19,14 +19,32 @@ with Keystore.IO;
 with Util.Encoders;
 package body Keystore.Containers is
 
-   Header_Key : constant Secret_Key
-     := Util.Encoders.Create ("If you can't give me poetry, can't you give me poetical science?");
+   use type Keystore.Passwords.Keys.Key_Provider_Access;
+
+   protected Default_Key_Provider is
+      procedure Set_Default_Keys (Into : in out Keystore.Keys.Key_Manager);
+
+   private
+      Key_Provider : Keystore.Passwords.Keys.Key_Provider_Access;
+   end Default_Key_Provider;
+
+   protected body Default_Key_Provider is
+
+      procedure Set_Default_Keys (Into : in out Keystore.Keys.Key_Manager) is
+      begin
+         if Key_Provider = null then
+            Key_Provider := Keystore.Passwords.Keys.Create (DEFAULT_WALLET_KEY);
+         end if;
+         Keys.Set_Master_Key (Into, Key_Provider.all);
+      end Set_Default_Keys;
+
+   end Default_Key_Provider;
 
    protected body Wallet_Container is
 
       procedure Initialize is
       begin
-         Keys.Set_Header_Key (Master, Header_Key);
+         Default_Key_Provider.Set_Default_Keys (Master);
       end Initialize;
 
       procedure Open (Ident         : in Wallet_Identifier;
