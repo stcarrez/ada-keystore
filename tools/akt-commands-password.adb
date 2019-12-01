@@ -49,7 +49,7 @@ package body AKT.Commands.Password is
             GPG : Keystore.Passwords.GPG.Context_Type;
          begin
             AKT.Commands.Initialize (GPG);
-            GPG.Create_Secret;
+            GPG.Create_Secret (Context.Key_Provider.all);
             Context.Change_Password (Args         => Args,
                                      New_Password => GPG,
                                      Config       => Config,
