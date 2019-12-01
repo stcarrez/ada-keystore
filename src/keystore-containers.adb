@@ -24,11 +24,15 @@ package body Keystore.Containers is
 
    protected body Wallet_Container is
 
+      procedure Initialize is
+      begin
+         Keys.Set_Header_Key (Master, Header_Key);
+      end Initialize;
+
       procedure Open (Ident         : in Wallet_Identifier;
                       Block         : in Keystore.IO.Storage_Block;
                       Wallet_Stream : in out Keystore.IO.Refs.Stream_Ref) is
       begin
-         Keys.Set_Header_Key (Master, Header_Key);
          Stream := Wallet_Stream;
          Master_Block := Block;
          Master_Ident := Ident;
@@ -44,7 +48,6 @@ package body Keystore.Containers is
          Stream := Wallet_Stream;
          Master_Block := Block;
          Master_Ident := Ident;
-         Keys.Set_Header_Key (Master, Header_Key);
          Keystore.Repository.Create (Repository, Password, Config, Block, Ident,
                                      Master, Stream.Value);
          State := S_OPEN;
