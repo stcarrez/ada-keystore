@@ -59,6 +59,7 @@ package body AKT.Commands.Info is
          Context.Wallet.Unlock (Context.Provider.all, Context.Slot);
       else
          Context.GPG.Load_Secrets (Context.Wallet);
+         Context.Wallet.Set_Master_Key (Context.GPG);
          Context.Wallet.Unlock (Context.GPG, Context.Slot);
       end if;
 
