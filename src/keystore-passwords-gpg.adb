@@ -186,6 +186,17 @@ package body Keystore.Passwords.GPG is
       Context.Create_Secret (Context.Data);
    end Create_Secret;
 
+   procedure Create_Secret (Context : in out Context_Type;
+                            Image   : in Context_Type'Class) is
+   begin
+      Context.Encrypt_Command := Image.Encrypt_Command;
+      Context.Decrypt_Command := Image.Decrypt_Command;
+      Context.List_Key_Command := Image.List_Key_Command;
+      Context.Create_Secret;
+      Context.Data (POS_WALLET_KEY .. POS_WALLET_SIGN_LAST)
+        := Image.Data (POS_WALLET_KEY .. POS_WALLET_SIGN_LAST);
+   end Create_Secret;
+
    --  ------------------------------
    --  Save the GPG secret by encrypting it using the user's GPG key and storing
    --  the encrypted data in the keystore data header.
@@ -382,7 +393,7 @@ package body Keystore.Passwords.GPG is
       if Context.Valid_Key then
          Context.Create_Secret (Context.Data);
       end if;
-      Context.Data := (others => 0);
+      Context.Data (POS_TAG .. POS_LOCK_IV_LAST) := (others => 0);
    end Decrypt_GPG_Secret;
 
    --  ------------------------------
