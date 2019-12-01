@@ -76,9 +76,6 @@ private package Keystore.Keys is
                      Config   : in out Wallet_Config;
                      Stream   : in out IO.Wallet_Stream'Class);
 
-   procedure Set_Header_Key (Manager  : in out Key_Manager;
-                             Key      : in Secret_Key);
-
    --  Set a new key
    procedure Set_Key (Manager      : in out Key_Manager;
                       Password     : in out Keystore.Passwords.Provider'Class;
