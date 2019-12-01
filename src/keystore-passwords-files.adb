@@ -46,14 +46,19 @@ package body Keystore.Passwords.Files is
                            Getter : not null access procedure (Password : in Secret_Key));
 
    type Key_Provider (Len : Key_Length) is new Provider (Len)
-     and Keys.Key_Provider with null record;
+     and Keys.Key_Provider and Internal_Key_Provider with null record;
    type Key_Provider_Access is access all Key_Provider'Class;
 
    --  Get the Key, IV and signature.
+   overriding
    procedure Get_Keys (From : in Key_Provider;
                        Key  : out Secret_Key;
                        IV   : out Secret_Key;
                        Sign : out Secret_Key);
+
+   overriding
+   procedure Save_Key (Provider : in Key_Provider;
+                       Data     : out Ada.Streams.Stream_Element_Array);
 
    function Verify_And_Get_Size (Path : in String) return Ada.Streams.Stream_Element_Count is
       P       : Interfaces.C.Strings.chars_ptr;
@@ -180,6 +185,13 @@ package body Keystore.Passwords.Files is
       Util.Encoders.Create (From.Password (First .. Last), Sign);
    end Get_Keys;
 
+   overriding
+   procedure Save_Key (Provider : in Key_Provider;
+                       Data     : out Ada.Streams.Stream_Element_Array) is
+   begin
+      Data := Provider.Password;
+   end Save_Key;
+
    --  ------------------------------
    --  Generate a file that contains the keys.  Keys are generated using a random generator.
    --  The file is created with the mode rw------- (600) and the owning directory is forced
@@ -193,7 +205,7 @@ package body Keystore.Passwords.Files is
       Dir     : constant String := Ada.Directories.Containing_Directory (Path);
       File    : Ada.Streams.Stream_IO.File_Type;
       P       : Interfaces.C.Strings.chars_ptr;
-      Res     : Integer;
+      Res     : Integer with Unreferenced;
    begin
       if not Ada.Directories.Exists (Dir) then
          Ada.Directories.Create_Path (Dir);
