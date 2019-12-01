@@ -173,6 +173,9 @@ sets while launching the command.
 .TP 5
 --wallet-key-file file
 Defines the path of a file which contains the wallet master key file.
+.TP 5
+-z
+Erase and fill with zeros instead of random values.
 .\"
 .SH COMMANDS
 .\"
@@ -357,8 +360,8 @@ command allows to change the current wallet password.
 .\"
 .SH SECURITY
 .\"
-Wallet master keys are protected by a derived key that is created from the user's
-password using
+Wallet master keys are protected by a derived key that is created from
+the user's password using
 .B PBKDF2
 and
 .B HMAC-256
@@ -380,16 +383,24 @@ through a file or passing using a socket based communication.
 .PP
 When the wallet master key is protected using
 .IR gpg2 (1)
-a 256-bytes random binary string is created to protect the wallet master
-key.  This random binary string is then encrypted using the user's
-GPG key and the result saved in the keystore header block.  The
+a 32-bytes random binary key and a 16-bytes random binary IV is created
+to protect the wallet master key.  Another set of 80 bytes of random
+binary data is used to encrypt and sign the whole wallet master key block.
+The 128 bytes that form these random binary keys are encrypted using
+the user's GPG public key and the result saved in the keystore header
+block.  The
 .B --gpg
-option is specified only for the creation of the keystore.
+option is specified only for the creation of the keystore and allows
+to encrypt a master key slot for several GPG keys.
 To unlock the keystore file, the
 .IR gpg2 (1)
 command will be used to decrypt the keystore header content automatically.
 When the user's GPG private key is not found, it is not possible
 to unlock the keystore with this method.
+.PP
+When several GPG keys are used to protect the wallet, they share the same
+80 bytes to decrypt the wallet master key block but they have their own
+key and IV to unlock the key slot.
 .\"
 .PP
 Depending on the size, a data stored in the wallet is split in one or
