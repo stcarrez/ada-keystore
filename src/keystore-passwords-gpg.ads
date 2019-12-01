@@ -45,6 +45,8 @@ package Keystore.Passwords.GPG is
    procedure Create_Secret (Context : in out Context_Type);
    procedure Create_Secret (Context : in out Context_Type;
                             Image   : in Context_Type'Class);
+   procedure Create_Secret (Context      : in out Context_Type;
+                            Key_Provider : in Keys.Key_Provider'Class);
 
    --  Save the GPG secret by encrypting it using the user's GPG key and storing
    --  the encrypted data in the keystore data header.
