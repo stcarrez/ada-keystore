@@ -199,7 +199,10 @@ package body Keystore.Files.Tests is
                when Keystore.Corrupted =>
                   null;
 
-               when Keystore.Invalid_Block =>
+               when Keystore.Invalid_Block | Keystore.Invalid_Signature =>
+                  null;
+
+               when Keystore.Bad_Password =>
                   null;
 
                when Ahven.Assertion_Error =>
