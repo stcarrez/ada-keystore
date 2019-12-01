@@ -71,7 +71,7 @@ package body AKT.Commands.Create is
             declare
                GPG2 : Keystore.Passwords.GPG.Context_Type;
             begin
-               GPG2.Create_Secret (Context.GPG);
+               GPG2.Create_Secret (Image => Context.GPG);
                Context.Wallet.Set_Key (Context.GPG, GPG2, Config, Keystore.KEY_ADD);
                GPG2.Save_Secret (Args.Get_Argument (I), Keystore.Header_Slot_Index_Type (I),
                                  Context.Wallet);
