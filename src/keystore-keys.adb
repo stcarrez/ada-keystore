@@ -623,26 +623,6 @@ package body Keystore.Keys is
       Save_Key (Manager, Buffer, Password, Slot, Config, Stream);
    end Create;
 
-   procedure Set_Header_Key (Manager : in out Key_Manager;
-                             Key     : in Secret_Key) is
-   begin
-      --  Build the header key by deriving the key we get.
-      --  Generate a master key from the random, salt, counter.
-      PBKDF2_HMAC_SHA256 (Password => Key,
-                          Salt     => Key,
-                          Counter  => 1234,
-                          Result   => Manager.Crypt.Key);
-      PBKDF2_HMAC_SHA256 (Password => Manager.Crypt.Key,
-                          Salt     => Key,
-                          Counter  => 1234,
-                          Result   => Manager.Crypt.IV);
-
-      Manager.Crypt.Decipher.Set_Key (Manager.Crypt.Key, Util.Encoders.AES.CBC);
-      Manager.Crypt.Decipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
-      Manager.Crypt.Cipher.Set_Key (Manager.Crypt.Key, Util.Encoders.AES.CBC);
-      Manager.Crypt.Cipher.Set_Padding (Util.Encoders.AES.NO_PADDING);
-   end Set_Header_Key;
-
    --  ------------------------------
    --  Create a new masker keys for a children wallet and save the new keys in the buffer.
    --  ------------------------------
