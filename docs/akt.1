@@ -1,11 +1,17 @@
 .\"
 .\"
-.TH AKT 1 "Nov 16, 2019" "Ada Keystore Tool"
+.TH AKT 1 "Dec 1, 2019" "Ada Keystore Tool"
 .SH NAME
 akt - Tool to protect your sensitive data with secure storage
 .SH SYNOPSIS
 .B akt
-[ -v ] [-vv] [-V] [ -t
+[ -v ] [-vv] [-vv] [-V] [ -c
+.I file
+] [-t
+.I count
+] [-z]
+.I command
+ [-k
 .I file
 ] [ -d
 .I dir
@@ -21,8 +27,9 @@ akt - Tool to protect your sensitive data with secure storage
 .I fd
 ] [--passask] [--passcmd
 .I cmd
+] [--wallet-key-file
+.I file
 ]
-.I command
 .br
 .SH DESCRIPTION
 \fIakt\fR is a tool to store information in secure wallets
@@ -98,6 +105,17 @@ Enable the verbose mode.
 -vv
 Enable debugging output.
 .TP 5
+-c
+.I file
+Defines the path of the global
+.I akt
+configuration file.
+.TP 5
+-t
+.I count
+Defines the number of threads for the encryption and decryption process.
+By default, it uses the number of system CPU cores.
+.TP 5
 -k file
 .br
 Specifies the path of the keystore file to open.
@@ -152,6 +170,9 @@ The command should print the password on its standard output without end of line
 The password is retrieved through a pipe that
 .I akt
 sets while launching the command.
+.TP 5
+--wallet-key-file file
+Defines the path of a file which contains the wallet master key file.
 .\"
 .SH COMMANDS
 .\"
