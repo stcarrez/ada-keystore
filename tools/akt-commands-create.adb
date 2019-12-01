@@ -15,9 +15,11 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
+with Keystore.Passwords.Files;
 package body AKT.Commands.Create is
 
    use GNAT.Strings;
+   use type Keystore.Passwords.Keys.Key_Provider_Access;
 
    --  ------------------------------
    --  Create the keystore file.
@@ -57,9 +59,9 @@ package body AKT.Commands.Create is
       if Command.Gpg_Mode then
 
          Context.GPG.Create_Secret;
+         Context.Wallet.Set_Master_Key (Context.GPG);
 
-         Keystore.Files.Create (Container => Context.Wallet,
-                                Password  => Context.GPG,
+         Context.Wallet.Create (Password  => Context.GPG,
                                 Path      => Path,
                                 Data_Path => Context.Data_Path.all,
                                 Config    => Config);
@@ -78,6 +80,13 @@ package body AKT.Commands.Create is
          end loop;
 
       else
+         if Context.Wallet_Key_File'Length > 0 then
+            Context.Key_Provider
+              := Keystore.Passwords.Files.Generate (Context.Wallet_Key_File.all);
+         end if;
+         if Context.Key_Provider /= null then
+            Context.Wallet.Set_Master_Key (Context.Key_Provider.all);
+         end if;
          Keystore.Files.Create (Container => Context.Wallet,
                                 Password  => Context.Provider.all,
                                 Path      => Path,
