@@ -769,7 +769,7 @@ package body Keystore.Tests is
 
       --  Even with good password, unlocking should fail because of missing wallet-key-file.
       T.Execute (Tool & " list " & Path & " -p admin testing my-testing-value", Result, 1);
-      Util.Tests.Assert_Matches (T, "The keystore file is corrupted: invalid data block",
+      Util.Tests.Assert_Matches (T, "Invalid password to unlock the keystore file",
                                  Result, "list command failed");
    end Test_Tool_With_Wallet_Key_File;
 
