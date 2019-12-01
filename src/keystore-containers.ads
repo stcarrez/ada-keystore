@@ -29,6 +29,8 @@ private package Keystore.Containers is
    --  The `Wallet_Container` protects concurrent accesses to the repository.
    protected type Wallet_Container is
 
+      procedure Initialize;
+
       procedure Open (Ident         : in Wallet_Identifier;
                       Block         : in Keystore.IO.Storage_Block;
                       Wallet_Stream : in out Keystore.IO.Refs.Stream_Ref);
