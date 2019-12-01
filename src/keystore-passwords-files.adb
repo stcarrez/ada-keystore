@@ -29,6 +29,7 @@ package body Keystore.Passwords.Files is
 
    --  GNAT 2019 complains about unused use type but gcc 7.4 fails if it not defined (st_mode).
    pragma Warnings (Off);
+   use type Interfaces.C.int;
    use type Interfaces.C.unsigned;
    use type Interfaces.C.unsigned_short;
    pragma Warnings (On);
