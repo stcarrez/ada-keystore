@@ -21,6 +21,7 @@ with Util.Commands;
 with Keystore;
 private with Util.Log.Loggers;
 private with Keystore.Files;
+private with Keystore.Passwords.Keys;
 private with Ada.Finalization;
 private with GNAT.Command_Line;
 private with GNAT.Strings;
@@ -79,6 +80,7 @@ private
       Info              : Keystore.Wallet_Info;
       Workers           : Keystore.Task_Manager_Access;
       Provider          : Keystore.Passwords.Provider_Access;
+      Key_Provider      : Keystore.Passwords.Keys.Key_Provider_Access;
       Slot              : Keystore.Key_Slot;
       Worker_Count      : aliased Integer := 1;
       Version           : aliased Boolean := False;
@@ -89,6 +91,7 @@ private
       Config_File       : aliased GNAT.Strings.String_Access;
       Wallet_File       : aliased GNAT.Strings.String_Access;
       Data_Path         : aliased GNAT.Strings.String_Access;
+      Wallet_Key_File   : aliased GNAT.Strings.String_Access;
       Password_File     : aliased GNAT.Strings.String_Access;
       Password_Env      : aliased GNAT.Strings.String_Access;
       Unsafe_Password   : aliased GNAT.Strings.String_Access;
