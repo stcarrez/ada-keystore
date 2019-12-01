@@ -45,4 +45,11 @@ package Keystore.Passwords is
    procedure To_Provider (Secret  : in Secret_Key;
                           Process : not null access procedure (P : in out Provider'Class));
 
+private
+
+   type Internal_Key_Provider is limited interface;
+
+   procedure Save_Key (Provider : in Internal_Key_Provider;
+                       Data     : out Ada.Streams.Stream_Element_Array) is abstract;
+
 end Keystore.Passwords;
