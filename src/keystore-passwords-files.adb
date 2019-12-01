@@ -192,6 +192,8 @@ package body Keystore.Passwords.Files is
       Random  : Keystore.Random.Generator;
       Dir     : constant String := Ada.Directories.Containing_Directory (Path);
       File    : Ada.Streams.Stream_IO.File_Type;
+      P       : Interfaces.C.Strings.chars_ptr;
+      Res     : Integer;
    begin
       if not Ada.Directories.Exists (Dir) then
          Ada.Directories.Create_Path (Dir);
@@ -206,6 +208,17 @@ package body Keystore.Passwords.Files is
       Random.Generate (Result.Password);
       Ada.Streams.Stream_IO.Write (File, Result.Password);
       Ada.Streams.Stream_IO.Close (File);
+
+      P := Interfaces.C.Strings.New_String (Path);
+      Res := Util.Systems.Os.Sys_Chmod (Path => P,
+                                        Mode => 8#0600#);
+      Interfaces.C.Strings.Free (P);
+
+      P := Interfaces.C.Strings.New_String (Dir);
+      Res := Util.Systems.Os.Sys_Chmod (Path => P,
+                                        Mode => 8#0700#);
+      Interfaces.C.Strings.Free (P);
+
       return Result.all'Access;
    end Generate;
 
