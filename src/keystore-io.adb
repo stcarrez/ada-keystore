@@ -150,7 +150,7 @@ package body Keystore.IO is
          --  Check that the block hash mac matches our hash.
          if Hash /= Data (BT_HMAC_HEADER_POS .. Data'Last) then
             Keystore.Logs.Warn (Log, "Block{0} HMAC-256 is invalid", Into.Block);
-            raise Invalid_Block;
+            raise Invalid_Signature;
          end if;
       end Read;
 
