@@ -44,6 +44,8 @@ package body Keystore.Tests is
    TEST_TOOL3_PATH  : constant String := "regtests/result/test-tool-3.akt";
    DATA_TOOL3_PATH  : constant String := "regtests/result/test-tool-3";
    TEST_TOOL4_PATH  : constant String := "regtests/result/test-tool-4.akt";
+   TEST_TOOL5_PATH  : constant String := "regtests/result/test-tool-5.akt";
+   TEST_WALLET_KEY_PATH : constant String := "regtests/result/keys/wallet.keys";
 
    function Tool return String;
    function Compare (Path1 : in String;
@@ -140,6 +142,8 @@ package body Keystore.Tests is
                        Test_Tool_Extract_Error'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Info",
                        Test_Tool_Info'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Create (Wallet_Key)",
+                       Test_Tool_With_Wallet_Key_File'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -734,5 +738,39 @@ package body Keystore.Tests is
          T.Execute (Tool & " info " & Dir & "/" & Id & "-1.dkt -p admin", Result, 0);
       end;
    end Test_Tool_Info;
+
+   --  ------------------------------
+   --  Test the akt commands with --wallet-key-file
+   --  ------------------------------
+   procedure Test_Tool_With_Wallet_Key_File (T : in out Test) is
+      Path    : constant String := Util.Tests.Get_Test_Path (TEST_TOOL5_PATH);
+      Keys    : constant String := Util.Tests.Get_Test_Path (TEST_WALLET_KEY_PATH);
+      Result  : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      if Ada.Directories.Exists (Path) then
+         Ada.Directories.Delete_File (Path);
+      end if;
+
+      --  Create keystore
+      T.Execute (Tool & " create " & Path & " --wallet-key-file " & Keys &
+                   " -p admin --counter-range 10:100", Result);
+      Util.Tests.Assert_Equals (T, "", Result, "create command failed");
+      T.Assert (Ada.Directories.Exists (Path),
+                "Keystore file does not exist");
+
+      --  List content => empty result
+      T.Execute (Tool & " list " & Path & " --wallet-key-file " & Keys & " -p admin", Result);
+      Util.Tests.Assert_Equals (T, "", Result, "list command failed");
+
+      --  Set property
+      T.Execute (Tool & " set " & Path & " --wallet-key-file " & Keys &
+                   " -p admin testing my-testing-value", Result);
+      Util.Tests.Assert_Equals (T, "", Result, "set command failed");
+
+      --  Even with good password, unlocking should fail because of missing wallet-key-file.
+      T.Execute (Tool & " list " & Path & " -p admin testing my-testing-value", Result, 1);
+      Util.Tests.Assert_Matches (T, "The keystore file is corrupted: invalid data block",
+                                 Result, "list command failed");
+   end Test_Tool_With_Wallet_Key_File;
 
 end Keystore.Tests;
