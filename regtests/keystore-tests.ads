@@ -75,6 +75,9 @@ package Keystore.Tests is
    --  Test the akt info command on several keystore files.
    procedure Test_Tool_Info (T : in out Test);
 
+   --  Test the akt commands with --wallet-key-file
+   procedure Test_Tool_With_Wallet_Key_File (T : in out Test);
+
    procedure Execute (T       : in out Test;
                       Command : in String;
                       Result  : out Ada.Strings.Unbounded.Unbounded_String;
