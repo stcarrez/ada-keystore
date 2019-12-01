@@ -211,7 +211,7 @@ package body Keystore.Passwords.GPG is
                             Mode    => Util.Processes.READ_WRITE);
 
       Input := Util.Processes.Get_Input_Stream (Proc);
-      Input.Write (Context.Data (Context.Data'First + 4 .. Context.Data'Last));
+      Input.Write (Context.Data (POS_LOCK_KEY .. Context.Data'Last));
       Input.Close;
 
       Output := Util.Processes.Get_Output_Stream (Proc);
@@ -362,13 +362,13 @@ package body Keystore.Passwords.GPG is
    begin
       Log.Info ("Decrypt GPG secret using {0}", Cmd);
 
-      Context.Data (1 .. 4) := Data (Data'First .. Data'First + 3);
-      Last := 4;
+      Context.Data (POS_TAG .. POS_TAG_LAST) := Data (Data'First .. Data'First + 3);
+      Last := POS_TAG_LAST;
       Util.Processes.Spawn (Proc    => Proc,
                             Command => Cmd,
                             Mode    => Util.Processes.READ_WRITE);
 
-      Util.Processes.Get_Input_Stream (Proc).Write (Data (Data'First + 4 .. Data'Last));
+      Util.Processes.Get_Input_Stream (Proc).Write (Data (POS_LOCK_KEY .. Data'Last));
       Util.Processes.Get_Input_Stream (Proc).Close;
       while Last < Context.Data'Last loop
          Util.Processes.Get_Output_Stream (Proc).Read
