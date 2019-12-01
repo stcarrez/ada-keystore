@@ -107,6 +107,9 @@ package Keystore is
    --  Invalid data block when reading the wallet.
    Invalid_Block : exception;
 
+   --  Invalid HMAC signature when reading a block.
+   Invalid_Signature : exception;
+
    --  Invalid storage identifier when loading a wallet data block.
    Invalid_Storage : exception;
 
