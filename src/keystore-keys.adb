@@ -450,10 +450,19 @@ package body Keystore.Keys is
       Set_IV (Manager.Crypt, Block.Block);
       Buffer.Buffer := Buffers.Allocate (Block);
       Manager.Header_Block := Block;
-      Stream.Read (Decipher     => Manager.Crypt.Decipher,
-                   Sign         => Manager.Crypt.Sign,
-                   Decrypt_Size => Size,
-                   Into         => Buffer.Buffer);
+      begin
+         Stream.Read (Decipher     => Manager.Crypt.Decipher,
+                      Sign         => Manager.Crypt.Sign,
+                      Decrypt_Size => Size,
+                      Into         => Buffer.Buffer);
+
+      exception
+         when Invalid_Signature =>
+            Keystore.Logs.Warn (Log, "Invalid signature for wallet block{0}," &
+                                  " may be an invalid wallet key was used",
+                                Manager.Header_Block);
+            raise Bad_Password;
+      end;
       if Marshallers.Get_Header_16 (Buffer) /= IO.BT_WALLET_HEADER then
          Keystore.Logs.Warn (Log, "Invalid wallet block header BN{0}", Manager.Header_Block);
          raise Invalid_Block;
