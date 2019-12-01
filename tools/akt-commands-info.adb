@@ -20,6 +20,7 @@ with Keystore.Verifier;
 package body AKT.Commands.Info is
 
    use type Keystore.Header_Slot_Count_Type;
+   use type Keystore.Passwords.Keys.Key_Provider_Access;
 
    --  ------------------------------
    --  List the value entries of the keystore.
@@ -43,6 +44,7 @@ package body AKT.Commands.Info is
       end if;
 
       Setup_Password_Provider (Context);
+      Setup_Key_Provider (Context);
 
       Context.Wallet.Open (Path => Path,
                            Data_Path => Context.Data_Path.all,
@@ -51,6 +53,9 @@ package body AKT.Commands.Info is
          return;
       end if;
       if not Context.No_Password_Opt then
+         if Context.Key_Provider /= null then
+            Context.Wallet.Set_Master_Key (Context.Key_Provider.all);
+         end if;
          Context.Wallet.Unlock (Context.Provider.all, Context.Slot);
       else
          Context.GPG.Load_Secrets (Context.Wallet);
