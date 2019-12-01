@@ -16,7 +16,6 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Keystore.IO;
-with Util.Encoders;
 package body Keystore.Containers is
 
    use type Keystore.Passwords.Keys.Key_Provider_Access;
