@@ -43,6 +43,7 @@ with Keystore.Passwords.Cmds;
 package body AKT.Commands is
 
    use type Keystore.Header_Slot_Count_Type;
+   use type Keystore.Passwords.Keys.Key_Provider_Access;
 
    Help_Command            : aliased AKT.Commands.Drivers.Help_Command_Type;
    Set_Command             : aliased AKT.Commands.Set.Command_Type;
@@ -90,9 +91,16 @@ package body AKT.Commands is
                            Info      => Context.Info);
 
       if not Context.No_Password_Opt or else Context.Info.Header_Count = 0 then
+         if Context.Key_Provider /= null then
+            Context.Wallet.Set_Master_Key (Context.Key_Provider.all);
+         end if;
+
          Context.Wallet.Unlock (Context.Provider.all, Context.Slot);
       else
          Context.GPG.Load_Secrets (Context.Wallet);
+
+         Context.Wallet.Set_Master_Key (Context.GPG);
+
          Context.Wallet.Unlock (Context.GPG, Context.Slot);
       end if;
 
@@ -305,6 +313,11 @@ package body AKT.Commands is
                         Long_Switch => "--passcmd=",
                         Argument => "COMMAND",
                         Help   => -("Run the command to get the password"));
+      GC.Define_Switch (Config => Config,
+                        Output => Context.Wallet_Key_File'Access,
+                        Long_Switch => "--wallet-key-file=",
+                        Argument => "PATH",
+                        Help   => -("Read the file that contains the wallet keys"));
    end Setup;
 
    procedure Setup_Password_Provider (Context : in out Context_Type) is
@@ -320,6 +333,10 @@ package body AKT.Commands is
       else
          Context.Provider := Keystore.Passwords.Input.Create (False);
          Context.No_Password_Opt := True;
+      end if;
+
+      if Context.Wallet_Key_File'Length > 0 then
+         Context.Key_Provider := Keystore.Passwords.Files.Create (Context.Wallet_Key_File.all);
       end if;
    end Setup_Password_Provider;
 
