@@ -21,6 +21,7 @@ package Keystore.Passwords.Keys is
    use type Ada.Streams.Stream_Element_Offset;
 
    type Key_Provider is limited interface;
+   type Key_Provider_Access is access all Key_Provider'Class;
 
    --  Get the Key, IV and signature.
    procedure Get_Keys (From : in Key_Provider;
