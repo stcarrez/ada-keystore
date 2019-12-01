@@ -340,6 +340,7 @@ package body AKT.Commands is
          Context.Provider := Keystore.Passwords.Input.Create (False);
          Context.No_Password_Opt := True;
       end if;
+      Context.Key_Provider := Keystore.Passwords.Keys.Create (Keystore.DEFAULT_WALLET_KEY);
    end Setup_Password_Provider;
 
    procedure Setup_Key_Provider (Context : in out Context_Type) is
