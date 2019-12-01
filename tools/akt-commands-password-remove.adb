@@ -19,6 +19,7 @@ with Ada.Text_IO;
 package body AKT.Commands.Password.Remove is
 
    use type Keystore.Header_Slot_Count_Type;
+   use type Keystore.Passwords.Keys.Key_Provider_Access;
 
    function Get_Slot (Value : in String) return Keystore.Key_Slot;
 
@@ -53,6 +54,9 @@ package body AKT.Commands.Password.Remove is
                            Info => Context.Info);
 
       if not Context.No_Password_Opt or else Context.Info.Header_Count = 0 then
+         if Context.Key_Provider /= null then
+            Context.Wallet.Set_Master_Key (Context.Key_Provider.all);
+         end if;
          Context.Wallet.Unlock (Context.Provider.all, Context.Slot);
 
          Context.Wallet.Remove_Key (Password => Context.Provider.all,
@@ -60,6 +64,7 @@ package body AKT.Commands.Password.Remove is
                                     Force    => Command.Force);
       else
          Context.GPG.Load_Secrets (Context.Wallet);
+         Context.Wallet.Set_Master_Key (Context.GPG);
          Context.Wallet.Unlock (Context.GPG, Context.Slot);
          Context.Wallet.Remove_Key (Password => Context.GPG,
                                     Slot     => Slot,
