@@ -347,6 +347,9 @@ package Keystore is
                   Name      : in String) return Entry_Info is abstract with
      Pre'Class => Container.Is_Open;
 
+   DEFAULT_WALLET_KEY : constant String
+     := "If you can't give me poetry, can't you give me poetical science?";
+
 private
 
    type UUID_Type is array (1 .. 4) of Interfaces.Unsigned_32;
