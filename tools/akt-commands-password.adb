@@ -39,6 +39,7 @@ package body AKT.Commands.Password is
       New_Password_Provider : Keystore.Passwords.Provider_Access;
    begin
       Setup_Password_Provider (Context);
+      Setup_Key_Provider (Context);
       if Command.Counter_Range /= null and then Command.Counter_Range'Length > 0 then
          Parse_Range (Command.Counter_Range.all, Config);
       end if;
