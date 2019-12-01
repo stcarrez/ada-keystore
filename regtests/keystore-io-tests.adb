@@ -122,7 +122,7 @@ package body Keystore.IO.Tests is
             T.Fail ("An Invalid_Block exception is expected.");
 
          exception
-            when Invalid_Block =>
+            when Invalid_Block | Invalid_Signature =>
                null;
          end;
          Stream.Close;
