@@ -19,16 +19,22 @@ with Util.Encoders.SHA256;
 with Util.Encoders.HMAC.SHA256;
 package body Keystore.Passwords.Keys is
 
-   type Raw_Key_Provider (Len : Key_Length) is limited new Key_Provider with record
+   type Raw_Key_Provider (Len : Key_Length) is limited new Key_Provider
+     and Internal_Key_Provider with record
       Password : Ada.Streams.Stream_Element_Array (1 .. Len);
    end record;
    type Raw_Key_Provider_Access is access all Raw_Key_Provider'Class;
 
    --  Get the Key, IV and signature.
+   overriding
    procedure Get_Keys (From : in Raw_Key_Provider;
                        Key  : out Secret_Key;
                        IV   : out Secret_Key;
                        Sign : out Secret_Key);
+
+   overriding
+   procedure Save_Key (Provider : in Raw_Key_Provider;
+                       Data     : out Ada.Streams.Stream_Element_Array);
 
    --  ------------------------------
    --  Create a key, iv, sign provider from the string.
@@ -78,5 +84,12 @@ package body Keystore.Passwords.Keys is
       Last := First + Sign.Length - 1;
       Util.Encoders.Create (From.Password (First .. Last), Sign);
    end Get_Keys;
+
+   overriding
+   procedure Save_Key (Provider : in Raw_Key_Provider;
+                       Data     : out Ada.Streams.Stream_Element_Array) is
+   begin
+      Data := Provider.Password;
+   end Save_Key;
 
 end Keystore.Passwords.Keys;
