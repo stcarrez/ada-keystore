@@ -244,6 +244,8 @@ package body Keystore.Passwords.GPG is
 
       Util.Processes.Wait (Proc);
       if Util.Processes.Get_Exit_Status (Proc) /= 0 or Last <= 4 then
+         Log.Warn ("GPG encrypt command '{0}' terminated with exit code{1}", Cmd,
+                   Natural'Image (Util.Processes.Get_Exit_Status (Proc)));
          raise Keystore.Bad_Password;
       end if;
 
@@ -380,6 +382,7 @@ package body Keystore.Passwords.GPG is
       Last   : Ada.Streams.Stream_Element_Offset := 0;
       Last2  : Ada.Streams.Stream_Element_Offset;
       Cmd    : constant String := To_String (Context.Decrypt_Command);
+      Status : Natural;
    begin
       Log.Info ("Decrypt GPG secret using {0}", Cmd);
 
@@ -399,9 +402,13 @@ package body Keystore.Passwords.GPG is
       end loop;
 
       Util.Processes.Wait (Proc);
-      Context.Valid_Key := Util.Processes.Get_Exit_Status (Proc) = 0 and Last > 4;
+      Status := Util.Processes.Get_Exit_Status (Proc);
+      Context.Valid_Key := Status = 0 and Last > 4;
       if Context.Valid_Key then
          Context.Create_Secret (Context.Data);
+      elsif Status /= 0 then
+         Log.Warn ("GPG decrypt command '{0}' terminated with exit code{1}", Cmd,
+                   Natural'Image (Status));
       end if;
       Context.Data (POS_TAG .. POS_LOCK_IV_LAST) := (others => 0);
    end Decrypt_GPG_Secret;
