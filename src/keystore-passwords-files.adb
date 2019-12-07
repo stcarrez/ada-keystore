@@ -20,6 +20,7 @@ with Ada.Directories;
 with Ada.Streams.Stream_IO;
 with Util.Systems.Types;
 with Util.Systems.Os;
+with Util.Log.Loggers;
 with Keystore.Random;
 package body Keystore.Passwords.Files is
 
@@ -57,6 +58,8 @@ package body Keystore.Passwords.Files is
                        IV   : out Secret_Key;
                        Sign : out Secret_Key);
 
+   Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Passwords.Files");
+
    overriding
    procedure Save_Key (Provider : in Key_Provider;
                        Data     : out Ada.Streams.Stream_Element_Array);
@@ -66,6 +69,7 @@ package body Keystore.Passwords.Files is
       Stat    : aliased Util.Systems.Types.Stat_Type;
       Res     : Integer;
       Result  : Ada.Streams.Stream_Element_Count;
+      Dir     : constant String := Ada.Directories.Containing_Directory (Path);
    begin
       --  Verify that the file is readable only by the current user.
       P := Interfaces.C.Strings.New_String (Path);
@@ -73,33 +77,40 @@ package body Keystore.Passwords.Files is
                                        Stat => Stat'Access);
       Interfaces.C.Strings.Free (P);
       if Res /= 0 then
+         Log.Info ("Password file {0} does not exist", Path);
          raise Keystore.Bad_Password with "Password file does not exist";
       end if;
       if (Stat.st_mode and 8#0077#) /= 0 then
+         Log.Info ("Password file {0} is not safe", Path);
          raise Keystore.Bad_Password with "Password file is not safe";
       end if;
       if Stat.st_size = 0 then
+         Log.Info ("Password file {0} is empty", Path);
          raise Keystore.Bad_Password with "Password file is empty";
       end if;
       if Stat.st_size > MAX_FILE_SIZE then
+         Log.Info ("Password file {0} is too big", Path);
          raise Keystore.Bad_Password with "Password file is too big";
       end if;
       Result := Ada.Streams.Stream_Element_Offset (Stat.st_size);
 
       --  Verify that the parent directory is readable only by the current user.
-      P := Interfaces.C.Strings.New_String (Ada.Directories.Containing_Directory (Path));
+      P := Interfaces.C.Strings.New_String (Dir);
       Res := Util.Systems.Os.Sys_Stat (Path => P,
                                        Stat => Stat'Access);
       Interfaces.C.Strings.Free (P);
       if Res /= 0 then
+         Log.Info ("Directory {0} is not safe for password file", Dir);
          raise Keystore.Bad_Password
          with "Directory that contains password file cannot be checked";
       end if;
       if (Stat.st_mode and 8#0077#) /= 0 then
+         Log.Info ("Directory {0} is not safe for password file", Dir);
          raise Keystore.Bad_Password
          with "Directory that contains password file is not safe";
       end if;
 
+      Log.Info ("Password file {0} passes the security checks", Path);
       return Result;
    end Verify_And_Get_Size;
 
@@ -209,9 +220,11 @@ package body Keystore.Passwords.Files is
       Res     : Integer with Unreferenced;
    begin
       if not Ada.Directories.Exists (Dir) then
+         Log.Info ("Creating directory {0}", Dir);
          Ada.Directories.Create_Path (Dir);
       end if;
 
+      Log.Info ("Creating password file {0}", Path);
       Ada.Streams.Stream_IO.Create (File => File,
                                     Mode => Ada.Streams.Stream_IO.Out_File,
                                     Name => Path);
