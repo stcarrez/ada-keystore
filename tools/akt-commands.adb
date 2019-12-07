@@ -338,6 +338,8 @@ package body AKT.Commands is
          Context.Provider := Keystore.Passwords.Cmds.Create (Context.Password_Command.all);
       elsif Context.Password_File'Length > 0 then
          Context.Provider := Keystore.Passwords.Files.Create (Context.Password_File.all);
+      elsif Context.Password_Command'Length > 0 then
+         Context.Provider := Keystore.Passwords.Cmds.Create (Context.Password_Command.all);
       elsif Context.Unsafe_Password'Length > 0 then
          Context.Provider := Keystore.Passwords.Unsafe.Create (Context.Unsafe_Password.all);
       else
