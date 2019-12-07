@@ -20,6 +20,7 @@ with Keystore.Files.Tests;
 with Keystore.IO.Tests;
 with Keystore.Tests;
 with Keystore.Tools.Tests;
+with Keystore.Passwords.Tests;
 with Keystore.GPG_Tests;
 package body Keystore.Testsuite is
 
@@ -27,6 +28,7 @@ package body Keystore.Testsuite is
 
    function Suite return Util.Tests.Access_Test_Suite is
    begin
+      Keystore.Passwords.Tests.Add_Tests (Tests'Access);
       Keystore.IO.Tests.Add_Tests (Tests'Access);
       Keystore.Files.Tests.Add_Tests (Tests'Access);
       Keystore.Tools.Tests.Add_Tests (Tests'Access);
