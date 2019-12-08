@@ -1,12 +1,12 @@
 .\"
 .\"
-.TH AKT 1 "Dec 1, 2019" "Ada Keystore Tool"
+.TH AKT 1 "Dec 8, 2019" "Ada Keystore Tool"
 .SH NAME
 akt - Tool to protect your sensitive data with secure storage
 .SH SYNOPSIS
 .B akt
 [ -v ] [-vv] [-vv] [-V] [ -c
-.I file
+.I config-file
 ] [-t
 .I count
 ] [-z]
@@ -106,7 +106,7 @@ Enable the verbose mode.
 Enable debugging output.
 .TP 5
 -c
-.I file
+.I config-file
 Defines the path of the global
 .I akt
 configuration file.
@@ -181,10 +181,13 @@ Erase and fill with zeros instead of random values.
 .\"
 .SS The create command
 .RS 0
-akt \fBcreate\fR [--counter-range \fImin\fR:\fImax\fR] [--split \fIcount\fR] [--gpg \fIuser\fP ...]
+akt \fBcreate\fR \fIkeystore.akt\fR [--force] [--counter-range \fImin\fR:\fImax\fR] [--split \fIcount\fR] [--gpg \fIuser\fP ...]
 .RE
 .PP
-Create a new keystore and protect it with the password.
+Create a new keystore and protect it with the password.  When the keystore
+file already exist, the create operation will fail unless the
+.B --force
+option is passed.
 .\"
 .PP
 The password to protect the wallet is passed using one of the following options:
@@ -264,7 +267,7 @@ specified name.  It can be used as a target for a pipe command.
 .\"
 .SS The remove command
 .RS 0
-akt \fBremove\fP \fIname\fR ...
+akt \fBremove\fP \fIkeystore.akt\fR \fIname\fR ...
 .RE
 .PP
 The
@@ -326,7 +329,7 @@ option prevents the output of the trailing newline.
 .\"
 .SS The password-add command
 .RS 0
-akt \fBpassword-add\fR [--new-passfile \fIfile\fR] [--new-password \fIpassword\fR] [--new-passenv \fIname\fR]
+akt \fBpassword-add\fR \fIkeystore.akt\fR [--new-passfile \fIfile\fR] [--new-password \fIpassword\fR] [--new-passenv \fIname\fR]
 .RE
 .PP
 The
@@ -338,7 +341,7 @@ password.
 .\"
 .SS The password-remove command
 .RS 0
-akt \fBpassword-remove\fR [--force]
+akt \fBpassword-remove\fR \fIkeystore.akt\fR [--force]
 .RE
 .PP
 The
