@@ -30,7 +30,8 @@ package body Keystore.Files is
    procedure Open (Container : in out Wallet_File;
                    Password  : in Secret_Key;
                    Path      : in String;
-                   Data_Path : in String := "") is
+                   Data_Path : in String := "";
+                   Config    : in Wallet_Config := Secure_Config) is
       procedure Process (Provider : in out Keystore.Passwords.Provider'Class);
 
       procedure Process (Provider : in out Keystore.Passwords.Provider'Class) is
@@ -41,7 +42,7 @@ package body Keystore.Files is
 
       Info     : Wallet_Info;
    begin
-      Container.Open (Path, Data_Path, Info);
+      Container.Open (Path, Data_Path, Config, Info);
       Keystore.Passwords.To_Provider (Password, Process'Access);
 
       Log.Info ("Keystore {0} is opened", Path);
@@ -54,6 +55,7 @@ package body Keystore.Files is
    procedure Open (Container : in out Wallet_File;
                    Path      : in String;
                    Data_Path : in String := "";
+                   Config    : in Wallet_Config := Secure_Config;
                    Info      : out Wallet_Info) is
       use IO.Files;
       Block         : IO.Storage_Block;
@@ -67,7 +69,7 @@ package body Keystore.Files is
       Wallet_Stream := new IO.Files.Wallet_Stream;
       Stream := IO.Refs.Create (Wallet_Stream.all'Access);
       Wallet_Stream.Open (Path, Data_Path);
-      Container.Container.Open (1, Block, Stream);
+      Container.Container.Open (Config, 1, Block, Stream);
       Info := Wallet_Stream.Get_Info;
 
       Log.Info ("Keystore {0} is opened", Path);
