@@ -33,6 +33,7 @@ package Keystore.Tests is
 
    --  Test the akt keystore creation with password file.
    procedure Test_Tool_Create_Password_File (T : in out Test);
+   procedure Test_Tool_Create_Password_Command (T : in out Test);
 
    --  Test the akt command adding and removing values.
    procedure Test_Tool_Set_Remove (T : in out Test);
