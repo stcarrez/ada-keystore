@@ -42,10 +42,9 @@ private package Keystore.Repository is
    --  IO stream.  The wallet meta data is decrypted using AES-CTR using the given secret
    --  key and initial vector.
    procedure Open (Repository : in out Wallet_Repository;
-                   Password   : in out Keystore.Passwords.Provider'Class;
+                   Config     : in Keystore.Wallet_Config;
                    Ident      : in Wallet_Identifier;
                    Block      : in Keystore.IO.Storage_Block;
-                   Keys       : in out Keystore.Keys.Key_Manager;
                    Stream     : in IO.Wallet_Stream_Access);
 
    procedure Open (Repository   : in out Wallet_Repository;
@@ -63,6 +62,11 @@ private package Keystore.Repository is
                      Ident      : in Wallet_Identifier;
                      Keys       : in out Keystore.Keys.Key_Manager;
                      Stream     : in IO.Wallet_Stream_Access);
+
+   procedure Unlock (Repository : in out Wallet_Repository;
+                     Password   : in out Keystore.Passwords.Provider'Class;
+                     Block      : in Keystore.IO.Storage_Block;
+                     Keys       : in out Keystore.Keys.Key_Manager);
 
    procedure Add (Repository : in out Wallet_Repository;
                   Name       : in String;
@@ -197,8 +201,7 @@ private
    end record;
 
    type Wallet_Entry (Length    : Natural;
-                      Is_Wallet : Boolean) is
-   limited record
+                      Is_Wallet : Boolean) is limited record
       --  The block header that contains this entry.
       Header       : Wallet_Directory_Entry_Access;
       Id           : Wallet_Entry_Index;
@@ -207,11 +210,12 @@ private
       Update_Date  : Ada.Calendar.Time;
       Access_Date  : Ada.Calendar.Time;
       Entry_Offset : IO.Block_Index := IO.Block_Index'First;
-      Name         : aliased String (1 .. Length);
 
       --  List of data key blocks.
       Data_Blocks  : Wallet_Data_Key_List.List;
       Block_Count  : Natural := 0;
+
+      Name         : aliased String (1 .. Length);
 
       case Is_Wallet is
          when True =>
@@ -250,7 +254,6 @@ private
       Next_Id        : Wallet_Entry_Index;
       Next_Wallet_Id : Wallet_Identifier;
       Directory_List : Wallet_Directory_List.List;
-      Randomize      : Boolean := False;
       Root           : IO.Storage_Block;
       IV             : Util.Encoders.AES.Word_Block_Type;
       Config         : Keystore.Keys.Wallet_Config;
