@@ -31,7 +31,8 @@ private package Keystore.Containers is
 
       procedure Initialize;
 
-      procedure Open (Ident         : in Wallet_Identifier;
+      procedure Open (Config        : in Wallet_Config;
+                      Ident         : in Wallet_Identifier;
                       Block         : in Keystore.IO.Storage_Block;
                       Wallet_Stream : in out Keystore.IO.Refs.Stream_Ref);
 
