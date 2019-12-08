@@ -86,6 +86,8 @@ package body Keystore.Tests is
                        Test_Tool_Invalid'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Create (password-file)",
                        Test_Tool_Create_Password_File'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Create (Error)",
+                       Test_Tool_Create_Error'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Remove",
                        Test_Tool_Set_Remove'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Set+Remove",
@@ -284,6 +286,33 @@ package body Keystore.Tests is
                                  Result, "list command failed");
 
    end Test_Tool_Create;
+
+   --  ------------------------------
+   --  Test the akt keystore creation.
+   --  ------------------------------
+   procedure Test_Tool_Create_Error (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      --  Wrong option --counter-range
+      T.Execute (Tool & " create " & Path & " -p admin --counter-range bob", Result, 1);
+      Util.Tests.Assert_Matches (T, "Invalid counter range: bob", Result,
+                                 "Invalid message");
+
+      --  Wrong range
+      T.Execute (Tool & " create " & Path & " -p admin --counter-range 100:1", Result, 1);
+      Util.Tests.Assert_Matches (T, "The min counter is greater than max counter", Result,
+                                 "Invalid message");
+
+      T.Execute (Tool & " create " & Path & " -p admin --counter-range 100000000000", Result, 1);
+      Util.Tests.Assert_Matches (T, "Invalid counter range: 100000000000", Result,
+                                 "Invalid message");
+
+      T.Execute (Tool & " create " & Path & " -p admin --counter-range -1000", Result, 1);
+      Util.Tests.Assert_Matches (T, "Value is out of range", Result,
+                                 "Invalid message");
+
+   end Test_Tool_Create_Error;
 
    --  ------------------------------
    --  Test the akt keystore creation with password file.
