@@ -78,6 +78,7 @@ private
    type Context_Type is limited new Ada.Finalization.Limited_Controlled with record
       Wallet            : Keystore.Files.Wallet_File;
       Info              : Keystore.Wallet_Info;
+      Config            : Keystore.Wallet_Config := Keystore.Secure_Config;
       Workers           : Keystore.Task_Manager_Access;
       Provider          : Keystore.Passwords.Provider_Access;
       Key_Provider      : Keystore.Passwords.Keys.Key_Provider_Access;
