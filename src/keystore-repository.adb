@@ -70,25 +70,17 @@ package body Keystore.Repository is
       return Repository.Id;
    end Get_Identifier;
 
-   --  Open the wallet repository by reading the meta data block header from the wallet
-   --  IO stream.  The wallet meta data is decrypted using AES-CTR using the given secret
-   --  key and initial vector.
    procedure Open (Repository : in out Wallet_Repository;
-                   Password   : in out Keystore.Passwords.Provider'Class;
+                   Config     : in Keystore.Wallet_Config;
                    Ident      : in Wallet_Identifier;
                    Block      : in Keystore.IO.Storage_Block;
-                   Keys       : in out Keystore.Keys.Key_Manager;
                    Stream     : in IO.Wallet_Stream_Access) is
    begin
       Repository.Id := Ident;
       Repository.Stream := Stream;
       Repository.Next_Id := 1;
       Repository.Next_Wallet_Id := Ident + 1;
-      Keystore.Keys.Open (Keys, Password, Ident, Block,
-                          Repository.Root, Repository.Config, null, Stream.all);
-      Repository.Workers := Workers.Create (Repository'Unchecked_Access, null, 1).all'Access;
-
-      Entries.Load_Complete_Directory (Repository, Repository.Root);
+      Repository.Config.Randomize := Config.Randomize;
    end Open;
 
    procedure Open (Repository : in out Wallet_Repository;
@@ -140,7 +132,6 @@ package body Keystore.Repository is
       Repository.Next_Id := 1;
       Repository.Next_Wallet_Id := Ident + 1;
       Repository.Stream := Stream;
-      Repository.Randomize := Config.Randomize;
       Repository.Config.Randomize := Config.Randomize;
       Repository.Config.Max_Counter := Interfaces.Unsigned_32 (Config.Max_Counter);
       Repository.Config.Min_Counter := Interfaces.Unsigned_32 (Config.Min_Counter);
@@ -154,7 +145,7 @@ package body Keystore.Repository is
       Repository.Current.Buffer := Buffers.Allocate (Repository.Root);
 
       --  Fill the root directory block with random values or with zeros.
-      if Repository.Randomize then
+      if Repository.Config.Randomize then
          Repository.Random.Generate (Repository.Current.Buffer.Data.Value.Data);
       else
          Repository.Current.Buffer.Data.Value.Data := (others => 0);
@@ -170,6 +161,18 @@ package body Keystore.Repository is
                     Cipher => Repository.Config.Dir.Cipher,
                     Sign   => Repository.Config.Dir.Sign);
    end Create;
+
+   procedure Unlock (Repository : in out Wallet_Repository;
+                     Password   : in out Keystore.Passwords.Provider'Class;
+                     Block      : in Keystore.IO.Storage_Block;
+                     Keys       : in out Keystore.Keys.Key_Manager) is
+   begin
+      Keystore.Keys.Open (Keys, Password, Repository.Id, Block,
+                          Repository.Root, Repository.Config, null, Repository.Stream.all);
+      Repository.Workers := Workers.Create (Repository'Unchecked_Access, null, 1).all'Access;
+
+      Entries.Load_Complete_Directory (Repository, Repository.Root);
+   end Unlock;
 
    procedure Add (Repository : in out Wallet_Repository;
                   Name       : in String;
