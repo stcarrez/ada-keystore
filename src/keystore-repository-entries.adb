@@ -327,7 +327,7 @@ package body Keystore.Repository.Entries is
 
       --  Prepare the new directory block.
       --  Fill the new block with random values or with zeros.
-      if Manager.Randomize then
+      if Manager.Config.Randomize then
          Manager.Random.Generate (Manager.Current.Buffer.Data.Value.Data);
       else
          Manager.Current.Buffer.Data.Value.Data := (others => 0);
@@ -337,6 +337,7 @@ package body Keystore.Repository.Entries is
                               Id   => Manager.Id);
       Marshallers.Put_Unsigned_32 (Manager.Current, 0);
       Marshallers.Put_Block_Index (Manager.Current, IO.Block_Index'Last);
+      Marshallers.Put_Unsigned_32 (Manager.Current, 0);
 
       Manager.Modified.Include (Manager.Current.Buffer.Block, Manager.Current.Buffer.Data);
    end Find_Directory_Block;
@@ -452,7 +453,7 @@ package body Keystore.Repository.Entries is
             Buf.Data (Item.Entry_Offset + 1 .. Directory.Last_Pos - Size)
               := Buf.Data (End_Entry + 1 .. Directory.Last_Pos);
          end if;
-         if Manager.Randomize then
+         if Manager.Config.Randomize then
             --  When strong security is necessary, fill with random values
             --  (except the first 4 bytes).
             Buf.Data (Directory.Last_Pos - Size + 1 .. Directory.Last_Pos - Size + 3)
