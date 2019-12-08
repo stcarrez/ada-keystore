@@ -46,13 +46,15 @@ package body Keystore.Containers is
          Default_Key_Provider.Set_Default_Keys (Master);
       end Initialize;
 
-      procedure Open (Ident         : in Wallet_Identifier;
+      procedure Open (Config        : in Wallet_Config;
+                      Ident         : in Wallet_Identifier;
                       Block         : in Keystore.IO.Storage_Block;
                       Wallet_Stream : in out Keystore.IO.Refs.Stream_Ref) is
       begin
          Stream := Wallet_Stream;
          Master_Block := Block;
          Master_Ident := Ident;
+         Keystore.Repository.Open (Repository, Config, Ident, Block, Stream.Value);
          State := S_PROTECTED;
       end Open;
 
@@ -93,8 +95,7 @@ package body Keystore.Containers is
       procedure Unlock (Password  : in out Keystore.Passwords.Provider'Class;
                         Slot      : out Key_Slot) is
       begin
-         Keystore.Repository.Open (Repository, Password, Master_Ident,
-                                   Master_Block, Master, Stream.Value);
+         Keystore.Repository.Unlock (Repository, Password, Master_Block, Master);
          Slot := Repository.Get_Key_Slot;
          State := S_OPEN;
       end Unlock;
