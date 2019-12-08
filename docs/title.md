@@ -1,7 +1,7 @@
 ---
 title: "Ada Keystore Guide"
 author: [Stephane Carrez]
-date: 2019-11-11
+date: 2019-12-08
 subject: "Ada Keystore"
 tags: [Security, Storage, Wallet, AES-256, HMAC-256, PBKDF2]
 titlepage: true
