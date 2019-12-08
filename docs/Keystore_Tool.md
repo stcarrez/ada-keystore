@@ -2,11 +2,14 @@
 
 ## NAME
 
-akt - Ada Keystore Tool
+akt - Tool to protect your sensitive data with secure storage
 
 ## SYNOPSIS
 
-*akt* [ -v ] [-vv] [-V] [ -f
+*akt* [ -v ] [-vv] [-vv] [-V] [ -c
+_config-file_ ] [-t
+_count_ ] [-z]
+_command_  [-k
 _file_ ] [ -d
 _dir_ ] [ -p
 _password_ ] [--password
@@ -14,8 +17,9 @@ _password_ ] [--passfile
 _file_ ] [--passenv
 _name_ ] [--passfd
 _fd_ ] [--passask] [--passcmd
-_cmd_ ]
-_command_ 
+_cmd_ ] [--wallet-key-file
+_file_ ]
+
 
 ## DESCRIPTION
 
@@ -79,7 +83,15 @@ Enable the verbose mode.
 -vv
 Enable debugging output.
 
--f file
+-c
+_config-file_ Defines the path of the global
+_akt_ configuration file.
+
+-t
+_count_ Defines the number of threads for the encryption and decryption process.
+By default, it uses the number of system CPU cores.
+
+-k file
 
 Specifies the path of the keystore file to open.
 
@@ -130,15 +142,24 @@ _cmd_. The command should print the password on its standard output without end 
 The password is retrieved through a pipe that
 _akt_ sets while launching the command.
 
+--wallet-key-file file
+Defines the path of a file which contains the wallet master key file.
+
+-z
+Erase and fill with zeros instead of random values.
+
 ## COMMANDS
+
 
 
 ### The create command
 ```
-akt create [--counter-range min:max] [--split count] [--gpg user]
+akt create keystore.akt [--force] [--counter-range min:max] [--split count] [--gpg user ...]
 ```
 
-Create a new keystore and protect it with the password.
+Create a new keystore and protect it with the password.  When the keystore
+file already exist, the create operation will fail unless the
+*--force* option is passed.
 
 The password to protect the wallet is passed using one of the following options:
 *--passfile* ,
@@ -149,8 +170,10 @@ The password to protect the wallet is passed using one of the following options:
 
 The
 *--counter-range* option allows to control the range for the random counter used by PBKDF2
-to generate the encryption key derived from the specified password.  High values
-provide a strongest derived key at the expense of speed.
+to generate the encryption key derived from the specified password.
+High values provide a strongest derived key at the expense of speed.
+This option is ignored when the
+*--gpg* option is used.
 
 The
 *--split* option indicates to use several separate files for the data blocks
@@ -164,33 +187,46 @@ The option argument defines the GPG user's name or GPG key.
 When the keystore password is protected by the user's GPG key,
 a random password is generated to protect the keystore.
 The
-_gpg2_(1) command is used to encrypt that password and save it in the keystore
-header.  The
-_gpg2_(1) command is then used to decrypt that and be able to unlock the keystore.
+_gpg2_(1) command is used to encrypt that password using the user's public key
+and save it in the keystore header.  The
+_gpg2_(1) command is then used to decrypt that and be able to unlock the keystore
+provided that the user's private key is known.  When using the
+*--gpg* option, it is possible to protect the keystore for several users, thus
+being able to share the secure file with each of them.
+
 
 ### The set command
 ```
-akt set name [value | -f file] 
+akt set keystore.akt name value
 ```
 
 The
-_set_ command is used to store a content in the wallet.  The content is either
-passed as argument or it can be read from a file by using the
-_-f_ option.
+_set_ command is used to store a content passed as command
+line argument in the wallet.  If the wallet already contains
+the name, the value is updated.
+
 
 ### The store command
 ```
-akt store name
+akt store keystore.akt -- name
+```
+```
+akt store keystore.akt {file...|directory...}
 ```
 
-The
-_store_ command is intended to be used as a target for a pipe command.
-It reads the standard input and stores the content which is read
-in the wallet.
+This command can store files or directories recursively in the
+keystore.  It is possible to store several files and directories
+at the same time.
+
+When the
+_--_ option is passed, the command accepts only one
+argument.  It reads the standard input and stores it under the
+specified name.  It can be used as a target for a pipe command.
+
 
 ### The remove command
 ```
-akt remove name ...
+akt remove keystore.akt name ...
 ```
 
 The
@@ -199,9 +235,10 @@ the content to protect is erased and replaced by zeros.
 The secure key that protected the wallet entry is also cleared.
 It is possible to remove several contents.
 
+
 ### The edit command
 ```
-akt edit [-e editor] name
+akt edit keystore.akt [-e editor] name
 ```
 
 The
@@ -215,29 +252,35 @@ _-e_ option, by setting up the
 _EDITOR_ environment variable or by updating the
 _editor_(1) alternative with
 _update-alternative_(1). 
+
 ### The list command
 ```
-akt list
+akt list keystore.akt
 ```
 
 The
-_list_ command describes the entries stored in the wallet.
+_list_ command describes the entries stored in the keystore with
+their name, size, type, creation date and number of keys which
+protect the entry.
+
 
 ### The get command
 ```
-akt get [-n] name...
+akt get keystore.akt [-n] name...
 ```
 
 The
 _get_ command allows to retrieve the value associated with a wallet entry.
 It retrieves the value for each name passed to the command.
+The value is printed on the standard output.
 By default a newline is emitted after each value.
 The
 _-n_ option prevents the output of the trailing newline.
 
+
 ### The password-add command
 ```
-akt password-add [--new-passfile file] [--new-password password] [--new-passenv name]
+akt password-add keystore.akt [--new-passfile file] [--new-password password] [--new-passenv name]
 ```
 
 The
@@ -246,9 +289,10 @@ passwords can be defined to protect the wallet.  The overall security of the wal
 is that of the weakest password.  To add a new password, one must know an existing
 password.
 
+
 ### The password-remove command
 ```
-akt password-remove [--force]
+akt password-remove keystore.akt [--force]
 ```
 
 The
@@ -256,6 +300,7 @@ _password-remove_ command can be used to erase a password from the wallet master
 Removing the last password makes the keystore unusable and it is necessary
 to pass the
 _--force_ option for that.
+
 
 ### The password-set command
 ```
@@ -267,8 +312,8 @@ _password-set_ command allows to change the current wallet password.
 
 ## SECURITY
 
-Wallet master keys are protected by a derived key that is created from the user's
-password using
+Wallet master keys are protected by a derived key that is created from
+the user's password using
 *PBKDF2* and
 *HMAC-256* as hashing operation.  When the wallet is first created, a random salt
 and counter are allocated which are then used by the
@@ -284,14 +329,22 @@ use another method such as using the interactive form, passing the password
 through a file or passing using a socket based communication.
 
 When the wallet master key is protected using
-_gpg2_(1) a 256-bytes random binary string is created to protect the wallet master
-key.  This random binary string is then encrypted using the user's
-
-*--gpg* option is specified only for the creation of the keystore.
+_gpg2_(1) a 32-bytes random binary key and a 16-bytes random binary IV is created
+to protect the wallet master key.  Another set of 80 bytes of random
+binary data is used to encrypt and sign the whole wallet master key block.
+The 128 bytes that form these random binary keys are encrypted using
+the user's GPG public key and the result saved in the keystore header
+block.  The
+*--gpg* option is specified only for the creation of the keystore and allows
+to encrypt a master key slot for several GPG keys.
 To unlock the keystore file, the
 _gpg2_(1) command will be used to decrypt the keystore header content automatically.
 When the user's GPG private key is not found, it is not possible
 to unlock the keystore with this method.
+
+When several GPG keys are used to protect the wallet, they share the same
+80 bytes to decrypt the wallet master key block but they have their own
+key and IV to unlock the key slot.
 
 Depending on the size, a data stored in the wallet is split in one or
 several data entry. Each wallet data entry is then protected by their
@@ -303,6 +356,43 @@ When the
 *--split* option is used, the data storage files only contain the data blocks.
 They do not contain any encryption key.  The data storage files use the
 *.dkt* file extension.
+
+## CONFIGURATION
+
+The
+_akt_ global configuration file contains several configuration properties
+which are used to customize several commands.  These properties can
+be modified with the
+*config* command.
+
+
+### gpg-encrypt
+This property defines the
+_gpg2_(1) command to be used to encrypt a content.  The content to encrypt is
+passed in the standard input and the encrypted content is read from
+the standard output.  The GPG key parameter can be retrieved
+by using the
+_$USER_ pattern.
+
+
+### gpg-decrypt
+This property defines the
+_gpg2_(1) command to be used to decrypt a content.  The content to decrypt is
+passed in the standard input and the decrypted content is read from
+the standard output.
+
+
+### gpg-list-keys
+This property defines the
+_gpg2_(1) command to be used to retrieve the list of available secret keys.
+This command is executed when the keystore file is protected by a
+
+are capable of decrypting it.
+
+
+### fill-zero
+This property controls whether
+_akt_ must fill unused data areas with zeros or with random bytes.
 
 ## SEE ALSO
 
