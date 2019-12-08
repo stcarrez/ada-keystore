@@ -26,7 +26,8 @@ package Keystore.Files is
    procedure Open (Container : in out Wallet_File;
                    Password  : in Secret_Key;
                    Path      : in String;
-                   Data_Path : in String := "") with
+                   Data_Path : in String := "";
+                   Config    : in Wallet_Config := Secure_Config) with
      Pre  => not Container.Is_Open,
      Post => Container.Is_Open;
 
@@ -35,6 +36,7 @@ package Keystore.Files is
    procedure Open (Container : in out Wallet_File;
                    Path      : in String;
                    Data_Path : in String := "";
+                   Config    : in Wallet_Config := Secure_Config;
                    Info      : out Wallet_Info) with
      Pre  => not Container.Is_Open,
      Post => Container.State = S_PROTECTED;
