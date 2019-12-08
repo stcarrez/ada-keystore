@@ -86,6 +86,8 @@ package body Keystore.Tests is
                        Test_Tool_Invalid'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Create (password-file)",
                        Test_Tool_Create_Password_File'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Create (password-cmd)",
+                       Test_Tool_Create_Password_Command'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Create (Error)",
                        Test_Tool_Create_Error'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Remove",
@@ -345,6 +347,35 @@ package body Keystore.Tests is
       Util.Tests.Assert_Matches (T, "^testing", Result, "list command failed");
 
    end Test_Tool_Create_Password_File;
+
+   --  ------------------------------
+   --  Test the akt keystore creation with password file.
+   --  ------------------------------
+   procedure Test_Tool_Create_Password_Command (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      if Ada.Directories.Exists (Path) then
+         Ada.Directories.Delete_File (Path);
+      end if;
+
+      T.Execute (Tool & " create -k " & Path & " --passcmd 'echo -n admin' "
+                 & "--counter-range 100:200",
+                 Result, 0);
+      Util.Tests.Assert_Equals (T, "", Result, "create command failed");
+      T.Assert (Ada.Directories.Exists (Path),
+                "Keystore file does not exist");
+
+      --  Set property
+      T.Execute (Tool & " set -k " & Path & " --passcmd 'echo -n admin' "
+                 & "testing my-testing-value", Result);
+      Util.Tests.Assert_Equals (T, "", Result, "set command failed");
+
+      --  List content => one entry
+      T.Execute (Tool & " list -k " & Path & " --passcmd 'echo -n admin'", Result);
+      Util.Tests.Assert_Matches (T, "^testing", Result, "list command failed");
+
+   end Test_Tool_Create_Password_Command;
 
    --  ------------------------------
    --  Test the akt command adding and removing values.
