@@ -89,6 +89,7 @@ package body AKT.Commands is
 
       Context.Wallet.Open (Path      => Context.Get_Keystore_Path (Args),
                            Data_Path => Context.Data_Path.all,
+                           Config    => Context.Config,
                            Info      => Context.Info);
 
       if not Context.No_Password_Opt or else Context.Info.Header_Count = 0 then
@@ -123,6 +124,7 @@ package body AKT.Commands is
    begin
       Context.Wallet.Open (Path      => Context.Get_Keystore_Path (Args),
                            Data_Path => Context.Data_Path.all,
+                           Config    => Context.Config,
                            Info      => Context.Info);
 
       if not Context.No_Password_Opt or else Context.Info.Header_Count = 0 then
@@ -193,7 +195,7 @@ package body AKT.Commands is
                         Long_Switch => "--debug-dump",
                         Help   => -("Enable debug dump execution"));
       GC.Define_Switch (Config => Context.Command_Config,
-                        Output => Context.Debug'Access,
+                        Output => Context.Zero'Access,
                         Switch => "-z",
                         Long_Switch => "--zero",
                         Help   => -("Erase and fill with zeros instead of random values"));
@@ -389,6 +391,7 @@ package body AKT.Commands is
          return;
       end if;
 
+      Context.Config.Randomize := not Context.Zero;
       declare
          Cmd_Name : constant String := Arguments.Get_Command_Name;
       begin
