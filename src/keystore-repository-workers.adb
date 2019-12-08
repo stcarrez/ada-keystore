@@ -383,6 +383,14 @@ package body Keystore.Repository.Workers is
          End_Pos      : constant IO.Block_Index := Work.End_Aligned_Data;
          Encrypt_Size : IO.Block_Index;
       begin
+         --  This is a new block, fill empty area with zero or random values.
+         if Work.Data_Need_Setup and Data_Block.Pos < Work.Start_Data then
+            if Work.Manager.Config.Randomize then
+               Work.Random.Generate (Buf.Data (Data_Block.Pos + 1 .. Work.Start_Data - 1));
+            else
+               Buf.Data (Data_Block.Pos + 1 .. Work.Start_Data - 1) := (others => 0);
+            end if;
+         end if;
          Encrypt_Size := IO.Block_Index (Work.Fragment_Count * DATA_ENTRY_SIZE);
 
          Work.Data_Cipher.Transform (Data    => Work.Data (Start_Pos .. Last_Pos),
