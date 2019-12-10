@@ -235,6 +235,11 @@ To use the AKT docker container you can run the following commands:
 * [Ada Keystore Guide](https://ada-keystore.readthedocs.io/en/latest/) [PDF](https://github.com/stcarrez/ada-keystore/blob/master/docs/keystore-book.pdf)
 * Man page: [akt (1)](https://github.com/stcarrez/ada-keystore/blob/master/docs/akt.md)
 
+# Presentations
+
+* [AKT un outil pour sécuriser vos données et documents sensibles](https://fr.slideshare.net/StephaneCarrez1/akt-un-outil-pour-scuriser-vos-donnes-et-documents-sensibles) Paris Open Source Summit 2019
+
+
 # References
 
 * [RFC8018: PKCS #5: Password-Based Cryptography Specification Version 2.1](https://tools.ietf.org/html/rfc8018)
