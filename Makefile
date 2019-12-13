@@ -97,7 +97,8 @@ docs/keystore-book.pdf: $(KEYSTORE_DOC_DEP) force
 	cat docs/Design.md \
 	    docs/Keystore_IO_Headers.md \
 	    docs/Keystore_Repository_Entries.md \
-		docs/Keystore_Repository_Data.md > docs/Keystore_Design.md
+		docs/Keystore_Repository_Data.md \
+        docs/Design_Implementation.md > docs/Keystore_Design.md
 	cd docs && pandoc $(DOC_OPTIONS) --template=./eisvogel.tex $(KEYSTORE_DOC)
 
 docs/keystore-book.html: docs/keystore-book.pdf force
