@@ -24,11 +24,22 @@ first and then the child wallet.
 
 ![AKT Overview](images/akt-overview.png)
 
-The data is organized in blocks of 4K whose primary content is encrypted
+The data is organized in 4K blocks whose primary content is encrypted
 either by the wallet master key or by the entry keys.  The data block is
 signed by using HMAC-256.  A data block can contain several values but
 each of them is protected by its own encryption key.  Each value is also
 signed using HMAC-256.
+
+The keystore uses several encryption keys at different levels to protect
+the content.  A document stored in the keystore is split in data fragment
+and each data fragment is encrypted by using its own key.
+The data fragments are stored in specific data blocks so that they
+are physically separated from the encryption keys.
+
+The data fragment encryption keys are stored in the directory blocks
+and they are encrypted by using a specific key.
+
+![AKT Keys](images/akt-keys.png)
 
 This document describes how to build the tool and library and how you can use
 the different features to protect your sensitive data.
