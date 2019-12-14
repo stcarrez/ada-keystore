@@ -270,6 +270,7 @@ AC_DEFUN(AM_GNAT_FIND_XML_ADA,
         gnat_xmlada_version=`$gnat_xml_ada --version 2>/dev/null | sed -e 's, ,-,g'`
       else
         gnat_xmlada_version=none
+        HAVE_XML_ADA='no'
       fi
 
       case $gnat_xmlada_version in
@@ -283,6 +284,7 @@ AC_DEFUN(AM_GNAT_FIND_XML_ADA,
 
       *)
         ac_cv_gnat_xmlada_version='none'
+        HAVE_XML_ADA='no'
         ;;
 
       esac
@@ -290,9 +292,11 @@ AC_DEFUN(AM_GNAT_FIND_XML_ADA,
       if test T$ac_cv_gnat_project_xmlada_sax = Tno; then
         if test T$ac_cv_gnat_project_xmlada != Tyes; then
           ac_cv_gnat_xmlada_version='none'
+          HAVE_XML_ADA='no'
         fi
       else
         ac_cv_gnat_xmlada_version='4'
+        HAVE_XML_ADA='yes'
       fi
 
     ])
@@ -309,11 +313,19 @@ AC_DEFUN(AM_GNAT_FIND_XML_ADA,
 
   VERSION_XML_ADA=$ac_cv_gnat_xmlada_version
 
-  if test T$HAVE_XML_ADA = Tno; then
-    WITH_XML_ADA='';
-    VERSION_XML_ADA='none';
-    HAVE_XML_ADA='no';
-  fi
+  case T$HAVE_XML_ADA in
+    Tyes)
+      $1
+      ;;
+
+    Tno)
+      WITH_XML_ADA='';
+      VERSION_XML_ADA='none';
+      HAVE_XML_ADA='no'
+      $2
+      ;;
+
+  esac
 
   AC_SUBST(WITH_XML_ADA)
   AC_SUBST(VERSION_XML_ADA)
@@ -331,10 +343,26 @@ AC_DEFUN(AM_SHARED_LIBRARY_SUPPORT,
       no|none)  ac_enable_shared=no ;;
       *)        ac_enable_shared=yes ;;
     esac])dnl
+  ac_enable_default_shared=no
+  AC_ARG_ENABLE(default-shared,
+    [  --enable-default-shared Use shared libraries by default (disabled)],
+    [case "${enableval}" in
+      no|none)  ac_enable_default_shared=no ;;
+      *)        ac_enable_default_shared=yes ;;
+    esac])dnl
 
   AC_MSG_RESULT(${ac_enable_shared})
   BUILDS_SHARED=$ac_enable_shared
   AC_SUBST(BUILDS_SHARED)
+
+  AC_MSG_CHECKING([default library type])
+  if test ${ac_enable_shared} = yes && test ${ac_enable_default_shared} = yes; then
+    DEFAULT_LIBRARY_TYPE='relocatable'
+  else
+    DEFAULT_LIBRARY_TYPE='static'
+  fi
+  AC_MSG_RESULT(${DEFAULT_LIBRARY_TYPE})
+  AC_SUBST(DEFAULT_LIBRARY_TYPE)
 ])
 
 dnl Check whether the coverage support is enabled.
@@ -352,6 +380,9 @@ AC_DEFUN(AM_COVERAGE_SUPPORT,
   AC_MSG_RESULT(${ac_enable_coverage})
   BUILDS_COVERAGE=$ac_enable_coverage
   AC_SUBST(BUILDS_COVERAGE)
+  if test T$ac_enable_coverage = Tyes; then
+     ac_build_mode='coverage'
+  fi
 ])
 
 dnl Check whether the distrib/debug build is enabled.
@@ -378,9 +409,6 @@ AC_DEFUN(AM_DISTRIB_SUPPORT,
   BUILDS_DISTRIB=$ac_enable_distrib
   AC_SUBST(BUILDS_DISTRIB)
 
-  MODE=$ac_build_mode
-  AC_SUBST(MODE)
-  
   BUILDS_QUIET=$ac_quiet_mode
   AC_SUBST(BUILDS_QUIET)
 ])
@@ -760,6 +788,9 @@ AC_DEFUN(AM_GNAT_LIBRARY_PROJECT,
   AM_DISTRIB_SUPPORT
   AM_COVERAGE_SUPPORT
 
+  BUILD=$ac_build_mode
+  AC_SUBST(BUILD)
+  
   AC_CACHE_CHECK([number of processors],[ac_cv_proc_count],[
     ac_cv_proc_count=`getconf _NPROCESSORS_CONF 2>/dev/null || getconf NPROCESSORS_CONF 2>/dev/null || echo 1`
   ])
