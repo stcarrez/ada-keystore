@@ -119,20 +119,29 @@ package body Keystore.Passwords.GPG is
                                    List    : in out Util.Strings.Sets.Set) is
       procedure Parse (Line : in String);
 
+      --  GPG2 command output:
       --  ssb:u:<key-size>:<key-algo>:<key-id>:<create-date>:<expire-date>:::::<e>:
-      REGEX : constant String
-        := "^(ssb|sec):u:[1-9][0-9][0-9][0-9]:[0-9]:([0-9a-fA-F]+):[0-9]+:[0-9]*:::::[esa]+::.*";
+      REGEX2 : constant String
+        := "^(ssb|sec):u?:[1-9][0-9][0-9][0-9]:[0-9]:([0-9a-fA-F]+):[0-9]+:[0-9]*:::::[esa]+::.*";
 
-      Pattern : constant GNAT.Regpat.Pattern_Matcher := GNAT.Regpat.Compile (REGEX);
+      --  GPG1 command output:
+      --  ssb::<key-size>:<key-algo>:<key-id>:<create-date>:<expire-date>:::::<e>:
+      REGEX1 : constant String
+        := "^(ssb|sec):u?:[1-9][0-9][0-9][0-9]:[0-9]:([0-9a-fA-F]+):[0-9-]+:[0-9-]*:::::.*";
+
+      Pattern1 : constant GNAT.Regpat.Pattern_Matcher := GNAT.Regpat.Compile (REGEX1);
+      Pattern2 : constant GNAT.Regpat.Pattern_Matcher := GNAT.Regpat.Compile (REGEX2);
 
       procedure Parse (Line : in String) is
          Matches : GNAT.Regpat.Match_Array (0 .. 2);
       begin
-         if not GNAT.Regpat.Match (Pattern, Line) then
-            return;
+         if GNAT.Regpat.Match (Pattern1, Line) then
+            GNAT.Regpat.Match (Pattern1, Line, Matches);
+            List.Include (Line (Matches (2).First .. Matches (2).Last));
+         elsif GNAT.Regpat.Match (Pattern2, Line) then
+            GNAT.Regpat.Match (Pattern2, Line, Matches);
+            List.Include (Line (Matches (2).First .. Matches (2).Last));
          end if;
-         GNAT.Regpat.Match (Pattern, Line, Matches);
-         List.Include (Line (Matches (2).First .. Matches (2).Last));
 
       exception
          when others =>
