@@ -16,7 +16,7 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 
-with Ahven;
+with Util.XUnit;
 with Ada.Directories;
 with Ada.Exceptions;
 with Ada.IO_Exceptions;
@@ -205,7 +205,7 @@ package body Keystore.Files.Tests is
                when Keystore.Bad_Password =>
                   null;
 
-               when Ahven.Assertion_Error =>
+               when Util.XUnit.Assertion_Error =>
                   raise;
 
                when E : others =>
