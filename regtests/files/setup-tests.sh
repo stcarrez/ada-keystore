@@ -1,9 +1,11 @@
 #!/bin/sh
 rm -rf regtests/files/gnupg
-GPG=`which gpg2`
+GPG=`which gpg2 2>/dev/null`
 if test T$GPG = T; then
   GPG=gpg
 fi
+V=`$GPG --version`
+echo "Using $V"
 ROOT=`pwd`/regtests/files/gnupg
 USERS="user1 user2 user3"
 for USER in $USERS; do
