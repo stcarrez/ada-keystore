@@ -24,6 +24,7 @@ procedure AKT.Gtk is
    Application : aliased AKT.Windows.Application_Type;
 begin
    AKT.Configure_Logs (Debug   => False,
+                       Dump    => False,
                        Verbose => False);
    Application.Initialize_Widget (Main);
    Application.Main;
