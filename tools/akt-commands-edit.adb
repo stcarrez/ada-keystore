@@ -183,6 +183,11 @@ package body AKT.Commands.Edit is
             Cleanup;
 
          exception
+            when Util.Processes.Process_Error =>
+               AKT.Commands.Log.Error (-("Cannot execute editor '{0}'"), Editor);
+               Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+               Cleanup;
+
             when others =>
                Cleanup;
                raise;
