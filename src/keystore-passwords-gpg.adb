@@ -16,6 +16,7 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Ada.Unchecked_Deallocation;
+with Ada.Exceptions;
 with Ada.Strings.Fixed;
 with GNAT.Regpat;
 with Util.Streams;
@@ -166,6 +167,12 @@ package body Keystore.Passwords.GPG is
          end;
       end loop;
       Pipe.Close;
+
+   exception
+      when E : Util.Processes.Process_Error =>
+         Log.Warn ("Cannot execute GPG command '{0}': {1}",
+                   Command, Ada.Exceptions.Exception_Message (E));
+
    end List_GPG_Secret_Keys;
 
    --  ------------------------------
@@ -261,6 +268,13 @@ package body Keystore.Passwords.GPG is
       Keystore.Files.Set_Header_Data (Wallet, Index,
                                       Keystore.SLOT_KEY_GPG2, Result (1 .. Last));
       Context.Index := Context.Index + 1;
+
+   exception
+      when E : Util.Processes.Process_Error =>
+         Log.Warn ("Cannot execute GPG encrypt command '{0}': {1}",
+                   Cmd, Ada.Exceptions.Exception_Message (E));
+         raise Keystore.Bad_Password;
+
    end Save_Secret;
 
    --  ------------------------------
@@ -420,6 +434,13 @@ package body Keystore.Passwords.GPG is
                    Natural'Image (Status));
       end if;
       Context.Data (POS_TAG .. POS_LOCK_IV_LAST) := (others => 0);
+
+   exception
+      when E : Util.Processes.Process_Error =>
+         Log.Warn ("Cannot execute GPG decrypt command '{0}': {1}",
+                   Cmd, Ada.Exceptions.Exception_Message (E));
+         Context.Valid_Key := False;
+
    end Decrypt_GPG_Secret;
 
    --  ------------------------------
