@@ -44,6 +44,13 @@ package Keystore.GPG_Tests is
 
    procedure Execute (T       : in out Test;
                       Command : in String;
+                      Input   : in String;
+                      Output  : in String;
+                      Result  : out Ada.Strings.Unbounded.Unbounded_String;
+                      Status  : in Natural := 0);
+
+   procedure Execute (T       : in out Test;
+                      Command : in String;
                       Result  : out Ada.Strings.Unbounded.Unbounded_String;
                       Status  : in Natural := 0);
 

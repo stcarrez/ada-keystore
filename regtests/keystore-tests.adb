@@ -22,6 +22,7 @@ with Ada.Streams.Stream_IO;
 with Ada.Environment_Variables;
 with GNAT.Regpat;
 with Util.Files;
+with Util.Systems.Os;
 with Util.Test_Caller;
 with Util.Encoders.AES;
 with Util.Log.Loggers;
@@ -46,6 +47,9 @@ package body Keystore.Tests is
    TEST_TOOL4_PATH  : constant String := "regtests/result/test-tool-4.akt";
    TEST_TOOL5_PATH  : constant String := "regtests/result/test-tool-5.akt";
    TEST_WALLET_KEY_PATH : constant String := "regtests/result/keys/wallet.keys";
+
+   EXE   : constant String
+     := (if Util.Systems.Os.Directory_Separator = '/' then "" else ".exe");
 
    function Tool return String;
    function Compare (Path1 : in String;
@@ -163,12 +167,22 @@ package body Keystore.Tests is
    --  ------------------------------
    procedure Execute (T       : in out Test;
                       Command : in String;
+                      Input   : in String;
+                      Output  : in String;
                       Result  : out Ada.Strings.Unbounded.Unbounded_String;
                       Status  : in Natural := 0) is
       P        : aliased Util.Streams.Pipes.Pipe_Stream;
       Buffer   : Util.Streams.Buffered.Input_Buffer_Stream;
    begin
-      Log.Info ("Execute: {0}", Command);
+      if Input'Length > 0 then
+         Log.Info ("Execute: {0} < {1}", Command, Input);
+      elsif Output'Length > 0 then
+         Log.Info ("Execute: {0} > {1}", Command, Output);
+      else
+         Log.Info ("Execute: {0}", Command);
+      end if;
+      P.Set_Input_Stream (Input);
+      P.Set_Output_Stream (Output);
       P.Open (Command, Util.Processes.READ_ALL);
 
       --  Write on the process input stream.
@@ -183,13 +197,21 @@ package body Keystore.Tests is
 
    procedure Execute (T       : in out Test;
                       Command : in String;
+                      Result  : out Ada.Strings.Unbounded.Unbounded_String;
+                      Status  : in Natural := 0) is
+   begin
+      T.Execute (Command, "", "", Result, Status);
+   end Execute;
+
+   procedure Execute (T       : in out Test;
+                      Command : in String;
                       Expect  : in String;
                       Status  : in Natural := 0) is
       Path   : constant String := Util.Tests.Get_Test_Path ("regtests/expect/" & Expect);
       Output : constant String := Util.Tests.Get_Test_Path ("regtests/result/" & Expect);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
-      T.Execute (Command & " > " & Output, Result, Status);
+      T.Execute (Command, "", Output, Result, Status);
 
       Util.Tests.Assert_Equal_Files (T, Path, Output, "Command '" & Command & "' invalid output");
    end Execute;
@@ -230,9 +252,9 @@ package body Keystore.Tests is
       Output_Path : constant String := Util.Tests.Get_Test_Path ("regtests/result/" & Name);
       Result      : Ada.Strings.Unbounded.Unbounded_String;
    begin
-      T.Execute (Tool & " store " & Command & " -- " & Name & " < " & Path, Result);
+      T.Execute (Tool & " store " & Command & " -- " & Name, Path, "", Result);
 
-      T.Execute (Tool & " extract " & Command & " -- " & Name & " > " & Output_Path, Result);
+      T.Execute (Tool & " extract " & Command & " -- " & Name, "", Output_Path, Result);
 
       T.Assert (Compare (Path, Output_Path),
                 "store+extract invalid for " & Name);
@@ -472,8 +494,8 @@ package body Keystore.Tests is
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " get -k " & Path
-                 & " -p mypassword -n list-1 list-2 list-3 list-4 LICENSE.txt "
-                 & "> " & Output, Result, 0);
+                 & " -p mypassword -n list-1 list-2 list-3 list-4 LICENSE.txt ",
+                 "", Output, Result, 0);
       Util.Tests.Assert_Equals (T, "", Result, "get -n command failed");
       Util.Tests.Assert_Equal_Files (T, Expect, Output,
                                      "akt get command returned invalid content");
@@ -504,7 +526,7 @@ package body Keystore.Tests is
                                  Result, "Wrong message when command was not found");
 
       T.Execute (Tool & " create -k " & Path & " -p admin -q", Result, 1);
-      Util.Tests.Assert_Matches (T, "^akt: unrecognized option '-q'",
+      Util.Tests.Assert_Matches (T, "^akt" & EXE & ": unrecognized option '-q'",
                                  Result, "Wrong message for invalid option");
 
       --  Create keystore with a missing key file.
@@ -575,8 +597,11 @@ package body Keystore.Tests is
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " create -k " & Path & " -p admin -c 1:10 --force", Result, 0);
-      T.Execute (Tool & " store -k " & Path & " -p admin -- store-extract < bin/akt", Result, 0);
-      T.Execute (Tool & " extract -k " & Path & " -p admin -- store-extract > regtests/result/akt",
+      T.Execute (Tool & " store -k " & Path & " -p admin -- store-extract",
+                 "bin/akt" & EXE, "",
+                 Result, 0);
+      T.Execute (Tool & " extract -k " & Path & " -p admin -- store-extract",
+                 "", "regtests/result/akt",
                  Result, 0);
 
       --  Check extract command with invalid value
@@ -604,10 +629,11 @@ package body Keystore.Tests is
       T.Execute (Tool & " extract " & Path & " -p admin -o regtests/result/extract bin",
                  Result, 0);
 
-      T.Assert (Compare ("bin/akt", "regtests/result/extract/bin/akt"),
+      T.Assert (Compare ("bin/akt" & EXE, "regtests/result/extract/bin/akt" & EXE),
                 "store+extract failed for bin/akt");
 
-      T.Assert (Compare ("bin/keystore_harness", "regtests/result/extract/bin/keystore_harness"),
+      T.Assert (Compare ("bin/keystore_harness" & EXE,
+                "regtests/result/extract/bin/keystore_harness" & EXE),
                 "store+extract failed for bin/keystore_harness");
 
       T.Execute (Tool & " extract " & Path & " -p admin -o regtests/result/extract-obj obj",

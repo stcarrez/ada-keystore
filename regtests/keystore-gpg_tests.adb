@@ -78,12 +78,22 @@ package body Keystore.GPG_Tests is
    --  ------------------------------
    procedure Execute (T       : in out Test;
                       Command : in String;
+                      Input   : in String;
+                      Output  : in String;
                       Result  : out Ada.Strings.Unbounded.Unbounded_String;
                       Status  : in Natural := 0) is
       P        : aliased Util.Streams.Pipes.Pipe_Stream;
       Buffer   : Util.Streams.Buffered.Input_Buffer_Stream;
    begin
-      Log.Info ("Execute: {0}", Command);
+      if Input'Length > 0 then
+         Log.Info ("Execute: {0} < {1}", Command, Input);
+      elsif Output'Length > 0 then
+         Log.Info ("Execute: {0} > {1}", Command, Output);
+      else
+         Log.Info ("Execute: {0}", Command);
+      end if;
+      P.Set_Input_Stream (Input);
+      P.Set_Output_Stream (Output);      Log.Info ("Execute: {0}", Command);
       P.Open (Command, Util.Processes.READ_ALL);
 
       --  Write on the process input stream.
@@ -98,13 +108,21 @@ package body Keystore.GPG_Tests is
 
    procedure Execute (T       : in out Test;
                       Command : in String;
+                      Result  : out Ada.Strings.Unbounded.Unbounded_String;
+                      Status  : in Natural := 0) is
+   begin
+      T.Execute (Command, "", "", Result, Status);
+   end Execute;
+
+   procedure Execute (T       : in out Test;
+                      Command : in String;
                       Expect  : in String;
                       Status  : in Natural := 0) is
       Path   : constant String := Util.Tests.Get_Test_Path ("regtests/expect/" & Expect);
       Output : constant String := Util.Tests.Get_Test_Path ("regtests/result/" & Expect);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
-      T.Execute (Command & " > " & Output, Result, Status);
+      T.Execute (Command, "", Output, Result, Status);
 
       Util.Tests.Assert_Equal_Files (T, Path, Output, "Command '" & Command & "' invalid output");
    end Execute;
@@ -299,16 +317,20 @@ package body Keystore.GPG_Tests is
       T.Execute (Tool (User_2) & " store " & Path & " LICENSE.txt",
                  Result);
 
-      T.Execute (Tool (User_2) & " store " & Path & " -- LICENSE.txt < configure",
+      T.Execute (Tool (User_2) & " store " & Path & " -- LICENSE.txt",
+                 "configure", "",
                  Result);
 
-      T.Execute (Tool (User_2) & " store " & Path & " -- LICENSE.txt < Makefile",
+      T.Execute (Tool (User_2) & " store " & Path & " -- LICENSE.txt",
+                 "Makefile", "",
                  Result);
 
-      T.Execute (Tool (User_2) & " store " & Path & " -- LICENSE.txt < bin/akt",
+      T.Execute (Tool (User_2) & " store " & Path & " -- LICENSE.txt",
+                 "bin/akt", "",
                  Result);
 
-      T.Execute (Tool (User_2) & " store " & Path & " -- LICENSE.txt < Makefile.conf",
+      T.Execute (Tool (User_2) & " store " & Path & " -- LICENSE.txt",
+                 "Makefile.conf", "",
                  Result);
 
    end Test_Update_File;
