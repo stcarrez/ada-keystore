@@ -195,7 +195,7 @@ To unlock the keystore, GPG will use the private key.
 # AKT Debian Binaries
 
 Ubuntu 18.04 packages are available to help you install the `akt` command
-more easily.  You can configure you Ubuntu system as follows:
+more easily.  You can configure your Ubuntu system as follows:
 
 ```
 wget -O - http://apt.vacs.fr/apt.vacs.fr.gpg.key | sudo apt-key add -
