@@ -22,7 +22,6 @@ with Ada.Streams.Stream_IO;
 with Ada.Environment_Variables;
 with GNAT.Regpat;
 with Util.Files;
-with Util.Systems.Os;
 with Util.Test_Caller;
 with Util.Encoders.AES;
 with Util.Log.Loggers;
@@ -47,9 +46,6 @@ package body Keystore.Tests is
    TEST_TOOL4_PATH  : constant String := "regtests/result/test-tool-4.akt";
    TEST_TOOL5_PATH  : constant String := "regtests/result/test-tool-5.akt";
    TEST_WALLET_KEY_PATH : constant String := "regtests/result/keys/wallet.keys";
-
-   EXE   : constant String
-     := (if Util.Systems.Os.Directory_Separator = '/' then "" else ".exe");
 
    function Tool return String;
    function Compare (Path1 : in String;
@@ -90,8 +86,10 @@ package body Keystore.Tests is
                        Test_Tool_Invalid'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Create (password-file)",
                        Test_Tool_Create_Password_File'Access);
-      Caller.Add_Test (Suite, "Test AKT.Commands.Create (password-cmd)",
-                       Test_Tool_Create_Password_Command'Access);
+      if not Is_Windows then
+         Caller.Add_Test (Suite, "Test AKT.Commands.Create (password-cmd)",
+                          Test_Tool_Create_Password_Command'Access);
+      end if;
       Caller.Add_Test (Suite, "Test AKT.Commands.Create (Error)",
                        Test_Tool_Create_Error'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Remove",
@@ -105,7 +103,7 @@ package body Keystore.Tests is
       Caller.Add_Test (Suite, "Test AKT.Commands.Create (help)",
                        Test_Tool_Help_Create'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Edit (help)",
-                       Test_Tool_Help_Edit'Access);
+                          Test_Tool_Help_Edit'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Get (help)",
                        Test_Tool_Help_Get'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Set (help)",
@@ -128,8 +126,11 @@ package body Keystore.Tests is
                              Test_Tool_Help_Extract'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Config (help)",
                        Test_Tool_Help_Config'Access);
-      Caller.Add_Test (Suite, "Test AKT.Commands.Edit",
-                       Test_Tool_Edit'Access);
+      if not Is_Windows then
+         --  The test must be adapted for Windows.
+         Caller.Add_Test (Suite, "Test AKT.Commands.Edit",
+                          Test_Tool_Edit'Access);
+      end if;
       Caller.Add_Test (Suite, "Test AKT.Commands.Store+Extract",
                        Test_Tool_Store_Extract'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Store+Extract (Dir tree)",
@@ -770,7 +771,7 @@ package body Keystore.Tests is
                        "data-license.txt", "LICENSE.txt");
 
       T.Store_Extract (" -k " & Path & " -d " & Data & " -p admin ",
-                       "data-bin-akt", "bin/akt");
+                       "data-bin-akt", "bin/akt" & EXE);
 
    end Test_Tool_Separate_Data;
 
