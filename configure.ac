@@ -22,7 +22,44 @@ AC_CHECK_PROG(HAVE_PANDOC,pandoc,yes)
 AC_CHECK_PROG(HAVE_DYNAMO,dynamo,yes)
 
 AM_GNAT_LIBRARY_PROJECT(keystore)
-AM_GNAT_FIND_ADA_UTIL([Ada Keystore])
+
+AC_MSG_CHECKING([External Ada Utility Library])
+AC_ARG_WITH(ada-util,
+AS_HELP_STRING([--with-ada-util=x], [Path for Ada Utility Library]),
+[
+  if test T${withval} = Tno ; then
+    KEYSTORE_USE_ADA_UTIL=no;
+  else
+    KEYSTORE_USE_ADA_UTIL='yes';
+  fi
+],
+[
+  KEYSTORE_USE_ADA_UTIL=no;
+])
+AC_MSG_RESULT(${KEYSTORE_USE_ADA_UTIL})
+
+if test T${KEYSTORE_USE_ADA_UTIL} = Tyes; then
+  AM_GNAT_FIND_PROJECT([ada-util],[Ada Utility Library],[utilada_sys],
+  [git@github.com:stcarrez/ada-util.git],
+  [Building Ada Keystore requires the Ada Utility Library.],
+  [
+    UTIL_DIR=${ac_cv_gnat_project_dir_utilada_sys}
+  ])
+  WITH_ADA_UTIL="with \"${UTIL_DIR}utilada_core\";";
+  WITH_ADA_UTIL_SYS="with \"${UTIL_DIR}utilada_sys\";";
+else
+  WITH_ADA_UTIL=''
+  WITH_ADA_UTIL_SYS=''
+  UTIL_DIR='./ada-util/'
+
+  ac_configure_args="${ac_configure_args} --with-build-root="`pwd`
+
+  AC_CONFIG_SUBDIRS(ada-util)
+fi
+AC_SUBST(UTIL_DIR)
+AC_SUBST(WITH_ADA_UTIL)
+AC_SUBST(WITH_ADA_UTIL_SYS)
+AC_SUBST(KEYSTORE_USE_ADA_UTIL)
 
 AC_MSG_CHECKING([whether NLS is requested])
 dnl Default is enabled NLS
@@ -31,34 +68,6 @@ AC_ARG_ENABLE(nls,
   USE_NLS=$enableval, USE_NLS=yes)
 AC_MSG_RESULT($USE_NLS)
 AC_SUBST(USE_NLS)
-
-##########################################
-# Ada LibSecret library
-##########################################
-HAVE_SECRETADA='no'
-AM_GNAT_CHECK_PROJECT([secretada],[secretada])
-if test $ac_cv_gnat_project_secretada = 'yes'; then
-  SECRETADA_DIR=${gnat_project_dir_secretada}
-  HAVE_SECRETADA='yes'
-fi
-AC_SUBST(SECRETADA_DIR)
-AC_SUBST(HAVE_SECRETADA)
-
-##########################################
-# Ada LibSecret library
-##########################################
-AM_GNAT_CHECK_PROJECT([secretada],[secretada])
-
-if test T$gnat_project_secretada = Tno; then
-  WITH_SECRETADA='';
-  HAVE_SECRETADA='no';
-else
-  WITH_SECRETADA="with \"${SECRETADA_DIR}secretada\";";
-  HAVE_SECRETADA='yes';
-fi
-AC_SUBST(WITH_SECRETADA)
-AC_SUBST(SECRETADA_DIR)
-AC_SUBST(HAVE_SECRETADA)
 
 ac_enable_gtk=no
 AC_ARG_ENABLE(gtk,
