@@ -24,6 +24,7 @@ with Util.Log.Loggers;
 with Util.Processes;
 with Util.Streams.Buffered;
 with Util.Streams.Pipes;
+with Keystore.Tests;
 package body Keystore.GPG_Tests is
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.GPG_Tests");
@@ -326,7 +327,7 @@ package body Keystore.GPG_Tests is
                  Result);
 
       T.Execute (Tool (User_2) & " store " & Path & " -- LICENSE.txt",
-                 "bin/akt", "",
+                 "bin/akt" & Keystore.Tests.EXE, "",
                  Result);
 
       T.Execute (Tool (User_2) & " store " & Path & " -- LICENSE.txt",

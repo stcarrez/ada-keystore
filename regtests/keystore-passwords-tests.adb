@@ -21,6 +21,7 @@ with Ada.Streams.Stream_IO;
 with Util.Test_Caller;
 with Util.Encoders.SHA256;
 with Util.Encoders.HMAC.SHA256;
+with Keystore.Tests;
 with Keystore.Passwords.Keys;
 with Keystore.Passwords.Files;
 package body Keystore.Passwords.Tests is
@@ -110,14 +111,16 @@ package body Keystore.Passwords.Tests is
             null;
       end;
 
-      begin
-         Provider2 := Files.Create ("Makefile.conf");
-         T.Fail ("No exception raised for a file stored in an unprotected dir");
+      if not Keystore.Tests.Is_Windows then
+         begin
+            Provider2 := Files.Create ("Makefile.conf");
+            T.Fail ("No exception raised for a file stored in an unprotected dir");
 
-      exception
-         when Bad_Password =>
-            null;
-      end;
+         exception
+            when Bad_Password =>
+               null;
+         end;
+      end if;
    end Test_File_Password;
 
 end Keystore.Passwords.Tests;
