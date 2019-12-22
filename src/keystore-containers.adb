@@ -54,7 +54,7 @@ package body Keystore.Containers is
          Stream := Wallet_Stream;
          Master_Block := Block;
          Master_Ident := Ident;
-         Keystore.Repository.Open (Repository, Config, Ident, Block, Stream.Value);
+         Keystore.Repository.Open (Repository, Config, Ident, Stream.Value);
          State := S_PROTECTED;
       end Open;
 
