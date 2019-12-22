@@ -192,6 +192,23 @@ and defined the GPG key for each user you want to share the keystore:
 
 To unlock the keystore, GPG will use the private key.
 
+# AKT Debian Binaries
+
+Ubuntu 18.04 packages are available to help you install the `akt` command
+more easily.  You can configure you Ubuntu system as follows:
+
+```
+wget -O - http://apt.vacs.fr/apt.vacs.fr.gpg.key | sudo apt-key add -
+sudo add-apt-repository "deb http://apt.vacs.fr/ubuntu-bionic bionic main"
+```
+
+And then install the `akt` package:
+
+```
+sudo apt-get install akt
+```
+
+
 # Building Ada Keystore
 
 To build the Ada Keystore you will need the GNAT Ada compiler, either
