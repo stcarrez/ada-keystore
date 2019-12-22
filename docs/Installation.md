@@ -4,22 +4,52 @@ This chapter explains how to build and install the library.
 
 ## Before Building
 
-Before building the library, you will need:
+To build the Ada Keystore you will need the GNAT Ada compiler, either
+the FSF version available in Debian, FreeBSD systems NetBSD or the
+AdaCore GNAT Community 2019 edition.
 
-* [Ada Utility Library](https://github.com/stcarrez/ada-util)
+### Ubuntu
 
-First get, build and install the [Ada Utility Library](https://github.com/stcarrez/ada-util).
+Install the following packages:
+```
+sudo apt-get install -y make gnat-7 gprbuild git gnupg2
+```
 
-On Debian systems, you may run the following installation command
-to get a functional GNAT Ada build environment:
+### FreeBSD 12
+
+Install the following packages:
 
 ```
-sudo apt-get install -y make git gprbuild gnat-7 libxmlada-sax7-dev
+pkg install gmake gcc6-aux-20180516_1,1 gprbuild-20160609_1 git gnupg-2.2.17_2
+```
+
+### Windows
+
+Get the Ada compiler from [AdaCore Download](https://www.adacore.com/download)
+site and install.
+
+Install the following packages:
+
+```
+pacman -S git
+pacman -S make
+pacman -S base-devel --needed
+```
+
+## Getting the sources
+
+The project uses a sub-module to help you in the integration and build
+process.  You should checkout the project with the following commands:
+
+```
+   git clone --recursive https://github.com/stcarrez/ada-keystore.git
+   cd ada-keystore
 ```
 
 ## Configuration
 
-The library uses the `configure` script to detect the build environment, check whether Ada Utility Library is available.
+The library uses the `configure` script to detect the build environment,
+check which Ada Utility Library to use.
 If some component is missing, the
 `configure` script will report an error or it will disable the feature.
 The `configure` script provides several standard options
@@ -39,7 +69,15 @@ In most cases you will configure with the following command:
 ./configure
 ```
 
-On FreeBSD and NetBSD you have to disable the NLS support:
+The GTK application is not compiled by default unless you configure with
+the `--enable-gtk` option.  Be sure to install the GtkAda library before
+configuring and building the project.
+
+```
+./configure  --enable-gtk
+```
+
+On Windows, FreeBSD and NetBSD you have to disable the NLS support:
 ```
 ./configure --disable-nls
 ```
