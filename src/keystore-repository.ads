@@ -44,7 +44,6 @@ private package Keystore.Repository is
    procedure Open (Repository : in out Wallet_Repository;
                    Config     : in Keystore.Wallet_Config;
                    Ident      : in Wallet_Identifier;
-                   Block      : in Keystore.IO.Storage_Block;
                    Stream     : in IO.Wallet_Stream_Access);
 
    procedure Open (Repository   : in out Wallet_Repository;
@@ -201,7 +200,8 @@ private
    end record;
 
    type Wallet_Entry (Length    : Natural;
-                      Is_Wallet : Boolean) is limited record
+                      Is_Wallet : Boolean) is
+   limited record
       --  The block header that contains this entry.
       Header       : Wallet_Directory_Entry_Access;
       Id           : Wallet_Entry_Index;
