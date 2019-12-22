@@ -194,13 +194,60 @@ To unlock the keystore, GPG will use the private key.
 
 # Building Ada Keystore
 
+To build the Ada Keystore you will need the GNAT Ada compiler, either
+the FSF version available in Debian, FreeBSD systems NetBSD or the
+AdaCore GNAT Community 2019 edition.
+
+## Development Host Installation
+
+### Ubuntu
+
+Install the following packages:
+```
+sudo apt-get install -y make gnat-7 gprbuild git gnupg2
+```
+
+### FreeBSD 12
+
+Install the following packages:
+
+```
+pkg install gmake gcc6-aux-20180516_1,1 gprbuild-20160609_1 git gnupg-2.2.17_2
+```
+
+### Windows
+
+Get the Ada compiler from [AdaCore Download](https://www.adacore.com/download)
+site and install.
+
+Install the following packages:
+
+```
+pacman -S git
+pacman -S make
+pacman -S base-devel --needed
+```
+
+## Getting the sources
+
+The project uses a sub-module to help you in the integration and build
+process.  You should checkout the project with the following commands:
+
+```
+   git clone --recursive https://github.com/stcarrez/ada-keystore.git
+   cd ada-keystore
+```
+
+## Configuration
+
 To configure Ada Keystore, use the following command:
 ```
    ./configure
 ```
 
 The GTK application is not compiled by default unless to configure with
-the `--enable-gtk` option.
+the `--enable-gtk` option.  Be sure to install the GtkAda library before
+configuring and building the project.
 
 ```
    ./configure  --enable-gtk
