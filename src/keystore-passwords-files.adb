@@ -80,7 +80,7 @@ package body Keystore.Passwords.Files is
          Log.Info ("Password file {0} does not exist", Path);
          raise Keystore.Bad_Password with "Password file does not exist";
       end if;
-      if (Stat.st_mode and 8#0077#) /= 0 then
+      if (Stat.st_mode and 8#0077#) /= 0 and Util.Systems.Os.Directory_Separator = '/' then
          Log.Info ("Password file {0} is not safe", Path);
          raise Keystore.Bad_Password with "Password file is not safe";
       end if;
@@ -104,7 +104,7 @@ package body Keystore.Passwords.Files is
          raise Keystore.Bad_Password
          with "Directory that contains password file cannot be checked";
       end if;
-      if (Stat.st_mode and 8#0077#) /= 0 then
+      if (Stat.st_mode and 8#0077#) /= 0 and Util.Systems.Os.Directory_Separator = '/' then
          Log.Info ("Directory {0} is not safe for password file", Dir);
          raise Keystore.Bad_Password
          with "Directory that contains password file is not safe";
