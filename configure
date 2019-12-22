@@ -2553,10 +2553,14 @@ if test T${KEYSTORE_USE_ADA_UTIL} = Tyes; then
 # Check whether --with-ada-util was given.
 if test "${with_ada_util+set}" = set; then :
   withval=$with_ada_util;
-      ac_cv_gnat_project_name_utilada_sys=${withval}/
-      if test -d "${withval}"; then
-	    ac_cv_gnat_project_name_utilada_sys=${withval}/utilada_sys
-	  fi
+      if test "${withval}/" = "yes/"; then
+        ac_cv_gnat_project_name_utilada_sys=${awa_build_root}utilada_sys
+      else
+        ac_cv_gnat_project_name_utilada_sys=${withval}/
+        if test -d "${withval}"; then
+	      ac_cv_gnat_project_name_utilada_sys=${withval}/utilada_sys
+	    fi
+      fi
 
 else
 
