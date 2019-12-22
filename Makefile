@@ -109,5 +109,16 @@ endif
 
 $(eval $(call ada_library,$(NAME)))
 
+DIST_DIRS=ada-util
+dist::
+	rm -f $(DIST_FILE)
+	git archive -o $(DIST_DIR).tar --prefix=$(DIST_DIR)/ HEAD
+	for i in $(DIST_DIRS); do \
+	   cd $$i && git archive -o ../$$i.tar --prefix=$(DIST_DIR)/$$i/ HEAD ; \
+           cd .. && tar --concatenate --file=$(DIST_DIR).tar $$i.tar ; \
+           rm -f $$i.tar; \
+        done
+	gzip $(DIST_DIR).tar
+
 .PHONY: tools gtk
 
