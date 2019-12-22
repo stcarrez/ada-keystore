@@ -18,7 +18,14 @@
 
 with Ada.Strings.Unbounded;
 with Util.Tests;
+with Util.Systems.Os;
 package Keystore.Tests is
+
+   function Is_Windows return Boolean is
+     (Util.Systems.Os.Directory_Separator = '\');
+
+   EXE   : constant String
+     := (if Is_Windows then ".exe" else "");
 
    procedure Add_Tests (Suite : in Util.Tests.Access_Test_Suite);
 
