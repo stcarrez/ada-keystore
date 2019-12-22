@@ -253,6 +253,8 @@ configuring and building the project.
    ./configure  --enable-gtk
 ```
 
+## Build
+
 Then, build the application:
 ```
    make
