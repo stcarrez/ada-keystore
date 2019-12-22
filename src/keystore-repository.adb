@@ -73,7 +73,6 @@ package body Keystore.Repository is
    procedure Open (Repository : in out Wallet_Repository;
                    Config     : in Keystore.Wallet_Config;
                    Ident      : in Wallet_Identifier;
-                   Block      : in Keystore.IO.Storage_Block;
                    Stream     : in IO.Wallet_Stream_Access) is
    begin
       Repository.Id := Ident;
