@@ -94,7 +94,7 @@ package body Keystore.GPG_Tests is
          Log.Info ("Execute: {0}", Command);
       end if;
       P.Set_Input_Stream (Input);
-      P.Set_Output_Stream (Output);      Log.Info ("Execute: {0}", Command);
+      P.Set_Output_Stream (Output);
       P.Open (Command, Util.Processes.READ_ALL);
 
       --  Write on the process input stream.
