@@ -151,12 +151,20 @@ package body Keystore.Passwords.GPG is
 
       Command : constant String := To_String (Context.List_Key_Command);
       Pipe    : aliased Util.Streams.Pipes.Pipe_Stream;
+      Proc    : Util.Processes.Process;
+      Output  : Util.Streams.Input_Stream_Access;
+      Input   : Util.Streams.Output_Stream_Access;
       Reader  : Util.Streams.Texts.Reader_Stream;
    begin
       Log.Info ("Looking for GPG secrets using {0}", Command);
 
-      Pipe.Open (Command, Util.Processes.READ_ALL);
-      Reader.Initialize (Pipe'Access, 4096);
+      Util.Processes.Spawn (Proc    => Proc,
+                            Command => Command,
+                            Mode    => Util.Processes.READ_WRITE_ALL);
+      Input := Util.Processes.Get_Input_Stream (Proc);
+      Output := Util.Processes.Get_Output_Stream (Proc);
+      Reader.Initialize (Output, 4096);
+      Input.Close;
 
       while not Reader.Is_Eof loop
          declare
@@ -166,7 +174,7 @@ package body Keystore.Passwords.GPG is
             Parse (To_String (Line));
          end;
       end loop;
-      Pipe.Close;
+      Util.Processes.Wait (Proc);
 
    exception
       when E : Util.Processes.Process_Error =>
@@ -245,7 +253,7 @@ package body Keystore.Passwords.GPG is
       Last := 4;
       Util.Processes.Spawn (Proc    => Proc,
                             Command => Cmd,
-                            Mode    => Util.Processes.READ_WRITE);
+                            Mode    => Util.Processes.READ_WRITE_ALL);
 
       Input := Util.Processes.Get_Input_Stream (Proc);
       Input.Write (Context.Data (POS_LOCK_KEY .. Context.Data'Last));
@@ -413,7 +421,7 @@ package body Keystore.Passwords.GPG is
       Last := POS_TAG_LAST;
       Util.Processes.Spawn (Proc    => Proc,
                             Command => Cmd,
-                            Mode    => Util.Processes.READ_WRITE);
+                            Mode    => Util.Processes.READ_WRITE_ALL);
 
       Util.Processes.Get_Input_Stream (Proc).Write (Data (POS_LOCK_KEY .. Data'Last));
       Util.Processes.Get_Input_Stream (Proc).Close;
