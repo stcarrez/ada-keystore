@@ -24,7 +24,6 @@ with Util.Log.Loggers;
 with Util.Encoders;
 with Util.Processes;
 with Util.Streams.Texts;
-with Util.Streams.Pipes;
 with Keystore.Random;
 
 --  === GPG Header data ===
@@ -150,7 +149,6 @@ package body Keystore.Passwords.GPG is
       end Parse;
 
       Command : constant String := To_String (Context.List_Key_Command);
-      Pipe    : aliased Util.Streams.Pipes.Pipe_Stream;
       Proc    : Util.Processes.Process;
       Output  : Util.Streams.Input_Stream_Access;
       Input   : Util.Streams.Output_Stream_Access;
@@ -175,6 +173,10 @@ package body Keystore.Passwords.GPG is
          end;
       end loop;
       Util.Processes.Wait (Proc);
+      if Util.Processes.Get_Exit_Status (Proc) /= 0 then
+         Log.Warn ("GPG list command '{0}' terminated with exit code{1}", Command,
+                   Natural'Image (Util.Processes.Get_Exit_Status (Proc)));
+      end if;
 
    exception
       when E : Util.Processes.Process_Error =>
