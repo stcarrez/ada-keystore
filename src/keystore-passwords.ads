@@ -52,4 +52,17 @@ private
    procedure Save_Key (Provider : in Internal_Key_Provider;
                        Data     : out Ada.Streams.Stream_Element_Array) is abstract;
 
+   type Default_Provider (Len : Key_Length) is limited new Provider with record
+      Password : Keystore.Secret_Key (Len);
+   end record;
+   type Default_Provider_Access is access all Default_Provider'Class;
+
+   --  Get the password through the Getter operation.
+   overriding
+   procedure Get_Password (From   : in Default_Provider;
+                           Getter : not null access procedure (Password : in Secret_Key));
+
+   --  Create a password provider.
+   function Create (Password : in out Ada.Streams.Stream_Element_Array) return Provider_Access;
+
 end Keystore.Passwords;
