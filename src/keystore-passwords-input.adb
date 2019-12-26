@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---  keystore-passwords-files -- File based password provider
+--  keystore-passwords-input -- Interactive based password provider
 --  Copyright (C) 2019 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
@@ -17,53 +17,38 @@
 -----------------------------------------------------------------------
 with Ada.Text_IO;
 with Ada.IO_Exceptions;
-with Ada.Strings.Unbounded;
 package body Keystore.Passwords.Input is
 
-   type Provider is limited new Keystore.Passwords.Provider with record
-      Confirm : Boolean := False;
-   end record;
-
-   --  Get the password through the Getter operation.
-   overriding
-   procedure Get_Password (From   : in Provider;
-                           Getter : not null access procedure (Password : in Secret_Key));
+   use Ada.Streams;
 
    --  ------------------------------
    --  Create a password provider that asks interactively for the password.
    --  ------------------------------
-   function Create (Confirm : in Boolean) return Provider_Access is
-   begin
-      return new Provider '(Confirm => Confirm);
-   end Create;
-
-   --  ------------------------------
-   --  Get the password through the Getter operation.
-   --  ------------------------------
-   overriding
-   procedure Get_Password (From   : in Provider;
-                           Getter : not null access procedure (Password : in Secret_Key)) is
-      pragma Unreferenced (From);
-
-      Content : Ada.Strings.Unbounded.Unbounded_String;
+   function Create (Message : in String;
+                    Confirm : in Boolean) return Provider_Access is
+      Content : Ada.Streams.Stream_Element_Array (1 .. MAX_PASSWORD_LENGTH);
       C       : Character;
+      Length  : Ada.Streams.Stream_Element_Offset := 0;
    begin
-      Ada.Text_IO.Put_Line ("Enter password:");
+      Ada.Text_IO.Put (Message);
       begin
          loop
             Ada.Text_IO.Get_Immediate (C);
             exit when C < ' ';
-            Ada.Strings.Unbounded.Append (Content, C);
+            Length := Length + 1;
+            Content (Length) := Character'Pos (C);
          end loop;
 
       exception
          when Ada.IO_Exceptions.End_Error =>
             null;
       end;
-      if Ada.Strings.Unbounded.Length (Content) = 0 then
+      Ada.Text_IO.New_Line;
+      if Length = 0 then
          raise Keystore.Bad_Password with "Empty password given";
       end if;
-      Getter (Keystore.Create (Ada.Strings.Unbounded.To_String (Content)));
-   end Get_Password;
+
+      return Create (Content (Content'First .. Length));
+   end Create;
 
 end Keystore.Passwords.Input;
