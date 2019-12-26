@@ -42,6 +42,7 @@ with Keystore.Passwords.Unsafe;
 with Keystore.Passwords.Cmds;
 package body AKT.Commands is
 
+   use type Keystore.Passwords.Provider_Access;
    use type Keystore.Header_Slot_Count_Type;
    use type Keystore.Passwords.Keys.Key_Provider_Access;
 
@@ -95,6 +96,9 @@ package body AKT.Commands is
       if not Context.No_Password_Opt or else Context.Info.Header_Count = 0 then
          if Context.Key_Provider /= null then
             Context.Wallet.Set_Master_Key (Context.Key_Provider.all);
+         end if;
+         if Context.Provider = null then
+            Context.Provider := Keystore.Passwords.Input.Create (-("Enter password: "), False);
          end if;
 
          Context.Wallet.Unlock (Context.Provider.all, Context.Slot);
@@ -345,7 +349,6 @@ package body AKT.Commands is
       elsif Context.Unsafe_Password'Length > 0 then
          Context.Provider := Keystore.Passwords.Unsafe.Create (Context.Unsafe_Password.all);
       else
-         Context.Provider := Keystore.Passwords.Input.Create (False);
          Context.No_Password_Opt := True;
       end if;
       Context.Key_Provider := Keystore.Passwords.Keys.Create (Keystore.DEFAULT_WALLET_KEY);
