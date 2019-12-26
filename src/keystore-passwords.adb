@@ -39,4 +39,26 @@ package body Keystore.Passwords is
       Process (P);
    end To_Provider;
 
+   --  ------------------------------
+   --  Get the password through the Getter operation.
+   --  ------------------------------
+   overriding
+   procedure Get_Password (From   : in Default_Provider;
+                           Getter : not null access procedure (Password : in Secret_Key)) is
+   begin
+      Getter (From.Password);
+   end Get_Password;
+
+   --  ------------------------------
+   --  Create a password provider.
+   --  ------------------------------
+   function Create (Password : in out Ada.Streams.Stream_Element_Array) return Provider_Access is
+      P : constant Default_Provider_Access
+        := new Default_Provider '(Len => Password'Length, others => <>);
+   begin
+      Util.Encoders.Create (Password, P.Password);
+      Password := (others => 0);
+      return P.all'Access;
+   end Create;
+
 end Keystore.Passwords;
