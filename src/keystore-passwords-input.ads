@@ -17,7 +17,10 @@
 -----------------------------------------------------------------------
 package Keystore.Passwords.Input is
 
+   MAX_PASSWORD_LENGTH : constant := 1024;
+
    --  Create a password provider that asks interactively for the password.
-   function Create (Confirm : in Boolean) return Provider_Access;
+   function Create (Message : in String;
+                    Confirm : in Boolean) return Provider_Access;
 
 end Keystore.Passwords.Input;
