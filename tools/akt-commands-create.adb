@@ -16,9 +16,11 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Keystore.Passwords.Files;
+with Keystore.Passwords.Input;
 package body AKT.Commands.Create is
 
    use GNAT.Strings;
+   use type Keystore.Passwords.Provider_Access;
    use type Keystore.Passwords.Keys.Key_Provider_Access;
 
    --  ------------------------------
@@ -84,6 +86,9 @@ package body AKT.Commands.Create is
          end if;
          if Context.Key_Provider /= null then
             Context.Wallet.Set_Master_Key (Context.Key_Provider.all);
+         end if;
+         if Context.Provider = null then
+            Context.Provider := Keystore.Passwords.Input.Create (-("Enter password: "), False);
          end if;
          Keystore.Files.Create (Container => Context.Wallet,
                                 Password  => Context.Provider.all,
