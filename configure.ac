@@ -21,7 +21,7 @@ AC_SUBST(EXEC_PREFIX)
 AC_CHECK_PROG(HAVE_PANDOC,pandoc,yes)
 AC_CHECK_PROG(HAVE_DYNAMO,dynamo,yes)
 
-AM_GNAT_LIBRARY_PROJECT(keystore)
+AM_GNAT_LIBRARY_PROJECT(keystoreada)
 
 AC_MSG_CHECKING([External Ada Utility Library])
 AC_ARG_WITH(ada-util,
@@ -34,7 +34,11 @@ AS_HELP_STRING([--with-ada-util=x], [Path for Ada Utility Library]),
   fi
 ],
 [
-  KEYSTORE_USE_ADA_UTIL=no;
+  if test T${awa_build_root} = T ; then
+    KEYSTORE_USE_ADA_UTIL='no';
+  else
+    KEYSTORE_USE_ADA_UTIL='yes';
+  fi
 ])
 AC_MSG_RESULT(${KEYSTORE_USE_ADA_UTIL})
 
