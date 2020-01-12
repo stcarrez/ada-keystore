@@ -2522,9 +2522,9 @@ $as_echo "$ac_cv_proc_count" >&6; }
 
 
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking preparing for GNAT project keystore" >&5
-$as_echo_n "checking preparing for GNAT project keystore... " >&6; }
-  mkdir -p obj/keystore/static obj/keystore/relocatable lib/keystore/static lib/keystore/relocatable
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking preparing for GNAT project keystoreada" >&5
+$as_echo_n "checking preparing for GNAT project keystoreada... " >&6; }
+  mkdir -p obj/keystoreada/static obj/keystoreada/relocatable lib/keystoreada/static lib/keystoreada/relocatable
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: done" >&5
 $as_echo "done" >&6; }
 
@@ -2544,7 +2544,11 @@ if test "${with_ada_util+set}" = set; then :
 
 else
 
-  KEYSTORE_USE_ADA_UTIL=no;
+  if test T${awa_build_root} = T ; then
+    KEYSTORE_USE_ADA_UTIL='no';
+  else
+    KEYSTORE_USE_ADA_UTIL='yes';
+  fi
 
 fi
 
