@@ -23,7 +23,7 @@ procedure Wallet_Password is
    Count  : constant Natural := Ada.Command_Line.Argument_Count;
 begin
    if Count <= 2 then
-      Ada.Text_IO.Put_Line ("Usage: wallet_password <path> <password> {name...}");
+      Ada.Text_IO.Put_Line ("Usage: wallet_password <keystore-path> <password> {name...}");
       return;
    end if;
    declare
