@@ -1,5 +1,5 @@
 -----------------------------------------------------------------------
---  wallet -- Open wallet with password and get values
+--  wallet_gpg -- Open wallet protected by GPG and get values
 --  Copyright (C) 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
@@ -25,7 +25,7 @@ procedure Wallet_GPG is
    Count  : constant Natural := Ada.Command_Line.Argument_Count;
 begin
    if Count <= 1 then
-      Ada.Text_IO.Put_Line ("Usage: wallet_gpg <path> {name...}");
+      Ada.Text_IO.Put_Line ("Usage: wallet_gpg <keystore-path> {name...}");
       return;
    end if;
    declare
