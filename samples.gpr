@@ -3,7 +3,7 @@ with "keystoreada";
 
 project Samples is
 
-   Mains := ("wallet_password.adb", "wallet_gpg.adb");
+   Mains := ("wallet_password.adb", "wallet_gpg.adb", "wallet_ssh_askpass.adb");
 
    for Main use Mains;
 
