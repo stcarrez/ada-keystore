@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-repository-entries -- Repository management for the keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -456,12 +456,12 @@ package body Keystore.Repository.Entries is
          if Manager.Config.Randomize then
             --  When strong security is necessary, fill with random values
             --  (except the first 4 bytes).
-            Buf.Data (Directory.Last_Pos - Size + 1 .. Directory.Last_Pos - Size + 3)
+            Buf.Data (Directory.Last_Pos - Size + 1 .. Directory.Last_Pos - Size + 4)
               := (others => 0);
             Manager.Random.Generate
-              (Buf.Data (Directory.Last_Pos - Size + 4 .. Directory.Last_Pos));
+              (Buf.Data (Directory.Last_Pos - Size + 5 .. Directory.Last_Pos));
          else
-            Buf.Data (Directory.Last_Pos - Size .. Directory.Last_Pos) := (others => 0);
+            Buf.Data (Directory.Last_Pos - Size + 1 .. Directory.Last_Pos) := (others => 0);
          end if;
 
          Directory.Last_Pos := Directory.Last_Pos - Size;

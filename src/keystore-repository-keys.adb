@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-repository-keys -- Data keys management
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -158,8 +158,8 @@ package body Keystore.Repository.Keys is
       Iterator.Item.Block_Count := Iterator.Item.Block_Count - Natural (Del_Count);
 
       Key_Pos := Iterator.Directory.Key_Pos;
-      if Key_Pos + Del_Size < Key_Start_Pos then
-         Buf.Data (Key_Pos + Del_Size .. Key_Start_Pos + Del_Size - 1)
+      if Key_Pos + Del_Size <= Key_Start_Pos then
+         Buf.Data (Key_Pos + 1 + Del_Size .. Key_Start_Pos + Del_Size)
            := Buf.Data (Key_Pos + 1 .. Key_Start_Pos);
       end if;
       Buf.Data (Key_Pos + 1 .. Key_Pos + Del_Size) := (others => 0);
