@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-files-tests -- Tests for files
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -311,6 +311,21 @@ package body Keystore.Files.Tests is
       begin
          W.Open (Path => Path, Password => Password);
          W.Delete ("my-secret-2");
+         T.Assert (not W.Contains ("my-secret-2"),
+                   "Second property should have been removed");
+         T.Assert (W.Contains ("my-secret-1"),
+                   "First property should still be present");
+         T.Assert (W.Contains ("my-secret-3"),
+                   "Last property should still be present");
+         T.Assert (W.Contains ("my-secret-4"),
+                   "Last property should still be present");
+      end;
+
+      --  Re-open the keystore to verify the files and correct removal.
+      declare
+         W        : Keystore.Files.Wallet_File;
+      begin
+         W.Open (Path => Path, Password => Password);
          T.Assert (not W.Contains ("my-secret-2"),
                    "Second property should have been removed");
          T.Assert (W.Contains ("my-secret-1"),
