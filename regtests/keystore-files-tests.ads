@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-files-tests -- Tests for keystore files
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -65,6 +65,9 @@ package Keystore.Files.Tests is
    --  Test setting values through an Input_Stream.
    procedure Test_Set_From_Stream (T : in out Test);
    procedure Test_Set_From_Larger_Stream (T : in out Test);
+
+   --  Test updating values through an Input and Output_Stream.
+   procedure Test_Update_Stream (T : in out Test);
 
    --  Perforamce test adding values.
    procedure Test_Perf_Add (T : in out Test);
