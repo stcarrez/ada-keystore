@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-tests -- Tests for akt command
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -151,6 +151,8 @@ package body Keystore.Tests is
                        Test_Tool_Extract_Error'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Info",
                        Test_Tool_Info'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Info (Error)",
+                       Test_Tool_Info_Error'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Create (Wallet_Key)",
                        Test_Tool_With_Wallet_Key_File'Access);
    end Add_Tests;
@@ -825,6 +827,13 @@ package body Keystore.Tests is
          T.Execute (Tool & " info " & Dir & "/" & Id & "-1.dkt -p admin", Result, 0);
       end;
    end Test_Tool_Info;
+
+   procedure Test_Tool_Info_Error (T : in out Test) is
+      Result  : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " info Makefile", Result, 1);
+      T.Execute (Tool & " info some-missing-file", Result, 1);
+   end Test_Tool_Info_Error;
 
    --  ------------------------------
    --  Test the akt commands with --wallet-key-file
