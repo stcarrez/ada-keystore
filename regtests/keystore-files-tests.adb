@@ -74,6 +74,8 @@ package body Keystore.Files.Tests is
                        Test_Set_From_Stream'Access);
       Caller.Add_Test (Suite, "Test Keystore.Set (Input_Stream > 4K)",
                        Test_Set_From_Larger_Stream'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Update (Input_Stream > 4K)",
+                       Test_Update_Stream'Access);
       Caller.Add_Test (Suite, "Test Keystore.Set_Key",
                        Test_Set_Key'Access);
       Caller.Add_Test (Suite, "Test Keystore.Get_Header_Data (1)",
@@ -805,6 +807,21 @@ package body Keystore.Files.Tests is
    begin
       T.Test_File_Stream ("LICENSE.txt", Input);
    end Test_Set_From_Larger_Stream;
+
+   --  ------------------------------
+   --  Test updating values through an Input and Output_Stream.
+   --  ------------------------------
+   procedure Test_Update_Stream (T : in out Test) is
+      Input1   : constant String := Util.Tests.Get_Path ("LICENSE.txt");
+      Input2   : constant String := Util.Tests.Get_Path ("Makefile");
+      Input3   : constant String := Util.Tests.Get_Path ("aclocal.m4");
+      Input4   : constant String := Util.Tests.Get_Path ("config.gpr");
+   begin
+      T.Test_File_Stream ("Update_Stream", Input1);
+      T.Test_File_Stream ("Update_Stream", Input2);
+      T.Test_File_Stream ("Update_Stream", Input3);
+      T.Test_File_Stream ("Update_Stream", Input4);
+   end Test_Update_Stream;
 
    --  ------------------------------
    --  Perforamce test adding values.
