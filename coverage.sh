@@ -5,8 +5,8 @@ lcov --base-directory . --directory . -c -o keystore.cov
 lcov --remove keystore.cov "/usr*" -o keystore.cov
 lcov --remove keystore.cov "/build*" -o keystore.cov
 lcov --remove keystore.cov "/opt*" -o keystore.cov
-lcov --remove keystore.cov "regtests*" -o keystore.cov
-lcov --remove keystore.cov "adainclude*" -o keystore.cov
+lcov --remove keystore.cov "*/regtests*" -o keystore.cov
+lcov --remove keystore.cov "*/adainclude*" -o keystore.cov
 lcov --remove keystore.cov ada-keystore/b__keystore_harness.adb -o keystore.cov
 lcov --remove keystore.cov ada-keystore/b__akt-main.adb -o keystore.cov
 lcov --remove keystore.cov "*/b__keystore_harness.adb" -o keystore.cov
