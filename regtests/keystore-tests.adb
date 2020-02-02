@@ -158,6 +158,8 @@ package body Keystore.Tests is
                        Test_Tool_With_Wallet_Key_File'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Password (Slot limit)",
                        Test_Tool_Password_Add_Limit'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.List (No file provided)",
+                       Test_Tool_List_Error'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -859,6 +861,15 @@ package body Keystore.Tests is
       T.Execute (Tool & " info Makefile", Result, 1);
       T.Execute (Tool & " info some-missing-file", Result, 1);
    end Test_Tool_Info_Error;
+
+   procedure Test_Tool_List_Error (T : in out Test) is
+      Result  : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " list -p admin", Result, 1);
+      Util.Tests.Assert_Matches (T, "^Missing the keystore file name",
+                                 Result,
+                                 "Bad output for list command");
+   end Test_Tool_List_Error;
 
    --  ------------------------------
    --  Test the akt commands with --wallet-key-file
