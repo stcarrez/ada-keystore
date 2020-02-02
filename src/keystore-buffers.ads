@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-buffers -- Buffer management for the keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -85,11 +85,6 @@ private package Keystore.Buffers is
 
    subtype Buffer_Map is Buffer_Maps.Map;
    subtype Buffer_Cursor is Buffer_Maps.Cursor;
-
-   --  Find a buffer from the set of allocate an instance to hold it.
-   function Find_Or_Allocate (Container : in Buffer_Map;
-                              Storage   : in Storage_Identifier;
-                              Block     : in Block_Number) return Storage_Buffer;
 
    --  Find a buffer from the container.
    function Find (Container : in Buffer_Map;
