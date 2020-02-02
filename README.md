@@ -2,6 +2,7 @@
 
 [![Build Status](https://img.shields.io/jenkins/s/http/jenkins.vacs.fr/Bionic-Ada-Keystore.svg)](http://jenkins.vacs.fr/job/Bionic-Ada-Keystore/)
 [![Test Status](https://img.shields.io/jenkins/t/http/jenkins.vacs.fr/Bionic-Ada-Keystore.svg)](http://jenkins.vacs.fr/job/Bionic-Ada-Keystore/)
+[![codecov](https://codecov.io/gh/stcarrez/ada-keystore/branch/master/graph/badge.svg)](https://codecov.io/gh/stcarrez/ada-keystore)
 [![Documentation Status](https://readthedocs.org/projects/ada-keystore/badge/?version=latest)](https://ada-keystore.readthedocs.io/en/latest/?badge=latest)
 [![Download](https://img.shields.io/badge/download-1.0.0-brightgreen.svg)](http://download.vacs.fr/ada-keystore/ada-keystore-1.0.0.tar.gz)
 [![License](http://img.shields.io/badge/license-APACHE2-blue.svg)](LICENSE)
@@ -305,6 +306,7 @@ To use the AKT docker container you can run the following commands:
 # Presentations
 
 * [AKT un outil pour sécuriser vos données et documents sensibles](https://fr.slideshare.net/StephaneCarrez1/akt-un-outil-pour-scuriser-vos-donnes-et-documents-sensibles) Paris Open Source Summit 2019
+* [Protect Sensitive Data with Ada Keystore](https://fr.slideshare.net/StephaneCarrez1/protect-sensitive-data-with-ada-keystore) Ada devroom FOSDEM 2020
 
 
 # References
