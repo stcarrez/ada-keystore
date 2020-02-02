@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-tests -- Tests for akt command
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -83,6 +83,7 @@ package Keystore.Tests is
 
    --  Test the akt info command on several keystore files.
    procedure Test_Tool_Info (T : in out Test);
+   procedure Test_Tool_Info_Error (T : in out Test);
 
    --  Test the akt commands with --wallet-key-file
    procedure Test_Tool_With_Wallet_Key_File (T : in out Test);
