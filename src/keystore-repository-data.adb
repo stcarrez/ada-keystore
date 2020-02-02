@@ -209,6 +209,7 @@ package body Keystore.Repository.Data is
 
          Input_Pos := Input_Pos + Size;
          Data_Offset := Data_Offset + Size;
+         exit when Input_Pos > Content'Last;
 
          Keys.Next_Data_Key (Manager, Iterator);
       end loop;
