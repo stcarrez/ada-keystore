@@ -71,6 +71,7 @@ package Keystore.Tests is
 
    --  Test the akt password-set command.
    procedure Test_Tool_Password_Set (T : in out Test);
+   procedure Test_Tool_Password_Add_Limit (T : in out Test);
 
    --  Test the akt with an interactive password.
    procedure Test_Tool_Interactive_Password (T : in out Test);
