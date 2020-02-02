@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-testsuite -- Testsuite for keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ with Keystore.Tests;
 with Keystore.Tools.Tests;
 with Keystore.Passwords.Tests;
 with Keystore.GPG_Tests;
+with Keystore.Properties.Tests;
 package body Keystore.Testsuite is
 
    Tests : aliased Util.Tests.Test_Suite;
@@ -31,6 +32,7 @@ package body Keystore.Testsuite is
       Keystore.Passwords.Tests.Add_Tests (Tests'Access);
       Keystore.IO.Tests.Add_Tests (Tests'Access);
       Keystore.Files.Tests.Add_Tests (Tests'Access);
+      Keystore.Properties.Tests.Add_Tests (Tests'Access);
       Keystore.Tools.Tests.Add_Tests (Tests'Access);
       Keystore.Tests.Add_Tests (Tests'Access);
       Keystore.GPG_Tests.Add_Tests (Tests'Access);
