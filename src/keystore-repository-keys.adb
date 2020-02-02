@@ -15,7 +15,6 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-
 with Keystore.Repository.Entries;
 package body Keystore.Repository.Keys is
 
@@ -148,19 +147,19 @@ package body Keystore.Repository.Keys is
          Key_Start_Pos := Iterator.Key_Header_Pos - Key_Slot_Size (Iterator.Key_Count);
       else
          --  Erase some data keys but not all of them (the entry was updated and truncated).
-         Del_Count := Mark.Key_Count + 1;
+         Del_Count := Mark.Key_Count;
          Del_Size := Key_Slot_Size (Del_Count);
          Iterator.Current.Pos := Mark.Key_Header_Pos + 4;
-         New_Count := Iterator.Key_Count - Mark.Key_Count - 1;
+         New_Count := Iterator.Key_Count - Mark.Key_Count;
          Marshallers.Put_Unsigned_16 (Iterator.Current, New_Count);
          Key_Start_Pos := Iterator.Key_Header_Pos - Key_Slot_Size (New_Count);
       end if;
       Iterator.Item.Block_Count := Iterator.Item.Block_Count - Natural (Del_Count);
 
       Key_Pos := Iterator.Directory.Key_Pos;
-      if Key_Pos + Del_Size <= Key_Start_Pos then
-         Buf.Data (Key_Pos + 1 + Del_Size .. Key_Start_Pos + Del_Size)
-           := Buf.Data (Key_Pos + 1 .. Key_Start_Pos);
+      if Key_Pos + Del_Size < Key_Start_Pos then
+         Buf.Data (Key_Pos + 1 + Del_Size .. Key_Start_Pos)
+           := Buf.Data (Key_Pos + 1 .. Key_Start_Pos - Del_Size);
       end if;
       Buf.Data (Key_Pos + 1 .. Key_Pos + Del_Size) := (others => 0);
 
