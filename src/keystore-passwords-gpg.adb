@@ -255,7 +255,7 @@ package body Keystore.Passwords.GPG is
       Last := 4;
       Util.Processes.Spawn (Proc    => Proc,
                             Command => Cmd,
-                            Mode    => Util.Processes.READ_WRITE_ALL);
+                            Mode    => Util.Processes.READ_WRITE);
 
       Input := Util.Processes.Get_Input_Stream (Proc);
       Input.Write (Context.Data (POS_LOCK_KEY .. Context.Data'Last));
@@ -423,7 +423,7 @@ package body Keystore.Passwords.GPG is
       Last := POS_TAG_LAST;
       Util.Processes.Spawn (Proc    => Proc,
                             Command => Cmd,
-                            Mode    => Util.Processes.READ_WRITE_ALL);
+                            Mode    => Util.Processes.READ_WRITE);
 
       Util.Processes.Get_Input_Stream (Proc).Write (Data (POS_LOCK_KEY .. Data'Last));
       Util.Processes.Get_Input_Stream (Proc).Close;
