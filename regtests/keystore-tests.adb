@@ -22,6 +22,7 @@ with Ada.Streams.Stream_IO;
 with Ada.Environment_Variables;
 with GNAT.Regpat;
 with Util.Files;
+with Util.Strings;
 with Util.Test_Caller;
 with Util.Encoders.AES;
 with Util.Log.Loggers;
@@ -155,6 +156,8 @@ package body Keystore.Tests is
                        Test_Tool_Info_Error'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Create (Wallet_Key)",
                        Test_Tool_With_Wallet_Key_File'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Password (Slot limit)",
+                       Test_Tool_Password_Add_Limit'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -716,6 +719,28 @@ package body Keystore.Tests is
                                  "Bad output for password-remove command");
 
    end Test_Tool_Password_Set;
+
+   --  ------------------------------
+   --  Test the akt password-add command reaching the limit.
+   --  ------------------------------
+   procedure Test_Tool_Password_Add_Limit (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      for I in 1 .. 6 loop
+         T.Execute (Tool & " password-add " & Path & " -p admin-second --new-password "
+                    & "admin-" & Util.Strings.Image (I) & " --counter-range 10:100",
+                    Result, 0);
+      end loop;
+
+      T.Execute (Tool & " password-add " & Path & " -p admin-second --new-password "
+                 & "admin-8 --counter-range 10:100",
+                 Result, 1);
+
+      Util.Tests.Assert_Matches (T, "^There is no available key slot to add the password",
+                                 Result,
+                                 "Bad output for password-add command");
+   end Test_Tool_Password_Add_Limit;
 
    --  ------------------------------
    --  Test the akt with an interactive password.
