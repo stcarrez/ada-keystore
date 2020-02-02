@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-buffers -- Buffer management for the keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,26 +27,6 @@ package body Keystore.Buffers is
    begin
       return Sid (Sid'First + 1 .. Sid'Last) & "." & Bid (Bid'First + 1 .. Bid'Last);
    end To_String;
-
-   --  ------------------------------
-   --  Find a buffer from the set of allocate an instance to hold it.
-   --  ------------------------------
-   function Find_Or_Allocate (Container : in Buffer_Map;
-                              Storage   : in Storage_Identifier;
-                              Block     : in Block_Number) return Storage_Buffer is
-      Buffer : Storage_Buffer;
-      Pos    : Buffer_Cursor;
-      Key    : constant Storage_Block := Storage_Block '(Storage, Block);
-   begin
-      Buffer.Block := Key;
-      Pos := Container.Find (Key);
-      if Buffer_Maps.Has_Element (Pos) then
-         Buffer.Data := Buffer_Maps.Element (Pos);
-      else
-         Buffer.Data := Buffer_Refs.Create;
-      end if;
-      return Buffer;
-   end Find_Or_Allocate;
 
    --  ------------------------------
    --  Find a buffer from the container.
