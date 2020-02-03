@@ -88,6 +88,8 @@ package body Keystore.Files.Tests is
                        Test_Header_Data_Update'Access);
       Caller.Add_Test (Suite, "Test Keystore.Add (Wallet)",
                        Test_Add_Wallet'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Open (Wallet Error)",
+                       Test_Child_Wallet_Error'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -1042,5 +1044,104 @@ package body Keystore.Files.Tests is
       end;
 
    end Test_Add_Wallet;
+
+   procedure Test_Child_Wallet_Error (T : in out Test) is
+      Path      : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-wallet.akt");
+      Password  : Keystore.Secret_Key := Keystore.Create ("mypassword");
+      Password2 : Keystore.Secret_Key := Keystore.Create ("admin");
+      Config    : Keystore.Wallet_Config := Unsecure_Config;
+   begin
+      Config.Overwrite := True;
+      declare
+         W            : Keystore.Files.Wallet_File;
+         Child_Wallet : Keystore.Files.Wallet_File;
+      begin
+         W.Create (Path => Path, Password => Password, Config => Config);
+         W.Add ("property", "value");
+         T.Assert (W.Contains ("property"), "Property 'property' not contained in wallet");
+
+         W.Add ("wallet", Password2, Child_Wallet);
+         T.Assert (W.Contains ("wallet"), "Wallet 'wallet' not found");
+
+         Child_Wallet.Add ("child-property", "child-value");
+         T.Assert (Child_Wallet.Contains ("child-property"),
+                   "Property 'child-property' not contained in wallet");
+
+         Child_Wallet.Add ("child-2-property", "child-2-value");
+         T.Assert (Child_Wallet.Contains ("child-2-property"),
+                   "Property 'child-2-property' not contained in wallet");
+         Util.Tests.Assert_Equals (T, "child-value",
+                                   Child_Wallet.Get ("child-property"),
+                                   "Property 'child-property' cannot be retrieved from keystore");
+
+         --  Try to open an item which is not a wallet
+         declare
+            Bad_Wallet : Keystore.Files.Wallet_File;
+         begin
+            W.Open ("property", Password2, Bad_Wallet);
+            T.Fail ("The 'property' is not a child wallet!");
+
+         exception
+            when Invalid_Keystore =>
+               null;
+         end;
+
+         --  Try to open an item which does not exist.
+         declare
+            Bad_Wallet : Keystore.Files.Wallet_File;
+         begin
+            W.Open ("invalid-wallet", Password2, Bad_Wallet);
+            T.Fail ("No exception raised");
+
+         exception
+            when Not_Found =>
+               null;
+         end;
+
+         --  Try to update a child wallet with some content.
+         begin
+            W.Update ("wallet", "test");
+            T.Fail ("No exception raised");
+
+         exception
+            when No_Content =>
+               null;
+         end;
+
+         --  Try to get a wallet as content.
+         begin
+            T.Fail ("No exception for Get: " & W.Get ("wallet"));
+
+         exception
+            when No_Content =>
+               null;
+         end;
+
+         --  Try to get a wallet as content.
+         declare
+            Output : Util.Streams.Buffered.Output_Buffer_Stream;
+         begin
+            W.Get ("wallet", Output);
+            T.Fail ("No exception for Get");
+
+         exception
+            when No_Content =>
+               null;
+         end;
+
+         --  Try to get a wallet as content.
+         declare
+            Input : Util.Streams.Buffered.Input_Buffer_Stream;
+         begin
+            W.Set ("wallet", T_BINARY, Input);
+            T.Fail ("No exception for Get");
+
+         exception
+            when No_Content =>
+               null;
+         end;
+
+      end;
+   end Test_Child_Wallet_Error;
 
 end Keystore.Files.Tests;
