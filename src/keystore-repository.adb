@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-repository -- Repository management for the keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -467,9 +467,8 @@ package body Keystore.Repository is
 
          Keys.Initialize (Repository, Iterator, Item);
          Data.Get_Data (Repository, Iterator, Output);
-         if Iterator.Current_Offset /= Item.Size then
-            pragma Assert (Iterator.Current_Offset = Item.Size);
-         end if;
+
+         pragma Assert (Iterator.Current_Offset = Item.Size);
       end;
    end Get_Data;
 
@@ -544,14 +543,6 @@ package body Keystore.Repository is
          end if;
       end loop;
    end List;
-
-   --  ------------------------------
-   --  Get the keystore UUID.
-   --  ------------------------------
-   function Get_UUID (Repository : in Wallet_Repository) return UUID_Type is
-   begin
-      return Repository.Config.UUID;
-   end Get_UUID;
 
    --  ------------------------------
    --  Get the key slot number that was used to unlock the keystore.
