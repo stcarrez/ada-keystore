@@ -82,6 +82,8 @@ package body Keystore.Files.Tests is
                        Test_Header_Data_1'Access);
       Caller.Add_Test (Suite, "Test Keystore.Get_Header_Data (10)",
                        Test_Header_Data_10'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Get_Header_Data (Error)",
+                       Test_Header_Data_Error'Access);
       Caller.Add_Test (Suite, "Test Keystore.Add (Wallet)",
                        Test_Add_Wallet'Access);
    end Add_Tests;
@@ -927,6 +929,33 @@ package body Keystore.Files.Tests is
       Create_With_Header (Path, Password, 10);
       Verify_Header_Data (T, Path, 10);
    end Test_Header_Data_10;
+
+   procedure Test_Header_Data_Error (T : in out Test) is
+      Config   : Keystore.Wallet_Config := Unsecure_Config;
+      W        : Keystore.Files.Wallet_File;
+      Kind     : Keystore.Header_Slot_Type := 123;
+      Value    : Ada.Streams.Stream_Element := 3;
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-header.akt");
+      Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
+   begin
+      Config.Overwrite := True;
+      W.Create (Path => Path, Password => Password, Config => Config);
+      for I in 1 .. 31 loop
+         declare
+            D1 : constant Ada.Streams.Stream_Element_Array (1 .. 140) := (others => Value);
+         begin
+            W.Set_Header_Data (Header_Slot_Count_Type (I), Kind, D1);
+            Kind := Kind + 1;
+            Value := Value + 1;
+         end;
+      end loop;
+      T.Fail ("No exception raised by Set_Header_Data");
+
+   exception
+      when Keystore.No_Header_Slot =>
+         null;
+
+   end Test_Header_Data_Error;
 
    --  ------------------------------
    --  Test creating a wallet.
