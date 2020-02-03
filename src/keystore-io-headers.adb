@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-io-headers -- Keystore file header operations
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -277,21 +277,21 @@ package body Keystore.IO.Headers is
          Space := Data'Length - Size;
          Buffer.Pos := Buffer.Pos - 2;
       else
-         Space := Data'Length + 4;
+         Space := Data'Length;
       end if;
 
       Last := Get_Header_Data_Size (Header) + HEADER_DATA_POS;
 
       --  Verify there is enough room.
-      if Last + Space + 4 >= Limit then
+      if Last + Space + 8 >= Limit then
          Log.Warn ("Not enough header space to add a header data");
          raise No_Header_Slot;
       end if;
 
       --  Shift
-      if Index < Header.Data_Count then
+      if Index < Header.Data_Count and Space /= 0 then
          Start := Buffer.Pos + 4 + Size;
-         Buf.Data := Buf.Data (Start .. Last);
+         Buf.Data (Start + Space .. Last + Space) := Buf.Data (Start .. Last);
       end if;
 
       --  Update the header data slot.
