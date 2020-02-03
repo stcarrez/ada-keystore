@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-repository -- Repository management for the keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -134,9 +134,6 @@ private package Keystore.Repository is
                    Pattern    : in GNAT.Regpat.Pattern_Matcher;
                    Filter     : in Filter_Type;
                    Content    : out Entry_Map);
-
-   --  Get the keystore UUID.
-   function Get_UUID (Repository : in Wallet_Repository) return UUID_Type;
 
    --  Get the key slot number that was used to unlock the keystore.
    function Get_Key_Slot (Repository : in Wallet_Repository) return Key_Slot;
