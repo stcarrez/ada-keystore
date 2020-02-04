@@ -26,6 +26,20 @@ gpg-encrypt=$GPG --no-secmem-warning --homedir=$ROOT/$USER --encrypt --batch --y
 gpg-decrypt=$GPG --no-secmem-warning --homedir=$ROOT/$USER --decrypt --batch --yes --quiet
 gpg-list-keys=$GPG --no-secmem-warning --homedir=$ROOT/$USER --list-secret-keys --with-colons --with-fingerprint
 EOF
+
+  # Generate an AKT configuration file for each user
+  cat <<EOF > $ROOT/bad-list-$USER-akt.properties
+gpg-encrypt=$GPG --no-secmem-warning --homedir=$ROOT/$USER --encrypt --batch --yes --quiet -r \$USER
+gpg-decrypt=$GPG --no-secmem-warning --homedir=$ROOT/$USER --decrypt --batch --yes --quiet
+gpg-list-keys=$GPG --no-secmem-warning --homedir=$ROOT/$USER --list-secret-keys --with-colons --with-fingerprint-this-option-is-invalid
+EOF
+
+  cat <<EOF > $ROOT/bad-decrypt-$USER-akt.properties
+gpg-encrypt=$GPG --no-secmem-warning --homedir=$ROOT/$USER --encrypt --batch --yes --quiet -r \$USER
+gpg-decrypt=oops
+gpg-list-keys=$GPG --no-secmem-warning --homedir=$ROOT/$USER --list-secret-keys --with-colons --with-fingerprint
+EOF
+
 done
 
 # Import GPG public keys for user1 so that he knows user2 and user3.
