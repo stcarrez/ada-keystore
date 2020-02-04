@@ -90,6 +90,8 @@ package body Keystore.Files.Tests is
                        Test_Add_Wallet'Access);
       Caller.Add_Test (Suite, "Test Keystore.Open (Wallet Error)",
                        Test_Child_Wallet_Error'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Open (Corrupted)",
+                       Test_Corrupted_1'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -1143,5 +1145,20 @@ package body Keystore.Files.Tests is
 
       end;
    end Test_Child_Wallet_Error;
+
+   --  Test operation on corrupted keystore.
+   procedure Test_Corrupted_1 (T : in out Test) is
+      Path      : constant String
+        := Util.Tests.Get_Test_Path ("regtests/files/test-corrupted-1.akt");
+      Password  : Keystore.Secret_Key := Keystore.Create ("mypassword");
+      W         : Keystore.Files.Wallet_File;
+   begin
+      W.Open (Password, Path);
+      T.Fail ("No exception raised for corrupted file");
+
+   exception
+      when Keystore.Corrupted =>
+         null;
+   end Test_Corrupted_1;
 
 end Keystore.Files.Tests;
