@@ -46,7 +46,8 @@ package body Keystore.Tests is
    DATA_TOOL3_PATH  : constant String := "regtests/result/test-tool-3";
    TEST_TOOL4_PATH  : constant String := "regtests/result/test-tool-4.akt";
    TEST_TOOL5_PATH  : constant String := "regtests/result/test-tool-5.akt";
-   TEST_WALLET_KEY_PATH : constant String := "regtests/result/keys/wallet.keys";
+   TEST_WALLET_KEY_PATH  : constant String := "regtests/result/keys/wallet.keys";
+   TEST_CORRUPTED_1_PATH : constant String := "regtests/files/test-corrupted-1.akt";
 
    function Tool return String;
    function Compare (Path1 : in String;
@@ -160,6 +161,8 @@ package body Keystore.Tests is
                        Test_Tool_Password_Add_Limit'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.List (No file provided)",
                        Test_Tool_List_Error'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Open (Corrupted)",
+                       Test_Tool_Corrupted_1'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -904,5 +907,14 @@ package body Keystore.Tests is
       Util.Tests.Assert_Matches (T, "Invalid password to unlock the keystore file",
                                  Result, "list command failed");
    end Test_Tool_With_Wallet_Key_File;
+
+   procedure Test_Tool_Corrupted_1 (T : in out Test) is
+      Path    : constant String := Util.Tests.Get_Test_Path (TEST_CORRUPTED_1_PATH);
+      Result  : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " list " & Path & " -p mypassword", Result, 1);
+      Util.Tests.Assert_Matches (T, "The keystore file is corrupted: invalid meta data content",
+                                 Result, "list command failed");
+   end Test_Tool_Corrupted_1;
 
 end Keystore.Tests;
