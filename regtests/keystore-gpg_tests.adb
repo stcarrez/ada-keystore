@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-gpg_tests -- Test AKT with GPG2
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,6 +53,8 @@ package body Keystore.GPG_Tests is
                        Test_Remove_Password'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Store (Update)",
                        Test_Update_File'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Store (GPG Error)",
+                       Test_GPG_Error'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -335,5 +337,31 @@ package body Keystore.GPG_Tests is
                  Result);
 
    end Test_Update_File;
+
+   --  ------------------------------
+   --  Test when gpg execution fails
+   --  ------------------------------
+   procedure Test_Gpg_Error (T : in out Test) is
+      Config : constant String := Util.Tests.Get_Test_Path ("regtests/files/gnupg/");
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL3_PATH);
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute ("bin/akt --config " & Config & "bad-list-user1.properties store "
+                 & Path & " -- LICENSE.txt",
+                 "Makefile.conf", "",
+                 Result, 1);
+
+      Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
+                                 Result, "password-set command failed");
+
+      T.Execute ("bin/akt --config " & Config & "bad-decrypt-user1.properties store "
+                 & Path & " -- LICENSE.txt",
+                 "Makefile.conf", "",
+                 Result, 1);
+
+      Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
+                                 Result, "password-set command failed");
+
+   end Test_GPG_Error;
 
 end Keystore.GPG_Tests;
