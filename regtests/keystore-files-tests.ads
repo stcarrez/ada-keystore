@@ -86,4 +86,7 @@ package Keystore.Files.Tests is
    procedure Test_Add_Wallet (T : in out Test);
    procedure Test_Child_Wallet_Error (T : in out Test);
 
+   --  Test operation on corrupted keystore.
+   procedure Test_Corrupted_1 (T : in out Test);
+
 end Keystore.Files.Tests;
