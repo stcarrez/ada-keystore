@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-gpg_tests -- Test AKT with GPG2
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,6 +41,9 @@ package Keystore.GPG_Tests is
 
    --  Test update content with store command
    procedure Test_Update_File (T : in out Test);
+
+   --  Test when gpg execution fails
+   procedure Test_GPG_Error (T : in out Test);
 
    procedure Execute (T       : in out Test;
                       Command : in String;
