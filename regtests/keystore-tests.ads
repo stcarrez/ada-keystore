@@ -90,6 +90,8 @@ package Keystore.Tests is
    --  Test the akt commands with --wallet-key-file
    procedure Test_Tool_With_Wallet_Key_File (T : in out Test);
 
+   procedure Test_Tool_Corrupted_1 (T : in out Test);
+
    procedure Execute (T       : in out Test;
                       Command : in String;
                       Input   : in String;
