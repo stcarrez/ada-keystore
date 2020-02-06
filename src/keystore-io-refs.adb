@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-io-refs -- IO stream reference holder
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,11 +20,6 @@ with Ada.Unchecked_Deallocation;
 package body Keystore.IO.Refs is
 
    use type Util.Concurrent.Counters.Counter_Access;
-
-   function Is_Null (Object : in Stream_Ref) return Boolean is
-   begin
-      return Object.Stream = null;
-   end Is_Null;
 
    function Create (Stream : in Wallet_Stream_Access) return Stream_Ref is
    begin
