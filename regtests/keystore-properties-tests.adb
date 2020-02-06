@@ -68,6 +68,16 @@ package body Keystore.Properties.Tests is
       Wallet.Create (Path => Path, Password => Password, Config => Config);
       T.Test_Properties (Props);
 
+      Wallet.Close;
+      Wallet.Open (Path => Path, Password => Password);
+
+      declare
+         P3 : Keystore.Properties.Manager;
+      begin
+         P3 := Props;
+         T.Test_Properties (P3);
+      end;
+
       declare
          P2 : Util.Properties.Manager;
       begin
