@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-io-refs -- IO stream reference holder
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,8 +21,6 @@ private with Ada.Finalization;
 package Keystore.IO.Refs is
 
    type Stream_Ref is tagged private;
-
-   function Is_Null (Object : in Stream_Ref) return Boolean;
 
    function Create (Stream : in Wallet_Stream_Access) return Stream_Ref;
 
