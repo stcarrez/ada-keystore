@@ -35,7 +35,4 @@ private
    overriding
    procedure Initialize (Object : in out Manager);
 
-   overriding
-   procedure Adjust (Object : in out Manager);
-
 end Keystore.Properties;
