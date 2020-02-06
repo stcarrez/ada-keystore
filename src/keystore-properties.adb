@@ -79,11 +79,6 @@ package body Keystore.Properties is
       Check_And_Create_Impl (Object);
    end Initialize;
 
-   procedure Adjust (Object : in out Manager) is
-   begin
-      Check_And_Create_Impl (Object);
-   end Adjust;
-
    --  ------------------------------
    --  Get the value identified by the name.
    --  If the name cannot be found, the method should return the Null object.
@@ -157,7 +152,7 @@ package body Keystore.Properties is
    --  ------------------------------
    function Create_Copy (Self : in Wallet_Manager)
                          return Util.Properties.Implementation.Manager_Access is
-      Result : constant Keystore_Manager_Access := new Wallet_Manager;
+      Result : constant Keystore_Manager_Access := new Property_Map;
    begin
       Result.Wallet := Self.Wallet;
       Result.Props := Self.Props;
