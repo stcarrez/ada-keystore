@@ -94,6 +94,8 @@ package Keystore.Tests is
 
    procedure Test_Tool_Version (T : in out Test);
 
+   procedure Test_Tool_Bad_File (T : in out Test);
+
    procedure Execute (T       : in out Test;
                       Command : in String;
                       Input   : in String;
