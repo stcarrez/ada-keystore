@@ -945,7 +945,9 @@ package body Keystore.Tests is
       Result  : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " list " & Path & " -p mypassword", Result, 0);
-      Util.Tests.Assert_Matches (T, "property.*5.*wallet.* 0 ",
+      Util.Tests.Assert_Matches (T, "^property.*5.*",
+                                 Result, "list command failed");
+      Util.Tests.Assert_Matches (T, "wallet.*0 .*",
                                  Result, "list command failed");
 
       T.Execute (Tool & " get " & Path & " -p mypassword wallet", Result, 1);
