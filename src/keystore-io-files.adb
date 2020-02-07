@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-io-files -- Ada keystore IO for files
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -459,7 +459,7 @@ package body Keystore.IO.Files is
          if Stat.st_size mod IO.Block_Size /= 0 then
             Result := Util.Systems.Os.Sys_Close (Fd);
             Log.Error ("Invalid or truncated keystore file '{0}': size is incorrect", Path);
-            raise Ada.IO_Exceptions.Name_Error with Path;
+            raise Keystore.Invalid_Keystore with Path;
          end if;
          Size := Block_Count (Stat.st_size / IO.Block_Size);
 
