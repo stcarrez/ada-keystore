@@ -163,6 +163,8 @@ package body Keystore.Tests is
                        Test_Tool_List_Error'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Open (Corrupted)",
                        Test_Tool_Corrupted_1'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands (-V)",
+                       Test_Tool_Version'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -916,5 +918,13 @@ package body Keystore.Tests is
       Util.Tests.Assert_Matches (T, "The keystore file is corrupted: invalid meta data content",
                                  Result, "list command failed");
    end Test_Tool_Corrupted_1;
+
+   procedure Test_Tool_Version (T : in out Test) is
+      Result  : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " -V", Result, 0);
+      Util.Tests.Assert_Matches (T, "Ada Keystore Tool 1.[0-9].[0-9]",
+                                 Result, "akt -V option");
+   end Test_Tool_Version;
 
 end Keystore.Tests;
