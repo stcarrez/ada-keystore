@@ -48,6 +48,7 @@ package body Keystore.Tests is
    TEST_TOOL5_PATH  : constant String := "regtests/result/test-tool-5.akt";
    TEST_WALLET_KEY_PATH  : constant String := "regtests/result/keys/wallet.keys";
    TEST_CORRUPTED_1_PATH : constant String := "regtests/files/test-corrupted-1.akt";
+   TEST_WALLET_PATH      : constant String := "regtests/files/test-wallet.akt";
 
    function Tool return String;
    function Compare (Path1 : in String;
@@ -167,6 +168,8 @@ package body Keystore.Tests is
                        Test_Tool_Version'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands (Invalid file)",
                        Test_Tool_Bad_File'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.List (Nested wallet)",
+                       Test_Tool_Nested_Wallet'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -936,5 +939,18 @@ package body Keystore.Tests is
       Util.Tests.Assert_Matches (T, "The file is not a keystore",
                                  Result, "akt on an invalid file");
    end Test_Tool_Bad_File;
+
+   procedure Test_Tool_Nested_Wallet (T : in out Test) is
+      Path    : constant String := Util.Tests.Get_Test_Path (TEST_WALLET_PATH);
+      Result  : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " list " & Path & " -p mypassword", Result, 0);
+      Util.Tests.Assert_Matches (T, "property.*5.*wallet.* 0 ",
+                                 Result, "list command failed");
+
+      T.Execute (Tool & " get " & Path & " -p mypassword wallet", Result, 1);
+      Util.Tests.Assert_Matches (T, "No content for an item of type wallet",
+                                 Result, "get command on wallet");
+   end Test_Tool_Nested_Wallet;
 
 end Keystore.Tests;
