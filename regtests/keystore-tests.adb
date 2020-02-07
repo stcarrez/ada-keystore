@@ -165,6 +165,8 @@ package body Keystore.Tests is
                        Test_Tool_Corrupted_1'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands (-V)",
                        Test_Tool_Version'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands (Invalid file)",
+                       Test_Tool_Bad_File'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -926,5 +928,13 @@ package body Keystore.Tests is
       Util.Tests.Assert_Matches (T, "Ada Keystore Tool 1.[0-9].[0-9]",
                                  Result, "akt -V option");
    end Test_Tool_Version;
+
+   procedure Test_Tool_Bad_File (T : in out Test) is
+      Result  : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " list Makefile", Result, 1);
+      Util.Tests.Assert_Matches (T, "The file is not a keystore",
+                                 Result, "akt on an invalid file");
+   end Test_Tool_Bad_File;
 
 end Keystore.Tests;
