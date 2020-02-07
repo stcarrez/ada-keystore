@@ -1,6 +1,6 @@
 .\"
 .\"
-.TH AKT 1 "Dec 8, 2019" "Ada Keystore Tool"
+.TH AKT 1 "Feb 7, 2020" "Ada Keystore Tool"
 .SH NAME
 akt - Tool to protect your sensitive data with secure storage
 .SH SYNOPSIS
@@ -234,6 +234,26 @@ provided that the user's private key is known.  When using the
 .B --gpg
 option, it is possible to protect the keystore for several users, thus
 being able to share the secure file with each of them.
+.\"
+.SS The extract command
+.RE
+.RS 0
+akt \fBextract\fP \fIkeystore.akt\fR -- \fIname\fR
+.RE
+.RS 0
+akt \fBextract\fP \fIkeystore.akt\fR {\fIname\fR...}
+.RE
+.PP
+This command allows to extract files or directories recursively from the
+keystore.  It is possible to extract several files and directories
+at the same time.
+.PP
+When the
+.I --
+option is passed, the command accepts only one
+argument.  It extracts the specified name and writes the result
+on the standard output.  It can be used as a target for a pipe command.
+.\"
 .\"
 .SS The set command
 .RS 0
