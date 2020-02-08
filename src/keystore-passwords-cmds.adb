@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-passwords-cmds -- External command based password provider
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,54 +15,34 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Ada.Strings.Unbounded;
 with Util.Processes;
 with Util.Streams.Pipes;
-with Util.Streams.Buffered;
 package body Keystore.Passwords.Cmds is
 
-   type Provider (Len : Natural) is limited new Keystore.Passwords.Provider with record
-      Command : String (1 .. Len);
-   end record;
-
-   --  Get the password through the Getter operation.
-   overriding
-   procedure Get_Password (From   : in Provider;
-                           Getter : not null access procedure (Password : in Secret_Key));
+   use type Ada.Streams.Stream_Element_Offset;
 
    --  ------------------------------
-   --  Create a password provider that reads runs a command to get the password.
+   --  Create a password provider that runs a command to get the password.
    --  ------------------------------
    function Create (Command : in String) return Provider_Access is
-   begin
-      return new Provider '(Len => Command'Length, Command => Command);
-   end Create;
-
-   --  ------------------------------
-   --  Get the password through the Getter operation.
-   --  ------------------------------
-   overriding
-   procedure Get_Password (From   : in Provider;
-                           Getter : not null access procedure (Password : in Secret_Key)) is
+      Content : Ada.Streams.Stream_Element_Array (1 .. MAX_PASSWORD_LENGTH);
+      Last    : Ada.Streams.Stream_Element_Offset := 0;
       Pipe    : aliased Util.Streams.Pipes.Pipe_Stream;
-      Buffer  : Util.Streams.Buffered.Input_Buffer_Stream;
-      Content : Ada.Strings.Unbounded.Unbounded_String;
    begin
-      Pipe.Open (From.Command, Util.Processes.READ);
-      Buffer.Initialize (Pipe'Access, 1024);
-      Buffer.Read (Content);
+      Pipe.Open (Command, Util.Processes.READ);
       Pipe.Close;
+      Pipe.Read (Content, Last);
 
       if Pipe.Get_Exit_Status /= 0 then
          raise Keystore.Bad_Password with "External password command exited with status"
            & Natural'Image (Pipe.Get_Exit_Status);
       end if;
 
-      if Ada.Strings.Unbounded.Length (Content) = 0 then
-         raise Keystore.Bad_Password with "Operation canceled";
+      if Last = 0 then
+         raise Keystore.Bad_Password with "Empty password given";
       end if;
 
-      Getter (Keystore.Create (Ada.Strings.Unbounded.To_String (Content)));
-   end Get_Password;
+      return Create (Content (Content'First .. Last));
+   end Create;
 
 end Keystore.Passwords.Cmds;
