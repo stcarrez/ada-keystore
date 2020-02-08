@@ -17,14 +17,11 @@
 -----------------------------------------------------------------------
 
 with Util.Test_Caller;
-with Util.Measures;
-with Util.Encoders.AES;
 with Keystore.IO.Files;
 with Keystore.Buffers;
-with Keystore.Marshallers;
-with Keystore.IO.Files;
 with Keystore.Passwords.GPG;
 with Keystore.Repository;
+with Keystore.IO.Refs;
 package body Keystore.Coverage is
 
    --  A fake type to make sure execute generated compiler code for <T>DF() operation
@@ -34,6 +31,10 @@ package body Keystore.Coverage is
       Context : Keystore.Passwords.GPG.Context_Type;
       Config  : Keystore.Wallet_Config;
       Repo    : Keystore.Repository.Wallet_Repository;
+      Ref     : Keystore.IO.Refs.Stream_Ref;
+      Block   : Keystore.Buffers.Storage_Block;
+      Buf     : Keystore.Buffers.Data_Buffer_Type;
+      Storage : Keystore.Buffers.Storage_Buffer;
    end record;
 
    package Caller is new Util.Test_Caller (Test, "Keystore.Coverage");
@@ -47,7 +48,8 @@ package body Keystore.Coverage is
    procedure Test_Deep_Coverage (T : in out Test) is
       Item : Deep_Finalization_Coverage;
    begin
-      null;
+      Item.Config := Keystore.Secure_Config;
+      T.Assert (Item'Size > 0, "Compiler error!!!!");
    end Test_Deep_Coverage;
 
 end Keystore.Coverage;
