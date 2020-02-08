@@ -341,7 +341,7 @@ package body Keystore.GPG_Tests is
    --  ------------------------------
    --  Test when gpg execution fails
    --  ------------------------------
-   procedure Test_Gpg_Error (T : in out Test) is
+   procedure Test_GPG_Error (T : in out Test) is
       Config : constant String := Util.Tests.Get_Test_Path ("regtests/files/gnupg/");
       Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL3_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
