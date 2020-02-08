@@ -49,6 +49,7 @@ package body Keystore.Tests is
    TEST_WALLET_KEY_PATH  : constant String := "regtests/result/keys/wallet.keys";
    TEST_CORRUPTED_1_PATH : constant String := "regtests/files/test-corrupted-1.akt";
    TEST_WALLET_PATH      : constant String := "regtests/files/test-wallet.akt";
+   TEST_SPLIT_PATH       : constant String := "regtests/files/test-split.akt";
 
    function Tool return String;
    function Compare (Path1 : in String;
@@ -164,6 +165,8 @@ package body Keystore.Tests is
                        Test_Tool_List_Error'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Open (Corrupted)",
                        Test_Tool_Corrupted_1'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Open (Missing Storage)",
+                       Test_Tool_Missing_Storage'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands (-V)",
                        Test_Tool_Version'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands (Invalid file)",
@@ -933,6 +936,16 @@ package body Keystore.Tests is
       Util.Tests.Assert_Matches (T, "The keystore file is corrupted: invalid meta data content",
                                  Result, "list command failed");
    end Test_Tool_Corrupted_1;
+
+   procedure Test_Tool_Missing_Storage (T : in out Test) is
+      Path    : constant String := Util.Tests.Get_Test_Path (TEST_SPLIT_PATH);
+      Result  : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " list " & Path & " -p admin", Result, 1);
+      Util.Tests.Assert_Matches
+        (T, "The keystore file is corrupted: invalid or missing storage file",
+         Result, "list command failed");
+   end Test_Tool_Missing_Storage;
 
    procedure Test_Tool_Version (T : in out Test) is
       Result  : Ada.Strings.Unbounded.Unbounded_String;
