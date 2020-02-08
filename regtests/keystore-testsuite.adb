@@ -23,6 +23,7 @@ with Keystore.Tools.Tests;
 with Keystore.Passwords.Tests;
 with Keystore.GPG_Tests;
 with Keystore.Properties.Tests;
+with Keystore.Coverage;
 package body Keystore.Testsuite is
 
    Tests : aliased Util.Tests.Test_Suite;
@@ -36,6 +37,7 @@ package body Keystore.Testsuite is
       Keystore.Tools.Tests.Add_Tests (Tests'Access);
       Keystore.Tests.Add_Tests (Tests'Access);
       Keystore.GPG_Tests.Add_Tests (Tests'Access);
+      Keystore.Coverage.Add_Tests (Tests'Access);
       return Tests'Access;
    end Suite;
 
