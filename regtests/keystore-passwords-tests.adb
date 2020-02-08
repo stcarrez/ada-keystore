@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-passwords-tests -- Tests for Keystore.Passwords
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,11 +19,13 @@
 with Ada.Unchecked_Deallocation;
 with Ada.Streams.Stream_IO;
 with Util.Test_Caller;
+with Util.Strings.Sets;
 with Util.Encoders.SHA256;
 with Util.Encoders.HMAC.SHA256;
 with Keystore.Tests;
 with Keystore.Passwords.Keys;
 with Keystore.Passwords.Files;
+with Keystore.Passwords.GPG;
 package body Keystore.Passwords.Tests is
 
    use type Ada.Streams.Stream_Element_Array;
@@ -41,6 +43,8 @@ package body Keystore.Passwords.Tests is
    begin
       Caller.Add_Test (Suite, "Test Keystore.Passwords.Files",
                        Test_File_Password'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Passwords.GPG.List_Secret_Keys",
+                       Test_GPG2_List_Secrets'Access);
    end Add_Tests;
 
    function Hash (Provider : in Keys.Key_Provider_Access)
@@ -122,5 +126,31 @@ package body Keystore.Passwords.Tests is
          end;
       end if;
    end Test_File_Password;
+
+   --  ------------------------------
+   --  Test the List_GPG_Secret_Keys against various well known formats
+   --  ------------------------------
+   procedure Test_GPG2_List_Secrets (T : in out Test) is
+      procedure Check (Key : in String);
+
+      Path  : constant String := Util.Tests.Get_Test_Path ("regtests/files/gpg2-list.txt");
+      Ctx   : Keystore.Passwords.GPG.Context_Type;
+      List  : Util.Strings.Sets.Set;
+
+      procedure Check (Key : in String) is
+      begin
+         T.Assert (List.Contains (Key), "Key '" & Key & "' not found");
+      end Check;
+
+   begin
+      Ctx.Set_List_Key_Command ("cat " & Path);
+      Ctx.List_GPG_Secret_Keys (List);
+
+      T.Assert (not List.Is_Empty, "Empty set");
+      Check ("234ACBEFB9EA5201");
+      Check ("BEAD6E64B72F0C8C");
+      Check ("FC15CA870BE470F9");
+
+   end Test_GPG2_List_Secrets;
 
 end Keystore.Passwords.Tests;
