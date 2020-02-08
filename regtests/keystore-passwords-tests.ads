@@ -29,4 +29,7 @@ package Keystore.Passwords.Tests is
    --  Test the List_GPG_Secret_Keys against various well known formats
    procedure Test_GPG2_List_Secrets (T : in out Test);
 
+   --  Test the List_GPG_Secret_Keys against various well known formats
+   procedure Test_GPG1_List_Secrets (T : in out Test);
+
 end Keystore.Passwords.Tests;
