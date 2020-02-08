@@ -415,6 +415,16 @@ package body Keystore.Tests is
       T.Execute (Tool & " list -k " & Path & " --passcmd 'echo -n admin'", Result);
       Util.Tests.Assert_Matches (T, "^testing", Result, "list command failed");
 
+      --  Try using an invalid command
+      T.Execute (Tool & " list -k " & Path & " --passcmd 'missing-command'", Result, 1);
+      Util.Tests.Assert_Matches (T, "Invalid password to unlock the keystore file",
+                                 Result, "no error reported");
+
+      --  Try using a command that produces an empty password
+      T.Execute (Tool & " list -k " & Path & " --passcmd true", Result, 1);
+      Util.Tests.Assert_Matches (T, "Invalid password to unlock the keystore file",
+                                 Result, "no error reported");
+
    end Test_Tool_Create_Password_Command;
 
    --  ------------------------------
