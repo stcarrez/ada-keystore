@@ -445,18 +445,13 @@ package body Keystore.IO.Files is
          Interfaces.C.Strings.Free (P);
 
          if Fd = Util.Systems.Os.NO_FILE then
-            Log.Error ("Cannot open keystore '{0}': {1}", Path, Sys_Error);
+            Log.Warn ("Cannot open keystore '{0}': {1}", Path, Sys_Error);
             raise Ada.IO_Exceptions.Name_Error with Path;
          end if;
 
          Result := Util.Systems.Os.Sys_Fstat (Fd, Stat'Access);
-         if Result /= 0 then
-            Result := Util.Systems.Os.Sys_Close (Fd);
-            Log.Error ("Invalid keystore file '{0}': {1}", Path, Sys_Error);
-            raise Ada.IO_Exceptions.Name_Error with Path;
-         end if;
 
-         if Stat.st_size mod IO.Block_Size /= 0 then
+         if Result /= 0 or Stat.st_size mod IO.Block_Size /= 0 then
             Result := Util.Systems.Os.Sys_Close (Fd);
             Log.Error ("Invalid or truncated keystore file '{0}': size is incorrect", Path);
             raise Keystore.Invalid_Keystore with Path;
@@ -485,6 +480,10 @@ package body Keystore.IO.Files is
                Last_Id := Storage.Identifier;
             end if;
             Alloc_Id := 1;
+
+         exception
+            when Ada.IO_Exceptions.Name_Error =>
+               raise Keystore.Invalid_Storage with Path;
          end Open_Storage;
 
          File : File_Stream_Access;
