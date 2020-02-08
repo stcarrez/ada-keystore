@@ -122,7 +122,7 @@ package Keystore is
    type Filter_Type is array (Entry_Type) of Boolean;
 
    --  Defines the key operation mode.
-   type Mode_Type is (KEY_ADD, KEY_REPLACE, KEY_REMOVE, KEY_REMOVE_LAST);
+   type Mode_Type is (KEY_ADD, KEY_REPLACE, KEY_REMOVE);
 
    --  Defines the key slot number.
    type Key_Slot is new Positive range 1 .. 7;
