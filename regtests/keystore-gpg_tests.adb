@@ -343,10 +343,10 @@ package body Keystore.GPG_Tests is
    --  ------------------------------
    procedure Test_GPG_Error (T : in out Test) is
       Config : constant String := Util.Tests.Get_Test_Path ("regtests/files/gnupg/");
-      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL3_PATH);
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
-      T.Execute ("bin/akt --config " & Config & "bad-list-user1.properties store "
+      T.Execute ("bin/akt --config " & Config & "bad-list-user1-akt.properties store "
                  & Path & " -- LICENSE.txt",
                  "Makefile.conf", "",
                  Result, 1);
@@ -354,7 +354,7 @@ package body Keystore.GPG_Tests is
       Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
                                  Result, "password-set command failed");
 
-      T.Execute ("bin/akt --config " & Config & "bad-decrypt-user1.properties store "
+      T.Execute ("bin/akt --config " & Config & "bad-decrypt-user1-akt.properties store "
                  & Path & " -- LICENSE.txt",
                  "Makefile.conf", "",
                  Result, 1);
