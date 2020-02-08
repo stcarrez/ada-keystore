@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-keys -- Keystore key management
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -715,9 +715,6 @@ package body Keystore.Keys is
                Save_Key (Manager, Buffer, New_Password, Slot, Local_Config, Stream);
 
             when KEY_REMOVE =>
-               Erase_Key (Manager, Buffer, Slot, Stream);
-
-            when KEY_REMOVE_LAST =>
                Erase_Key (Manager, Buffer, Slot, Stream);
 
          end case;
