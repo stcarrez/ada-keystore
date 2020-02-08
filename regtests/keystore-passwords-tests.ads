@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-passwords-tests -- Tests for Keystore.Passwords
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -25,5 +25,8 @@ package Keystore.Passwords.Tests is
 
    --  Test the using the Passwords.Files
    procedure Test_File_Password (T : in out Test);
+
+   --  Test the List_GPG_Secret_Keys against various well known formats
+   procedure Test_GPG2_List_Secrets (T : in out Test);
 
 end Keystore.Passwords.Tests;
