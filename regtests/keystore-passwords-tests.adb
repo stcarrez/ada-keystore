@@ -43,8 +43,10 @@ package body Keystore.Passwords.Tests is
    begin
       Caller.Add_Test (Suite, "Test Keystore.Passwords.Files",
                        Test_File_Password'Access);
-      Caller.Add_Test (Suite, "Test Keystore.Passwords.GPG.List_Secret_Keys",
+      Caller.Add_Test (Suite, "Test Keystore.Passwords.GPG.List_Secret_Keys (GPG2)",
                        Test_GPG2_List_Secrets'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Passwords.GPG.List_Secret_Keys (GPG1)",
+                       Test_GPG1_List_Secrets'Access);
    end Add_Tests;
 
    function Hash (Provider : in Keys.Key_Provider_Access)
@@ -152,5 +154,30 @@ package body Keystore.Passwords.Tests is
       Check ("FC15CA870BE470F9");
 
    end Test_GPG2_List_Secrets;
+
+   --  ------------------------------
+   --  Test the List_GPG_Secret_Keys against various well known formats
+   --  ------------------------------
+   procedure Test_GPG1_List_Secrets (T : in out Test) is
+      procedure Check (Key : in String);
+
+      Path  : constant String := Util.Tests.Get_Test_Path ("regtests/files/gpg1-list.txt");
+      Ctx   : Keystore.Passwords.GPG.Context_Type;
+      List  : Util.Strings.Sets.Set;
+
+      procedure Check (Key : in String) is
+      begin
+         T.Assert (List.Contains (Key), "Key '" & Key & "' not found");
+      end Check;
+
+   begin
+      Ctx.Set_List_Key_Command ("cat " & Path);
+      Ctx.List_GPG_Secret_Keys (List);
+
+      T.Assert (not List.Is_Empty, "Empty set");
+      Check ("BEAD6E64B72F0C8C");
+      Check ("66F016067A184E83");
+
+   end Test_GPG1_List_Secrets;
 
 end Keystore.Passwords.Tests;
