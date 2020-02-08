@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-windows -- GtK Windows for Ada Keystore GTK application
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,9 +26,9 @@ procedure Load_UI (Application : in out Application_Type) is
    Result : Glib.Guint;
    Error  : aliased Glib.Error.GError;
 begin
-   Result := Application.Builder.Add_From_File ("gatk.glade", Error'Access);
+   Result := Application.Builder.Add_From_File ("gakt.glade", Error'Access);
    if Result /= 1 then
-      Log.Error ("Cannot load the 'gatk.glade' configuration file");
+      Log.Error ("Cannot load the 'gakt.glade' configuration file");
       raise Initialize_Error;
    end if;
 end Load_UI;
