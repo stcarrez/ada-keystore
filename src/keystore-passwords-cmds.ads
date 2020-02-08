@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-passwords-cmds -- External command based password provider
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +18,9 @@
 
 package Keystore.Passwords.Cmds is
 
-   --  Create a password provider that reads runs a command to get the password.
+   MAX_PASSWORD_LENGTH : constant := 1024;
+
+   --  Create a password provider that runs a command to get the password.
    function Create (Command : in String) return Provider_Access;
 
 end Keystore.Passwords.Cmds;
