@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-passwords-gpg -- Password protected by GPG
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -119,15 +119,15 @@ package body Keystore.Passwords.GPG is
                                    List    : in out Util.Strings.Sets.Set) is
       procedure Parse (Line : in String);
 
-      --  GPG2 command output:
-      --  ssb:u:<key-size>:<key-algo>:<key-id>:<create-date>:<expire-date>:::::<e>:
-      REGEX2 : constant String
-        := "^(ssb|sec):u?:[1-9][0-9][0-9][0-9]:[0-9]:([0-9a-fA-F]+):[0-9]+:[0-9]*:::::[esa]+::.*";
-
       --  GPG1 command output:
       --  ssb::<key-size>:<key-algo>:<key-id>:<create-date>:<expire-date>:::::<e>:
       REGEX1 : constant String
         := "^(ssb|sec):u?:[1-9][0-9][0-9][0-9]:[0-9]:([0-9a-fA-F]+):[0-9-]+:[0-9-]*:::::.*";
+
+      --  GPG2 command output:
+      --  ssb:u:<key-size>:<key-algo>:<key-id>:<create-date>:<expire-date>:::::<e>:
+      REGEX2 : constant String
+        := "^(ssb|sec):u?:[1-9][0-9][0-9][0-9]:[0-9]:([0-9a-fA-F]+):[0-9]+:[0-9]*:::::[esa]+::.*";
 
       Pattern1 : constant GNAT.Regpat.Pattern_Matcher := GNAT.Regpat.Compile (REGEX1);
       Pattern2 : constant GNAT.Regpat.Pattern_Matcher := GNAT.Regpat.Compile (REGEX2);
@@ -135,17 +135,15 @@ package body Keystore.Passwords.GPG is
       procedure Parse (Line : in String) is
          Matches : GNAT.Regpat.Match_Array (0 .. 2);
       begin
-         if GNAT.Regpat.Match (Pattern1, Line) then
-            GNAT.Regpat.Match (Pattern1, Line, Matches);
-            List.Include (Line (Matches (2).First .. Matches (2).Last));
-         elsif GNAT.Regpat.Match (Pattern2, Line) then
+         if GNAT.Regpat.Match (Pattern2, Line) then
             GNAT.Regpat.Match (Pattern2, Line, Matches);
             List.Include (Line (Matches (2).First .. Matches (2).Last));
-         end if;
 
-      exception
-         when others =>
-            Log.Debug ("Unkown line: {0}", Line);
+         elsif GNAT.Regpat.Match (Pattern1, Line) then
+            GNAT.Regpat.Match (Pattern1, Line, Matches);
+            List.Include (Line (Matches (2).First .. Matches (2).Last));
+
+         end if;
       end Parse;
 
       Command : constant String := To_String (Context.List_Key_Command);
