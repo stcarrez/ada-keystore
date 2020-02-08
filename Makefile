@@ -41,9 +41,9 @@ gtk:
 
 install::
 	$(INSTALL) bin/gakt $(DESTDIR)$(prefix)/bin/gakt
-	$(INSTALL) docs/akt.1 $(DESTDIR)$(prefix)/share/man/man1/gatk.1
-	mkdir -p $(DESTDIR)$(prefix)/share/gatk
-	$(INSTALL) gatk.glade $(DESTDIR)$(prefix)/share/gatk/gatk.glade
+	$(INSTALL) docs/akt.1 $(DESTDIR)$(prefix)/share/man/man1/gakt.1
+	mkdir -p $(DESTDIR)$(prefix)/share/gakt
+	$(INSTALL) gakt.glade $(DESTDIR)$(prefix)/share/gakt/gakt.glade
 
 endif
 
