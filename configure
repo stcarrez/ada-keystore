@@ -585,6 +585,8 @@ ac_unique_file="src/keystore.ads"
 enable_option_checking=no
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+WITH_FUSE_ADA
+HAVE_FUSE
 GTKADA_DIR
 HAVE_GTK
 USE_NLS
@@ -681,6 +683,8 @@ with_ada_util
 enable_nls
 enable_gtk
 with_gtkada
+enable_fuse
+with_fuseada
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1314,6 +1318,7 @@ Optional Features:
   --enable-coverage       build with coverage support -fprofile-arcs -ftest-coverage (disabled)
   --disable-nls           do not use Native Language Support
   --enable-gtk            enable compilation of Gtk tool (disabled)
+  --enable-fuse           enable support for Fuse (disabled)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1322,6 +1327,8 @@ Optional Packages:
   --with-ada-util=x       Path for Ada Utility Library
   --with-gtkada=x         Path for the Gtk Ada library
                           (libre.adacore.com/tools/gtkada)
+  --with-fuseada=x        Path for the Fuse Ada library
+                          (https://github.com/medsec/ada-fuse)
 
 Report bugs to the package provider.
 _ACEOF
@@ -1754,7 +1761,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 # Current release settings
 KEYSTORE_MAJOR_VERSION=1
-KEYSTORE_MINOR_VERSION=1
+KEYSTORE_MINOR_VERSION=2
 KEYSTORE_MICRO_VERSION=0
 KEYSTORE_VERSION=$KEYSTORE_MAJOR_VERSION.$KEYSTORE_MINOR_VERSION.$KEYSTORE_MICRO_VERSION
 
@@ -2744,6 +2751,64 @@ fi
 
 HAVE_GTK=$ac_enable_gtk
 
+
+
+
+ac_enable_fuse=no
+# Check whether --enable-fuse was given.
+if test "${enable_fuse+set}" = set; then :
+  enableval=$enable_fuse; case "${enableval}" in
+  no|none)  ac_enable_fuse= ;;
+  *)        ac_enable_fuse=yes
+esac
+fi
+
+FUSEADA_DIR=
+if test x$ac_enable_fuse = 'xyes'; then
+
+##########################################
+# FuseAda library
+##########################################
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking FuseAda library (https://github.com/medsec/ada-fuse)" >&5
+$as_echo_n "checking FuseAda library (https://github.com/medsec/ada-fuse)... " >&6; }
+
+# Check whether --with-fuseada was given.
+if test "${with_fuseada+set}" = set; then :
+  withval=$with_fuseada;
+  FUSEADA_DIR=${withval}/
+  WITH_FUSE_ADA="with \"${FUSEADA_DIR}ada_fuse\";";
+
+else
+
+  echo "with \"ada_fuse\"; project t is for Source_Dirs use (); end t;" > t.gpr
+  gnatmake -p -Pt >/dev/null 2>/dev/null
+  if test $? -eq 0; then
+    FUSEADA_DIR=
+    WITH_FUSE_ADA="with \"ada_fuse\";";
+  else
+    FUSEADA_DIR=../ada-fuse/
+    WITH_FUSE_ADA="with \"${FUSEADA_DIR}ada_fuse\";";
+  fi;
+
+fi
+
+echo "with \"${FUSEADA_DIR}ada_fuse\"; project t is for Source_Dirs use (); end t;" > t.gpr
+gnatmake -p -Pt >/dev/null 2>/dev/null
+if test $? -ne 0 ; then
+   rm -f t.gpr
+   ac_enable_fuse=
+   # AC_MSG_ERROR([GtkAda library not found in ${GTKADA_DIR}])
+ fi
+rm -f t.gpr
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${FUSEADA_DIR}" >&5
+$as_echo "${FUSEADA_DIR}" >&6; }
+
+fi
+
+if test $ac_enable_fuse = no; then
+  WITH_FUSE_ADA=""
+fi
+HAVE_FUSE=$ac_enable_fuse
 
 
 
