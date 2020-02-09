@@ -19,6 +19,8 @@ with Fuse;
 with AKT.Filesystem;
 package body AKT.Commands.Mount is
 
+   Mount_Command          : aliased Command_Type;
+
    --  ------------------------------
    --  Mount the keystore on the filesystem.
    --  ------------------------------
@@ -68,5 +70,12 @@ package body AKT.Commands.Mount is
                         Long_Switch => "--debug-fuse",
                         Help => -("Enable debug output of fuse library"));
    end Setup;
+
+   procedure Register (Driver : in out AKT.Commands.Drivers.Driver_Type) is
+   begin
+      Driver.Add_Command ("mount",
+                          -("mount the keystore on the filesystem for a direct access"),
+                          Mount_Command'Access);
+   end Register;
 
 end AKT.Commands.Mount;
