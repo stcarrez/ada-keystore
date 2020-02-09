@@ -6,7 +6,7 @@
 [![Documentation Status](https://readthedocs.org/projects/ada-keystore/badge/?version=latest)](https://ada-keystore.readthedocs.io/en/latest/?badge=latest)
 [![Download](https://img.shields.io/badge/download-1.0.0-brightgreen.svg)](http://download.vacs.fr/ada-keystore/ada-keystore-1.0.0.tar.gz)
 [![License](http://img.shields.io/badge/license-APACHE2-blue.svg)](LICENSE)
-![Commits](https://img.shields.io/github/commits-since/stcarrez/ada-keystore/1.0.0.svg)
+![Commits](https://img.shields.io/github/commits-since/stcarrez/ada-keystore/1.1.0.svg)
 ![semver](https://img.shields.io/badge/semver-2.0.0-blue.svg?cacheSeconds=2592000)
 
 # TL;DR
