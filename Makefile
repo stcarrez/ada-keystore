@@ -8,6 +8,12 @@ SHARED_MAKE_ARGS += -XUTILADA_BASE_BUILD=relocatable -XUTIL_LIBRARY_TYPE=relocat
 SHARED_MAKE_ARGS += -XXMLADA_BUILD=relocatable
 SHARED_MAKE_ARGS += -XLIBRARY_TYPE=relocatable
 
+ifeq ($(HAVE_FUSE),yes)
+FUSE_LIBS := $(shell pkg-config --libs fuse)
+
+export FUSE_LIBS
+endif
+
 include Makefile.defaults
 
 # Build executables for all mains defined by the project.
