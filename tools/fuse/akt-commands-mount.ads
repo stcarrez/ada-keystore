@@ -35,6 +35,8 @@ private package AKT.Commands.Mount is
                     Config  : in out GNAT.Command_Line.Command_Line_Configuration;
                     Context : in out Context_Type);
 
+   procedure Register (Driver : in out AKT.Commands.Drivers.Driver_Type);
+
 private
 
    type Command_Type is new AKT.Commands.Drivers.Command_Type with record
