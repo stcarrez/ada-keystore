@@ -6,7 +6,7 @@ AC_INIT(src/keystore.ads)
 
 # Current release settings
 KEYSTORE_MAJOR_VERSION=1
-KEYSTORE_MINOR_VERSION=1
+KEYSTORE_MINOR_VERSION=2
 KEYSTORE_MICRO_VERSION=0
 KEYSTORE_VERSION=$KEYSTORE_MAJOR_VERSION.$KEYSTORE_MINOR_VERSION.$KEYSTORE_MICRO_VERSION
 
@@ -118,6 +118,57 @@ HAVE_GTK=$ac_enable_gtk
 AC_SUBST(HAVE_GTK)
 
 AC_SUBST(GTKADA_DIR)
+
+ac_enable_fuse=no
+AC_ARG_ENABLE(fuse,
+[  --enable-fuse           enable support for Fuse (disabled)],
+[case "${enableval}" in
+  no|none)  ac_enable_fuse= ;;
+  *)        ac_enable_fuse=yes
+esac])dnl
+
+FUSEADA_DIR=
+if test x$ac_enable_fuse = 'xyes'; then
+
+##########################################
+# FuseAda library
+##########################################
+AC_MSG_CHECKING([FuseAda library (https://github.com/medsec/ada-fuse)])
+AC_ARG_WITH(fuseada,
+AS_HELP_STRING([--with-fuseada=x], [Path for the Fuse Ada library (https://github.com/medsec/ada-fuse)]),
+[
+  FUSEADA_DIR=${withval}/
+  WITH_FUSE_ADA="with \"${FUSEADA_DIR}ada_fuse\";";
+],
+[
+  echo "with \"ada_fuse\"; project t is for Source_Dirs use (); end t;" > t.gpr
+  gnatmake -p -Pt >/dev/null 2>/dev/null
+  if test $? -eq 0; then
+    FUSEADA_DIR=
+    WITH_FUSE_ADA="with \"ada_fuse\";";
+  else
+    FUSEADA_DIR=../ada-fuse/
+    WITH_FUSE_ADA="with \"${FUSEADA_DIR}ada_fuse\";";
+  fi;
+])
+echo "with \"${FUSEADA_DIR}ada_fuse\"; project t is for Source_Dirs use (); end t;" > t.gpr
+gnatmake -p -Pt >/dev/null 2>/dev/null
+if test $? -ne 0 ; then
+   rm -f t.gpr
+   ac_enable_fuse=
+   # AC_MSG_ERROR([GtkAda library not found in ${GTKADA_DIR}])
+ fi
+rm -f t.gpr
+AC_MSG_RESULT(${FUSEADA_DIR})
+
+fi
+
+if test $ac_enable_fuse = no; then
+  WITH_FUSE_ADA=""
+fi
+HAVE_FUSE=$ac_enable_fuse
+AC_SUBST(HAVE_FUSE)
+AC_SUBST(WITH_FUSE_ADA)
 
 AC_OUTPUT(
 Makefile.conf
