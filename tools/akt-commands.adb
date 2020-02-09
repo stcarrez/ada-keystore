@@ -61,7 +61,6 @@ package body AKT.Commands is
    Remove_Password_Command : aliased AKT.Commands.Password.Remove.Command_Type;
    Info_Command            : aliased AKT.Commands.Info.Command_Type;
    Config_Command          : aliased AKT.Commands.Config.Command_Type;
-   Mount_Command           : aliased AKT.Commands.Mount.Command_Type;
    Driver                  : Drivers.Driver_Type;
 
    --  ------------------------------
@@ -276,11 +275,7 @@ package body AKT.Commands is
       Driver.Add_Command ("info",
                           -("report information about the keystore"),
                           Info_Command'Access);
-      if AKT.Commands.Mount.HAS_FUSE then
-         Driver.Add_Command ("mount",
-                             -("mount the keystore on the filesystem for a direct access"),
-                             Mount_Command'Access);
-      end if;
+      AKT.Commands.Mount.Register (Driver);
    end Initialize;
 
    --  ------------------------------
