@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands -- Ada Keystore Tool commands
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -76,7 +76,7 @@ private
    procedure Initialize (Context : in out Keystore.Passwords.GPG.Context_Type);
 
    type Context_Type is limited new Ada.Finalization.Limited_Controlled with record
-      Wallet            : Keystore.Files.Wallet_File;
+      Wallet            : aliased Keystore.Files.Wallet_File;
       Info              : Keystore.Wallet_Info;
       Config            : Keystore.Wallet_Config := Keystore.Secure_Config;
       Workers           : Keystore.Task_Manager_Access;
