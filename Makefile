@@ -61,7 +61,7 @@ stamp-test-setup:
 	# Apply access constraints to the test key and directory.
 	chmod 600 regtests/files/file.key
 	chmod 700 regtests/files
-	sh regtests/files/setup-tests.sh
+	sh regtests/files/setup-tests.sh > test-setup.log 2>&1
 	touch stamp-test-setup
 
 clean::
