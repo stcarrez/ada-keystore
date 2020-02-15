@@ -55,7 +55,7 @@ endif
 
 # Build and run the unit tests
 test:	build stamp-test-setup
-	bin/keystore_harness -t 120 -xml keystore-aunit.xml -config tests.properties
+	bin/keystore_harness -l $(NAME): -t 120 -xml keystore-aunit.xml -config tests.properties
 
 stamp-test-setup:
 	# Apply access constraints to the test key and directory.
