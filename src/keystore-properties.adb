@@ -143,8 +143,20 @@ package body Keystore.Properties is
    procedure Iterate (Self    : in Wallet_Manager;
                       Process : access procedure (Name : in String;
                                                   Item : in Util.Beans.Objects.Object)) is
+      List  : Keystore.Entry_Map;
+      Iter  : Keystore.Entry_Cursor;
    begin
-      raise Program_Error with "Iterate is not implemented on Keystore";
+      Self.Wallet.List (Filter => (T_STRING => True, others => False), Content => List);
+      Iter := List.First;
+      while Keystore.Entry_Maps.Has_Element (Iter) loop
+         declare
+            Name  : constant String := Keystore.Entry_Maps.Key (Iter);
+            Value : constant String := Self.Wallet.Get (Name);
+         begin
+            Process (Name, Util.Beans.Objects.To_Object (Value));
+         end;
+         Keystore.Entry_Maps.Next (Iter);
+      end loop;
    end Iterate;
 
    --  ------------------------------
