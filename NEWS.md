@@ -1,5 +1,6 @@
-Version 1.2.0  -
-  - Added support for Fuse with a new mount command in akt
+Version 1.2.0  - May 2020
+  - Added support for Fuse with a new mount command in akt (beta!)
+  - Fix the implementation to iterate with Keystore.Properties
 
 Version 1.1.0  - Feb 2020
   - Added Keystore.Properties support
