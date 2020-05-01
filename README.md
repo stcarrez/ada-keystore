@@ -1,12 +1,13 @@
 # Ada Keystore
 
+[![Alire](https://img.shields.io/endpoint?url=https://alire.ada.dev/badges/keystoreada.json)](https://alire.ada.dev/crates/keystoreada)
 [![Build Status](https://img.shields.io/jenkins/s/https/jenkins.vacs.fr/Bionic-Ada-Keystore.svg)](http://jenkins.vacs.fr/job/Bionic-Ada-Keystore/)
 [![Test Status](https://img.shields.io/jenkins/t/https/jenkins.vacs.fr/Bionic-Ada-Keystore.svg)](http://jenkins.vacs.fr/job/Bionic-Ada-Keystore/)
 [![codecov](https://codecov.io/gh/stcarrez/ada-keystore/branch/master/graph/badge.svg)](https://codecov.io/gh/stcarrez/ada-keystore)
 [![Documentation Status](https://readthedocs.org/projects/ada-keystore/badge/?version=latest)](https://ada-keystore.readthedocs.io/en/latest/?badge=latest)
-[![Download](https://img.shields.io/badge/download-1.0.0-brightgreen.svg)](http://download.vacs.fr/ada-keystore/ada-keystore-1.0.0.tar.gz)
+[![Download](https://img.shields.io/badge/download-1.2.0-brightgreen.svg)](http://download.vacs.fr/ada-keystore/ada-keystore-1.2.0.tar.gz)
 [![License](http://img.shields.io/badge/license-APACHE2-blue.svg)](LICENSE)
-![Commits](https://img.shields.io/github/commits-since/stcarrez/ada-keystore/1.1.0.svg)
+![Commits](https://img.shields.io/github/commits-since/stcarrez/ada-keystore/1.2.0.svg)
 ![semver](https://img.shields.io/badge/semver-2.0.0-blue.svg?cacheSeconds=2592000)
 
 # TL;DR
@@ -44,6 +45,13 @@ Get a content:
    akt extract secure.akt contract.doc
    akt extract secure.akt -- backup | tar xzf -
 ```
+
+## Version 1.2.0 - May 2020
+
+- Added support for Fuse with a new mount command in akt (beta!)
+- Fix the implementation to iterate with Keystore.Properties
+
+[List all versions](https://github.com/stcarrez/ada-keystore/blob/master/NEWS.md)
 
 # Overview
 
