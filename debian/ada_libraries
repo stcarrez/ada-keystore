@@ -1,0 +1,2 @@
+MODE=distrib KEYSTORE_LIBRARY_TYPE=relocatable
+keystoreada.gpr
