@@ -74,9 +74,10 @@ install-samples:
 	cp -p $(srcdir)/config.gpr $(samplesdir)
 
 ifeq ($(HAVE_PANDOC),yes)
+doc::  docs/keystoreada-book.pdf docs/keystoreada-book.html
 ifeq ($(HAVE_DYNAMO),yes)
-doc::  docs/keystore-book.pdf docs/keystore-book.html
 	$(DYNAMO) build-doc -markdown wiki
+endif
 
 KEYSTORE_DOC= \
   title.md \
@@ -93,11 +94,13 @@ KEYSTORE_DOC= \
   pagebreak.tex \
   Keystore_Design.md
 
-DOC_OPTIONS=-f markdown -o keystore-book.pdf --listings --number-sections --toc
-HTML_OPTIONS=-f markdown -o keystore-book.html --listings --number-sections --toc --css pandoc.css
+DOC_OPTIONS=-f markdown -o keystoreada-book.pdf --listings --number-sections --toc
+HTML_OPTIONS=-f markdown -o keystoreada-book.html --listings --number-sections --toc --css pandoc.css
 
-docs/keystore-book.pdf: $(KEYSTORE_DOC_DEP) force
+docs/keystoreada-book.pdf: $(KEYSTORE_DOC_DEP) force
+ifeq ($(HAVE_DYNAMO),yes)
 	$(DYNAMO) build-doc -pandoc docs
+endif
 	cat docs/Programming.md docs/Keystore.md > docs/Keystore_Programming.md
 	cat docs/Tool.md docs/akt.md > docs/Keystore_Tool.md
 	cat docs/Design.md \
@@ -107,10 +110,9 @@ docs/keystore-book.pdf: $(KEYSTORE_DOC_DEP) force
         docs/Design_Implementation.md > docs/Keystore_Design.md
 	cd docs && pandoc $(DOC_OPTIONS) --template=./eisvogel.tex $(KEYSTORE_DOC)
 
-docs/keystore-book.html: docs/keystore-book.pdf force
+docs/keystoreada-book.html: docs/keystoreada-book.pdf force
 	cd docs && pandoc $(HTML_OPTIONS) $(KEYSTORE_DOC)
 
-endif
 endif
 
 $(eval $(call ada_library,$(NAME)))

@@ -18,7 +18,7 @@ a password that will be used to protect the wallet master key.
 with Keystore.Files;
 ...
   WS   : Keystore.Files.Wallet_File;
-  Pass : Keystore.Secret := Keystore.Create ("There was no choice but to be pioneers");
+  Pass : Keystore.Secret_Key := Keystore.Create ("There was no choice but to be pioneers");
 ```
 
 You can then create the keystore file by using the `Create` operation:

@@ -1,0 +1,23 @@
+with "config";
+with "keystoreada";
+
+project Examples is
+
+   Mains := ("wallet_password.adb", "wallet_gpg.adb", "wallet_ssh_askpass.adb");
+
+   for Main use Mains;
+
+   for Source_Dirs use (".");
+
+   for Object_Dir use "./" & Config'Object_Dir & "/obj";
+   for Exec_Dir use "./" & Config'Exec_Dir & "/bin";
+
+   package Binder renames Config.Binder;
+
+   package Builder renames Config.Builder;
+
+   package Compiler renames Config.Compiler;
+
+   package Linker renames Config.Linker;
+
+end Examples;
