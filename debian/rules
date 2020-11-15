@@ -47,4 +47,8 @@ override_dh_auto_install:
 	  dh_install debian/tmp/usr/share/akt/$$i usr/share/akt/$$dir ; \
         done
 
-	
+.PHONY: override_dh_installdocs-indep
+
+override_dh_installdocs-indep:
+	make doc
+	dh_installdocs -i
