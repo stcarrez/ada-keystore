@@ -329,6 +329,17 @@ package body Keystore.Files.Tests is
                    "Last property should still be present");
          T.Assert (W.Contains ("my-secret-4"),
                    "Last property should still be present");
+
+         --  Verify we can read the values that are not removed.
+         Util.Tests.Assert_Equals (T, "the secret 1",
+                                   W.Get ("my-secret-1"),
+                                   "Cannot get property my-secret-1");
+         Util.Tests.Assert_Equals (T, "the secret 3",
+                                   W.Get ("my-secret-3"),
+                                   "Cannot get property my-secret-3");
+         Util.Tests.Assert_Equals (T, "the secret 4",
+                                   W.Get ("my-secret-4"),
+                                   "Cannot get property my-secret-4");
       end;
 
       --  Re-open the keystore to verify the files and correct removal.
@@ -344,6 +355,17 @@ package body Keystore.Files.Tests is
                    "Last property should still be present");
          T.Assert (W.Contains ("my-secret-4"),
                    "Last property should still be present");
+
+         --  Verify we can read the values that are not removed.
+         Util.Tests.Assert_Equals (T, "the secret 1",
+                                   W.Get ("my-secret-1"),
+                                   "Cannot get property my-secret-1");
+         Util.Tests.Assert_Equals (T, "the secret 3",
+                                   W.Get ("my-secret-3"),
+                                   "Cannot get property my-secret-3");
+         Util.Tests.Assert_Equals (T, "the secret 4",
+                                   W.Get ("my-secret-4"),
+                                   "Cannot get property my-secret-4");
       end;
    end Test_Delete;
 
@@ -498,9 +520,6 @@ package body Keystore.Files.Tests is
          Util.Tests.Assert_Equals (T, "klmn",
                                    W.Get ("e"),
                                    "Cannot get property e");
-         if W.Get ("e") = "klmn" then
-            return;
-         end if;
 
          --  Update with size > 16 (a new AES block is necessary, hence shifting data in block).
          W.Update ("a", "0123456789abcdef12345");
