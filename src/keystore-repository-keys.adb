@@ -16,6 +16,7 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Keystore.Repository.Entries;
+with Keystore.Logs;
 package body Keystore.Repository.Keys is
 
    use type Interfaces.Unsigned_32;
@@ -144,7 +145,6 @@ package body Keystore.Repository.Keys is
          --  Erase header + all keys
          Del_Count := Iterator.Key_Count;
          Del_Size := Key_Slot_Size (Del_Count) + DATA_KEY_HEADER_SIZE;
-         Key_Start_Pos := Iterator.Key_Header_Pos - Key_Slot_Size (Iterator.Key_Count);
       else
          --  Erase some data keys but not all of them (the entry was updated and truncated).
          Del_Count := Mark.Key_Count;
@@ -152,14 +152,14 @@ package body Keystore.Repository.Keys is
          Iterator.Current.Pos := Mark.Key_Header_Pos + 4;
          New_Count := Iterator.Key_Count - Mark.Key_Count;
          Marshallers.Put_Unsigned_16 (Iterator.Current, New_Count);
-         Key_Start_Pos := Iterator.Key_Header_Pos - Key_Slot_Size (New_Count);
       end if;
       Iterator.Item.Block_Count := Iterator.Item.Block_Count - Natural (Del_Count);
+      Key_Start_Pos := Iterator.Key_Header_Pos - Key_Slot_Size (Iterator.Key_Count);
 
       Key_Pos := Iterator.Directory.Key_Pos;
-      if Key_Pos + Del_Size < Key_Start_Pos then
-         Buf.Data (Key_Pos + 1 + Del_Size .. Key_Start_Pos)
-           := Buf.Data (Key_Pos + 1 .. Key_Start_Pos - Del_Size);
+      if Key_Pos + Del_Size <= Key_Start_Pos then
+         Buf.Data (Key_Pos + 1 + Del_Size .. Key_Start_Pos + Del_Size)
+           := Buf.Data (Key_Pos + 1 .. Key_Start_Pos);
       end if;
       Buf.Data (Key_Pos + 1 .. Key_Pos + Del_Size) := (others => 0);
 
