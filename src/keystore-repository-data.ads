@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-repository-data -- Data access and management for the keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -73,5 +73,10 @@ private
    procedure Allocate_Data_Block (Manager    : in out Wallet_Repository;
                                   Space      : in IO.Block_Index;
                                   Work       : in Workers.Data_Work_Access);
+
+   --  Erase the data fragments starting at the key iterator current position.
+   procedure Delete_Data (Manager    : in out Wallet_Repository;
+                          Iterator   : in out Keys.Data_Key_Iterator;
+                          Mark       : in out Keys.Data_Key_Marker);
 
 end Keystore.Repository.Data;
