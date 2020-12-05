@@ -105,6 +105,14 @@ package body AKT.Windows is
    procedure Open_File (Application : in out Application_Type;
                         Path        : in String;
                         Password    : in Keystore.Secret_Key) is
+      use type Keystore.Header_Slot_Count_Type;
+
+      procedure Process (Provider : in out Keystore.Passwords.Provider'Class);
+
+      procedure Process (Provider : in out Keystore.Passwords.Provider'Class) is
+      begin
+         Application.Wallet.Unlock (Provider, Application.Slot);
+      end Process;
    begin
       --  Close the current wallet if necessary.
       if Application.Wallet.Is_Open then
@@ -113,7 +121,18 @@ package body AKT.Windows is
 
       Application.Path := To_Unbounded_String (Path);
       Application.Message ("Loading " & Path);
-      Application.Wallet.Open (Path => Path, Password => Password);
+      Application.Wallet.Open (Path      => Path,
+                               Config    => Application.Config,
+                               Info      => Application.Info);
+      if Application.Info.Header_Count = 0 then
+         Keystore.Passwords.To_Provider (Password, Process'Access);
+      else
+         Application.GPG.Load_Secrets (Application.Wallet);
+
+         Application.Wallet.Set_Master_Key (Application.GPG);
+
+         Application.Wallet.Unlock (Application.GPG, Application.Slot);
+      end if;
       Application.Locked := False;
       Application.Refresh_Toolbar;
 
@@ -283,17 +302,10 @@ package body AKT.Windows is
       Application.Scrolled.Show_All;
    end List_Keystore;
 
-   procedure Edit_Current (Application : in out Application_Type) is
-      Model : Gtk.Tree_Model.Gtk_Tree_Model;
-      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+   procedure Edit_Value (Application : in out Application_Type;
+                         Name        : in String) is
    begin
-      Gtk.Status_Bar.Remove_All (Application.Status, 1);
-
-      Gtk.Tree_Selection.Get_Selected (Selection => Application.Selection,
-                                       Model     => Model,
-                                       Iter      => Iter);
       declare
-         Name  : constant String := Gtk.Tree_Model.Get_String (Model, Iter, 0);
          Data  : constant String := Application.Wallet.Get (Name);
          Valid : Boolean;
          Pos   : Natural;
@@ -319,10 +331,29 @@ package body AKT.Windows is
       end;
 
    exception
+      when Keystore.Not_Found =>
+         Application.Message ("Value not found: " & Name);
+
       when E : others =>
          Log.Error ("Exception to edit content", E);
          Application.Message ("Cannot edit content");
 
+   end Edit_Value;
+
+   procedure Edit_Current (Application : in out Application_Type) is
+      Model : Gtk.Tree_Model.Gtk_Tree_Model;
+      Iter  : Gtk.Tree_Model.Gtk_Tree_Iter;
+   begin
+      Gtk.Status_Bar.Remove_All (Application.Status, 1);
+
+      Gtk.Tree_Selection.Get_Selected (Selection => Application.Selection,
+                                       Model     => Model,
+                                       Iter      => Iter);
+      declare
+         Name  : constant String := Gtk.Tree_Model.Get_String (Model, Iter, 4);
+      begin
+         Application.Edit_Value (Name);
+      end;
    end Edit_Current;
 
    procedure Save_Current (Application : in out Application_Type) is
