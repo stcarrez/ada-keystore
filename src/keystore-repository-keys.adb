@@ -16,7 +16,6 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Keystore.Repository.Entries;
-with Keystore.Logs;
 package body Keystore.Repository.Keys is
 
    use type Interfaces.Unsigned_32;
