@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-repository-data -- Data access and management for the keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,8 +31,25 @@ package body Keystore.Repository.Workers is
    use type Interfaces.Unsigned_32;
    use type Interfaces.Unsigned_64;
 
+   procedure Check_Raise_Error (Status : in Status_Type) with Inline;
+
    Log : constant Util.Log.Loggers.Logger
      := Util.Log.Loggers.Create ("Keystore.Repository.Workers");
+
+   procedure Check_Raise_Error (Status : in Status_Type) is
+   begin
+      case Status is
+         when DATA_CORRUPTION =>
+            raise Keystore.Corrupted;
+
+         when PENDING | SUCCESS =>
+            null;
+
+         when others =>
+            raise Keystore.Invalid_Block;
+
+      end case;
+   end Check_Raise_Error;
 
    procedure Initialize_Queue (Manager : in out Wallet_Repository) is
    begin
@@ -40,16 +57,56 @@ package body Keystore.Repository.Workers is
       Manager.Workers.Data_Queue.Reset_Sequence;
    end Initialize_Queue;
 
-   function Queue (Manager : in Wallet_Repository;
-                   Work    : in Data_Work_Access) return Boolean is
+   procedure Queue_Decipher_Work (Manager : in out Wallet_Repository;
+                                  Work    : in Data_Work_Access;
+                                  Queued  : out Boolean) is
+      Status  : Status_Type;
    begin
       if Manager.Workers.Work_Manager /= null then
+         Manager.Workers.Sequence := Manager.Workers.Sequence + 1;
          Manager.Workers.Work_Manager.Execute (Work.all'Access);
-         return True;
+         Queued := True;
+
       else
-         return False;
+         Work.Do_Decipher_Data;
+         Status := Work.Status;
+         Workers.Put_Work (Manager.Workers.all, Work);
+         Check_Raise_Error (Status);
+         Queued := False;
       end if;
-   end Queue;
+   end Queue_Decipher_Work;
+
+   procedure Queue_Cipher_Work (Manager : in out Wallet_Repository;
+                                Work    : in Data_Work_Access) is
+      Status  : Status_Type;
+   begin
+      if Manager.Workers.Work_Manager /= null then
+         Manager.Workers.Sequence := Manager.Workers.Sequence + 1;
+         Manager.Workers.Work_Manager.Execute (Work.all'Access);
+
+      else
+         Work.Do_Cipher_Data;
+         Status := Work.Status;
+         Workers.Put_Work (Manager.Workers.all, Work);
+         Check_Raise_Error (Status);
+      end if;
+   end Queue_Cipher_Work;
+
+   procedure Queue_Delete_Work (Manager : in out Wallet_Repository;
+                                Work    : in Data_Work_Access) is
+      Status  : Status_Type;
+   begin
+      if Manager.Workers.Work_Manager /= null then
+         Manager.Workers.Sequence := Manager.Workers.Sequence + 1;
+         Manager.Workers.Work_Manager.Execute (Work.all'Access);
+
+      else
+         Work.Do_Delete_Data;
+         Status := Work.Status;
+         Workers.Put_Work (Manager.Workers.all, Work);
+         Check_Raise_Error (Status);
+      end if;
+   end Queue_Delete_Work;
 
    procedure Fill (Work      : in out Data_Work;
                    Input     : in out Util.Streams.Input_Stream'Class;
@@ -123,6 +180,7 @@ package body Keystore.Repository.Workers is
                             Work     : out Data_Work_Access) is
       Workers : constant access Wallet_Worker := Manager.Workers;
       Seq     : Natural;
+      Status  : Status_Type;
    begin
       loop
          Work := Get_Work (Workers.all);
@@ -131,7 +189,9 @@ package body Keystore.Repository.Workers is
          if Process /= null then
             Process (Work);
          end if;
+         Status := Work.Status;
          Put_Work (Workers.all, Work);
+         Check_Raise_Error (Status);
       end loop;
 
       Work.Kind := Kind;
@@ -147,7 +207,6 @@ package body Keystore.Repository.Workers is
       Work.Data_Offset := Iterator.Current_Offset;
       Work.Sequence := Workers.Sequence;
       Work.Status := PENDING;
-      Workers.Sequence := Workers.Sequence + 1;
    end Allocate_Work;
 
    procedure Flush_Queue (Manager : in out Wallet_Repository;
@@ -155,15 +214,20 @@ package body Keystore.Repository.Workers is
       Workers : constant access Wallet_Worker := Manager.Workers;
       Seq     : Natural;
       Work    : Data_Work_Access;
+      Status  : Status_Type := SUCCESS;
    begin
       if Workers /= null then
          while Workers.Pool_Count < Workers.Work_Count loop
             Workers.Data_Queue.Dequeue (Work, Seq);
-            if Process /= null then
+            if Status = SUCCESS then
+               Status := Work.Status;
+            end if;
+            if Process /= null and Status = SUCCESS then
                Process (Work);
             end if;
             Put_Work (Workers.all, Work);
          end loop;
+         --  Check_Raise_Error (Status);
       end if;
    end Flush_Queue;
 
@@ -239,6 +303,11 @@ package body Keystore.Repository.Workers is
                Work.End_Data := Data_Pos + Slot_Size - 1;
                Marshallers.Skip (Data_Block, 2);
                Work.Data_Offset := Marshallers.Get_Unsigned_64 (Data_Block);
+               if Work.Kind = DATA_ENCRYPT then
+                  Size := Work.Last_Pos - Work.Buffer_Pos + 1;
+                  Work.Start_Data := Work.End_Aligned_Data - AES_Align (Size) + 1;
+                  Work.End_Data := Work.Start_Data + Size - 1;
+               end if;
                return;
             end if;
             Fragment_Pos := Fragment_Pos + 1;
@@ -288,7 +357,7 @@ package body Keystore.Repository.Workers is
          Marshallers.Get_Secret (Work.Key_Block, Secret, Work.Manager.Config.Key.Key,
                                  Work.Manager.Config.Key.IV);
 
-         Work.Data_Decipher.Set_IV (IV, (others => 0));
+         Work.Data_Decipher.Set_IV (IV);
          Work.Data_Decipher.Set_Key (Secret, Util.Encoders.AES.CBC);
          Work.Data_Decipher.Set_Padding (Util.Encoders.AES.ZERO_PADDING);
 
@@ -363,7 +432,7 @@ package body Keystore.Repository.Workers is
                               Work.Manager.Config.Key.IV);
 
       --  Encrypt the data content using the item encryption key and IV.
-      Work.Data_Cipher.Set_IV (IV, (others => 0));
+      Work.Data_Cipher.Set_IV (IV);
       Work.Data_Cipher.Set_Key (Secret, Util.Encoders.AES.CBC);
       Work.Data_Cipher.Set_Padding (Util.Encoders.AES.ZERO_PADDING);
 
@@ -522,21 +591,6 @@ package body Keystore.Repository.Workers is
       end;
       Work.Queue.Enqueue (Work'Unchecked_Access, Work.Sequence);
    end Execute;
-
-   procedure Check_Raise_Error (Work : in Data_Work) is
-   begin
-      case Work.Status is
-         when DATA_CORRUPTION =>
-            raise Keystore.Corrupted;
-
-         when PENDING | SUCCESS =>
-            null;
-
-         when others =>
-            raise Keystore.Invalid_Block;
-
-      end case;
-   end Check_Raise_Error;
 
    --  ------------------------------
    --  Create the wallet encryption and decryption work manager.
