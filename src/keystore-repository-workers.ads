@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-repository-workers -- Data access and management for the keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -99,8 +99,6 @@ private package Keystore.Repository.Workers is
    procedure Put_Work (Worker : in out Wallet_Worker;
                        Work   : in Data_Work_Access);
 
-   procedure Check_Raise_Error (Work : in Data_Work);
-
    procedure Allocate_Work (Manager  : in out Wallet_Repository;
                             Kind     : in Data_Work_Type;
                             Process  : access procedure (Work : in Data_Work_Access);
@@ -112,8 +110,15 @@ private package Keystore.Repository.Workers is
    procedure Flush_Queue (Manager : in out Wallet_Repository;
                           Process : access procedure (Work : in Data_Work_Access));
 
-   function Queue (Manager : in Wallet_Repository;
-                   Work    : in Data_Work_Access) return Boolean;
+   procedure Queue_Decipher_Work (Manager : in out Wallet_Repository;
+                                  Work    : in Data_Work_Access;
+                                  Queued  : out Boolean);
+
+   procedure Queue_Cipher_Work (Manager : in out Wallet_Repository;
+                                Work    : in Data_Work_Access);
+
+   procedure Queue_Delete_Work (Manager : in out Wallet_Repository;
+                                Work    : in Data_Work_Access);
 
 private
 
