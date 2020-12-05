@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-repository-data -- Data access and management for the keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -102,11 +102,7 @@ package body Keystore.Repository.Data is
                                  Work.Key_Pos, Work.Key_Block.Buffer.Block);
          Work.Key_Block.Buffer := Iterator.Current.Buffer;
 
-         if not Workers.Queue (Manager, Work) then
-            Work.Do_Cipher_Data;
-            Workers.Put_Work (Manager.Workers.all, Work);
-            Work.Check_Raise_Error;
-         end if;
+         Workers.Queue_Cipher_Work (Manager, Work);
 
          --  Move on to what remains.
          Data_Offset := Data_Offset + Size;
@@ -152,11 +148,7 @@ package body Keystore.Repository.Data is
                                  Work.Key_Pos, Work.Key_Block.Buffer.Block);
          Work.Key_Block.Buffer := Iterator.Current.Buffer;
 
-         if not Workers.Queue (Manager, Work) then
-            Work.Do_Cipher_Data;
-            Workers.Put_Work (Manager.Workers.all, Work);
-            Work.Check_Raise_Error;
-         end if;
+         Workers.Queue_Cipher_Work (Manager, Work);
 
          --  Move on to what remains.
          Data_Offset := Data_Offset + Size;
@@ -201,11 +193,7 @@ package body Keystore.Repository.Data is
          Work.Key_Block.Buffer := Iterator.Current.Buffer;
 
          --  Run the encrypt data work either through work manager or through current task.
-         if not Workers.Queue (Manager, Work) then
-            Work.Do_Cipher_Data;
-            Workers.Put_Work (Manager.Workers.all, Work);
-            Work.Check_Raise_Error;
-         end if;
+         Workers.Queue_Cipher_Work (Manager, Work);
 
          Input_Pos := Input_Pos + Size;
          Data_Offset := Data_Offset + Size;
@@ -237,8 +225,10 @@ package body Keystore.Repository.Data is
       Work        : Workers.Data_Work_Access;
       Size        : IO.Buffer_Size := 0;
       Data_Offset : Stream_Element_Offset := Stream_Element_Offset (Offset);
+      Mark        : Keys.Data_Key_Marker;
    begin
       Workers.Initialize_Queue (Manager);
+      Keys.Mark_Data_Key (Iterator, Mark);
       Keys.Next_Data_Key (Manager, Iterator);
       while Keys.Has_Data_Key (Iterator) loop
          Workers.Allocate_Work (Manager, Workers.DATA_ENCRYPT, null, Iterator, Work);
@@ -247,6 +237,8 @@ package body Keystore.Repository.Data is
          Workers.Fill (Work.all, Content, AES_Align (Iterator.Data_Size), Size);
          if Size = 0 then
             Workers.Put_Work (Manager.Workers.all, Work);
+
+            Delete_Data (Manager, Iterator, Mark);
             exit;
          end if;
 
@@ -254,14 +246,11 @@ package body Keystore.Repository.Data is
          Work.Key_Block.Buffer := Iterator.Current.Buffer;
 
          --  Run the encrypt data work either through work manager or through current task.
-         if not Workers.Queue (Manager, Work) then
-            Work.Do_Cipher_Data;
-            Workers.Put_Work (Manager.Workers.all, Work);
-            Work.Check_Raise_Error;
-         end if;
+         Workers.Queue_Cipher_Work (Manager, Work);
 
          Data_Offset := Data_Offset + Size;
 
+         Keys.Mark_Data_Key (Iterator, Mark);
          Keys.Next_Data_Key (Manager, Iterator);
       end loop;
 
@@ -284,6 +273,29 @@ package body Keystore.Repository.Data is
    --  Erase the data fragments starting at the key iterator current position.
    --  ------------------------------
    procedure Delete_Data (Manager    : in out Wallet_Repository;
+                          Iterator   : in out Keys.Data_Key_Iterator;
+                          Mark       : in out Keys.Data_Key_Marker) is
+      Work : Workers.Data_Work_Access;
+   begin
+      loop
+         Keys.Next_Data_Key (Manager, Iterator);
+         exit when not Keys.Has_Data_Key (Iterator);
+         Workers.Allocate_Work (Manager, Workers.DATA_RELEASE, null, Iterator, Work);
+
+         --  Run the delete data work either through work manager or through current task.
+         Workers.Queue_Delete_Work (Manager, Work);
+
+         --  When the last data block was processed, erase the data key.
+         if Keys.Is_Last_Key (Iterator) then
+            Keys.Delete_Key (Manager, Iterator, Mark);
+         end if;
+      end loop;
+   end Delete_Data;
+
+   --  ------------------------------
+   --  Erase the data fragments starting at the key iterator current position.
+   --  ------------------------------
+   procedure Delete_Data (Manager    : in out Wallet_Repository;
                           Iterator   : in out Keys.Data_Key_Iterator) is
       Work : Workers.Data_Work_Access;
       Mark : Keys.Data_Key_Marker;
@@ -296,11 +308,7 @@ package body Keystore.Repository.Data is
          Workers.Allocate_Work (Manager, Workers.DATA_RELEASE, null, Iterator, Work);
 
          --  Run the delete data work either through work manager or through current task.
-         if not Workers.Queue (Manager, Work) then
-            Work.Do_Delete_Data;
-            Workers.Put_Work (Manager.Workers.all, Work);
-            Work.Check_Raise_Error;
-         end if;
+         Workers.Queue_Delete_Work (Manager, Work);
 
          --  When the last data block was processed, erase the data key.
          if Keys.Is_Last_Key (Iterator) then
@@ -336,6 +344,7 @@ package body Keystore.Repository.Data is
       end Process;
 
       Work     : Workers.Data_Work_Access;
+      Enqueued : Boolean;
    begin
       Workers.Initialize_Queue (Manager);
       loop
@@ -344,10 +353,8 @@ package body Keystore.Repository.Data is
          Workers.Allocate_Work (Manager, Workers.DATA_DECRYPT, Process'Access, Iterator, Work);
 
          --  Run the decipher work either through work manager or through current task.
-         if not Workers.Queue (Manager, Work) then
-            Work.Do_Decipher_Data;
-            Workers.Put_Work (Manager.Workers.all, Work);
-            Work.Check_Raise_Error;
+         Workers.Queue_Decipher_Work (Manager, Work, Enqueued);
+         if not Enqueued then
             Process (Work);
          end if;
 
@@ -373,6 +380,7 @@ package body Keystore.Repository.Data is
       end Process;
 
       Work     : Workers.Data_Work_Access;
+      Enqueued : Boolean;
    begin
       Workers.Initialize_Queue (Manager);
       loop
@@ -381,10 +389,8 @@ package body Keystore.Repository.Data is
          Workers.Allocate_Work (Manager, Workers.DATA_DECRYPT, Process'Access, Iterator, Work);
 
          --  Run the decipher work either through work manager or through current task.
-         if not Workers.Queue (Manager, Work) then
-            Work.Do_Decipher_Data;
-            Workers.Put_Work (Manager.Workers.all, Work);
-            Work.Check_Raise_Error;
+         Workers.Queue_Decipher_Work (Manager, Work, Enqueued);
+         if not Enqueued then
             Process (Work);
          end if;
 
