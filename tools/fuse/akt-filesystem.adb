@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-filesystem -- Fuse filesystem operations
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +18,7 @@
 with Interfaces;
 with Ada.Calendar.Conversions;
 
+with Util.Strings;
 with Util.Log.Loggers;
 package body AKT.Filesystem is
 
@@ -135,10 +136,17 @@ package body AKT.Filesystem is
                     Mode   : in System.St_Mode_Type;
                     Fi     : access System.File_Info_Type) return System.Error_Type is
       pragma Unreferenced (Fi, Mode);
+
+      Data   : constant User_Data_Type := General.Get_User_Data;
    begin
       Log.Error ("Create {0}", Path);
 
-      return System.EROFS;
+      Data.Wallet.Add (Path (Path'First + 1 .. Path'Last), "");
+      return System.EXIT_SUCCESS;
+
+   exception
+      when others =>
+         return System.EIO;
    end Create;
 
    --------------------------
@@ -235,7 +243,7 @@ package body AKT.Filesystem is
       Buf    : Ada.Streams.Stream_Element_Array (1 .. Ada.Streams.Stream_Element_Offset (Size));
       for Buf'Address use Buffer.all'Address;
    begin
-      Log.Debug ("Write {0}", Path);
+      Log.Error ("Write {0} ", Path & " at" & Natural'Image (Offset) & " size" & Natural'Image (Size));
 
       Data.Wallet.Set (Name => Path (Path'First + 1 .. Path'Last),
                        Kind => Keystore.T_BINARY,
@@ -271,22 +279,27 @@ package body AKT.Filesystem is
       Log.Error ("Read directory {0}", Path);
 
       Initialize (St_Buf'Unchecked_Access, System.S_IFDIR);
-      Filler (".", St_Buf'Unchecked_Access, 0);
-      Filler ("..", St_Buf'Unchecked_Access, 0);
+      St_Buf.St_Mode := (S_IFDIR => True, S_IRUSR => True, S_IWUSR => True, Others => False);
+      --  Filler (".", St_Buf'Unchecked_Access, 0);
+      --  Filler ("..", St_Buf'Unchecked_Access, 0);
 
       Data.Wallet.List (Content => List);
       Iter := List.First;
+      St_Buf.St_Mode := (S_IFREG => True, S_IRUSR => True, S_IWUSR => True, Others => False);
       while Keystore.Entry_Maps.Has_Element (Iter) loop
          declare
             Name : constant String := Keystore.Entry_Maps.Key (Iter);
             Item : constant Keystore.Entry_Info := Keystore.Entry_Maps.Element (Iter);
          begin
-            Initialize (St_Buf'Unchecked_Access, System.S_IFREG);
-            St_Buf.St_Size := Interfaces.Integer_64 (Item.Size);
-            St_Buf.St_Ctime := To_Unix (Item.Create_Date);
-            St_Buf.St_Mtime := To_Unix (Item.Update_Date);
-            St_Buf.St_Blocks := Interfaces.Integer_64 (Item.Block_Count);
-            Filler.all (Name, St_Buf'Unchecked_Access, 0);
+            if Util.Strings.Index (Name, '/') = 0 then
+               Initialize (St_Buf'Unchecked_Access, System.S_IFREG);
+               St_Buf.St_Size := Interfaces.Integer_64 (Item.Size);
+               St_Buf.St_Ctime := To_Unix (Item.Create_Date);
+               St_Buf.St_Mtime := To_Unix (Item.Update_Date);
+               St_Buf.St_Blocks := Interfaces.Integer_64 (Item.Block_Count);
+               Filler.all (Name, St_Buf'Unchecked_Access, 0);
+               Log.Error (" {0}", Name);
+            end if;
          end;
          Keystore.Entry_Maps.Next (Iter);
       end loop;
@@ -297,7 +310,8 @@ package body AKT.Filesystem is
       when Keystore.Not_Found =>
          return System.ENOENT;
 
-      when others =>
+      when E : others =>
+         Log.Error ("Exception ", E);
          return System.EIO;
    end ReadDir;
 
@@ -310,4 +324,3 @@ package body AKT.Filesystem is
    end Truncate;
 
 end AKT.Filesystem;
-
