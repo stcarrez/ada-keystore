@@ -74,7 +74,8 @@ package Keystore.Files.Tests is
 
    procedure Test_File_Stream (T     : in out Test;
                                Name  : in String;
-                               Input : in String);
+                               Input : in String;
+                               Create : in Boolean);
 
    --  Test setting and getting header data.
    procedure Test_Header_Data_1 (T : in out Test);

@@ -789,9 +789,10 @@ package body Keystore.Files.Tests is
                                      Message => "Write operation failed");
    end Test_Get_Stream;
 
-   procedure Test_File_Stream (T     : in out Test;
-                               Name  : in String;
-                               Input : in String) is
+   procedure Test_File_Stream (T      : in out Test;
+                               Name   : in String;
+                               Input  : in String;
+                               Create : in Boolean) is
       Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-stream.akt");
       Output   : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-" & Name);
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
@@ -799,10 +800,14 @@ package body Keystore.Files.Tests is
       File     : Util.Streams.Files.File_Stream;
       Config   : Keystore.Wallet_Config := Unsecure_Config;
    begin
-      Config.Overwrite := True;
       File.Open (Mode => Ada.Streams.Stream_IO.In_File,
                  Name => Input);
-      W.Create (Path => Path, Password => Password, Config => Config);
+      if Create then
+         Config.Overwrite := True;
+         W.Create (Path => Path, Password => Password, Config => Config);
+      else
+         W.Open (Path => Path, Password => Password, Config => Config);
+      end if;
       W.Set (Name => Name, Kind => Keystore.T_STRING, Input => File);
       File.Close;
       W.Close;
@@ -826,13 +831,13 @@ package body Keystore.Files.Tests is
    procedure Test_Set_From_Stream (T : in out Test) is
       Input    : constant String := Util.Tests.Get_Path ("Makefile");
    begin
-      T.Test_File_Stream ("makefile.txt", Input);
+      T.Test_File_Stream ("makefile.txt", Input, Create => True);
    end Test_Set_From_Stream;
 
    procedure Test_Set_From_Larger_Stream (T : in out Test) is
       Input    : constant String := Util.Tests.Get_Path ("LICENSE.txt");
    begin
-      T.Test_File_Stream ("LICENSE.txt", Input);
+      T.Test_File_Stream ("LICENSE.txt", Input, Create => True);
    end Test_Set_From_Larger_Stream;
 
    --  ------------------------------
@@ -844,10 +849,10 @@ package body Keystore.Files.Tests is
       Input3   : constant String := Util.Tests.Get_Path ("aclocal.m4");
       Input4   : constant String := Util.Tests.Get_Path ("config.gpr");
    begin
-      T.Test_File_Stream ("Update_Stream", Input1);
-      T.Test_File_Stream ("Update_Stream", Input2);
-      T.Test_File_Stream ("Update_Stream", Input3);
-      T.Test_File_Stream ("Update_Stream", Input4);
+      T.Test_File_Stream ("Update_Stream", Input1, Create => True);
+      T.Test_File_Stream ("Update_Stream", Input2, Create => False);
+      T.Test_File_Stream ("Update_Stream", Input3, Create => False);
+      T.Test_File_Stream ("Update_Stream", Input4, Create => False);
    end Test_Update_Stream;
 
    --  ------------------------------
