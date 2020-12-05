@@ -354,9 +354,7 @@ package body Keystore.Repository is
          Keys.Initialize (Repository, Iterator, Item);
 
          Data.Update_Data (Repository, Iterator, Input, End_Of_Stream, Data_Offset);
-         if End_Of_Stream then
-            Data.Delete_Data (Repository, Iterator);
-         else
+         if not End_Of_Stream then
             Data.Add_Data (Repository, Iterator, Input, Data_Offset);
          end if;
 
