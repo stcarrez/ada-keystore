@@ -28,7 +28,6 @@ keystoreada.gpr
 keystoreada_tools.gpr
 keystoreada_gtk.gpr
 keystoreada_tests.gpr
-docs/Keystore_Keys.md
 docs/Keystore_Random.md
 regtests/files/gnupg
 regtests/result/
