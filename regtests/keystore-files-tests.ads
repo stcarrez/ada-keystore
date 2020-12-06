@@ -69,6 +69,9 @@ package Keystore.Files.Tests is
    --  Test updating values through an Input and Output_Stream.
    procedure Test_Update_Stream (T : in out Test);
 
+   --  Test reading partial value starting at a given position.
+   procedure Test_Read (T : in out Test);
+
    --  Perforamce test adding values.
    procedure Test_Perf_Add (T : in out Test);
 
