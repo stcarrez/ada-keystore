@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-repository-keys -- Data keys management
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -55,6 +55,10 @@ private package Keystore.Repository.Keys is
 
    procedure Mark_Data_Key (Iterator : in Data_Key_Iterator;
                             Mark     : in out Data_Key_Marker);
+
+   procedure Seek (Manager  : in out Wallet_Repository;
+                   Offset   : in out Stream_Element_Offset;
+                   Iterator : in out Data_Key_Iterator);
 
    procedure Next_Data_Key (Manager  : in out Wallet_Repository;
                             Iterator : in out Data_Key_Iterator);
