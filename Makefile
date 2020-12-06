@@ -106,6 +106,7 @@ endif
 	cat docs/Design.md \
 	    docs/Keystore_IO_Headers.md \
 	    docs/Keystore_Passwords_GPG.md \
+	    docs/Keystore_Keys.md \
 	    docs/Keystore_Repository_Entries.md \
 		docs/Keystore_Repository_Data.md \
         docs/Design_Implementation.md > docs/Keystore_Design.md
