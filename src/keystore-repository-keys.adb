@@ -85,6 +85,20 @@ package body Keystore.Repository.Keys is
       return Iterator.Count = 0 and Iterator.Directory /= null;
    end Is_Last_Key;
 
+   procedure Seek (Manager  : in out Wallet_Repository;
+                   Offset   : in out Stream_Element_Offset;
+                   Iterator : in out Data_Key_Iterator) is
+      Data_Size : Stream_Element_Offset;
+   begin
+      loop
+         Next_Data_Key (Manager, Iterator);
+         exit when not Has_Data_Key (Iterator);
+         Data_Size := Iterator.Data_Size;
+         exit when Data_Size > Offset;
+         Offset := Offset - Data_Size;
+      end loop;
+   end Seek;
+
    procedure Next_Data_Key (Manager  : in out Wallet_Repository;
                             Iterator : in out Data_Key_Iterator) is
       Pos : IO.Block_Index;
