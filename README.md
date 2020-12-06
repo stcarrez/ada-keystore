@@ -307,7 +307,7 @@ To use the AKT docker container you can run the following commands:
 
 # Documents
 
-* [Ada Keystore Guide](https://ada-keystore.readthedocs.io/en/latest/) [PDF](https://github.com/stcarrez/ada-keystore/blob/master/docs/keystore-book.pdf)
+* [Ada Keystore Guide](https://ada-keystore.readthedocs.io/en/latest/) [PDF](https://github.com/stcarrez/ada-keystore/blob/master/docs/keystoreada-book.pdf)
 * Man page: [akt (1)](https://github.com/stcarrez/ada-keystore/blob/master/docs/akt.md)
 
 # Presentations
