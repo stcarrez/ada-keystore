@@ -60,6 +60,12 @@ private package Keystore.Repository.Data is
                        Iterator   : in out Keys.Data_Key_Iterator;
                        Output     : out Ada.Streams.Stream_Element_Array);
 
+   procedure Read (Manager  : in out Wallet_Repository;
+                   Iterator : in out Keys.Data_Key_Iterator;
+                   Offset   : in Ada.Streams.Stream_Element_Offset;
+                   Output   : out Ada.Streams.Stream_Element_Array;
+                   Last     : out Ada.Streams.Stream_Element_Offset);
+
    --  Get the data associated with the named entry and write it in the output stream.
    procedure Get_Data (Manager    : in out Wallet_Repository;
                        Iterator   : in out Keys.Data_Key_Iterator;

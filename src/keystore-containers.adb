@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-containers -- Container protected keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -191,7 +191,15 @@ package body Keystore.Containers is
          Keystore.Repository.Update (Repository, Name, Kind, Content);
       end Update;
 
-      procedure Delete (Name : in String) is
+      procedure Read (Name      : in String;
+                      Offset    : in Ada.Streams.Stream_Element_Offset;
+                      Content   : out Ada.Streams.Stream_Element_Array;
+                      Last      : out Ada.Streams.Stream_Element_Offset) is
+      begin
+         Keystore.Repository.Read (Repository, Name, Offset, Content, Last);
+      end Read;
+
+      procedure Delete (Name     : in String) is
       begin
          Keystore.Repository.Delete (Repository, Name);
       end Delete;

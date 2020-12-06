@@ -125,6 +125,12 @@ private package Keystore.Repository is
                        Name       : in String;
                        Output     : in out Util.Streams.Output_Stream'Class);
 
+   procedure Read (Repository : in out Wallet_Repository;
+                   Name       : in String;
+                   Offset     : in Ada.Streams.Stream_Element_Offset;
+                   Content    : out Ada.Streams.Stream_Element_Array;
+                   Last       : out Ada.Streams.Stream_Element_Offset);
+
    --  Get the list of entries contained in the wallet that correspond to the optional filter.
    procedure List (Repository : in out Wallet_Repository;
                    Filter     : in Filter_Type;

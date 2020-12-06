@@ -405,4 +405,64 @@ package body Keystore.Repository.Data is
 
    end Get_Data;
 
+   --  ------------------------------
+   --  Get the data associated with the named entry.
+   --  ------------------------------
+   procedure Read (Manager  : in out Wallet_Repository;
+                   Iterator : in out Keys.Data_Key_Iterator;
+                   Offset   : in Ada.Streams.Stream_Element_Offset;
+                   Output   : out Ada.Streams.Stream_Element_Array;
+                   Last     : out Ada.Streams.Stream_Element_Offset) is
+      procedure Process (Work : in Workers.Data_Work_Access);
+
+      Seek_Offset : Stream_Element_Offset := Offset;
+      Data_Offset : Stream_Element_Offset := Output'First;
+
+      procedure Process (Work : in Workers.Data_Work_Access) is
+         Data_Size : Stream_Element_Offset
+           := Work.End_Data - Work.Start_Data + 1 - Work.Seek_Offset;
+      begin
+         Work.Buffer_Pos := Work.Buffer_Pos + Work.Seek_Offset;
+         if Data_Offset + Data_Size - 1 >= Output'Last then
+            Data_Size := Output'Last - Data_Offset + 1;
+         end if;
+         Output (Data_Offset .. Data_Offset + Data_Size - 1)
+           := Work.Data (Work.Buffer_Pos .. Work.Buffer_Pos + Data_Size - 1);
+         Data_Offset := Data_Offset + Data_Size;
+      end Process;
+
+      Work     : Workers.Data_Work_Access;
+      Enqueued : Boolean;
+      Length   : Stream_Element_Offset := Output'Length;
+   begin
+      Workers.Initialize_Queue (Manager);
+      Keys.Seek (Manager, Seek_Offset, Iterator);
+      Length := Length + Seek_Offset;
+      while Keys.Has_Data_Key (Iterator) and Length > 0 loop
+         Workers.Allocate_Work (Manager, Workers.DATA_DECRYPT, Process'Access, Iterator, Work);
+         Work.Seek_Offset := Seek_Offset;
+
+         --  Run the decipher work either through work manager or through current task.
+         Workers.Queue_Decipher_Work (Manager, Work, Enqueued);
+         if not Enqueued then
+            Process (Work);
+         end if;
+
+         exit when Length < Iterator.Data_Size;
+         Length := Length - Iterator.Data_Size;
+         Seek_Offset := 0;
+
+         Keys.Next_Data_Key (Manager, Iterator);
+      end loop;
+      Workers.Flush_Queue (Manager, Process'Access);
+      Last := Data_Offset - 1;
+
+   exception
+      when E : others =>
+         Log.Error ("Exception while decrypting data: ", E);
+         Workers.Flush_Queue (Manager, null);
+         raise;
+
+   end Read;
+
 end Keystore.Repository.Data;

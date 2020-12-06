@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-files -- Ada keystore files
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -380,6 +380,21 @@ package body Keystore.Files is
    begin
       Container.Container.Update (Name, Kind, Content);
    end Update;
+
+   --  ------------------------------
+   --  Read from the wallet the named entry starting at the given position.
+   --  Upon successful completion, Last will indicate the last valid position of
+   --  the Content array.
+   --  ------------------------------
+   overriding
+   procedure Read (Container : in out Wallet_File;
+                   Name      : in String;
+                   Offset    : in Ada.Streams.Stream_Element_Offset;
+                   Content   : out Ada.Streams.Stream_Element_Array;
+                   Last      : out Ada.Streams.Stream_Element_Offset) is
+   begin
+      Container.Container.Read (Name, Offset, Content, Last);
+   end Read;
 
    --  ------------------------------
    --  Delete from the wallet the named entry.

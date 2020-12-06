@@ -58,6 +58,7 @@ private package Keystore.Repository.Workers is
       Fragment_Pos     : Natural;
       Entry_Id         : Wallet_Entry_Index;
       Data_Offset      : Interfaces.Unsigned_64;
+      Seek_Offset      : Stream_Element_Offset;
       Data_Need_Setup  : Boolean;
       Sequence         : Natural;
       Start_Data       : Stream_Element_Offset;

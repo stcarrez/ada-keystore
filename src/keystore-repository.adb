@@ -470,6 +470,35 @@ package body Keystore.Repository is
       end;
    end Get_Data;
 
+   procedure Read (Repository : in out Wallet_Repository;
+                   Name       : in String;
+                   Offset     : in Ada.Streams.Stream_Element_Offset;
+                   Content    : out Ada.Streams.Stream_Element_Array;
+                   Last       : out Ada.Streams.Stream_Element_Offset) is
+      Pos : constant Wallet_Maps.Cursor := Repository.Map.Find (Name);
+   begin
+      if not Wallet_Maps.Has_Element (Pos) then
+         Log.Info ("Data entry '{0}' not found", Name);
+         raise Not_Found;
+      end if;
+      declare
+         Item     : constant Wallet_Entry_Access := Wallet_Maps.Element (Pos);
+         Iterator : Keys.Data_Key_Iterator;
+      begin
+         if Item.Is_Wallet then
+            Log.Info ("Data entry '{0}' is a wallet", Name);
+            raise No_Content;
+         end if;
+         if Item.Size <= Interfaces.Unsigned_64 (Offset) then
+            Last := Content'First - 1;
+            return;
+         end if;
+
+         Keys.Initialize (Repository, Iterator, Item);
+         Data.Read (Repository, Iterator, Offset, Content, Last);
+      end;
+   end Read;
+
    procedure Get_Data (Repository : in out Wallet_Repository;
                        Name       : in String;
                        Output     : in out Util.Streams.Output_Stream'Class) is
