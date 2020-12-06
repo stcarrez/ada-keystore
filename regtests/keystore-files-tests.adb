@@ -15,7 +15,7 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-
+with Ada.Text_IO;
 with Util.XUnit;
 with Ada.Directories;
 with Ada.Exceptions;
@@ -92,6 +92,8 @@ package body Keystore.Files.Tests is
                        Test_Child_Wallet_Error'Access);
       Caller.Add_Test (Suite, "Test Keystore.Open (Corrupted)",
                        Test_Corrupted_1'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Read",
+                       Test_Read'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -854,6 +856,82 @@ package body Keystore.Files.Tests is
       T.Test_File_Stream ("Update_Stream", Input3, Create => False);
       T.Test_File_Stream ("Update_Stream", Input4, Create => False);
    end Test_Update_Stream;
+
+   --  ------------------------------
+   --  Test updating values through an Input and Output_Stream.
+   --  ------------------------------
+   procedure Test_Read (T : in out Test) is
+      Input1   : constant String := Util.Tests.Get_Path ("LICENSE.txt");
+      Input2   : constant String := Util.Tests.Get_Path ("Makefile");
+      Input3   : constant String := Util.Tests.Get_Path ("aclocal.m4");
+      Input4   : constant String := Util.Tests.Get_Path ("config.gpr");
+   begin
+      T.Test_File_Stream ("Update_Stream", Input1, Create => True);
+
+      declare
+         Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-stream.akt");
+         W        : Keystore.Files.Wallet_File;
+         Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
+         Config   : Keystore.Wallet_Config := Unsecure_Config;
+         Data     : Ada.Streams.Stream_Element_Array (1 .. 10);
+         Last     : Ada.Streams.Stream_Element_Offset;
+         S        : String (1 .. 10);
+      begin
+         W.Open (Path => Path, Password => Password, Config => Config);
+         W.Read ("Update_Stream", 33, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "Apache Lic", S, "Invalid Read at 34");
+
+         W.Read ("Update_Stream", 165, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "TERMS AND ", S, "Invalid Read at 165");
+
+         W.Read ("Update_Stream", 1085, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "dividual o", S, "Invalid Read at 1085");
+
+         --  Verify reading a 10 byte content when we overlap two data blocks.
+         W.Read ("Update_Stream", 3960, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "s in Sourc", S, "Invalid Read at 3960");
+
+         W.Read ("Update_Stream", 3961, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, " in Source", S, "Invalid Read at 3961");
+
+         W.Read ("Update_Stream", 3962, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "in Source ", S, "Invalid Read at 3962");
+
+         W.Read ("Update_Stream", 3963, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "n Source o", S, "Invalid Read at 3963");
+
+         W.Read ("Update_Stream", 3964, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, " Source or", S, "Invalid Read at 3964");
+
+         W.Read ("Update_Stream", 3965, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "Source or ", S, "Invalid Read at 3965");
+
+         W.Read ("Update_Stream", 3966, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "ource or O", S, "Invalid Read at 3966");
+
+         W.Read ("Update_Stream", 3967, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "urce or Ob", S, "Invalid Read at 3967");
+
+         W.Read ("Update_Stream", 3968, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "rce or Obj", S, "Invalid Read at 3968");
+
+         W.Read ("Update_Stream", 3969, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "ce or Obje", S, "Invalid Read at 3969");
+      end;
+   end Test_Read;
 
    --  ------------------------------
    --  Perforamce test adding values.
