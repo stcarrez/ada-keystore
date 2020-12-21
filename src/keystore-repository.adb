@@ -510,8 +510,9 @@ package body Keystore.Repository is
          raise Not_Found;
       end if;
       declare
-         Item     : constant Wallet_Entry_Access := Wallet_Maps.Element (Pos);
-         Iterator : Keys.Data_Key_Iterator;
+         Item        : constant Wallet_Entry_Access := Wallet_Maps.Element (Pos);
+         Iterator    : Keys.Data_Key_Iterator;
+         Data_Offset : Interfaces.Unsigned_64 := 0;
       begin
          if Item.Is_Wallet then
             Log.Info ("Data entry '{0}' is a wallet", Name);
@@ -519,7 +520,12 @@ package body Keystore.Repository is
          end if;
 
          Keys.Initialize (Repository, Iterator, Item);
-         Data.Write (Repository, Iterator, Offset, Content);
+         Data.Write (Repository, Iterator, Offset, Content, Data_Offset);
+
+         --  The item is now bigger, update its size.
+         if Item.Size < Data_Offset then
+            Entries.Update_Entry (Repository, Item, Item.Kind, Data_Offset);
+         end if;
 
          Entries.Save (Repository);
       end;
