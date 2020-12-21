@@ -92,6 +92,8 @@ package body Keystore.Files.Tests is
                        Test_Child_Wallet_Error'Access);
       Caller.Add_Test (Suite, "Test Keystore.Open (Corrupted)",
                        Test_Corrupted_1'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Open (Corrupted data)",
+                       Test_Corrupted_2'Access);
       Caller.Add_Test (Suite, "Test Keystore.Read",
                        Test_Read'Access);
       Caller.Add_Test (Suite, "Test Keystore.Write",
@@ -1312,7 +1314,9 @@ package body Keystore.Files.Tests is
       end;
    end Test_Child_Wallet_Error;
 
+   --  ------------------------------
    --  Test operation on corrupted keystore.
+   --  ------------------------------
    procedure Test_Corrupted_1 (T : in out Test) is
       Path      : constant String
         := Util.Tests.Get_Test_Path ("regtests/files/test-corrupted-1.akt");
@@ -1326,5 +1330,45 @@ package body Keystore.Files.Tests is
       when Keystore.Corrupted =>
          null;
    end Test_Corrupted_1;
+
+   --  ------------------------------
+   --  Test operation on corrupted keystore.
+   --  ------------------------------
+   procedure Test_Corrupted_2 (T : in out Test) is
+      Path      : constant String
+        := Util.Tests.Get_Test_Path ("regtests/files/test-corrupted-2.akt");
+      Password  : Keystore.Secret_Key := Keystore.Create ("mypassword");
+      W         : Keystore.Files.Wallet_File;
+      Items     : Keystore.Entry_Map;
+   begin
+      W.Open (Password, Path);
+      W.List (Content => Items);
+
+      --  List must succeed and gets one entry.
+      Util.Tests.Assert_Equals (T, 1, Natural (Items.Length), "Invalid length");
+
+      --  Reading the entry fails because it contained an invalid data HMAC.
+      begin
+         Util.Tests.Assert_Equals (T, "", W.Get ("Update_Stream"), "?");
+         T.Fail ("No exception raised by Get() for corrupted file");
+
+      exception
+         when Keystore.Corrupted =>
+            null;
+      end;
+
+      declare
+         D    : Ada.Streams.Stream_Element_Array (1 .. 10);
+         Last : Ada.Streams.Stream_Element_Offset;
+      begin
+         W.Read ("Update_Stream", 12, D, Last);
+         T.Fail ("No exception raised by Read() for corrupted file");
+
+      exception
+         when Keystore.Corrupted =>
+            null;
+      end;
+
+   end Test_Corrupted_2;
 
 end Keystore.Files.Tests;
