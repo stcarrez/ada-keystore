@@ -397,6 +397,19 @@ package body Keystore.Files is
    end Read;
 
    --  ------------------------------
+   --  Write in the wallet the named entry starting at the given position.
+   --  The existing content is overwritten or new content is appended.
+   --  ------------------------------
+   overriding
+   procedure Write (Container : in out Wallet_File;
+                    Name      : in String;
+                    Offset    : in Ada.Streams.Stream_Element_Offset;
+                    Content   : out Ada.Streams.Stream_Element_Array) is
+   begin
+      Container.Container.Write (Name, Offset, Content);
+   end Write;
+
+   --  ------------------------------
    --  Delete from the wallet the named entry.
    --  ------------------------------
    overriding
