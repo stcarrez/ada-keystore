@@ -1011,6 +1011,7 @@ package body Keystore.Files.Tests is
             T.Assert ((for all C of Data => C = Character'Pos ('x')), "Invalid read at 1");
          end;
 
+         --  Check writing on two data blocks
          declare
             W        : Keystore.Files.Wallet_File;
             Data     : Ada.Streams.Stream_Element_Array (1 .. 1000);
@@ -1034,6 +1035,27 @@ package body Keystore.Files.Tests is
             W.Read ("Update_Stream", 3800, Data, Last);
             Util.Tests.Assert_Equals (T, 1000, Natural (Last), "Invalid read at 3800");
             T.Assert ((for all C of Data => C = Character'Pos ('B')), "Invalid read at 3800");
+         end;
+
+         --  Check writing on several data blocks
+         declare
+            W        : Keystore.Files.Wallet_File;
+            Data     : Ada.Streams.Stream_Element_Array (1 .. IO.Block_Size * 3);
+         begin
+            W.Open (Path => Path, Password => Password, Config => Unsecure_Config);
+
+            Data := (others => Character'Pos ('C'));
+            W.Write ("Update_Stream", 1000, Data);
+            W.Read ("Update_Stream", 1000, Data, Last);
+            Util.Tests.Assert_Equals (T, Natural (Data'Last), Natural (Last), "Invalid read at 1000");
+            T.Assert ((for all C of Data => C = Character'Pos ('C')), "Invalid read at 1000");
+
+            Data := (others => Character'Pos ('D'));
+            W.Write ("Update_Stream", 3800, Data);
+
+            W.Read ("Update_Stream", 3800, Data, Last);
+            Util.Tests.Assert_Equals (T, Natural (Data'Last), Natural (Last), "Invalid read at 3800");
+            T.Assert ((for all C of Data => C = Character'Pos ('D')), "Invalid read at 3800");
          end;
 
       end;
