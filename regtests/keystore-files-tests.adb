@@ -943,20 +943,57 @@ package body Keystore.Files.Tests is
       declare
          W        : Keystore.Files.Wallet_File;
          Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
-         Data     : Ada.Streams.Stream_Element_Array (1 .. 10);
          Last     : Ada.Streams.Stream_Element_Offset;
-         S        : String (1 .. 10);
       begin
          W.Open (Path => Path, Password => Password, Config => Unsecure_Config);
-         W.Read ("Update_Stream", 33, Data, Last);
-         Util.Streams.Copy (Data, S);
-         Util.Tests.Assert_Equals (T, "Apache Lic", S, "Invalid Read at 34");
+         declare
+            Data     : Ada.Streams.Stream_Element_Array (1 .. 10);
+            S        : String (1 .. 10);
+         begin
+            W.Read ("Update_Stream", 33, Data, Last);
+            Util.Streams.Copy (Data, S);
+            Util.Tests.Assert_Equals (T, "Apache Lic", S, "Invalid Read at 34");
 
-         Util.Streams.Copy (Data, S);
-         W.Write ("Update_Stream", 165, Data);
-         W.Read ("Update_Stream", 165, Data, Last);
-         Util.Streams.Copy (Data, S);
-         Util.Tests.Assert_Equals (T, "Apache Lic", S, "Invalid Read after Write at 165");
+            Util.Streams.Copy (Data, S);
+            W.Write ("Update_Stream", 165, Data);
+            W.Read ("Update_Stream", 165, Data, Last);
+            Util.Streams.Copy (Data, S);
+            Util.Tests.Assert_Equals (T, "Apache Lic", S, "Invalid Read after Write at 165");
+
+            W.Write ("Update_Stream", 3960, Data);
+            W.Read ("Update_Stream", 3960, Data, Last);
+            Util.Streams.Copy (Data, S);
+            Util.Tests.Assert_Equals (T, "Apache Lic", S, "Invalid Read after Write at 3966");
+
+            W.Write ("Update_Stream", 3966, Data);
+            W.Read ("Update_Stream", 3966, Data, Last);
+            Util.Streams.Copy (Data, S);
+            Util.Tests.Assert_Equals (T, "Apache Lic", S, "Invalid Read after Write at 3966");
+         end;
+
+         declare
+            Data     : Ada.Streams.Stream_Element_Array (1 .. 1000);
+            S        : String (1 .. 1000);
+         begin
+            W.Read ("Update_Stream", 165, Data, Last);
+            Util.Tests.Assert_Equals (T, 1000, Natural (Last), "Invalid read at 3800");
+            Util.Streams.Copy (Data, S);
+            Util.Tests.Assert_Matches (T, ".*CONDITIONS FOR USE", S, "Invalid Read at 165");
+
+            Data := (others => Character'Pos ('A'));
+            W.Write ("Update_Stream", 1000, Data);
+            W.Read ("Update_Stream", 1000, Data, Last);
+            Util.Tests.Assert_Equals (T, 1000, Natural (Last), "Invalid read at 1000");
+            T.Assert ((for all C of Data => C = Character'Pos ('A')), "Invalid read at 1000");
+
+            Data := (others => Character'Pos ('B'));
+            W.Write ("Update_Stream", 3800, Data);
+
+            W.Read ("Update_Stream", 3800, Data, Last);
+            Util.Tests.Assert_Equals (T, 1000, Natural (Last), "Invalid read at 3800");
+            T.Assert ((for all C of Data => C = Character'Pos ('B')), "Invalid read at 3800");
+         end;
+
       end;
    end Test_Write;
 
