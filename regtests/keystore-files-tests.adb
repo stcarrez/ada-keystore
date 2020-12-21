@@ -94,6 +94,8 @@ package body Keystore.Files.Tests is
                        Test_Corrupted_1'Access);
       Caller.Add_Test (Suite, "Test Keystore.Read",
                        Test_Read'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Write",
+                       Test_Write'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -861,23 +863,19 @@ package body Keystore.Files.Tests is
    --  Test updating values through an Input and Output_Stream.
    --  ------------------------------
    procedure Test_Read (T : in out Test) is
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-stream.akt");
       Input1   : constant String := Util.Tests.Get_Path ("LICENSE.txt");
-      Input2   : constant String := Util.Tests.Get_Path ("Makefile");
-      Input3   : constant String := Util.Tests.Get_Path ("aclocal.m4");
-      Input4   : constant String := Util.Tests.Get_Path ("config.gpr");
    begin
       T.Test_File_Stream ("Update_Stream", Input1, Create => True);
 
       declare
-         Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-stream.akt");
          W        : Keystore.Files.Wallet_File;
          Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
-         Config   : Keystore.Wallet_Config := Unsecure_Config;
          Data     : Ada.Streams.Stream_Element_Array (1 .. 10);
          Last     : Ada.Streams.Stream_Element_Offset;
          S        : String (1 .. 10);
       begin
-         W.Open (Path => Path, Password => Password, Config => Config);
+         W.Open (Path => Path, Password => Password, Config => Unsecure_Config);
          W.Read ("Update_Stream", 33, Data, Last);
          Util.Streams.Copy (Data, S);
          Util.Tests.Assert_Equals (T, "Apache Lic", S, "Invalid Read at 34");
@@ -932,6 +930,35 @@ package body Keystore.Files.Tests is
          Util.Tests.Assert_Equals (T, "ce or Obje", S, "Invalid Read at 3969");
       end;
    end Test_Read;
+
+   --  ------------------------------
+   --  Test writing values through an Input and Output_Stream.
+   --  ------------------------------
+   procedure Test_Write (T : in out Test) is
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-stream.akt");
+      Input1   : constant String := Util.Tests.Get_Path ("LICENSE.txt");
+   begin
+      T.Test_File_Stream ("Update_Stream", Input1, Create => True);
+
+      declare
+         W        : Keystore.Files.Wallet_File;
+         Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
+         Data     : Ada.Streams.Stream_Element_Array (1 .. 10);
+         Last     : Ada.Streams.Stream_Element_Offset;
+         S        : String (1 .. 10);
+      begin
+         W.Open (Path => Path, Password => Password, Config => Unsecure_Config);
+         W.Read ("Update_Stream", 33, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "Apache Lic", S, "Invalid Read at 34");
+
+         Util.Streams.Copy (Data, S);
+         W.Write ("Update_Stream", 165, Data);
+         W.Read ("Update_Stream", 165, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "Apache Lic", S, "Invalid Read after Write at 165");
+      end;
+   end Test_Write;
 
    --  ------------------------------
    --  Perforamce test adding values.
