@@ -1003,7 +1003,7 @@ package body Keystore.Files.Tests is
             --  List must succeed and gets one entry.
             Util.Tests.Assert_Equals (T, 2, Natural (Items.Length), "Invalid length");
             T.Assert (Items.Contains ("Update_Value"));
-            Util.Tests.Assert_Equals (T, 100, Natural (Items.Element ("Update_Value").Size),
+            Util.Tests.Assert_Equals (T, 101, Natural (Items.Element ("Update_Value").Size),
                                       "Invalid size for Update_Value");
 
             W.Read ("Update_Value", 1, Data, Last);
