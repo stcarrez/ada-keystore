@@ -471,16 +471,17 @@ package body Keystore.Repository.Data is
    procedure Write (Manager  : in out Wallet_Repository;
                     Iterator : in out Keys.Data_Key_Iterator;
                     Offset   : in Ada.Streams.Stream_Element_Offset;
-                    Input    : in Ada.Streams.Stream_Element_Array) is
+                    Content  : in Ada.Streams.Stream_Element_Array;
+                    Result   : in out Interfaces.Unsigned_64) is
 
       use type Workers.Status_Type;
 
       Seek_Offset : Stream_Element_Offset := Offset;
-      Data_Offset : Stream_Element_Offset := Input'First;
+      Input_Pos   : Stream_Element_Offset := Content'First;
 
       Work     : Workers.Data_Work_Access;
       Enqueued : Boolean;
-      Length   : Stream_Element_Offset := Input'Length;
+      Length   : Stream_Element_Offset := Content'Length;
       Status   : Workers.Status_Type;
    begin
       Workers.Initialize_Queue (Manager);
@@ -500,12 +501,12 @@ package body Keystore.Repository.Data is
                Pos : Stream_Element_Offset
                  := Work.Buffer_Pos + Seek_Offset;
             begin
-               if Data_Offset + Data_Size - 1 >= Input'Last then
-                  Data_Size := Input'Last - Data_Offset + 1;
+               if Input_Pos + Data_Size - 1 >= Content'Last then
+                  Data_Size := Content'Last - Input_Pos + 1;
                end if;
                Work.Data (Pos .. Pos + Data_Size - 1)
-                 := Input (Data_Offset .. Data_Offset + Data_Size - 1);
-               Data_Offset := Data_Offset + Data_Size;
+                 := Content (Input_Pos .. Input_Pos + Data_Size - 1);
+               Input_Pos := Input_Pos + Data_Size;
 
                Work.Kind := Workers.DATA_ENCRYPT;
                Work.Status := Workers.PENDING;
@@ -517,7 +518,7 @@ package body Keystore.Repository.Data is
                Work.Data_Offset := Iterator.Current_Offset;
                Length := Length - Data_Size;
 
-               Manager.Modified.Include (Iterator.Current.Buffer.Block, Iterator.Current.Buffer.Data);
+               Keys.Update_Key_Slot (Manager, Iterator, Work.End_Data - Work.Start_Data + 1);
             end;
 
             --  Run the encrypt data work either through work manager or through current task.
@@ -530,20 +531,72 @@ package body Keystore.Repository.Data is
          Keys.Next_Data_Key (Manager, Iterator);
       end if;
 
-      while Keys.Has_Data_Key (Iterator) and Length > 0 loop
-         Workers.Allocate_Work (Manager, Workers.DATA_DECRYPT, null, Iterator, Work);
-         Work.Seek_Offset := Seek_Offset;
+      while Keys.Has_Data_Key (Iterator) and Length >= DATA_MAX_SIZE loop
+         Workers.Allocate_Work (Manager, Workers.DATA_ENCRYPT, null, Iterator, Work);
 
-         --  Run the decipher work either through work manager or through current task.
-         Workers.Queue_Decipher_Work (Manager, Work, Enqueued);
+         Work.Buffer_Pos := 1;
+         Work.Last_Pos := DATA_MAX_SIZE;
+         Work.Data (1 .. DATA_MAX_SIZE) := Content (Input_Pos .. Input_Pos + DATA_MAX_SIZE - 1);
+         Keys.Update_Key_Slot (Manager, Iterator, DATA_MAX_SIZE);
+         Work.Key_Block.Buffer := Iterator.Current.Buffer;
 
-         exit when Length < Iterator.Data_Size;
-         Length := Length - Iterator.Data_Size;
-         Seek_Offset := 0;
+         --  Run the encrypt data work either through work manager or through current task.
+         Workers.Queue_Cipher_Work (Manager, Work);
+
+         Input_Pos := Input_Pos + DATA_MAX_SIZE;
+         --  Data_Offset := Data_Offset + DATA_MAX_SIZE;
+         Length := Length - DATA_MAX_SIZE;
+         exit when Input_Pos > Content'Last;
 
          Keys.Next_Data_Key (Manager, Iterator);
       end loop;
+
+      --  Last part that overlaps an existing data block: read the current block, update the content.
+      if Keys.Has_Data_Key (Iterator) and Length > 0 then
+         Workers.Allocate_Work (Manager, Workers.DATA_DECRYPT, null, Iterator, Work);
+
+         --  Run the decipher work ourselves.
+         Work.Do_Decipher_Data;
+         Status := Work.Status;
+         if Status = Workers.SUCCESS then
+            declare
+               Last : constant Stream_Element_Offset
+                 := Content'Last - Input_Pos + 1;
+            begin
+               Work.Data (1 .. Last) := Content (Input_Pos .. Content'Last);
+               Input_Pos := Content'Last + 1;
+               if Last > Work.End_Data then
+                  Work.End_Data := Last;
+               end if;
+
+               Work.Kind := Workers.DATA_ENCRYPT;
+               Work.Status := Workers.PENDING;
+               Work.Entry_Id := Iterator.Entry_Id;
+               Work.Key_Pos := Iterator.Key_Pos;
+               Work.Key_Block.Buffer := Iterator.Current.Buffer;
+               Work.Data_Block := Iterator.Data_Block;
+               Work.Data_Need_Setup := False;
+               Work.Data_Offset := Iterator.Current_Offset;
+
+               Keys.Update_Key_Slot (Manager, Iterator, Work.End_Data - Work.Start_Data + 1);
+            end;
+
+            --  Run the encrypt data work either through work manager or through current task.
+            Workers.Queue_Cipher_Work (Manager, Work);
+         else
+            Workers.Put_Work (Manager.Workers.all, Work);
+            --  Check_Raise_Error (Status);
+         end if;
+
+         Keys.Next_Data_Key (Manager, Iterator);
+      end if;
+
       Workers.Flush_Queue (Manager, null);
+      Result := Iterator.Current_Offset;
+      if Input_Pos <= Content'Last then
+         Keys.Prepare_Append (Iterator);
+         Add_Data (Manager, Iterator, Content (Input_Pos .. Content'Last), Result);
+      end if;
 
    exception
       when E : others =>
