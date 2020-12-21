@@ -69,7 +69,8 @@ private package Keystore.Repository.Data is
    procedure Write (Manager  : in out Wallet_Repository;
                     Iterator : in out Keys.Data_Key_Iterator;
                     Offset   : in Ada.Streams.Stream_Element_Offset;
-                    Input    : in Ada.Streams.Stream_Element_Array);
+                    Content  : in Ada.Streams.Stream_Element_Array;
+                    Result   : in out Interfaces.Unsigned_64);
 
    --  Get the data associated with the named entry and write it in the output stream.
    procedure Get_Data (Manager    : in out Wallet_Repository;
