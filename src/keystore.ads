@@ -317,6 +317,15 @@ package Keystore is
      Pre'Class  => Container.Is_Open,
      Post'Class => Container.Contains (Name);
 
+   --  Write in the wallet the named entry starting at the given position.
+   --  The existing content is overwritten or new content is appended.
+   procedure Write (Container : in out Wallet;
+                    Name      : in String;
+                    Offset    : in Ada.Streams.Stream_Element_Offset;
+                    Content   : out Ada.Streams.Stream_Element_Array) is abstract with
+     Pre'Class  => Container.Is_Open,
+     Post'Class => Container.Contains (Name);
+
    --  Delete from the wallet the named entry.
    procedure Delete (Container : in out Wallet;
                      Name      : in String) is abstract with
