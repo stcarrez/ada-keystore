@@ -95,5 +95,6 @@ package Keystore.Files.Tests is
 
    --  Test operation on corrupted keystore.
    procedure Test_Corrupted_1 (T : in out Test);
+   procedure Test_Corrupted_2 (T : in out Test);
 
 end Keystore.Files.Tests;
