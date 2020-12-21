@@ -943,15 +943,15 @@ package body Keystore.Files.Tests is
       T.Test_File_Stream ("Update_Stream", Input1, Create => True);
 
       declare
-         W        : Keystore.Files.Wallet_File;
          Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
          Last     : Ada.Streams.Stream_Element_Offset;
       begin
-         W.Open (Path => Path, Password => Password, Config => Unsecure_Config);
          declare
+            W        : Keystore.Files.Wallet_File;
             Data     : Ada.Streams.Stream_Element_Array (1 .. 10);
             S        : String (1 .. 10);
          begin
+            W.Open (Path => Path, Password => Password, Config => Unsecure_Config);
             W.Read ("Update_Stream", 33, Data, Last);
             Util.Streams.Copy (Data, S);
             Util.Tests.Assert_Equals (T, "Apache Lic", S, "Invalid Read at 34");
@@ -973,10 +973,50 @@ package body Keystore.Files.Tests is
             Util.Tests.Assert_Equals (T, "Apache Lic", S, "Invalid Read after Write at 3966");
          end;
 
+         --  Test Write() on a short data block: the content is extended.
          declare
+            W        : Keystore.Files.Wallet_File;
+            Data     : Ada.Streams.Stream_Element_Array (1 .. 100);
+         begin
+            W.Open (Path => Path, Password => Password, Config => Unsecure_Config);
+
+            W.Set ("Update_Value", "a first short value");
+            Util.Tests.Assert_Equals (T, "a first short value", W.Get ("Update_Value"),
+                                      "Invalid Get()");
+
+            Data := (others => Character'Pos ('x'));
+            W.Write ("Update_Value", 1, Data);
+            W.Read ("Update_Value", 1, Data, Last);
+            Util.Tests.Assert_Equals (T, 100, Natural (Last), "Invalid read at 1");
+            T.Assert ((for all C of Data => C = Character'Pos ('x')), "Invalid read at 1");
+         end;
+
+         --  Check that after re-opening the keystore we still have the correct content!!!!
+         declare
+            W        : Keystore.Files.Wallet_File;
+            Data     : Ada.Streams.Stream_Element_Array (1 .. 100);
+            Items    : Keystore.Entry_Map;
+         begin
+            W.Open (Path => Path, Password => Password, Config => Unsecure_Config);
+            W.List (Content => Items);
+
+            --  List must succeed and gets one entry.
+            Util.Tests.Assert_Equals (T, 2, Natural (Items.Length), "Invalid length");
+            T.Assert (Items.Contains ("Update_Value"));
+            Util.Tests.Assert_Equals (T, 100, Natural (Items.Element ("Update_Value").Size),
+                                      "Invalid size for Update_Value");
+
+            W.Read ("Update_Value", 1, Data, Last);
+            Util.Tests.Assert_Equals (T, 100, Natural (Last), "Invalid read at 1");
+            T.Assert ((for all C of Data => C = Character'Pos ('x')), "Invalid read at 1");
+         end;
+
+         declare
+            W        : Keystore.Files.Wallet_File;
             Data     : Ada.Streams.Stream_Element_Array (1 .. 1000);
             S        : String (1 .. 1000);
          begin
+            W.Open (Path => Path, Password => Password, Config => Unsecure_Config);
             W.Read ("Update_Stream", 165, Data, Last);
             Util.Tests.Assert_Equals (T, 1000, Natural (Last), "Invalid read at 3800");
             Util.Streams.Copy (Data, S);
