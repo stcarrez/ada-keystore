@@ -72,6 +72,9 @@ package Keystore.Files.Tests is
    --  Test reading partial value starting at a given position.
    procedure Test_Read (T : in out Test);
 
+   --  Test writing partial value starting at a given position.
+   procedure Test_Write (T : in out Test);
+
    --  Perforamce test adding values.
    procedure Test_Perf_Add (T : in out Test);
 
