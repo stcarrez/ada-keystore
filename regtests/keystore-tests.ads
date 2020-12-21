@@ -95,6 +95,7 @@ package Keystore.Tests is
    procedure Test_Tool_With_Wallet_Key_File (T : in out Test);
 
    procedure Test_Tool_Corrupted_1 (T : in out Test);
+   procedure Test_Tool_Corrupted_2 (T : in out Test);
 
    procedure Test_Tool_Missing_Storage (T : in out Test);
 
