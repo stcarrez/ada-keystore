@@ -227,7 +227,7 @@ package body Keystore.Repository.Workers is
             end if;
             Put_Work (Workers.all, Work);
          end loop;
-         --  Check_Raise_Error (Status);
+         Check_Raise_Error (Status);
       end if;
    end Flush_Queue;
 
