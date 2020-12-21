@@ -199,6 +199,13 @@ package body Keystore.Containers is
          Keystore.Repository.Read (Repository, Name, Offset, Content, Last);
       end Read;
 
+      procedure Write (Name      : in String;
+                       Offset    : in Ada.Streams.Stream_Element_Offset;
+                       Content   : out Ada.Streams.Stream_Element_Array) is
+      begin
+         Keystore.Repository.Write (Repository, Name, Offset, Content);
+      end Write;
+
       procedure Delete (Name     : in String) is
       begin
          Keystore.Repository.Delete (Repository, Name);
