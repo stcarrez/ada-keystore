@@ -48,6 +48,7 @@ package body Keystore.Tests is
    TEST_TOOL5_PATH  : constant String := "regtests/result/test-tool-5.akt";
    TEST_WALLET_KEY_PATH  : constant String := "regtests/result/keys/wallet.keys";
    TEST_CORRUPTED_1_PATH : constant String := "regtests/files/test-corrupted-1.akt";
+   TEST_CORRUPTED_2_PATH : constant String := "regtests/files/test-corrupted-2.akt";
    TEST_WALLET_PATH      : constant String := "regtests/files/test-wallet.akt";
    TEST_SPLIT_PATH       : constant String := "regtests/files/test-split.akt";
 
@@ -165,6 +166,8 @@ package body Keystore.Tests is
                        Test_Tool_List_Error'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Open (Corrupted)",
                        Test_Tool_Corrupted_1'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Open (Corrupted data)",
+                       Test_Tool_Corrupted_2'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Open (Missing Storage)",
                        Test_Tool_Missing_Storage'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands (-V)",
@@ -936,6 +939,17 @@ package body Keystore.Tests is
       Util.Tests.Assert_Matches (T, "The keystore file is corrupted: invalid meta data content",
                                  Result, "list command failed");
    end Test_Tool_Corrupted_1;
+
+   procedure Test_Tool_Corrupted_2 (T : in out Test) is
+      Path    : constant String := Util.Tests.Get_Test_Path (TEST_CORRUPTED_2_PATH);
+      Result  : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      --  This keystore file was corrupted while implementing the Write procedure.
+      --  The data HMAC is invalid but every block is correctly signed and encrypted.
+      T.Execute (Tool & " get " & Path & " -p mypassword Update_Stream", Result, 1);
+      Util.Tests.Assert_Matches (T, "The keystore file is corrupted: invalid meta data content",
+                                 Result, "list command failed");
+   end Test_Tool_Corrupted_2;
 
    procedure Test_Tool_Missing_Storage (T : in out Test) is
       Path    : constant String := Util.Tests.Get_Test_Path (TEST_SPLIT_PATH);
