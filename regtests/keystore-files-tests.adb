@@ -21,6 +21,7 @@ with Ada.Directories;
 with Ada.Exceptions;
 with Ada.IO_Exceptions;
 with Ada.Streams.Stream_IO;
+with Ada.Unchecked_Deallocation;
 with Util.Test_Caller;
 with Util.Streams.Files;
 with Util.Measures;
@@ -98,6 +99,8 @@ package body Keystore.Files.Tests is
                        Test_Read'Access);
       Caller.Add_Test (Suite, "Test Keystore.Write",
                        Test_Write'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Write (Workers)",
+                       Test_Write_Workers'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -663,10 +666,12 @@ package body Keystore.Files.Tests is
       Ada.Directories.Copy_File (Source_Name => Path,
                                  Target_Name => Test_Path);
       declare
-         W            : Keystore.Files.Wallet_File;
+         S     : Util.Measures.Stamp;
+         W     : Keystore.Files.Wallet_File;
       begin
          W.Open (Path => Test_Path, Password => Password);
          W.Set_Key (Password, New_Password, Keystore.Unsecure_Config, Keystore.KEY_REPLACE);
+         Util.Measures.Report (S, "Keystore.Set_Key");
       end;
 
       declare
@@ -683,15 +688,19 @@ package body Keystore.Files.Tests is
             T.Fail ("Bad exception raised after Set_Key");
       end;
       declare
-         W            : Keystore.Files.Wallet_File;
+         S     : Util.Measures.Stamp;
+         W     : Keystore.Files.Wallet_File;
       begin
          W.Open (Path => Test_Path, Password => New_Password);
          W.Set_Key (New_Password, Password, Keystore.Unsecure_Config, Keystore.KEY_REPLACE);
+         Util.Measures.Report (S, "Keystore.Set_Key (Update)");
       end;
       declare
-         W            : Keystore.Files.Wallet_File;
+         S     : Util.Measures.Stamp;
+         W     : Keystore.Files.Wallet_File;
       begin
          W.Open (Path => Test_Path, Password => Password);
+         Util.Measures.Report (S, "Keystore.Open");
          begin
             W.Set_Key (New_Password, New_Password, Keystore.Unsecure_Config, Keystore.KEY_REPLACE);
             T.Fail ("No exception raised by Set_Key");
@@ -702,30 +711,38 @@ package body Keystore.Files.Tests is
          end;
       end;
       declare
-         W            : Keystore.Files.Wallet_File;
+         S     : Util.Measures.Stamp;
+         W     : Keystore.Files.Wallet_File;
       begin
          W.Open (Path => Test_Path, Password => Password);
          W.Set_Key (Password, New_Password, Keystore.Unsecure_Config, Keystore.KEY_ADD);
+         Util.Measures.Report (S, "Keystore.Set_Key (Add)");
       end;
 
       --  Open the wallet with a first password and then the second one.
       declare
-         W            : Keystore.Files.Wallet_File;
+         S     : Util.Measures.Stamp;
+         W     : Keystore.Files.Wallet_File;
       begin
          W.Open (Path => Test_Path, Password => Password);
+         Util.Measures.Report (S, "Keystore.Open2");
       end;
       declare
-         W            : Keystore.Files.Wallet_File;
+         S     : Util.Measures.Stamp;
+         W     : Keystore.Files.Wallet_File;
       begin
          W.Open (Path => Test_Path, Password => New_Password);
+         Util.Measures.Report (S, "Keystore.Open3");
       end;
 
       --  Remove the password we added.
       declare
-         W            : Keystore.Files.Wallet_File;
+         S     : Util.Measures.Stamp;
+         W     : Keystore.Files.Wallet_File;
       begin
          W.Open (Path => Test_Path, Password => Password);
          W.Set_Key (New_Password, New_Password, Keystore.Unsecure_Config, Keystore.KEY_REMOVE);
+         Util.Measures.Report (S, "Keystore.Set_Key (Remove)");
       end;
    end Test_Set_Key;
 
@@ -1060,6 +1077,66 @@ package body Keystore.Files.Tests is
 
       end;
    end Test_Write;
+
+   --  ------------------------------
+   --  Test writing values through an Input and Output_Stream.
+   --  ------------------------------
+   procedure Test_Write_Workers (T : in out Test) is
+      procedure Free is
+        new Ada.Unchecked_Deallocation (Object => Keystore.Task_Manager,
+                                        Name   => Keystore.Task_Manager_Access);
+
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-stream-workers.akt");
+      Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
+      Config   : Keystore.Wallet_Config := Unsecure_Config;
+      Worker   : Keystore.Task_Manager_Access := new Keystore.Task_Manager (3);
+   begin
+      Keystore.Start (Worker);
+      begin
+         Config.Overwrite := True;
+         declare
+            W        : Keystore.Files.Wallet_File;
+            Data     : Ada.Streams.Stream_Element_Array (1 .. 30000);
+            Offset   : Ada.Streams.Stream_Element_Offset := 0;
+            Pattern  : constant String := "abcdef";
+         begin
+            W.Create (Path => Path, Password => Password, Config => Config);
+            W.Set_Work_Manager (Worker);
+            W.Set ("Write_Stream", "");
+            for C of Pattern loop
+               Data := (others => Character'Pos (C));
+               W.Write ("Write_Stream", Offset, Data);
+               Offset := Offset + Data'Length / 2;
+            end loop;
+         end;
+
+         declare
+            W        : Keystore.Files.Wallet_File;
+            Data     : Ada.Streams.Stream_Element_Array (1 .. 30000);
+            Offset   : Ada.Streams.Stream_Element_Offset := 0;
+            Last     : Ada.Streams.Stream_Element_Offset;
+            Pattern  : constant String := "abcdef";
+         begin
+            W.Open (Path => Path, Password => Password, Config => Config);
+            W.Set_Work_Manager (Worker);
+            for C of Pattern loop
+               Data := (others => Character'Pos (C));
+               W.Read ("Write_Stream", Offset, Data, Last);
+               Util.Tests.Assert_Equals (T, 30_000, Natural (Last),
+                                         "Invalid last position after Read");
+               Offset := Offset + Data'Length / 2;
+            end loop;
+         end;
+      end;
+      Keystore.Stop (Worker);
+      Free (Worker);
+
+   exception
+      when others =>
+         Keystore.Stop (Worker);
+         Free (Worker);
+         raise;
+   end Test_Write_Workers;
 
    --  ------------------------------
    --  Perforamce test adding values.
