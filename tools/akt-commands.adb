@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands -- Ada Keystore Tool commands
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -111,7 +111,7 @@ package body AKT.Commands is
          Context.Wallet.Unlock (Context.GPG, Context.Slot);
       end if;
 
-      if Use_Worker then
+      if Use_Worker and then Context.Worker_Count > 1 then
          Context.Workers := new Keystore.Task_Manager (Context.Worker_Count);
          Keystore.Start (Context.Workers);
          Context.Wallet.Set_Work_Manager (Context.Workers);

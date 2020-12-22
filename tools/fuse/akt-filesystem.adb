@@ -24,6 +24,7 @@ package body AKT.Filesystem is
 
    use type System.St_Mode_Type;
    use type Interfaces.Unsigned_64;
+   use Ada.Streams;
 
    Log     : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Filesystem");
 
@@ -46,7 +47,7 @@ package body AKT.Filesystem is
       St_Buf.St_Atime := 0;
       St_Buf.St_Mtime := 0;
       St_Buf.St_Ctime := 0;
-      St_Buf.St_Blksize := 4096;
+      St_Buf.St_Blksize := 8192;
       St_Buf.St_Blocks := 0;
       St_Buf.St_Mode := System.Mode_T_to_St_Mode (8#700#) or Mode;
    end Initialize;
@@ -95,7 +96,7 @@ package body AKT.Filesystem is
                    Mode   : in System.St_Mode_Type) return System.Error_Type is
       pragma Unreferenced (Mode);
    begin
-      Log.Debug ("Mkdir {0}", Path);
+      Log.Info ("Mkdir {0}", Path);
 
       return System.EROFS;
    end MkDir;
@@ -106,7 +107,7 @@ package body AKT.Filesystem is
    function Unlink (Path   : in String) return System.Error_Type is
       Data   : constant User_Data_Type := General.Get_User_Data;
    begin
-      Log.Debug ("Unlink {0}", Path);
+      Log.Info ("Unlink {0}", Path);
 
       Data.Wallet.Delete (Name => Path (Path'First + 1 .. Path'Last));
       return System.EXIT_SUCCESS;
@@ -124,7 +125,7 @@ package body AKT.Filesystem is
    --------------------------
    function RmDir (Path   : in String) return System.Error_Type is
    begin
-      Log.Debug ("Rmdir {0}", Path);
+      Log.Info ("Rmdir {0}", Path);
 
       return System.EROFS;
    end RmDir;
@@ -139,7 +140,7 @@ package body AKT.Filesystem is
 
       Data   : constant User_Data_Type := General.Get_User_Data;
    begin
-      Log.Error ("Create {0}", Path);
+      Log.Info ("Create {0}", Path);
 
       Data.Wallet.Add (Path (Path'First + 1 .. Path'Last), "");
       return System.EXIT_SUCCESS;
@@ -158,7 +159,7 @@ package body AKT.Filesystem is
 
       Data   : constant User_Data_Type := General.Get_User_Data;
    begin
-      Log.Error ("Open {0}", Path);
+      Log.Info ("Open {0}", Path);
 
       if not Data.Wallet.Contains (Path (Path'First + 1 .. Path'Last)) then
          return System.ENOENT;
@@ -178,7 +179,7 @@ package body AKT.Filesystem is
                      Fi     : access System.File_Info_Type) return System.Error_Type is
       pragma Unreferenced (Fi);
    begin
-      Log.Error ("Release {0}", Path);
+      Log.Info ("Release {0}", Path);
 
       return System.EXIT_SUCCESS;
    end Release;
@@ -195,27 +196,20 @@ package body AKT.Filesystem is
       pragma Unreferenced (Fi);
 
       Data   : constant User_Data_Type := General.Get_User_Data;
-      Info   : Keystore.Entry_Info;
+      Last   : Stream_Element_Offset;
 
       Buf    : Ada.Streams.Stream_Element_Array (1 .. Ada.Streams.Stream_Element_Offset (Size));
       for Buf'Address use Buffer.all'Address;
+
    begin
-      Log.Error ("Read {0}", Path);
+      Log.Info ("Read {0}", Path);
 
-      Info := Data.Wallet.Find (Path (Path'First + 1 .. Path'Last));
+      Data.Wallet.Read (Name    => Path (Path'First + 1 .. Path'Last),
+                        Offset  => Stream_Element_Offset (Offset),
+                        Content => Buf,
+                        Last    => Last);
 
-      if Interfaces.Unsigned_64 (Offset) >= Info.Size then
-         Size := 0;
-
-      elsif Interfaces.Unsigned_64 (Offset + Size) > Info.Size then
-         Size := Natural (Info.Size) - Offset;
-
-      end if;
-
-      Data.Wallet.Get (Name => Path (Path'First + 1 .. Path'Last),
-                       Info => Info,
-                       Content => Buf (1 .. Ada.Streams.Stream_Element_Offset (Size)));
-
+      Size := Natural (Last - Buf'First + 1);
       return System.EXIT_SUCCESS;
 
    exception
@@ -235,7 +229,7 @@ package body AKT.Filesystem is
                    Size   : in out Natural;
                    Offset : in Natural;
                    Fi     : access System.File_Info_Type) return System.Error_Type is
-      pragma Unreferenced (Offset, Fi);
+      pragma Unreferenced (Fi);
       pragma Unmodified (Size);
 
       Data   : constant User_Data_Type := General.Get_User_Data;
@@ -243,11 +237,12 @@ package body AKT.Filesystem is
       Buf    : Ada.Streams.Stream_Element_Array (1 .. Ada.Streams.Stream_Element_Offset (Size));
       for Buf'Address use Buffer.all'Address;
    begin
-      Log.Error ("Write {0} ", Path & " at" & Natural'Image (Offset) & " size" & Natural'Image (Size));
+      Log.Info ("Write {0} at {1}", Path,
+                Natural'Image (Offset) & " size" & Natural'Image (Size));
 
-      Data.Wallet.Set (Name => Path (Path'First + 1 .. Path'Last),
-                       Kind => Keystore.T_BINARY,
-                       Content => Buf);
+      Data.Wallet.Write (Name    => Path (Path'First + 1 .. Path'Last),
+                         Offset  => Stream_Element_Offset (Offset),
+                         Content => Buf);
 
       return System.EXIT_SUCCESS;
 
@@ -276,16 +271,14 @@ package body AKT.Filesystem is
       Iter   : Keystore.Entry_Cursor;
       St_Buf : aliased System.Stat_Type;
    begin
-      Log.Error ("Read directory {0}", Path);
+      Log.Info ("Read directory {0}", Path);
 
       Initialize (St_Buf'Unchecked_Access, System.S_IFDIR);
-      St_Buf.St_Mode := (S_IFDIR => True, S_IRUSR => True, S_IWUSR => True, Others => False);
-      --  Filler (".", St_Buf'Unchecked_Access, 0);
-      --  Filler ("..", St_Buf'Unchecked_Access, 0);
+      St_Buf.St_Mode := (S_IFDIR => True, S_IRUSR => True, S_IWUSR => True, others => False);
 
       Data.Wallet.List (Content => List);
       Iter := List.First;
-      St_Buf.St_Mode := (S_IFREG => True, S_IRUSR => True, S_IWUSR => True, Others => False);
+      St_Buf.St_Mode := (S_IFREG => True, S_IRUSR => True, S_IWUSR => True, others => False);
       while Keystore.Entry_Maps.Has_Element (Iter) loop
          declare
             Name : constant String := Keystore.Entry_Maps.Key (Iter);
@@ -298,7 +291,6 @@ package body AKT.Filesystem is
                St_Buf.St_Mtime := To_Unix (Item.Update_Date);
                St_Buf.St_Blocks := Interfaces.Integer_64 (Item.Block_Count);
                Filler.all (Name, St_Buf'Unchecked_Access, 0);
-               Log.Error (" {0}", Name);
             end if;
          end;
          Keystore.Entry_Maps.Next (Iter);
@@ -320,6 +312,13 @@ package body AKT.Filesystem is
                       return System.Error_Type is
       Data   : constant User_Data_Type := General.Get_User_Data;
    begin
+      Log.Info ("Truncate {0} to {1}", Path, Natural'Image (Size));
+
+      if Size /= 0 then
+         return System.EPERM;
+      end if;
+
+      Data.Wallet.Set (Path (Path'First + 1 .. Path'Last), "");
       return System.EXIT_SUCCESS;
    end Truncate;
 
