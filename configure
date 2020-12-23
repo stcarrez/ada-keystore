@@ -587,6 +587,7 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 WITH_FUSE_ADA
 HAVE_FUSE
+USE_GIT_FUSE
 GTKADA_DIR
 HAVE_GTK
 USE_NLS
@@ -2912,7 +2913,18 @@ HAVE_GTK=$ac_enable_gtk
 
 
 
-ac_enable_fuse=no
+if test -f ada-fuse/ada_fuse.gpr; then
+   ac_enable_fuse=yes
+   FUSEADA_DIR=ada-fuse
+   WITH_FUSE_ADA='with "ada-fuse/ada_fuse";'
+   USE_GIT_FUSE=yes
+else
+   ac_enable_fuse=no
+   FUSEADA_DIR=
+   USE_GIT_FUSE=no
+fi
+
+
 # Check whether --enable-fuse was given.
 if test "${enable_fuse+set}" = set; then :
   enableval=$enable_fuse; case "${enableval}" in
@@ -2926,8 +2938,7 @@ $as_echo_n "checking whether Fuse is enabled... " >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_enable_fuse" >&5
 $as_echo "$ac_enable_fuse" >&6; }
 
-FUSEADA_DIR=
-if test x$ac_enable_fuse = 'xyes'; then
+if test x$ac_enable_fuse = 'xyes' && test x$FUSEADA_DIR = 'x'; then
 
 
 
