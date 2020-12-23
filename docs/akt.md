@@ -428,7 +428,7 @@ the standard output.
 This property defines the
 _gpg2_(1) command to be used to retrieve the list of available secret keys.
 This command is executed when the keystore file is protected by a
-
+GPG key to identify the possible GPG Key ids that
 are capable of decrypting it.
 
 
