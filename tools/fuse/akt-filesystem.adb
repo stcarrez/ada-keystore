@@ -18,12 +18,16 @@
 with Interfaces;
 with Ada.Calendar.Conversions;
 
+with GNAT.Regpat;
+
 with Util.Strings;
 with Util.Log.Loggers;
+with Util.Strings.Sets;
 package body AKT.Filesystem is
 
    use type System.St_Mode_Type;
    use type Interfaces.Unsigned_64;
+   use type Keystore.Entry_Type;
    use Ada.Streams;
 
    Log     : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Filesystem");
@@ -71,8 +75,13 @@ package body AKT.Filesystem is
 
          Info := Data.Wallet.Find (Path (Path'First + 1 .. Path'Last));
 
-         St_Buf.St_Mode := System.Mode_T_to_St_Mode (8#600#);
-         St_Buf.St_Mode := St_Buf.St_Mode or System.S_IFREG;
+         if Info.Kind = Keystore.T_DIRECTORY then
+            St_Buf.St_Mode := System.Mode_T_to_St_Mode (8#700#);
+            St_Buf.St_Mode := St_Buf.St_Mode or System.S_IFDIR;
+         else
+            St_Buf.St_Mode := System.Mode_T_to_St_Mode (8#600#);
+            St_Buf.St_Mode := St_Buf.St_Mode or System.S_IFREG;
+         end if;
          St_Buf.St_Size := Interfaces.Integer_64 (Info.Size);
          St_Buf.St_Ctime := To_Unix (Info.Create_Date);
          St_Buf.St_Mtime := To_Unix (Info.Update_Date);
@@ -136,12 +145,14 @@ package body AKT.Filesystem is
    function Create (Path   : in String;
                     Mode   : in System.St_Mode_Type;
                     Fi     : access System.File_Info_Type) return System.Error_Type is
-      pragma Unreferenced (Fi, Mode);
+      pragma Unreferenced (Mode);
 
       Data   : constant User_Data_Type := General.Get_User_Data;
    begin
       Log.Info ("Create {0}", Path);
 
+      Fi.Direct_IO := Data.Direct_IO;
+      Fi.Keep_Cache := not Data.Direct_IO;
       Data.Wallet.Add (Path (Path'First + 1 .. Path'Last), "");
       return System.EXIT_SUCCESS;
 
@@ -155,12 +166,12 @@ package body AKT.Filesystem is
    --------------------------
    function Open (Path   : in String;
                   Fi     : access System.File_Info_Type) return System.Error_Type is
-      pragma Unreferenced (Fi);
-
       Data   : constant User_Data_Type := General.Get_User_Data;
    begin
       Log.Info ("Open {0}", Path);
 
+      Fi.Direct_IO := Data.Direct_IO;
+      Fi.Keep_Cache := not Data.Direct_IO;
       if not Data.Wallet.Contains (Path (Path'First + 1 .. Path'Last)) then
          return System.ENOENT;
       else
@@ -193,8 +204,6 @@ package body AKT.Filesystem is
                   Size   : in out Natural;
                   Offset : in Natural;
                   Fi     : access System.File_Info_Type) return System.Error_Type is
-      pragma Unreferenced (Fi);
-
       Data   : constant User_Data_Type := General.Get_User_Data;
       Last   : Stream_Element_Offset;
 
@@ -204,6 +213,8 @@ package body AKT.Filesystem is
    begin
       Log.Info ("Read {0}", Path);
 
+      Fi.Direct_IO := Data.Direct_IO;
+      Fi.Keep_Cache := not Data.Direct_IO;
       Data.Wallet.Read (Name    => Path (Path'First + 1 .. Path'Last),
                         Offset  => Stream_Element_Offset (Offset),
                         Content => Buf,
@@ -229,7 +240,6 @@ package body AKT.Filesystem is
                    Size   : in out Natural;
                    Offset : in Natural;
                    Fi     : access System.File_Info_Type) return System.Error_Type is
-      pragma Unreferenced (Fi);
       pragma Unmodified (Size);
 
       Data   : constant User_Data_Type := General.Get_User_Data;
@@ -240,6 +250,8 @@ package body AKT.Filesystem is
       Log.Info ("Write {0} at {1}", Path,
                 Natural'Image (Offset) & " size" & Natural'Image (Size));
 
+      Fi.Direct_IO := Data.Direct_IO;
+      Fi.Keep_Cache := not Data.Direct_IO;
       Data.Wallet.Write (Name    => Path (Path'First + 1 .. Path'Last),
                          Offset  => Stream_Element_Offset (Offset),
                          Content => Buf);
@@ -266,10 +278,11 @@ package body AKT.Filesystem is
                      Fi     : access System.File_Info_Type) return System.Error_Type is
       pragma Unreferenced (Offset, Fi);
 
-      Data   : constant User_Data_Type := General.Get_User_Data;
-      List   : Keystore.Entry_Map;
-      Iter   : Keystore.Entry_Cursor;
-      St_Buf : aliased System.Stat_Type;
+      Data    : constant User_Data_Type := General.Get_User_Data;
+      List    : Keystore.Entry_Map;
+      Iter    : Keystore.Entry_Cursor;
+      St_Buf  : aliased System.Stat_Type;
+      Pattern : constant GNAT.Regpat.Pattern_Matcher := GNAT.Regpat.Compile (Path & "/.*");
    begin
       Log.Info ("Read directory {0}", Path);
 
@@ -281,16 +294,30 @@ package body AKT.Filesystem is
       St_Buf.St_Mode := (S_IFREG => True, S_IRUSR => True, S_IWUSR => True, others => False);
       while Keystore.Entry_Maps.Has_Element (Iter) loop
          declare
-            Name : constant String := Keystore.Entry_Maps.Key (Iter);
-            Item : constant Keystore.Entry_Info := Keystore.Entry_Maps.Element (Iter);
+            Name  : constant String := Keystore.Entry_Maps.Key (Iter);
+            Start : constant Positive := Name'First + Path'Length - 1;
+            Pos   : Natural := Util.Strings.Rindex (Name, '/');
          begin
-            if Util.Strings.Index (Name, '/') = 0 then
-               Initialize (St_Buf'Unchecked_Access, System.S_IFREG);
-               St_Buf.St_Size := Interfaces.Integer_64 (Item.Size);
-               St_Buf.St_Ctime := To_Unix (Item.Create_Date);
-               St_Buf.St_Mtime := To_Unix (Item.Update_Date);
-               St_Buf.St_Blocks := Interfaces.Integer_64 (Item.Block_Count);
-               Filler.all (Name, St_Buf'Unchecked_Access, 0);
+            if Pos = 0 then
+               Pos := Name'First - 1;
+            end if;
+            if Name (Name'First .. Pos - 1) = Path (Path'First + 1 .. Path'Last) then
+               declare
+                  Item : constant Keystore.Entry_Info := Keystore.Entry_Maps.Element (Iter);
+               begin
+                  if Item.Kind = Keystore.T_DIRECTORY then
+                     Log.Info ("Directory {0}", Name);
+                     Initialize (St_Buf'Unchecked_Access, System.S_IFDIR);
+                  else
+                     Initialize (St_Buf'Unchecked_Access, System.S_IFREG);
+                     Log.Info ("Item {0}", Name);
+                  end if;
+                  St_Buf.St_Size := Interfaces.Integer_64 (Item.Size);
+                  St_Buf.St_Ctime := To_Unix (Item.Create_Date);
+                  St_Buf.St_Mtime := To_Unix (Item.Update_Date);
+                  St_Buf.St_Blocks := Interfaces.Integer_64 (Item.Block_Count);
+                  Filler.all (Name (Pos + 1 .. Name'Last), St_Buf'Unchecked_Access, 0);
+               end;
             end if;
          end;
          Keystore.Entry_Maps.Next (Iter);
