@@ -1,0 +1,18 @@
+akt mount: mount the keystore on the filesystem for a direct access
+
+Usage: akt mount [-f] [--enable-cache] <keystore>.akt <mount-point>
+
+  This command is available when the fuse(8) support is enabled.  It allows
+  to mount the keystore content on the mount-point directory and access
+  the encrypted content through the filesystem.  The akt tool works
+  as a daemon to serve fuse(8) requests that come from the  kernel.
+  The -f option allows to run this daemon as a foreground process.
+  By default, the kernel cache are disabled because the keystore content is
+  decrypted and given as clear content to the kernel.  This could be a
+  security issue for some system and users.  The kernel cache can be
+  enabled by using the --enable-cache option.
+
+  To unmount the file system, one must use the mount(8) command.
+
+  umount mount-point
+
