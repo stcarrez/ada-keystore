@@ -499,7 +499,9 @@ package body Keystore.Repository.Workers is
    procedure Do_Delete_Data (Work : in out Data_Work) is
       Data_Block   : IO.Marshaller;
    begin
-      Logs.Debug (Log, "Delete data in{0}", Work.Data_Block);
+      if Log.Get_Level >= Util.Log.INFO_LEVEL then
+         Log.Info ("Delete data block{0}", Buffers.To_String (Work.Data_Block));
+      end if;
 
       --  Read the encrypted data block to release the data fragment or the full data block.
       Load_Data (Work, Data_Block);
