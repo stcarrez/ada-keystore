@@ -56,6 +56,7 @@ The `configure` script provides several standard options
 and you may use:
 
   * `--prefix=DIR` to control the installation directory,
+  * `--enable-fuse` to enable building the `mount` command with FUSE,
   * `--enable-gtk` to enable building the Gtk tool,
   * `--enable-shared` to enable the build of shared libraries,
   * `--disable-static` to disable the build of static libraries,
