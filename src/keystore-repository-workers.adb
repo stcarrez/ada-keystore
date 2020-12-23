@@ -333,11 +333,11 @@ package body Keystore.Repository.Workers is
       IV         : Secret_Key (Length => IO.SIZE_IV);
    begin
       if Log.Get_Level >= Util.Log.INFO_LEVEL then
-         Log.Info ("Decipher data block{0} with key block{1}@{2}{3} bytes",
+         Log.Info ("Decipher {3} bytes data block{0} with key block{1}@{2}",
                     Buffers.To_String (Work.Data_Block),
                     Buffers.To_String (Work.Key_Block.Buffer.Block),
-                    IO.Block_Index'Image (Work.Key_Pos),
-                    IO.Block_Index'Image (Work.Last_Pos - Work.Buffer_Pos + 1));
+                    Buffers.Image (Work.Key_Pos),
+                    Buffers.Image (Work.Last_Pos - Work.Buffer_Pos + 1));
       end if;
 
       --  Read the encrypted data block.
@@ -382,8 +382,8 @@ package body Keystore.Repository.Workers is
          end if;
 
          if Log.Get_Level >= Util.Log.DEBUG_LEVEL then
-            Log.Debug ("Key pos for decrypt at {0}", IO.Block_Index'Image (Work.Key_Pos));
-            Log.Debug ("Current pos {0}", IO.Block_Index'Image (Work.Key_Block.Pos));
+            Log.Debug ("Key pos for decrypt at {0}", Buffers.Image (Work.Key_Pos));
+            Log.Debug ("Current pos {0}", Buffers.Image (Work.Key_Block.Pos));
 
             Log.Debug ("Dump encrypted data:");
             Logs.Dump (Log, Buf.Data (Work.Start_Data .. Work.End_Aligned_Data));
@@ -408,11 +408,11 @@ package body Keystore.Repository.Workers is
       IV           : Secret_Key (Length => 16);
    begin
       if Log.Get_Level >= Util.Log.INFO_LEVEL then
-         Log.Info ("Cipher data block{0} with key block{1}@{2}{3} bytes",
+         Log.Info ("Cipher {3} bytes data block{0} with key block{1}@{2}",
                     Buffers.To_String (Work.Data_Block),
                     Buffers.To_String (Work.Key_Block.Buffer.Block),
-                    IO.Block_Index'Image (Work.Key_Pos),
-                    IO.Block_Index'Image (Work.Last_Pos - Work.Buffer_Pos + 1));
+                    Buffers.Image (Work.Key_Pos),
+                    Buffers.Image (Work.Last_Pos - Work.Buffer_Pos + 1));
       end if;
 
       --  Read the encrypted data block.
@@ -478,8 +478,8 @@ package body Keystore.Repository.Workers is
                             Sign         => Work.Info_Cryptor.Sign,
                             From         => Data_Block.Buffer);
          if Log.Get_Level >= Util.Log.DEBUG_LEVEL then
-            Log.Debug ("Key pos for encryption at {0}", IO.Block_Index'Image (Work.Key_Pos));
-            Log.Debug ("Current pos {0}", IO.Block_Index'Image (Work.Key_Block.Pos));
+            Log.Debug ("Key pos for encryption at {0}", Buffers.Image (Work.Key_Pos));
+            Log.Debug ("Current pos {0}", Buffers.Image (Work.Key_Block.Pos));
 
             Log.Debug ("Dump clear data:");
             Logs.Dump (Log, Work.Data (Start_Pos .. Last_Pos));
