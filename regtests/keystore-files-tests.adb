@@ -1094,11 +1094,15 @@ package body Keystore.Files.Tests is
       Keystore.Start (Worker);
       begin
          Config.Overwrite := True;
+
+         --  Step 1: fill two big values by using the Write procedure.
+         --          markers are inserted between the two values.
+         --          this has an effect on how encryption keys are organized.
          declare
             W        : Keystore.Files.Wallet_File;
-            Data     : Ada.Streams.Stream_Element_Array (1 .. 30000);
+            Data     : Ada.Streams.Stream_Element_Array (1 .. 60000);
             Offset   : Ada.Streams.Stream_Element_Offset := 0;
-            Pattern  : constant String := "abcdef";
+            Pattern  : constant String := "abcdef01234567";
          begin
             W.Create (Path => Path, Password => Password, Config => Config);
             W.Set_Work_Manager (Worker);
@@ -1106,26 +1110,68 @@ package body Keystore.Files.Tests is
             for C of Pattern loop
                Data := (others => Character'Pos (C));
                W.Write ("Write_Stream", Offset, Data);
-               Offset := Offset + Data'Length / 2;
+               Offset := Offset + Data'Length - 1367;
             end loop;
+            W.Set ("Mark1", "Marker1");
+
+            Offset := 0;
+            W.Set ("Write_Stream_2", "");
+            for C of Pattern loop
+               Data := (others => Character'Pos (C));
+               W.Write ("Write_Stream_2", Offset, Data);
+               Offset := Offset + Data'Length - 1873;
+            end loop;
+            W.Set ("Mark2", "Marker2");
+            Util.Tests.Assert_Equals (T, "Marker1", W.Get ("Mark1"), "Invalid marker1");
+            Util.Tests.Assert_Equals (T, "Marker2", W.Get ("Mark2"), "Invalid marker2");
          end;
 
+         --  Step 2: read the two big values by using the Read and verify the content.
+         --          once the content is verified, erase but keep the first big value.
+         --          verify that markers are still valid.
          declare
             W        : Keystore.Files.Wallet_File;
-            Data     : Ada.Streams.Stream_Element_Array (1 .. 30000);
+            Data     : Ada.Streams.Stream_Element_Array (1 .. 60000);
             Offset   : Ada.Streams.Stream_Element_Offset := 0;
             Last     : Ada.Streams.Stream_Element_Offset;
-            Pattern  : constant String := "abcdef";
+            Pattern  : constant String := "abcdef01234567";
          begin
             W.Open (Path => Path, Password => Password, Config => Config);
             W.Set_Work_Manager (Worker);
             for C of Pattern loop
                Data := (others => Character'Pos (C));
                W.Read ("Write_Stream", Offset, Data, Last);
-               Util.Tests.Assert_Equals (T, 30_000, Natural (Last),
+               Util.Tests.Assert_Equals (T, 60_000, Natural (Last),
                                          "Invalid last position after Read");
-               Offset := Offset + Data'Length / 2;
+               Offset := Offset + Data'Length - 1367;
             end loop;
+            Util.Tests.Assert_Equals (T, "Marker1", W.Get ("Mark1"), "Invalid marker1");
+            Util.Tests.Assert_Equals (T, "Marker2", W.Get ("Mark2"), "Invalid marker2");
+
+            W.Set ("Write_Stream", "");
+            Util.Tests.Assert_Equals (T, "", W.Get ("Write_Stream"), "Invalid value after Set");
+
+            Offset := 0;
+            for C of Pattern loop
+               Data := (others => Character'Pos (C));
+               W.Read ("Write_Stream_2", Offset, Data, Last);
+               Util.Tests.Assert_Equals (T, 60_000, Natural (Last),
+                                         "Invalid last position after Read");
+               Offset := Offset + Data'Length - 1873;
+            end loop;
+
+            Util.Tests.Assert_Equals (T, "Marker1", W.Get ("Mark1"), "Invalid marker1");
+            Util.Tests.Assert_Equals (T, "Marker2", W.Get ("Mark2"), "Invalid marker2");
+         end;
+
+         --  Step 3: re-open the keystore and verify the values.
+         declare
+            W        : Keystore.Files.Wallet_File;
+         begin
+            W.Open (Path => Path, Password => Password, Config => Config);
+            Util.Tests.Assert_Equals (T, "", W.Get ("Write_Stream"), "Invalid value after Set");
+            Util.Tests.Assert_Equals (T, "Marker1", W.Get ("Mark1"), "Invalid marker1");
+            Util.Tests.Assert_Equals (T, "Marker2", W.Get ("Mark2"), "Invalid marker2");
          end;
       end;
       Keystore.Stop (Worker);
