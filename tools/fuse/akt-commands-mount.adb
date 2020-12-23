@@ -35,6 +35,7 @@ package body AKT.Commands.Mount is
       Mount_Arguments : Fuse.Arguments_Type;
    begin
       Data.Wallet := Context.Wallet'Unchecked_Access;
+      Data.Direct_IO := not Command.Enable_Cache;
 
       Context.Open_Keystore (Args, Use_Worker => True);
 
@@ -69,6 +70,10 @@ package body AKT.Commands.Mount is
                         Output => Command.Foreground'Access,
                         Long_Switch => "--debug-fuse",
                         Help => -("Enable debug output of fuse library"));
+      GC.Define_Switch (Config => Config,
+                        Output => Command.Enable_Cache'Access,
+                        Long_Switch => "--enable-cache",
+                        Help => -("Allow the kernel to cache data from this file system"));
    end Setup;
 
    procedure Register (Driver : in out AKT.Commands.Drivers.Driver_Type) is
