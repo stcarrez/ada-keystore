@@ -16,6 +16,7 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Util.Log.Loggers;
+with Util.Strings;
 with Ada.Unchecked_Deallocation;
 with Keystore.Marshallers;
 with Keystore.Repository.Data;
@@ -59,6 +60,9 @@ package body Keystore.Repository is
    procedure Free is
      new Ada.Unchecked_Deallocation (Object => Keystore.Repository.Workers.Wallet_Worker,
                                      Name   => Wallet_Worker_Access);
+
+   procedure Mkdir (Repository : in out Wallet_Repository;
+                    Name       : in String);
 
    function Hash (Value : in Wallet_Entry_Index) return Ada.Containers.Hash_Type is
    begin
@@ -173,6 +177,34 @@ package body Keystore.Repository is
       Entries.Load_Complete_Directory (Repository, Repository.Root);
    end Unlock;
 
+   procedure Mkdir (Repository : in out Wallet_Repository;
+                    Name       : in String) is
+      First  : Positive := Name'First;
+      Pos    : Natural;
+   begin
+      while First <= Name'Last loop
+         Pos := Util.Strings.Index (Name, '/', First);
+         if Pos = 0 then
+            Pos := Name'Last;
+         else
+            Pos := Pos - 1;
+         end if;
+
+         declare
+            Path : constant String := Name (Name'First .. Pos);
+            Item : Wallet_Entry_Access;
+         begin
+            if not Repository.Map.Contains (Path) then
+               Log.Info ("Mkdir {0}", Path);
+
+               Entries.Add_Entry (Repository, Path, T_DIRECTORY, Item);
+               Entries.Update_Entry (Repository, Item, T_DIRECTORY, 0);
+            end if;
+         end;
+         First := Pos + 2;
+      end loop;
+   end Mkdir;
+
    procedure Add (Repository : in out Wallet_Repository;
                   Name       : in String;
                   Kind       : in Entry_Type;
@@ -180,7 +212,16 @@ package body Keystore.Repository is
       Item        : Wallet_Entry_Access;
       Data_Offset : Interfaces.Unsigned_64 := 0;
       Iterator    : Keys.Data_Key_Iterator;
+      Pos         : Natural;
    begin
+      --  For a new file, make sure we have a T_DIRECTORY entry for each path component.
+      if Kind = T_FILE then
+         Pos := Util.Strings.Rindex (Name, '/');
+         if Pos > 0 then
+            Mkdir (Repository, Name (Name'First .. Pos - 1));
+         end if;
+      end if;
+
       Entries.Add_Entry (Repository, Name, Kind, Item);
       Entries.Update_Entry (Repository, Item, Kind, Content'Length);
 
@@ -202,7 +243,16 @@ package body Keystore.Repository is
       Item        : Wallet_Entry_Access;
       Data_Offset : Interfaces.Unsigned_64 := 0;
       Iterator    : Keys.Data_Key_Iterator;
+      Pos         : Natural;
    begin
+      --  For a new file, make sure we have a T_DIRECTORY entry for each path component.
+      if Kind = T_FILE then
+         Pos := Util.Strings.Rindex (Name, '/');
+         if Pos > 0 then
+            Mkdir (Repository, Name (Name'First .. Pos - 1));
+         end if;
+      end if;
+
       Entries.Add_Entry (Repository, Name, Kind, Item);
       Entries.Update_Entry (Repository, Item, Kind, 1);
 
@@ -506,7 +556,7 @@ package body Keystore.Repository is
    procedure Write (Repository : in out Wallet_Repository;
                     Name       : in String;
                     Offset     : in Ada.Streams.Stream_Element_Offset;
-                    Content    : out Ada.Streams.Stream_Element_Array) is
+                    Content    : in Ada.Streams.Stream_Element_Array) is
       Pos : constant Wallet_Maps.Cursor := Repository.Map.Find (Name);
    begin
       if not Wallet_Maps.Has_Element (Pos) then
