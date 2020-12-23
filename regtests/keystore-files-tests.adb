@@ -15,7 +15,6 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Ada.Text_IO;
 with Util.XUnit;
 with Ada.Directories;
 with Ada.Exceptions;
@@ -1038,20 +1037,25 @@ package body Keystore.Files.Tests is
             W.Read ("Update_Stream", 165, Data, Last);
             Util.Tests.Assert_Equals (T, 1000, Natural (Last), "Invalid read at 3800");
             Util.Streams.Copy (Data, S);
-            Util.Tests.Assert_Matches (T, ".*CONDITIONS FOR USE", S, "Invalid Read at 165");
+            Util.Tests.Assert_Matches (T, ".*CONDITIONS FOR USE", S,
+                                       "Invalid Read at 165");
 
             Data := (others => Character'Pos ('A'));
             W.Write ("Update_Stream", 1000, Data);
             W.Read ("Update_Stream", 1000, Data, Last);
-            Util.Tests.Assert_Equals (T, 1000, Natural (Last), "Invalid read at 1000");
-            T.Assert ((for all C of Data => C = Character'Pos ('A')), "Invalid read at 1000");
+            Util.Tests.Assert_Equals (T, 1000, Natural (Last),
+                                      "Invalid read at 1000");
+            T.Assert ((for all C of Data => C = Character'Pos ('A')),
+                      "Invalid read at 1000");
 
             Data := (others => Character'Pos ('B'));
             W.Write ("Update_Stream", 3800, Data);
 
             W.Read ("Update_Stream", 3800, Data, Last);
-            Util.Tests.Assert_Equals (T, 1000, Natural (Last), "Invalid read at 3800");
-            T.Assert ((for all C of Data => C = Character'Pos ('B')), "Invalid read at 3800");
+            Util.Tests.Assert_Equals (T, 1000, Natural (Last),
+                                      "Invalid read at 3800");
+            T.Assert ((for all C of Data => C = Character'Pos ('B')),
+                      "Invalid read at 3800");
          end;
 
          --  Check writing on several data blocks
@@ -1064,15 +1068,19 @@ package body Keystore.Files.Tests is
             Data := (others => Character'Pos ('C'));
             W.Write ("Update_Stream", 1000, Data);
             W.Read ("Update_Stream", 1000, Data, Last);
-            Util.Tests.Assert_Equals (T, Natural (Data'Last), Natural (Last), "Invalid read at 1000");
-            T.Assert ((for all C of Data => C = Character'Pos ('C')), "Invalid read at 1000");
+            Util.Tests.Assert_Equals (T, Natural (Data'Last), Natural (Last),
+                                      "Invalid read at 1000");
+            T.Assert ((for all C of Data => C = Character'Pos ('C')),
+                      "Invalid read at 1000");
 
             Data := (others => Character'Pos ('D'));
             W.Write ("Update_Stream", 3800, Data);
 
             W.Read ("Update_Stream", 3800, Data, Last);
-            Util.Tests.Assert_Equals (T, Natural (Data'Last), Natural (Last), "Invalid read at 3800");
-            T.Assert ((for all C of Data => C = Character'Pos ('D')), "Invalid read at 3800");
+            Util.Tests.Assert_Equals (T, Natural (Data'Last), Natural (Last),
+                                      "Invalid read at 3800");
+            T.Assert ((for all C of Data => C = Character'Pos ('D')),
+                      "Invalid read at 3800");
          end;
 
       end;
@@ -1086,7 +1094,8 @@ package body Keystore.Files.Tests is
         new Ada.Unchecked_Deallocation (Object => Keystore.Task_Manager,
                                         Name   => Keystore.Task_Manager_Access);
 
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-stream-workers.akt");
+      Path     : constant String
+        := Util.Tests.Get_Test_Path ("regtests/result/test-stream-workers.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       Config   : Keystore.Wallet_Config := Unsecure_Config;
       Worker   : Keystore.Task_Manager_Access := new Keystore.Task_Manager (3);
