@@ -339,7 +339,7 @@ package body Keystore.Repository.Entries is
       Marshallers.Put_Block_Index (Manager.Current, IO.Block_Index'Last);
       Marshallers.Put_Unsigned_32 (Manager.Current, 0);
 
-      Keystore.Logs.Info ("Allocated directory block{0}", Manager.Current.Buffer.Block);
+      Keystore.Logs.Info (Log, "Allocated directory block{0}", Directory.Block);
 
       Manager.Modified.Include (Manager.Current.Buffer.Block, Manager.Current.Buffer.Data);
    end Find_Directory_Block;
