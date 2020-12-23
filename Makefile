@@ -12,6 +12,12 @@ ifeq ($(HAVE_FUSE),yes)
 FUSE_LIBS := $(shell pkg-config --libs fuse)
 
 export FUSE_LIBS
+
+ifeq ($(USE_GIT_FUSE),yes)
+ADA_FUSE_SYSTEM := $(shell uname -sm)
+export ADA_FUSE_SYSTEM
+endif
+
 endif
 
 include Makefile.defaults
