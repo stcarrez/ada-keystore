@@ -194,6 +194,50 @@ provided that the user's private key is known.  When using the
 being able to share the secure file with each of them.
 
 
+### The extract command
+```
+```
+akt extract keystore.akt -- name
+```
+```
+akt extract keystore.akt {name...}
+```
+
+This command allows to extract files or directories recursively from the
+keystore.  It is possible to extract several files and directories
+at the same time.
+
+When the
+_--_ option is passed, the command accepts only one
+argument.  It extracts the specified name and writes the result
+on the standard output.  It can be used as a target for a pipe command.
+
+
+### The mount command
+```
+akt mount keystore.akt [-f] [--enable-cache] mount-point
+```
+
+This command is available when the
+_fuse_(8) support is enabled.  It allows to mount the keystore content on the
+_mount-point_ directory and access the encrypted content through the filesystem.
+The
+_akt_ tool works as a daemon to serve
+_fuse_(8) requests that come from the kernel.  The
+_-f_ option allows to run this daemon as a foreground process.
+By default, the kernel cache are disabled because the keystore content
+is decrypted and given as clear content to the kernel.  This could be
+a security issue for some system and users.
+The kernel cache can be enabled by using the
+_--enable-cache_ option.
+
+To unmount the file system, one must use the
+_mount_(8) command.
+```
+umount mount-point
+```
+
+
 ### The set command
 ```
 akt set keystore.akt name value
@@ -396,7 +440,7 @@ _akt_ must fill unused data areas with zeros or with random bytes.
 ## SEE ALSO
 
 _editor(1)_, _update-alternative(1)_, _ssh-askpass(1)_,
-_gpg2(1)_
+_gpg2(1)_, _mount(8)_, _fuse(8)_
 
 ## AUTHOR
 
