@@ -196,7 +196,6 @@ being able to share the secure file with each of them.
 
 ### The extract command
 ```
-```
 akt extract keystore.akt -- name
 ```
 ```
