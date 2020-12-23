@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-windows -- GtK Windows for Ada Keystore GTK application
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -197,6 +197,7 @@ package body AKT.Windows is
    procedure List_Keystore (Application : in out Application_Type) is
 
       procedure Add_Column (Name : in String; Column_Id : in Glib.Gint);
+      procedure Set_Content (Name : in String);
 
       List  : Keystore.Entry_Map;
       Iter  : Keystore.Entry_Cursor;
