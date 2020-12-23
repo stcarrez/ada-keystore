@@ -312,7 +312,11 @@ package body Keystore.Repository is
          Item.Kind := Kind;
          Keys.Initialize (Repository, Iterator, Item);
 
-         Data.Update_Data (Repository, Iterator, Content, Last_Pos, Data_Offset);
+         if Content'Length > 0 then
+            Data.Update_Data (Repository, Iterator, Content, Last_Pos, Data_Offset);
+         else
+            Last_Pos := Content'Last + 1;
+         end if;
 
          if Last_Pos > Content'Last then
             Data.Delete_Data (Repository, Iterator);
