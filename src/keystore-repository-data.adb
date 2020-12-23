@@ -480,14 +480,14 @@ package body Keystore.Repository.Data is
       Input_Pos   : Stream_Element_Offset := Content'First;
 
       Work     : Workers.Data_Work_Access;
-      Enqueued : Boolean;
       Length   : Stream_Element_Offset := Content'Length;
       Status   : Workers.Status_Type;
    begin
       Workers.Initialize_Queue (Manager);
       Keys.Seek (Manager, Seek_Offset, Iterator);
 
-      --  First part that overlaps an existing data block: read the current block, update the content.
+      --  First part that overlaps an existing data block:
+      --  read the current block, update the content.
       if Keys.Has_Data_Key (Iterator) and Length > 0 then
          Workers.Allocate_Work (Manager, Workers.DATA_DECRYPT, null, Iterator, Work);
 
@@ -498,7 +498,7 @@ package body Keystore.Repository.Data is
             declare
                Data_Size : Stream_Element_Offset
                  := Work.End_Data - Work.Start_Data + 1 - Seek_Offset;
-               Pos : Stream_Element_Offset
+               Pos : constant Stream_Element_Offset
                  := Work.Buffer_Pos + Seek_Offset;
             begin
                if Input_Pos + Data_Size - 1 >= Content'Last then
@@ -551,7 +551,8 @@ package body Keystore.Repository.Data is
          Keys.Next_Data_Key (Manager, Iterator);
       end loop;
 
-      --  Last part that overlaps an existing data block: read the current block, update the content.
+      --  Last part that overlaps an existing data block:
+      --  read the current block, update the content.
       if Keys.Has_Data_Key (Iterator) and Length > 0 then
          Workers.Allocate_Work (Manager, Workers.DATA_DECRYPT, null, Iterator, Work);
 
