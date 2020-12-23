@@ -46,9 +46,12 @@ Get a content:
    akt extract secure.akt -- backup | tar xzf -
 ```
 
-## Version 1.2.1 - Nov 2020
+## Version 1.3.0  - Dec 2020
 
-- Add Alire template crate
+- Added Write and Read direct data access
+- Finalize and fix the Fuse filesystem
+- Document the mount command
+- Fix deleting large data contents
 
 [List all versions](https://github.com/stcarrez/ada-keystore/blob/master/NEWS.md)
 
