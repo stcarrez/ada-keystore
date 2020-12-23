@@ -99,8 +99,6 @@ package body Keystore.Repository.Entries is
       Wid   : Interfaces.Unsigned_32;
       Size  : IO.Block_Index;
    begin
-      Keystore.Logs.Debug (Log, "Load directory block{0}", Directory.Block);
-
       --  Get the directory block from the cache.
       Into.Buffer := Buffers.Find (Manager.Cache, Directory.Block);
       if not Buffers.Is_Null (Into.Buffer) then
@@ -112,6 +110,8 @@ package body Keystore.Repository.Entries is
       if not Buffers.Is_Null (Into.Buffer) then
          return;
       end if;
+
+      Keystore.Logs.Info (Log, "Loading directory block{0}", Directory.Block);
 
       --  Allocate block storage.
       Into.Buffer := Buffers.Allocate (Directory.Block);
@@ -338,6 +338,8 @@ package body Keystore.Repository.Entries is
       Marshallers.Put_Unsigned_32 (Manager.Current, 0);
       Marshallers.Put_Block_Index (Manager.Current, IO.Block_Index'Last);
       Marshallers.Put_Unsigned_32 (Manager.Current, 0);
+
+      Keystore.Logs.Info ("Allocated directory block{0}", Manager.Current.Buffer.Block);
 
       Manager.Modified.Include (Manager.Current.Buffer.Block, Manager.Current.Buffer.Data);
    end Find_Directory_Block;
