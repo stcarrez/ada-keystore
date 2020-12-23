@@ -46,6 +46,13 @@ Get a content:
    akt extract secure.akt -- backup | tar xzf -
 ```
 
+Mount the keystore:
+```
+   akt mount secure.akt /mnt
+   # access the keystore content in /mnt
+   umount /mnt
+```
+
 ## Version 1.3.0  - Dec 2020
 
 - Added Write and Read direct data access
@@ -107,6 +114,7 @@ It provides the following commands:
 * `help`:     print some help
 * `info`:     print information about the keystore
 * `list`:     list values of the keystore
+* `mount`:    mount the keystore on the filesystem for a direct access
 * `password-add`:      add a password
 * `password-remove`:   remove a password
 * `password-set`:      change the password
@@ -203,6 +211,31 @@ and defined the GPG key for each user you want to share the keystore:
 ```
 
 To unlock the keystore, GPG will use the private key.
+
+## Mounting the keystore on the filesystem
+
+The keystore content can be mounted as a filesystem so that the
+encrypted content are directly available to existing application
+as regular files.  The `mount` command starts the fuse daemon
+and puts the command as a background fuse daemon to serve as
+a fuse filesystem and make the content visible through the
+mount point.
+
+```
+   akt mount secure.akt /mnt
+```
+
+To unmount the filesystem, you must use the `umount` command.
+
+```
+   umount /mnt
+```
+
+Sometimes, you may have to force the umount by running:
+
+```
+   sudo umount /mnt
+```
 
 # AKT Debian Binaries
 
