@@ -102,7 +102,18 @@ AC_SUBST(HAVE_GTK)
 
 AC_SUBST(GTKADA_DIR)
 
-ac_enable_fuse=no
+if test -f ada-fuse/ada_fuse.gpr; then
+   ac_enable_fuse=yes
+   FUSEADA_DIR=ada-fuse
+   WITH_FUSE_ADA='with "ada-fuse/ada_fuse";'
+   USE_GIT_FUSE=yes
+else
+   ac_enable_fuse=no
+   FUSEADA_DIR=
+   USE_GIT_FUSE=no
+fi
+AC_SUBST(USE_GIT_FUSE)
+
 AC_ARG_ENABLE(fuse,
 [  --enable-fuse           enable support for Fuse (disabled)],
 [case "${enableval}" in
@@ -113,8 +124,7 @@ esac])dnl
 AC_MSG_CHECKING([whether Fuse is enabled])
 AC_MSG_RESULT($ac_enable_fuse)
 
-FUSEADA_DIR=
-if test x$ac_enable_fuse = 'xyes'; then
+if test x$ac_enable_fuse = 'xyes' && test x$FUSEADA_DIR = 'x'; then
 
   AM_GNAT_FIND_PROJECT([ada-fuse],[Fuse Ada Library],[ada_fuse],
     [git@github.com:medsec/ada-fuse.git],
