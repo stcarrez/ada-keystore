@@ -322,7 +322,7 @@ package Keystore is
    procedure Write (Container : in out Wallet;
                     Name      : in String;
                     Offset    : in Ada.Streams.Stream_Element_Offset;
-                    Content   : out Ada.Streams.Stream_Element_Array) is abstract with
+                    Content   : in Ada.Streams.Stream_Element_Array) is abstract with
      Pre'Class  => Container.Is_Open,
      Post'Class => Container.Contains (Name);
 

@@ -54,6 +54,7 @@ with Keystore.Repository.Workers;
 package body Keystore.Repository.Data is
 
    use type Interfaces.Unsigned_64;
+   use type Keystore.Repository.Workers.Data_Work_Access;
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Repository.Data");
 
@@ -93,6 +94,7 @@ package body Keystore.Repository.Data is
          Workers.Fill (Work.all, Content, Input_Pos, Size);
          if Size = 0 then
             Workers.Put_Work (Manager.Workers.all, Work);
+            Work := null;
             exit;
          end if;
 
@@ -103,6 +105,7 @@ package body Keystore.Repository.Data is
          Work.Key_Block.Buffer := Iterator.Current.Buffer;
 
          Workers.Queue_Cipher_Work (Manager, Work);
+         Work := null;
 
          --  Move on to what remains.
          Data_Offset := Data_Offset + Size;
@@ -114,6 +117,9 @@ package body Keystore.Repository.Data is
    exception
       when E : others =>
          Log.Error ("Exception while encrypting data: ", E);
+         if Work /= null then
+            Workers.Put_Work (Manager.Workers.all, Work);
+         end if;
          Workers.Flush_Queue (Manager, null);
          raise;
 

@@ -404,7 +404,7 @@ package body Keystore.Files is
    procedure Write (Container : in out Wallet_File;
                     Name      : in String;
                     Offset    : in Ada.Streams.Stream_Element_Offset;
-                    Content   : out Ada.Streams.Stream_Element_Array) is
+                    Content   : in Ada.Streams.Stream_Element_Array) is
    begin
       Container.Container.Write (Name, Offset, Content);
    end Write;

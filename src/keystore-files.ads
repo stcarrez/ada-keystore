@@ -236,7 +236,7 @@ package Keystore.Files is
    procedure Write (Container : in out Wallet_File;
                     Name      : in String;
                     Offset    : in Ada.Streams.Stream_Element_Offset;
-                    Content   : out Ada.Streams.Stream_Element_Array) with
+                    Content   : in Ada.Streams.Stream_Element_Array) with
      Pre  => Container.Is_Open,
      Post => Container.Contains (Name);
 

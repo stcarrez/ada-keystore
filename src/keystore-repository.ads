@@ -134,7 +134,7 @@ private package Keystore.Repository is
    procedure Write (Repository : in out Wallet_Repository;
                     Name       : in String;
                     Offset     : in Ada.Streams.Stream_Element_Offset;
-                    Content    : out Ada.Streams.Stream_Element_Array);
+                    Content    : in Ada.Streams.Stream_Element_Array);
 
    --  Get the list of entries contained in the wallet that correspond to the optional filter.
    procedure List (Repository : in out Wallet_Repository;

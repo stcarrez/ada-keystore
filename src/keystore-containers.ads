@@ -116,7 +116,7 @@ private package Keystore.Containers is
 
       procedure Write (Name      : in String;
                        Offset    : in Ada.Streams.Stream_Element_Offset;
-                       Content   : out Ada.Streams.Stream_Element_Array);
+                       Content   : in Ada.Streams.Stream_Element_Array);
 
       procedure Delete (Name     : in String);
 
