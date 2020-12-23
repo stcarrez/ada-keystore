@@ -1,3 +1,9 @@
+Version 1.3.0  - Dec 2020
+  - Added Write and Read direct data access
+  - Finalize and fix the Fuse filesystem
+  - Document the mount command
+  - Fix deleting large data contents
+
 Version 1.2.1  - Nov 2020
   - Add Alire template crate
 
