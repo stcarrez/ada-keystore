@@ -42,6 +42,7 @@ private
    type Command_Type is new AKT.Commands.Drivers.Command_Type with record
       Foreground   : aliased Boolean := False;
       Verbose_Fuse : aliased Boolean := False;
+      Enable_Cache : aliased Boolean := False;
    end record;
 
 end AKT.Commands.Mount;
