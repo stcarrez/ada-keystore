@@ -15,11 +15,15 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
+with Util.Log.Loggers;
 with Keystore.Repository.Entries;
 package body Keystore.Repository.Keys is
 
    use type Interfaces.Unsigned_32;
    use type Interfaces.Unsigned_64;
+
+   Log : constant Util.Log.Loggers.Logger
+     := Util.Log.Loggers.Create ("Keystore.Repository.Keys");
 
    procedure Load_Next_Keys (Manager  : in out Wallet_Manager;
                              Iterator : in out Data_Key_Iterator) is
@@ -70,8 +74,18 @@ package body Keystore.Repository.Keys is
       Iterator.Data_Size := 0;
       if Wallet_Data_Key_List.Has_Element (Iterator.Key_Iter) then
          Load_Next_Keys (Manager, Iterator);
+         if Log.Get_Level >= Util.Log.INFO_LEVEL then
+            Log.Info ("Item {0} has id{1} with{3} keys in block{2}",
+                      Item.Name, Wallet_Entry_Index'Image (Item.Id),
+                      Buffers.To_String (Iterator.Directory.Block),
+                      Key_Count_Type'Image (Iterator.Key_Count));
+         end if;
       else
          Iterator.Directory := null;
+         if Log.Get_Level >= Util.Log.INFO_LEVEL then
+            Log.Info ("Item {0} has id{1} with no key", Item.Name,
+                      Wallet_Entry_Index'Image (Item.Id));
+         end if;
       end if;
    end Initialize;
 
@@ -169,29 +183,32 @@ package body Keystore.Repository.Keys is
       Iterator.Item.Block_Count := Iterator.Item.Block_Count - Natural (Del_Count);
       Key_Start_Pos := Iterator.Key_Header_Pos - Key_Slot_Size (Iterator.Key_Count);
 
+      if Log.Get_Level >= Util.Log.INFO_LEVEL then
+         Log.Info ("Delete{1} keys in block{0}@{3} keysize {2}",
+                   Buffers.To_String (Iterator.Directory.Block),
+                   Key_Count_Type'Image (Del_Count),
+                   Buffers.Image (Del_Size),
+                   Buffers.Image (Key_Start_Pos));
+      end if;
+
       Key_Pos := Iterator.Directory.Key_Pos;
-      if Key_Pos + Del_Size <= Key_Start_Pos then
+      if Key_Start_Pos /= Key_Pos then
          Buf.Data (Key_Pos + 1 + Del_Size .. Key_Start_Pos + Del_Size)
            := Buf.Data (Key_Pos + 1 .. Key_Start_Pos);
       end if;
       Buf.Data (Key_Pos + 1 .. Key_Pos + Del_Size) := (others => 0);
 
       Iterator.Directory.Key_Pos := Key_Pos + Del_Size;
-      if Iterator.Directory.Count > 0 or Iterator.Directory.Key_Pos < IO.Block_Index'Last then
-         Iterator.Current.Pos := IO.BT_DATA_START + 4 - 1;
-         Marshallers.Put_Block_Index (Iterator.Current, Iterator.Directory.Key_Pos);
+      Iterator.Current.Pos := IO.BT_DATA_START + 4 - 1;
+      Marshallers.Put_Block_Index (Iterator.Current, Iterator.Directory.Key_Pos);
 
-         Manager.Modified.Include (Iterator.Current.Buffer.Block, Iterator.Current.Buffer.Data);
-      else
-         Manager.Stream.Release (Iterator.Directory.Block);
-      end if;
+      Manager.Modified.Include (Iterator.Current.Buffer.Block, Iterator.Current.Buffer.Data);
 
       if Mark.Key_Count = Iterator.Key_Count then
          Next_Iter := Wallet_Data_Key_List.Next (Iterator.Key_Iter);
          Iterator.Item.Data_Blocks.Delete (Iterator.Key_Iter);
          Iterator.Key_Iter := Next_Iter;
       else
-
          if not Wallet_Data_Key_List.Has_Element (Iterator.Key_Iter) then
             Iterator.Directory := null;
             return;
