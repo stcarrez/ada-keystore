@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-extract -- Get content from keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +27,7 @@ with Util.Streams.Files;
 package body AKT.Commands.Extract is
 
    use GNAT.Strings;
+   use type Keystore.Entry_Type;
 
    --  ------------------------------
    --  Get a value from the keystore.
@@ -85,11 +86,13 @@ package body AKT.Commands.Extract is
          Iter := List.First;
          while Keystore.Entry_Maps.Has_Element (Iter) loop
             declare
-               Name   : constant String := Keystore.Entry_Maps.Key (Iter);
+               Name : constant String := Keystore.Entry_Maps.Key (Iter);
+               Item : constant Keystore.Entry_Info := Keystore.Entry_Maps.Element (Iter);
             begin
-               Ada.Text_IO.Put_Line (-("Extract ") & Name);
-               Extract_File (Name, Output);
-
+               if Item.Kind /= Keystore.T_DIRECTORY then
+                  Ada.Text_IO.Put_Line (-("Extract ") & Name);
+                  Extract_File (Name, Output);
+               end if;
             end;
             Keystore.Entry_Maps.Next (Iter);
          end loop;
@@ -124,12 +127,18 @@ package body AKT.Commands.Extract is
          for I in Context.First_Arg .. Args.Get_Count loop
             declare
                Name : constant String := Args.Get_Argument (I);
+               Item : Keystore.Entry_Info;
             begin
                if Context.Wallet.Contains (Name) then
-                  Extract_File (Name, Command.Output.all);
-
+                  Item := Context.Wallet.Find (Name);
+                  if Item.Kind = Keystore.T_DIRECTORY then
+                     Extract_Directory (Name, Command.Output.all);
+                  else
+                     Extract_File (Name, Command.Output.all);
+                  end if;
                else
-                  Extract_Directory (Name, Command.Output.all);
+                  AKT.Commands.Log.Error (-("Value '{0}' not found"), Name);
+                  Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
                end if;
             end;
          end loop;
