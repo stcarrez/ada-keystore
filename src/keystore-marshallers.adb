@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-marshallers -- Data marshaller for the keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -249,18 +249,16 @@ package body Keystore.Marshallers is
                                      Block   => Block_Number (Block));
    end Get_Storage_Block;
 
-   function Get_String (From   : in out Marshaller;
-                        Length : in Natural) return String is
-      Result : String (1 .. Length);
+   procedure Get_String (From   : in out Marshaller;
+                         Result : in out String) is
       Pos    : Block_Index := From.Pos;
       Buf    : constant Buffers.Buffer_Accessor := From.Buffer.Data.Value;
    begin
-      From.Pos := From.Pos + Block_Index (Length);
+      From.Pos := From.Pos + Block_Index (Result'Length);
       for I in Result'Range loop
          Pos := Pos + 1;
          Result (I) := Character'Val (Buf.Data (Pos));
       end loop;
-      return Result;
    end Get_String;
 
    function Get_Date (From : in out Marshaller) return Ada.Calendar.Time is
