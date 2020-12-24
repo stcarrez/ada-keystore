@@ -2928,8 +2928,12 @@ fi
 # Check whether --enable-fuse was given.
 if test "${enable_fuse+set}" = set; then :
   enableval=$enable_fuse; case "${enableval}" in
-  no|none)  ac_enable_fuse= ;;
-  *)        ac_enable_fuse=yes
+  no|none)
+     ac_enable_fuse=no
+     USE_GIT_FUSE=no
+     ;;
+  *)
+     ac_enable_fuse=yes
 esac
 fi
 
