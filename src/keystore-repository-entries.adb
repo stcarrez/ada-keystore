@@ -195,8 +195,8 @@ package body Keystore.Repository.Entries is
                      Logs.Error (Log, "Block{0} contains invalid data entry", Directory.Block);
                      --  It is better not to raise a corruption error but continue, this data block
                      --  is corrupted but we can still have valid entries in other blocks.
-                     --  raise Keystore.Corrupted;
-                     exit;
+                     exit when Manager.Config.Ignore_Bad_Entry;
+                     raise Keystore.Corrupted;
                end;
             end loop;
             Directory.Last_Pos := Into.Pos - 4;
