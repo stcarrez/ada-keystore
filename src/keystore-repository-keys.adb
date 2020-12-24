@@ -198,7 +198,9 @@ package body Keystore.Repository.Keys is
       end if;
       Buf.Data (Key_Pos + 1 .. Key_Pos + Del_Size) := (others => 0);
 
+      --  Release Del_Size bytes from the directory block.
       Iterator.Directory.Key_Pos := Key_Pos + Del_Size;
+      Iterator.Directory.Available := Iterator.Directory.Available + Del_Size;
       Iterator.Current.Pos := IO.BT_DATA_START + 4 - 1;
       Marshallers.Put_Block_Index (Iterator.Current, Iterator.Directory.Key_Pos);
 
@@ -243,9 +245,11 @@ package body Keystore.Repository.Keys is
       Key_Start : IO.Block_Index;
       Key_Last  : IO.Block_Index;
    begin
-      if Iterator.Directory = null or else Iterator.Directory.Available < DATA_KEY_ENTRY_SIZE
+      if Iterator.Directory = null
+        or else Iterator.Directory.Available < DATA_KEY_ENTRY_SIZE + DATA_KEY_HEADER_SIZE
         or else Iterator.Key_Count = Key_Count_Type'Last
       then
+         --  Get a directory block with enough space to hold several keys.
          Entries.Find_Directory_Block (Manager, DATA_KEY_ENTRY_SIZE * 4, Iterator.Directory);
          Iterator.Directory.Available := Iterator.Directory.Available + DATA_KEY_ENTRY_SIZE * 4;
          if Iterator.Directory.Count > 0 then
@@ -253,6 +257,8 @@ package body Keystore.Repository.Keys is
          else
             Iterator.Current.Buffer := Manager.Current.Buffer;
          end if;
+
+         --  Setup the new entry key slot and take room for the key header.
          Iterator.Key_Header_Pos := Iterator.Directory.Key_Pos - DATA_KEY_HEADER_SIZE;
          Iterator.Directory.Available := Iterator.Directory.Available - DATA_KEY_HEADER_SIZE;
          Iterator.Directory.Key_Pos := Iterator.Key_Header_Pos;
