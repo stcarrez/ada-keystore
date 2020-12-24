@@ -22,7 +22,6 @@ with GNAT.Regpat;
 
 with Util.Strings;
 with Util.Log.Loggers;
-with Util.Strings.Sets;
 package body AKT.Filesystem is
 
    use type System.St_Mode_Type;
@@ -104,10 +103,20 @@ package body AKT.Filesystem is
    function MkDir (Path   : in String;
                    Mode   : in System.St_Mode_Type) return System.Error_Type is
       pragma Unreferenced (Mode);
+
+      Data   : constant User_Data_Type := General.Get_User_Data;
+      Empty  : constant Ada.Streams.Stream_Element_Array (1 .. 0) := (others => <>);
    begin
       Log.Info ("Mkdir {0}", Path);
 
-      return System.EROFS;
+      if Data.Wallet.Contains (Path (Path'First + 1 .. Path'Last)) then
+         return System.EEXIST;
+      end if;
+
+      Data.Wallet.Set (Name => Path (Path'First + 1 .. Path'Last),
+                       Kind => Keystore.T_DIRECTORY,
+                       Content => Empty);
+      return System.EXIT_SUCCESS;
    end MkDir;
 
    --------------------------
