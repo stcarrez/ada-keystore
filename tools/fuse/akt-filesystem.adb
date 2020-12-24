@@ -142,10 +142,27 @@ package body AKT.Filesystem is
    --          RmDir       --
    --------------------------
    function RmDir (Path   : in String) return System.Error_Type is
+      Data   : constant User_Data_Type := General.Get_User_Data;
    begin
       Log.Info ("Rmdir {0}", Path);
 
-      return System.EROFS;
+      declare
+         Item : constant Keystore.Entry_Info := Data.Wallet.Find (Path (Path'First + 1 .. Path'Last));
+      begin
+         if Item.Kind /= Keystore.T_DIRECTORY then
+            return System.ENOTDIR;
+         end if;
+
+         Data.Wallet.Delete (Path (Path'First + 1 .. Path'Last));
+         return System.EXIT_SUCCESS;
+      end;
+
+   exception
+      when Keystore.Not_Found =>
+         return System.ENOENT;
+
+      when others =>
+         return System.EIO;
    end RmDir;
 
    --------------------------
