@@ -161,9 +161,13 @@ package body Keystore.Repository.Entries is
                declare
                   Kind : constant Entry_Type := Marshallers.Get_Kind (Into);
                   Len  : constant Natural := Natural (Marshallers.Get_Unsigned_16 (Into));
-                  Name : constant String := Marshallers.Get_String (Into, Len);
                begin
+                  --  Verify the length before allocating the entry.
+                  exit when Len > Buffers.BT_DATA_SIZE;
+
+                  --  Allocate the wallet entry.
                   Item := new Wallet_Entry (Length => Len, Is_Wallet => Kind = T_WALLET);
+                  Marshallers.Get_String (Into, Item.Name);
                   Item.Entry_Offset := Offset;
                   Item.Kind := Kind;
                   Item.Id := Wallet_Entry_Index (Index);
@@ -176,21 +180,23 @@ package body Keystore.Repository.Entries is
                      Item.Size := Marshallers.Get_Unsigned_64 (Into);
                   end if;
                   Item.Header := Directory;
-                  Item.Name := Name;
 
                   if Item.Id >= Manager.Next_Id then
                      Manager.Next_Id := Item.Id + 1;
                   end if;
 
-                  Manager.Map.Insert (Key => Name, New_Item => Item);
+                  Manager.Map.Insert (Key => Item.Name, New_Item => Item);
                   Manager.Entry_Indexes.Insert (Key => Item.Id, New_Item => Item);
                   Directory.Count := Directory.Count + 1;
 
                exception
-                  when others =>
+                  when E : others =>
                      Free (Item);
                      Logs.Error (Log, "Block{0} contains invalid data entry", Directory.Block);
-                     raise Keystore.Corrupted;
+                     --  It is better not to raise a corruption error but continue, this data block
+                     --  is corrupted but we can still have valid entries in other blocks.
+                     --  raise Keystore.Corrupted;
+                     exit;
                end;
             end loop;
             Directory.Last_Pos := Into.Pos - 4;
