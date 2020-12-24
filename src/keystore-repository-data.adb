@@ -283,9 +283,7 @@ package body Keystore.Repository.Data is
                           Mark       : in out Keys.Data_Key_Marker) is
       Work : Workers.Data_Work_Access;
    begin
-      loop
-         Keys.Next_Data_Key (Manager, Iterator);
-         exit when not Keys.Has_Data_Key (Iterator);
+      while Keys.Has_Data_Key (Iterator) loop
          Workers.Allocate_Work (Manager, Workers.DATA_RELEASE, null, Iterator, Work);
 
          --  Run the delete data work either through work manager or through current task.
@@ -295,6 +293,7 @@ package body Keystore.Repository.Data is
          if Keys.Is_Last_Key (Iterator) then
             Keys.Delete_Key (Manager, Iterator, Mark);
          end if;
+         Keys.Next_Data_Key (Manager, Iterator);
       end loop;
    end Delete_Data;
 
