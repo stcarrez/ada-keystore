@@ -117,8 +117,12 @@ AC_SUBST(USE_GIT_FUSE)
 AC_ARG_ENABLE(fuse,
 [  --enable-fuse           enable support for Fuse (disabled)],
 [case "${enableval}" in
-  no|none)  ac_enable_fuse= ;;
-  *)        ac_enable_fuse=yes
+  no|none)
+     ac_enable_fuse=no
+     USE_GIT_FUSE=no
+     ;;
+  *)
+     ac_enable_fuse=yes
 esac])dnl
 
 AC_MSG_CHECKING([whether Fuse is enabled])
