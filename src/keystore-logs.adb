@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-logs -- Log support for the keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -84,16 +84,6 @@ package body Keystore.Logs is
    begin
       if Log.Get_Level >= Util.Log.DEBUG_LEVEL then
          Log.Debug (Message, Buffers.To_String (Block1), Buffers.To_String (Block2));
-      end if;
-   end Debug;
-
-   procedure Debug (Log     : in Util.Log.Loggers.Logger;
-                    Message : in String;
-                    Block   : in IO.Storage_Block;
-                    Size    : in IO.Block_Index) is
-   begin
-      if Log.Get_Level >= Util.Log.DEBUG_LEVEL then
-         Log.Debug (Message, Buffers.To_String (Block), IO.Block_Index'Image (Size));
       end if;
    end Debug;
 
