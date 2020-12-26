@@ -84,6 +84,7 @@ package body Keystore.Repository is
       Repository.Next_Id := 1;
       Repository.Next_Wallet_Id := Ident + 1;
       Repository.Config.Randomize := Config.Randomize;
+      Repository.Config.Cache_Directory := Config.Cache_Directory;
    end Open;
 
    procedure Open (Repository : in out Wallet_Repository;
@@ -681,6 +682,9 @@ package body Keystore.Repository is
       First : Wallet_Maps.Cursor;
       Item  : Wallet_Entry_Access;
    begin
+      Entries.Save (Manager => Repository);
+      Repository.Cache.Clear;
+
       while not Repository.Directory_List.Is_Empty loop
          Dir := Repository.Directory_List.First_Element;
          Repository.Directory_List.Delete_First;
