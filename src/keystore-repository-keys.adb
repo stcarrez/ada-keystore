@@ -161,6 +161,7 @@ package body Keystore.Repository.Keys is
                          Iterator : in out Data_Key_Iterator;
                          Mark     : in out Data_Key_Marker) is
       Buf  : constant Buffers.Buffer_Accessor := Iterator.Current.Buffer.Data.Value;
+      Directory     : constant Wallet_Directory_Entry_Access := Iterator.Directory;
       Key_Start_Pos : IO.Block_Index;
       Next_Iter     : Wallet_Data_Key_List.Cursor;
       Key_Pos       : IO.Block_Index;
@@ -185,13 +186,13 @@ package body Keystore.Repository.Keys is
 
       if Log.Get_Level >= Util.Log.INFO_LEVEL then
          Log.Info ("Delete{1} keys in block{0}@{3} keysize {2}",
-                   Buffers.To_String (Iterator.Directory.Block),
+                   Buffers.To_String (Directory.Block),
                    Key_Count_Type'Image (Del_Count),
                    Buffers.Image (Del_Size),
                    Buffers.Image (Key_Start_Pos));
       end if;
 
-      Key_Pos := Iterator.Directory.Key_Pos;
+      Key_Pos := Directory.Key_Pos;
       if Key_Start_Pos /= Key_Pos then
          Buf.Data (Key_Pos + 1 + Del_Size .. Key_Start_Pos + Del_Size)
            := Buf.Data (Key_Pos + 1 .. Key_Start_Pos);
@@ -199,10 +200,13 @@ package body Keystore.Repository.Keys is
       Buf.Data (Key_Pos + 1 .. Key_Pos + Del_Size) := (others => 0);
 
       --  Release Del_Size bytes from the directory block.
-      Iterator.Directory.Key_Pos := Key_Pos + Del_Size;
-      Iterator.Directory.Available := Iterator.Directory.Available + Del_Size;
+      Directory.Key_Pos := Key_Pos + Del_Size;
+
+      pragma Assert (Check => Directory.Last_Pos + DATA_KEY_SEPARATOR <= Directory.Key_Pos);
+
+      Directory.Available := Directory.Available + Del_Size;
       Iterator.Current.Pos := IO.BT_DATA_START + 4 - 1;
-      Marshallers.Put_Block_Index (Iterator.Current, Iterator.Directory.Key_Pos);
+      Marshallers.Put_Block_Index (Iterator.Current, Directory.Key_Pos);
 
       Manager.Modified.Include (Iterator.Current.Buffer.Block, Iterator.Current.Buffer.Data);
 
@@ -274,9 +278,10 @@ package body Keystore.Repository.Keys is
 
       declare
          Buf       : constant Buffers.Buffer_Accessor := Iterator.Current.Buffer.Data.Value;
+         Directory : constant Wallet_Directory_Entry_Access := Iterator.Directory;
       begin
          --  Shift keys before the current slot.
-         Key_Start := Iterator.Directory.Key_Pos;
+         Key_Start := Directory.Key_Pos;
          Key_Last := Iterator.Key_Last_Pos;
          if Key_Last /= Key_Start then
             Buf.Data (Key_Start - DATA_KEY_ENTRY_SIZE .. Key_Last - DATA_KEY_ENTRY_SIZE)
@@ -287,8 +292,11 @@ package body Keystore.Repository.Keys is
          Key_Last := Key_Last - DATA_KEY_ENTRY_SIZE;
          Key_Start := Key_Start - DATA_KEY_ENTRY_SIZE;
          Iterator.Key_Last_Pos := Key_Last;
-         Iterator.Directory.Key_Pos := Key_Start;
-         Iterator.Directory.Available := Iterator.Directory.Available - DATA_KEY_ENTRY_SIZE;
+         Directory.Key_Pos := Key_Start;
+
+         pragma Assert (Check => Directory.Last_Pos + DATA_KEY_SEPARATOR <= Directory.Key_Pos);
+
+         Directory.Available := Directory.Available - DATA_KEY_ENTRY_SIZE;
          Iterator.Current.Pos := IO.BT_DATA_START + 4 - 1;
          Marshallers.Put_Block_Index (Iterator.Current, Key_Start);
 
