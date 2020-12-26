@@ -26,6 +26,8 @@ package body Keystore.Properties.Tests is
    begin
       Caller.Add_Test (Suite, "Test Keystore.Properties.Files",
                        Test_Properties'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Properties.Iterate",
+                       Test_Iterate'Access);
    end Add_Tests;
 
    procedure Test_Properties (T     : in out Test;
@@ -85,5 +87,43 @@ package body Keystore.Properties.Tests is
          T.Test_Properties (P2);
       end;
    end Test_Properties;
+
+   --  ------------------------------
+   --  Test iterating over the property manager.
+   --  ------------------------------
+   procedure Test_Iterate (T : in out Test) is
+      use Util.Properties;
+      procedure Process (Name : in String; Item : in Util.Properties.Value);
+
+      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-prop.akt");
+      Password : constant Keystore.Secret_Key := Keystore.Create ("mypassword");
+      Wallet   : aliased Keystore.Files.Wallet_File;
+      Props    : Keystore.Properties.Manager;
+      Config   : Keystore.Wallet_Config := Unsecure_Config;
+      Count    : Natural := 0;
+
+      procedure Process (Name : in String; Item : in Util.Properties.Value) is
+      begin
+         Count := Count + 1;
+         if Name = "p1" then
+            Util.Tests.Assert_Equals (T, "a", To_String (Item), "Invalid property " & Name);
+         elsif Name = "p2" then
+            Util.Tests.Assert_Equals (T, "b", To_String (Item), "Invalid property " & Name);
+         elsif Name = "p3" then
+            Util.Tests.Assert_Equals (T, "c", To_String (Item), "Invalid property " & Name);
+         else
+            T.Fail ("Invalid property " & Name);
+         end if;
+      end Process;
+
+   begin
+      Config.Overwrite := True;
+      Props.Initialize (Wallet'Unchecked_Access);
+      Wallet.Create (Path => Path, Password => Password, Config => Config);
+      T.Test_Properties (Props);
+      Props.Iterate (Process'Access);
+      Wallet.Close;
+
+   end Test_Iterate;
 
 end Keystore.Properties.Tests;
