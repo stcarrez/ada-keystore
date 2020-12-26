@@ -241,6 +241,11 @@ package body Keystore.Repository.Entries is
          Directory.Ready := True;
       end if;
 
+      --  Add the directory block in the cache if enabled.
+      if Manager.Config.Cache_Directory then
+         Manager.Cache.Include (Directory.Block, Into.Buffer.Data);
+      end if;
+
    exception
       when Ada.IO_Exceptions.End_Error | Ada.IO_Exceptions.Data_Error =>
          Logs.Error (Log, "Block{0} cannot be read", Directory.Block);
@@ -346,6 +351,11 @@ package body Keystore.Repository.Entries is
       Keystore.Logs.Info (Log, "Allocated directory block{0}", Directory.Block);
 
       Manager.Modified.Include (Manager.Current.Buffer.Block, Manager.Current.Buffer.Data);
+
+      --  Add the directory block in the cache if enabled.
+      if Manager.Config.Cache_Directory then
+         Manager.Cache.Include (Directory.Block, Manager.Current.Buffer.Data);
+      end if;
    end Find_Directory_Block;
 
    --  ------------------------------
