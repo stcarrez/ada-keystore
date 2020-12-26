@@ -50,6 +50,7 @@ private package Keystore.Keys is
       Max_Counter : Interfaces.Unsigned_32 := 300_000;
       Min_Counter : Interfaces.Unsigned_32 := 100_000;
       Randomize   : Boolean := True;
+      Cache_Directory  : Boolean := False;
       Ignore_Bad_Entry : Boolean := False;
    end record;
 
