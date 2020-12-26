@@ -18,8 +18,6 @@
 with Interfaces;
 with Ada.Calendar.Conversions;
 
-with GNAT.Regpat;
-
 with Util.Strings;
 with Util.Log.Loggers;
 package body AKT.Filesystem is
@@ -93,8 +91,6 @@ package body AKT.Filesystem is
       when Keystore.Not_Found =>
          return System.ENOENT;
 
-      when others =>
-         return System.EIO;
    end GetAttr;
 
    --------------------------
@@ -109,14 +105,15 @@ package body AKT.Filesystem is
    begin
       Log.Info ("Mkdir {0}", Path);
 
-      if Data.Wallet.Contains (Path (Path'First + 1 .. Path'Last)) then
-         return System.EEXIST;
-      end if;
-
-      Data.Wallet.Set (Name => Path (Path'First + 1 .. Path'Last),
+      Data.Wallet.Add (Name => Path (Path'First + 1 .. Path'Last),
                        Kind => Keystore.T_DIRECTORY,
                        Content => Empty);
       return System.EXIT_SUCCESS;
+
+   exception
+      when Keystore.Name_Exist =>
+         return System.EEXIST;
+
    end MkDir;
 
    --------------------------
@@ -134,8 +131,6 @@ package body AKT.Filesystem is
       when Keystore.Not_Found =>
          return System.ENOENT;
 
-      when others =>
-         return System.EIO;
    end Unlink;
 
    --------------------------
@@ -147,7 +142,8 @@ package body AKT.Filesystem is
       Log.Info ("Rmdir {0}", Path);
 
       declare
-         Item : constant Keystore.Entry_Info := Data.Wallet.Find (Path (Path'First + 1 .. Path'Last));
+         Item : constant Keystore.Entry_Info
+           := Data.Wallet.Find (Path (Path'First + 1 .. Path'Last));
       begin
          if Item.Kind /= Keystore.T_DIRECTORY then
             return System.ENOTDIR;
@@ -161,8 +157,6 @@ package body AKT.Filesystem is
       when Keystore.Not_Found =>
          return System.ENOENT;
 
-      when others =>
-         return System.EIO;
    end RmDir;
 
    --------------------------
@@ -183,8 +177,8 @@ package body AKT.Filesystem is
       return System.EXIT_SUCCESS;
 
    exception
-      when others =>
-         return System.EIO;
+      when Keystore.Name_Exist =>
+         return System.EEXIST;
    end Create;
 
    --------------------------
@@ -203,10 +197,6 @@ package body AKT.Filesystem is
       else
          return System.EXIT_SUCCESS;
       end if;
-
-   exception
-      when others =>
-         return System.EIO;
    end Open;
 
    --------------------------
@@ -252,9 +242,6 @@ package body AKT.Filesystem is
    exception
       when Keystore.Not_Found =>
          return System.EINVAL;
-
-      when others =>
-         return System.EIO;
    end Read;
 
 
@@ -287,9 +274,6 @@ package body AKT.Filesystem is
    exception
       when Keystore.Not_Found =>
          return System.EINVAL;
-
-      when others =>
-         return System.EIO;
    end Write;
 
 
@@ -308,7 +292,6 @@ package body AKT.Filesystem is
       List    : Keystore.Entry_Map;
       Iter    : Keystore.Entry_Cursor;
       St_Buf  : aliased System.Stat_Type;
-      Pattern : constant GNAT.Regpat.Pattern_Matcher := GNAT.Regpat.Compile (Path & "/.*");
    begin
       Log.Info ("Read directory {0}", Path);
 
@@ -321,7 +304,6 @@ package body AKT.Filesystem is
       while Keystore.Entry_Maps.Has_Element (Iter) loop
          declare
             Name  : constant String := Keystore.Entry_Maps.Key (Iter);
-            Start : constant Positive := Name'First + Path'Length - 1;
             Pos   : Natural := Util.Strings.Rindex (Name, '/');
          begin
             if Pos = 0 then
@@ -354,10 +336,6 @@ package body AKT.Filesystem is
    exception
       when Keystore.Not_Found =>
          return System.ENOENT;
-
-      when E : others =>
-         Log.Error ("Exception ", E);
-         return System.EIO;
    end ReadDir;
 
    function Truncate (Path   : in String;
