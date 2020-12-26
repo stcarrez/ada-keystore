@@ -4,8 +4,8 @@ language: generic
 
 install:
 
-  # Install GNAT FSF
-  - sudo apt-get -y install gnat gprbuild libxmlada-sax7-dev
+  # Install GNAT FSF and libfuse-dev 2.9
+  - sudo apt-get -y install gnat gprbuild libxmlada-sax7-dev libfuse-dev
 
   # Install lcov for coverage
   - sudo apt-get -y install lcov
