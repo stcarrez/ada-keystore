@@ -24,12 +24,14 @@ with Keystore.Passwords.Tests;
 with Keystore.GPG_Tests;
 with Keystore.Properties.Tests;
 with Keystore.Coverage;
+with Keystore.Fuse_Tests;
 package body Keystore.Testsuite is
 
    Tests : aliased Util.Tests.Test_Suite;
 
    function Suite return Util.Tests.Access_Test_Suite is
    begin
+      Keystore.Fuse_Tests.Add_Tests (Tests'Access);
       Keystore.Passwords.Tests.Add_Tests (Tests'Access);
       Keystore.IO.Tests.Add_Tests (Tests'Access);
       Keystore.Files.Tests.Add_Tests (Tests'Access);
