@@ -180,17 +180,19 @@ package Keystore is
 
    --  Configuration to create or open a keystore.
    type Wallet_Config is record
-      Randomize     : Boolean := True;
-      Overwrite     : Boolean := False;
-      Max_Counter   : Positive := 300_000;
-      Min_Counter   : Positive := 100_000;
-      Max_File_Size : Positive := Positive'Last;
-      Storage_Count : Positive := 1;
+      Randomize       : Boolean := True;
+      Overwrite       : Boolean := False;
+      Cache_Directory : Boolean := True;
+      Max_Counter     : Positive := 300_000;
+      Min_Counter     : Positive := 100_000;
+      Max_File_Size   : Positive := Positive'Last;
+      Storage_Count   : Positive := 1;
    end record;
 
    --  Fast configuration but less secure.
    Unsecure_Config : constant Wallet_Config
      := (Randomize => False, Overwrite => False,
+         Cache_Directory => True,
          Min_Counter => 10_000, Max_Counter => 100_000,
          Max_File_Size => Positive'Last,
          Storage_Count => 1);
@@ -198,6 +200,7 @@ package Keystore is
    --  Slow configuration but more secure.
    Secure_Config : constant Wallet_Config
      := (Randomize => True, Overwrite => False,
+         Cache_Directory => True,
          Min_Counter => 500_000, Max_Counter => 1_000_000,
          Max_File_Size => Positive'Last,
          Storage_Count => 1);
