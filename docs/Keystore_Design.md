@@ -163,12 +163,10 @@ The wallet repository block is encrypted with the wallet directory key.
 +------------------+
 | ...              |
 +------------------+--
-| 0 0 0 0          | 16b (End of name entry list)
+| 0 0 0 0          | 4b (End of name entry list = DATA_KEY_SEPARATOR)
 +------------------+--
 | ...              |     (random or zero)
-+------------------+--
-| 0 0 0 0          | 16b (End of data key list)
-+------------------+--
++------------------+--  <- = Data key offset
 | ...              |
 +------------------+
 | Storage ID       | 4b   ^ Repeats "Data key count" times
