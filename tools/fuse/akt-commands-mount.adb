@@ -71,11 +71,13 @@ package body AKT.Commands.Mount is
       --  and we need them (they will dead in the child if fuse runs as daemon).
       Mount_Arguments.Append ("-f");
 
-      --  Even if the Keystore is thread-safe, run only one thread in fuse.
-      Mount_Arguments.Append ("-s");
       if Command.Verbose_Fuse then
          Mount_Arguments.Append ("-d");
       end if;
+
+      --  Enable big writes because it's faster with 128K writes.
+      Mount_Arguments.Append ("-o");
+      Mount_Arguments.Append ("big_writes");
       for I in Context.First_Arg .. Args.Get_Count loop
          Mount_Arguments.Append (Args.Get_Argument (I));
       end loop;
