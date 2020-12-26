@@ -42,6 +42,21 @@ case $1 in
         res=$?
         ;;
 
+    BIG)
+        trap umount_akt 0
+        bin/akt mount -f --password=mount regtests/result/test-mount.akt regtests/result/mount &
+        sleep 1
+        for i in 1 2 3 ; do
+            rm -rf regtests/result/mount/bin &&
+            cp -r bin regtests/result/mount/bin &&
+            diff -r bin regtests/result/mount/bin &&
+            cp configure LICENSE.txt regtests/result/mount/ &&
+            diff -rup LICENSE.txt regtests/result/mount/
+        done
+        echo "PASS"
+        res=$?
+        ;;
+
     MIX)
         trap umount_akt 0
         bin/akt mount -f --password=mount regtests/result/test-mount.akt regtests/result/mount &
