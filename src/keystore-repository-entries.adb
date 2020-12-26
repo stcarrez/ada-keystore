@@ -54,12 +54,10 @@ with Keystore.Marshallers;
 --  +------------------+
 --  | ...              |
 --  +------------------+--
---  | 0 0 0 0          | 16b (End of name entry list)
+--  | 0 0 0 0          | 4b (End of name entry list = DATA_KEY_SEPARATOR)
 --  +------------------+--
 --  | ...              |     (random or zero)
---  +------------------+--
---  | 0 0 0 0          | 16b (End of data key list)
---  +------------------+--
+--  +------------------+--  <- = Data key offset
 --  | ...              |
 --  +------------------+
 --  | Storage ID       | 4b   ^ Repeats "Data key count" times
@@ -235,8 +233,8 @@ package body Keystore.Repository.Entries is
 
             end loop;
          end;
-         if Directory.Last_Pos + 4 < Directory.Key_Pos then
-            Directory.Available := Directory.Key_Pos - Directory.Last_Pos - 4;
+         if Directory.Last_Pos + DATA_KEY_SEPARATOR < Directory.Key_Pos then
+            Directory.Available := Directory.Key_Pos - Directory.Last_Pos - DATA_KEY_SEPARATOR;
          else
             Directory.Available := 0;
          end if;
@@ -279,7 +277,7 @@ package body Keystore.Repository.Entries is
    begin
       --  We need a new wallet directory block.
       Directory := new Wallet_Directory_Entry;
-      Directory.Available := IO.Block_Index'Last - IO.BT_DATA_START - Space - 4 - 2;
+      Directory.Available := IO.Block_Index'Last - IO.BT_DATA_START - Space - 4 - 2 - DATA_KEY_SEPARATOR;
       Directory.Count := 0;
       Directory.Key_Pos := IO.Block_Index'Last;
       Directory.Last_Pos := IO.BT_DATA_START + 4 + 2 - 1;
@@ -387,6 +385,8 @@ package body Keystore.Repository.Entries is
       Item.Header.Last_Pos := Item.Entry_Offset + Entry_Size (Item);
       Item.Header.Count := Item.Header.Count + 1;
 
+      pragma Assert (Check => Item.Header.Last_Pos + DATA_KEY_SEPARATOR <= Item.Header.Key_Pos);
+
       --  Register it in the local repository.
       Manager.Map.Insert (Name, Item);
       Manager.Entry_Indexes.Insert (Item.Id, Item);
@@ -463,16 +463,20 @@ package body Keystore.Repository.Entries is
          end if;
          if Manager.Config.Randomize then
             --  When strong security is necessary, fill with random values
-            --  (except the first 4 bytes).
-            Buf.Data (Directory.Last_Pos - Size + 1 .. Directory.Last_Pos - Size + 4)
+            --  (except the first DATA_KEY_SEPARATOR = 4 bytes).
+            Buf.Data (Directory.Last_Pos - Size + 1
+                        .. Directory.Last_Pos - Size + DATA_KEY_SEPARATOR)
               := (others => 0);
             Manager.Random.Generate
-              (Buf.Data (Directory.Last_Pos - Size + 5 .. Directory.Last_Pos));
+              (Buf.Data (Directory.Last_Pos - Size + DATA_KEY_SEPARATOR + 1
+                           .. Directory.Last_Pos));
          else
             Buf.Data (Directory.Last_Pos - Size + 1 .. Directory.Last_Pos) := (others => 0);
          end if;
 
          Directory.Last_Pos := Directory.Last_Pos - Size;
+
+         pragma Assert (Check => Directory.Last_Pos + DATA_KEY_SEPARATOR <= Directory.Key_Pos);
 
          Manager.Modified.Include (Manager.Current.Buffer.Block, Manager.Current.Buffer.Data);
       end;
