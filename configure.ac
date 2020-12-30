@@ -139,6 +139,13 @@ if test x$ac_enable_fuse = 'xyes' && test x$FUSEADA_DIR = 'x'; then
     ])
 fi
 
+if test x$ac_enable_fuse = 'xyes'; then
+  AC_CHECK_PROG(HAVE_PKG_CONFIG,pkg-config,yes)
+  if test x$HAVE_PKG_CONFIG != 'xyes'; then
+    AC_MSG_ERROR([Please install pkg-config when fuse support is enabled.])     
+  fi
+fi
+
 HAVE_FUSE=$ac_enable_fuse
 AC_SUBST(HAVE_FUSE)
 AC_SUBST(WITH_FUSE_ADA)
