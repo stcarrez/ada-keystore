@@ -29,7 +29,6 @@ package body Keystore.Repository.Workers is
 
    use type Interfaces.Unsigned_16;
    use type Interfaces.Unsigned_32;
-   use type Interfaces.Unsigned_64;
 
    procedure Check_Raise_Error (Status : in Status_Type) with Inline;
 

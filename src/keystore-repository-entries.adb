@@ -188,7 +188,7 @@ package body Keystore.Repository.Entries is
                   Directory.Count := Directory.Count + 1;
 
                exception
-                  when E : others =>
+                  when others =>
                      Free (Item);
                      Logs.Error (Log, "Block{0} contains invalid data entry", Directory.Block);
                      --  It is better not to raise a corruption error but continue, this data block

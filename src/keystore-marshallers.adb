@@ -18,6 +18,7 @@
 with Interfaces.C;
 with Ada.Calendar.Conversions;
 with Util.Encoders.HMAC.SHA256;
+with Util.Encoders.AES;
 
 package body Keystore.Marshallers is
 

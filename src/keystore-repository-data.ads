@@ -17,7 +17,6 @@
 -----------------------------------------------------------------------
 with Ada.Streams;
 with Util.Streams;
-with Util.Encoders.AES;
 with Keystore.IO;
 with Keystore.Repository.Keys;
 

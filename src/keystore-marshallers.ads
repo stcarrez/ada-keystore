@@ -18,7 +18,6 @@
 with Ada.Streams;
 with Ada.Calendar;
 with Interfaces;
-with Util.Encoders.AES;
 with Keystore.Buffers;
 private package Keystore.Marshallers is
 

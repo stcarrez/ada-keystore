@@ -19,7 +19,6 @@ with Ada.IO_Exceptions;
 with Ada.Unchecked_Deallocation;
 with Ada.Directories;
 with Interfaces.C.Strings;
-with Util.Encoders.AES;
 with Util.Log.Loggers;
 with Util.Strings;
 with Util.Systems.Os;
