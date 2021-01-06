@@ -18,7 +18,6 @@
 with Ada.Streams;
 with Ada.Finalization;
 with Interfaces;
-with Util.Encoders.AES;
 private with Ada.Numerics.Discrete_Random;
 
 --  == Random Generator ==

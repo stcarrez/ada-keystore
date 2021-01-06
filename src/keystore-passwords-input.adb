@@ -26,6 +26,7 @@ package body Keystore.Passwords.Input is
    --  ------------------------------
    function Create (Message : in String;
                     Confirm : in Boolean) return Provider_Access is
+      pragma Unreferenced (Confirm);
       Content : Ada.Streams.Stream_Element_Array (1 .. MAX_PASSWORD_LENGTH);
       C       : Character;
       Length  : Ada.Streams.Stream_Element_Offset := 0;

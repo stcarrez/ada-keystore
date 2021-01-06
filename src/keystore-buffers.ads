@@ -17,7 +17,6 @@
 -----------------------------------------------------------------------
 with Ada.Streams;
 with Ada.Containers.Ordered_Maps;
-with Util.Encoders.AES;
 with Util.Refs;
 with Util.Strings;
 private package Keystore.Buffers is
