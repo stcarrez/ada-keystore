@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-gpg_tests -- Test AKT with GPG2
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2021 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,6 +32,7 @@ package body Keystore.GPG_Tests is
    TEST_TOOL_PATH  : constant String := "regtests/result/test-gpg-1.akt";
    TEST_TOOL2_PATH : constant String := "regtests/result/test-gpg-2.akt";
    TEST_TOOL3_PATH : constant String := "regtests/result/test-gpg-3.akt";
+   TEST_TOOL4_PATH : constant String := "regtests/result/test-gpg-4.akt";
 
    type User_Type is (User_1, User_2, User_3);
 
@@ -43,6 +44,8 @@ package body Keystore.GPG_Tests is
    begin
       Caller.Add_Test (Suite, "Test AKT.Commands.Create (GPG)",
                        Test_Create'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Create (GPG+error)",
+                       Test_Create_Bad_Usage'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Create (GPG++)",
                        Test_Create_Multi_User'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Info (GPG)",
@@ -169,6 +172,27 @@ package body Keystore.GPG_Tests is
                                  Result, "list command failed");
 
    end Test_Create;
+
+   --  ------------------------------
+   --  Test the akt keystore creation with missing parameter.
+   --  ------------------------------
+   procedure Test_Create_Bad_Usage (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL4_PATH);
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      if Ada.Directories.Exists (Path) then
+         Ada.Directories.Delete_File (Path);
+      end if;
+
+      --  Create keystore
+      T.Execute (Tool (User_1) & " create -k " & Path & " --gpg",
+                 Result, 1);
+      T.Assert (not Ada.Directories.Exists (Path),
+                "Keystore file exist but create failed");
+      Util.Tests.Assert_Matches (T, "^Missing GPG user name",
+                                 Result, "invalid create --gpg error message");
+
+   end Test_Create_Bad_Usage;
 
    --  ------------------------------
    --  Test the akt keystore for several users each having their own GPG key.
