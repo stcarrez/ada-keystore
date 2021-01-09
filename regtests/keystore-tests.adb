@@ -347,6 +347,11 @@ package body Keystore.Tests is
       Util.Tests.Assert_Matches (T, "Invalid counter range: bob", Result,
                                  "Invalid message");
 
+      --  Missing parameter for -c option
+      T.Execute (Tool & " create " & Path & " -p admin -c", Result, 1);
+      Util.Tests.Assert_Matches (T, "Missing option parameter", Result,
+                                 "Invalid message");
+
       --  Wrong range
       T.Execute (Tool & " create " & Path & " -p admin --counter-range 100:1", Result, 1);
       Util.Tests.Assert_Matches (T, "The min counter is greater than max counter", Result,
