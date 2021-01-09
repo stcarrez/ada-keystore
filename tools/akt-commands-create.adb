@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-create -- Create a keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2021 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,6 +58,10 @@ package body AKT.Commands.Create is
       end if;
 
       if Command.Gpg_Mode then
+         if Args.Get_Count < Context.First_Arg then
+            AKT.Commands.Log.Error (-("Missing GPG user name"));
+            raise Error;
+         end if;
 
          Context.GPG.Create_Secret;
          Context.Wallet.Set_Master_Key (Context.GPG);
