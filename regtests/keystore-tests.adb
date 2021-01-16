@@ -330,7 +330,7 @@ package body Keystore.Tests is
 
       --  Open keystore with invalid password
       T.Execute (Tool & " list " & Path & " -p admin2", Result, 1);
-      Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
+      Util.Tests.Assert_Matches (T, "^akt: invalid password to unlock the keystore file",
                                  Result, "list command failed");
 
    end Test_Tool_Create;
@@ -344,25 +344,25 @@ package body Keystore.Tests is
    begin
       --  Wrong option --counter-range
       T.Execute (Tool & " create " & Path & " -p admin --counter-range bob", Result, 1);
-      Util.Tests.Assert_Matches (T, "Invalid counter range: bob", Result,
+      Util.Tests.Assert_Matches (T, "akt: invalid counter range: bob", Result,
                                  "Invalid message");
 
       --  Missing parameter for -c option
       T.Execute (Tool & " create " & Path & " -p admin -c", Result, 1);
-      Util.Tests.Assert_Matches (T, "Missing option parameter", Result,
+      Util.Tests.Assert_Matches (T, "akt: missing option parameter", Result,
                                  "Invalid message");
 
       --  Wrong range
       T.Execute (Tool & " create " & Path & " -p admin --counter-range 100:1", Result, 1);
-      Util.Tests.Assert_Matches (T, "The min counter is greater than max counter", Result,
+      Util.Tests.Assert_Matches (T, "akt: the min counter is greater than max counter", Result,
                                  "Invalid message");
 
       T.Execute (Tool & " create " & Path & " -p admin --counter-range 100000000000", Result, 1);
-      Util.Tests.Assert_Matches (T, "Invalid counter range: 100000000000", Result,
+      Util.Tests.Assert_Matches (T, "akt: invalid counter range: 100000000000", Result,
                                  "Invalid message");
 
       T.Execute (Tool & " create " & Path & " -p admin --counter-range -1000", Result, 1);
-      Util.Tests.Assert_Matches (T, "Value is out of range", Result,
+      Util.Tests.Assert_Matches (T, "akt: value is out of range", Result,
                                  "Invalid message");
 
    end Test_Tool_Create_Error;
@@ -428,12 +428,12 @@ package body Keystore.Tests is
 
       --  Try using an invalid command
       T.Execute (Tool & " list -k " & Path & " --passcmd 'missing-command'", Result, 1);
-      Util.Tests.Assert_Matches (T, "Invalid password to unlock the keystore file",
+      Util.Tests.Assert_Matches (T, "akt: invalid password to unlock the keystore file",
                                  Result, "no error reported");
 
       --  Try using a command that produces an empty password
       T.Execute (Tool & " list -k " & Path & " --passcmd true", Result, 1);
-      Util.Tests.Assert_Matches (T, "Invalid password to unlock the keystore file",
+      Util.Tests.Assert_Matches (T, "akt: invalid password to unlock the keystore file",
                                  Result, "no error reported");
 
    end Test_Tool_Create_Password_Command;
@@ -551,6 +551,9 @@ package body Keystore.Tests is
                  & " -p mypassword", Result, 1);
       T.Execute (Tool & " get -k " & Path
                  & " -p mypassword missing-property", Result, 1);
+      Util.Tests.Assert_Matches (T, "^akt: value 'missing-property' not found",
+                                 Result, "Invalid error message when value was not found");
+
    end Test_Tool_Get_Error;
 
    --  ------------------------------
@@ -561,7 +564,7 @@ package body Keystore.Tests is
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " unkown-cmd -k " & Path & " -p admin", Result, 1);
-      Util.Tests.Assert_Matches (T, "^Unkown command 'unkown-cmd'",
+      Util.Tests.Assert_Matches (T, "^akt: unkown command 'unkown-cmd'",
                                  Result, "Wrong message when command was not found");
 
       T.Execute (Tool & " create -k " & Path & " -p admin -q", Result, 1);
@@ -571,13 +574,13 @@ package body Keystore.Tests is
       --  Create keystore with a missing key file.
       T.Execute (Tool & " create -k " & Path & " --force --passfile regtests/missing.key",
                  Result, 1);
-      Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
+      Util.Tests.Assert_Matches (T, "^akt: invalid password to unlock the keystore file",
                                  Result, "Wrong message when command was not found");
 
       --  Create keystore with a key file that does not satisfy the security constraints.
       T.Execute (Tool & " create -k " & Path & " --passfile src/keystore.ads",
                  Result, 1);
-      Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
+      Util.Tests.Assert_Matches (T, "^akt: invalid password to unlock the keystore file",
                                  Result, "Wrong message when command was not found");
 
       T.Execute (Tool & " set -k " & Path & " -p admin", Result, 1);
@@ -607,8 +610,6 @@ package body Keystore.Tests is
       Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
-      T.Execute (Tool & " edit -k " & Path & " -p admin -e bad-command testing", Result, 1);
-
       T.Execute (Tool & " edit -k " & Path & " -p admin -e ./regtests/files/fake-editor edit",
                  Result, 0);
 
@@ -646,13 +647,13 @@ package body Keystore.Tests is
       --  Check extract command with invalid value
       T.Execute (Tool & " extract -k " & Path & " -p admin missing",
                  Result, 1);
-      Util.Tests.Assert_Matches (T, "^Value 'missing' not found", Result,
+      Util.Tests.Assert_Matches (T, "^akt: value 'missing' not found", Result,
                                  "Invalid value for extract command");
 
       --  Check extract command with missing parameter
       T.Execute (Tool & " extract -k " & Path & " -p admin",
                  Result, 1);
-      Util.Tests.Assert_Matches (T, "Missing file or directory to extract", Result,
+      Util.Tests.Assert_Matches (T, "akt: missing file or directory to extract", Result,
                                  "Expecting usage print for extract command");
    end Test_Tool_Store_Extract;
 
@@ -709,11 +710,11 @@ package body Keystore.Tests is
       T.Execute (Tool & " create " & Path & " -p admin -c 1:10 --force", Result, 0);
 
       T.Execute (Tool & " extract " & Path & " -p admin missing-1", Result, 1);
-      Util.Tests.Assert_Matches (T, "^Value 'missing-1' not found", Result,
+      Util.Tests.Assert_Matches (T, "^akt: value 'missing-1' not found", Result,
                                  "Invalid value for extract command");
 
       T.Execute (Tool & " extract " & Path & " -p admin -- missing-2", Result, 1);
-      Util.Tests.Assert_Matches (T, "^Value 'missing-2' not found", Result,
+      Util.Tests.Assert_Matches (T, "^akt: value 'missing-2' not found", Result,
                                  "Invalid value for extract command");
    end Test_Tool_Extract_Error;
 
@@ -734,7 +735,7 @@ package body Keystore.Tests is
       --  Check using old password.
       T.Execute (Tool & " password-set -k " & Path & " -p admin --new-password admin-ko",
                  Result, 1);
-      Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
+      Util.Tests.Assert_Matches (T, "^akt: invalid password to unlock the keystore file",
                                  Result, "password-set command failed");
 
       --  Add new password
@@ -745,7 +746,7 @@ package body Keystore.Tests is
                                 "Bad output for password-set command");
 
       --  Remove added password
-      T.Execute (Tool & " password-remove -k " & Path & " -p admin-second --slot 2",
+      T.Execute (Tool & " password-remove -k " & Path & " -p admin-second -f",
                  Result, 0);
 
       Util.Tests.Assert_Matches (T, "^The password was successfully removed.", Result,
@@ -770,7 +771,7 @@ package body Keystore.Tests is
                  & "admin-8 --counter-range 10:100",
                  Result, 1);
 
-      Util.Tests.Assert_Matches (T, "^There is no available key slot to add the password",
+      Util.Tests.Assert_Matches (T, "^akt: there is no available key slot to add the password",
                                  Result,
                                  "Bad output for password-add command");
    end Test_Tool_Password_Add_Limit;
@@ -897,7 +898,7 @@ package body Keystore.Tests is
       Result  : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " list -p admin", Result, 1);
-      Util.Tests.Assert_Matches (T, "^Missing the keystore file name",
+      Util.Tests.Assert_Matches (T, "^akt: missing the keystore file name",
                                  Result,
                                  "Bad output for list command");
    end Test_Tool_List_Error;
@@ -932,7 +933,7 @@ package body Keystore.Tests is
 
       --  Even with good password, unlocking should fail because of missing wallet-key-file.
       T.Execute (Tool & " list " & Path & " -p admin testing my-testing-value", Result, 1);
-      Util.Tests.Assert_Matches (T, "Invalid password to unlock the keystore file",
+      Util.Tests.Assert_Matches (T, "akt: invalid password to unlock the keystore file",
                                  Result, "list command failed");
    end Test_Tool_With_Wallet_Key_File;
 
@@ -941,7 +942,7 @@ package body Keystore.Tests is
       Result  : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " list " & Path & " -p mypassword", Result, 1);
-      Util.Tests.Assert_Matches (T, "The keystore file is corrupted: invalid meta data content",
+      Util.Tests.Assert_Matches (T, "akt: the keystore file is corrupted: invalid meta data content",
                                  Result, "list command failed");
    end Test_Tool_Corrupted_1;
 
@@ -952,7 +953,7 @@ package body Keystore.Tests is
       --  This keystore file was corrupted while implementing the Write procedure.
       --  The data HMAC is invalid but every block is correctly signed and encrypted.
       T.Execute (Tool & " get " & Path & " -p mypassword Update_Stream", Result, 1);
-      Util.Tests.Assert_Matches (T, "The keystore file is corrupted: invalid meta data content",
+      Util.Tests.Assert_Matches (T, "akt: the keystore file is corrupted: invalid meta data content",
                                  Result, "list command failed");
    end Test_Tool_Corrupted_2;
 
@@ -962,7 +963,7 @@ package body Keystore.Tests is
    begin
       T.Execute (Tool & " list " & Path & " -p admin", Result, 1);
       Util.Tests.Assert_Matches
-        (T, "The keystore file is corrupted: invalid or missing storage file",
+        (T, "akt: the keystore file is corrupted: invalid or missing storage file",
          Result, "list command failed");
    end Test_Tool_Missing_Storage;
 
@@ -978,7 +979,7 @@ package body Keystore.Tests is
       Result  : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " list Makefile", Result, 1);
-      Util.Tests.Assert_Matches (T, "The file is not a keystore",
+      Util.Tests.Assert_Matches (T, "akt: the file is not a keystore",
                                  Result, "akt on an invalid file");
    end Test_Tool_Bad_File;
 
@@ -993,7 +994,7 @@ package body Keystore.Tests is
                                  Result, "list command failed");
 
       T.Execute (Tool & " get " & Path & " -p mypassword wallet", Result, 1);
-      Util.Tests.Assert_Matches (T, "No content for an item of type wallet",
+      Util.Tests.Assert_Matches (T, "akt: no content for an item of type wallet",
                                  Result, "get command on wallet");
    end Test_Tool_Nested_Wallet;
 
