@@ -168,7 +168,7 @@ package body Keystore.GPG_Tests is
 
       --  Open keystore with another user GPG configuration should fail
       T.Execute (Tool (User_2) & " list -k " & Path, Result, 1);
-      Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
+      Util.Tests.Assert_Matches (T, "^akt: invalid password to unlock the keystore file",
                                  Result, "list command failed");
 
    end Test_Create;
@@ -189,7 +189,7 @@ package body Keystore.GPG_Tests is
                  Result, 1);
       T.Assert (not Ada.Directories.Exists (Path),
                 "Keystore file exist but create failed");
-      Util.Tests.Assert_Matches (T, "^Missing GPG user name",
+      Util.Tests.Assert_Matches (T, "^akt: missing GPG user name",
                                  Result, "invalid create --gpg error message");
 
    end Test_Create_Bad_Usage;
@@ -313,18 +313,18 @@ package body Keystore.GPG_Tests is
       --  User_2 must not have access to the keystore
       T.Execute (Tool (User_2) & " get " & Path & " testing2",
                  Result, 1);
-      Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
+      Util.Tests.Assert_Matches (T, "^akt: invalid password to unlock the keystore file",
                                  Result, "get command returned unexpected result");
 
       --  Try remove current key
       T.Execute (Tool (User_1) & " password-remove " & Path & " -p gpg-admin --slot 1",
                  Result, 1);
-      Util.Tests.Assert_Matches (T, "^Refusing to erase the key slot",
+      Util.Tests.Assert_Matches (T, "^akt: refusing to erase the key slot",
                                  Result, "password-remove command returned unexpected result");
 
       T.Execute (Tool (User_1) & " password-remove " & Path & " -p gpg-admin --slot 0",
                  Result, 1);
-      Util.Tests.Assert_Matches (T, "^Invalid key slot number",
+      Util.Tests.Assert_Matches (T, "^akt: invalid key slot number",
                                  Result, "password-remove command returned unexpected result");
 
       --  Add again GPG password for User_2
@@ -375,7 +375,7 @@ package body Keystore.GPG_Tests is
                  "Makefile.conf", "",
                  Result, 1);
 
-      Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
+      Util.Tests.Assert_Matches (T, "^akt: invalid password to unlock the keystore file",
                                  Result, "password-set command failed");
 
       T.Execute ("bin/akt --config " & Config & "bad-decrypt-user1-akt.properties store "
@@ -383,7 +383,7 @@ package body Keystore.GPG_Tests is
                  "Makefile.conf", "",
                  Result, 1);
 
-      Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
+      Util.Tests.Assert_Matches (T, "^akt: invalid password to unlock the keystore file",
                                  Result, "password-set command failed");
 
    end Test_GPG_Error;
