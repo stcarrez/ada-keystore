@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-tests -- Tests for akt command
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2021 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -135,6 +135,8 @@ package body Keystore.Tests is
          --  The test must be adapted for Windows.
          Caller.Add_Test (Suite, "Test AKT.Commands.Edit",
                           Test_Tool_Edit'Access);
+         Caller.Add_Test (Suite, "Test AKT.Commands.Edit (Error)",
+                          Test_Tool_Edit_Error'Access);
       end if;
       Caller.Add_Test (Suite, "Test AKT.Commands.Store+Extract",
                        Test_Tool_Store_Extract'Access);
@@ -629,6 +631,29 @@ package body Keystore.Tests is
 
    end Test_Tool_Edit;
 
+
+   --  ------------------------------
+   --  Test the akt edit command.
+   --  ------------------------------
+   procedure Test_Tool_Edit_Error (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " edit -k " & Path & " -p admin -e bad-command testing", Result, 1);
+      Util.Tests.Assert_Matches (T, ".*akt: editor exited with status 127", Result,
+                                 "Invalid value after edit");
+
+      T.Execute (Tool & " edit -k " & Path & " -p admin -e ./regtests/files/error-editor edit",
+                 Result, 1);
+      Util.Tests.Assert_Matches (T, "^akt: editor exited with status 23", Result,
+                                 "Invalid value after edit");
+
+      T.Execute (Tool & " edit -k " & Path & " -p admin -e ./regtests/files/error2-editor edit",
+                 Result, 1);
+      Util.Tests.Assert_Matches (T, "^akt: cannot read the editor's output", Result,
+                                 "Invalid value after edit");
+   end Test_Tool_Edit_Error;
+
    --  ------------------------------
    --  Test the akt store and akt extract commands.
    --  ------------------------------
@@ -762,12 +787,12 @@ package body Keystore.Tests is
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       for I in 1 .. 6 loop
-         T.Execute (Tool & " password-add " & Path & " -p admin-second --new-password "
+         T.Execute (Tool & " password-add " & Path & " -p admin --new-password "
                     & "admin-" & Util.Strings.Image (I) & " --counter-range 10:100",
                     Result, 0);
       end loop;
 
-      T.Execute (Tool & " password-add " & Path & " -p admin-second --new-password "
+      T.Execute (Tool & " password-add " & Path & " -p admin --new-password "
                  & "admin-8 --counter-range 10:100",
                  Result, 1);
 
