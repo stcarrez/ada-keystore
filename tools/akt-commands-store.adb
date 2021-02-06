@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-store -- Store content read from standard input in keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2021 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -82,7 +82,7 @@ package body AKT.Commands.Store is
 
       if Command.Use_Stdin then
          if Context.First_Arg > Args.Get_Count then
-            AKT.Commands.Log.Error (-("Missing name to store the standard input"));
+            AKT.Commands.Log.Error (-("missing name to store the standard input"));
             raise Error;
          end if;
 
@@ -93,7 +93,7 @@ package body AKT.Commands.Store is
                Name : constant String := Args.Get_Argument (I);
             begin
                if not Ada.Directories.Exists (Name) then
-                  AKT.Commands.Log.Error (-("{0} does not exist"), Name);
+                  AKT.Commands.Log.Error (-("'{0}' does not exist"), Name);
                   raise Error;
 
                elsif Ada.Directories.Kind (Name) = Ada.Directories.Ordinary_File then
@@ -103,7 +103,7 @@ package body AKT.Commands.Store is
                   Insert_Directory (Name);
 
                else
-                  AKT.Commands.Log.Error (-("{0} is not a regular file nor a directory"), Name);
+                  AKT.Commands.Log.Error (-("'{0}' is not a regular file nor a directory"), Name);
                   raise Error;
 
                end if;
