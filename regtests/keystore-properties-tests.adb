@@ -59,7 +59,7 @@ package body Keystore.Properties.Tests is
    --  Test the accessing the keystore through property manager.
    --  ------------------------------
    procedure Test_Properties (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-prop.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-prop.akt");
       Password : constant Keystore.Secret_Key := Keystore.Create ("mypassword");
       Wallet   : aliased Keystore.Files.Wallet_File;
       Props    : Keystore.Properties.Manager;
@@ -95,7 +95,7 @@ package body Keystore.Properties.Tests is
       use Util.Properties;
       procedure Process (Name : in String; Item : in Util.Properties.Value);
 
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-prop.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-prop.akt");
       Password : constant Keystore.Secret_Key := Keystore.Create ("mypassword");
       Wallet   : aliased Keystore.Files.Wallet_File;
       Props    : Keystore.Properties.Manager;

@@ -89,8 +89,8 @@ package body Keystore.Fuse_Tests is
                       Command : in String;
                       Expect  : in String;
                       Status  : in Natural := 0) is
-      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/expect/" & Expect);
-      Output : constant String := Util.Tests.Get_Test_Path ("regtests/result/" & Expect);
+      Path   : constant String := Util.Tests.Get_Path ("regtests/expect/" & Expect);
+      Output : constant String := Util.Tests.Get_Test_Path (Expect);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Command, "", Output, Result, Status);
@@ -102,7 +102,7 @@ package body Keystore.Fuse_Tests is
    --  Test the akt keystore creation.
    --  ------------------------------
    procedure Test_Mount (T : in out Test) is
-      Tool   : constant String := Util.Tests.Get_Test_Path (CHECK_MOUNT_PATH);
+      Tool   : constant String := Util.Tests.Get_Path (CHECK_MOUNT_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       --  Create keystore
@@ -114,7 +114,7 @@ package body Keystore.Fuse_Tests is
    --  Test the akt mount and filling the keystore.
    --  ------------------------------
    procedure Test_Mount_Fill (T : in out Test) is
-      Tool   : constant String := Util.Tests.Get_Test_Path (CHECK_MOUNT_PATH);
+      Tool   : constant String := Util.Tests.Get_Path (CHECK_MOUNT_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " FILL", Result);
@@ -126,7 +126,7 @@ package body Keystore.Fuse_Tests is
    --  Test the akt mount and cleaning the keystore.
    --  ------------------------------
    procedure Test_Mount_Clean (T : in out Test) is
-      Tool   : constant String := Util.Tests.Get_Test_Path (CHECK_MOUNT_PATH);
+      Tool   : constant String := Util.Tests.Get_Path (CHECK_MOUNT_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " CLEAN", Result);
@@ -138,7 +138,7 @@ package body Keystore.Fuse_Tests is
    --  Test the akt mount and checking its content.
    --  ------------------------------
    procedure Test_Mount_Check (T : in out Test) is
-      Tool   : constant String := Util.Tests.Get_Test_Path (CHECK_MOUNT_PATH);
+      Tool   : constant String := Util.Tests.Get_Path (CHECK_MOUNT_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " CHECK", Result);
@@ -150,7 +150,7 @@ package body Keystore.Fuse_Tests is
    --  Test the akt mount and stressing the filesystem.
    --  ------------------------------
    procedure Test_Mount_Stress (T : in out Test) is
-      Tool   : constant String := Util.Tests.Get_Test_Path (CHECK_MOUNT_PATH);
+      Tool   : constant String := Util.Tests.Get_Path (CHECK_MOUNT_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " BIG", Result);

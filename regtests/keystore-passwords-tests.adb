@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-passwords-tests -- Tests for Keystore.Passwords
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2021 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -69,7 +69,7 @@ package body Keystore.Passwords.Tests is
    --  Test the using the Passwords.Files
    --  ------------------------------
    procedure Test_File_Password (T : in out Test) is
-      Path      : constant String := Util.Tests.Get_Test_Path ("regtests/result/pass/key1.bin");
+      Path      : constant String := Util.Tests.Get_Test_Path ("pass/key1.bin");
       Provider1 : Keys.Key_Provider_Access;
       Provider2 : Keys.Key_Provider_Access;
       Hash1     : Util.Encoders.SHA256.Hash_Array;
@@ -135,7 +135,7 @@ package body Keystore.Passwords.Tests is
    procedure Test_GPG2_List_Secrets (T : in out Test) is
       procedure Check (Key : in String);
 
-      Path  : constant String := Util.Tests.Get_Test_Path ("regtests/files/gpg2-list.txt");
+      Path  : constant String := Util.Tests.Get_Path ("regtests/files/gpg2-list.txt");
       Ctx   : Keystore.Passwords.GPG.Context_Type;
       List  : Util.Strings.Sets.Set;
 
@@ -161,7 +161,7 @@ package body Keystore.Passwords.Tests is
    procedure Test_GPG1_List_Secrets (T : in out Test) is
       procedure Check (Key : in String);
 
-      Path  : constant String := Util.Tests.Get_Test_Path ("regtests/files/gpg1-list.txt");
+      Path  : constant String := Util.Tests.Get_Path ("regtests/files/gpg1-list.txt");
       Ctx   : Keystore.Passwords.GPG.Context_Type;
       List  : Util.Strings.Sets.Set;
 

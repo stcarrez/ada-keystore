@@ -39,14 +39,14 @@ package body Keystore.Tests is
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Tool");
 
-   TEST_CONFIG_PATH : constant String := "regtests/result/test-config.properties";
-   TEST_TOOL_PATH   : constant String := "regtests/result/test-tool.akt";
-   TEST_TOOL2_PATH  : constant String := "regtests/result/test-tool-2.akt";
-   TEST_TOOL3_PATH  : constant String := "regtests/result/test-tool-3.akt";
-   DATA_TOOL3_PATH  : constant String := "regtests/result/test-tool-3";
-   TEST_TOOL4_PATH  : constant String := "regtests/result/test-tool-4.akt";
-   TEST_TOOL5_PATH  : constant String := "regtests/result/test-tool-5.akt";
-   TEST_WALLET_KEY_PATH  : constant String := "regtests/result/keys/wallet.keys";
+   TEST_CONFIG_PATH : constant String := "test-config.properties";
+   TEST_TOOL_PATH   : constant String := "test-tool.akt";
+   TEST_TOOL2_PATH  : constant String := "test-tool-2.akt";
+   TEST_TOOL3_PATH  : constant String := "test-tool-3.akt";
+   DATA_TOOL3_PATH  : constant String := "test-tool-3";
+   TEST_TOOL4_PATH  : constant String := "test-tool-4.akt";
+   TEST_TOOL5_PATH  : constant String := "test-tool-5.akt";
+   TEST_WALLET_KEY_PATH  : constant String := "keys/wallet.keys";
    TEST_CORRUPTED_1_PATH : constant String := "regtests/files/test-corrupted-1.akt";
    TEST_CORRUPTED_2_PATH : constant String := "regtests/files/test-corrupted-2.akt";
    TEST_WALLET_PATH      : constant String := "regtests/files/test-wallet.akt";
@@ -233,8 +233,8 @@ package body Keystore.Tests is
                       Command : in String;
                       Expect  : in String;
                       Status  : in Natural := 0) is
-      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/expect/" & Expect);
-      Output : constant String := Util.Tests.Get_Test_Path ("regtests/result/" & Expect);
+      Path   : constant String := Util.Tests.Get_Path ("regtests/expect/" & Expect);
+      Output : constant String := Util.Tests.Get_Test_Path (Expect);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Command, "", Output, Result, Status);
@@ -275,7 +275,7 @@ package body Keystore.Tests is
                             Command : in String;
                             Name    : in String;
                             Path    : in String) is
-      Output_Path : constant String := Util.Tests.Get_Test_Path ("regtests/result/" & Name);
+      Output_Path : constant String := Util.Tests.Get_Test_Path (Name);
       Result      : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " store " & Command & " -- " & Name, Path, "", Result);
@@ -506,7 +506,7 @@ package body Keystore.Tests is
    --  ------------------------------
    procedure Test_Tool_Set_Big (T : in out Test) is
       Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
-      Path2  : constant String := Util.Tests.Get_Test_Path ("regtests/result/big-content.txt");
+      Path2  : constant String := Util.Tests.Get_Test_Path ("big-content.txt");
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       Test_Tool_Create (T);
@@ -529,9 +529,9 @@ package body Keystore.Tests is
    --  Test the akt get command.
    --  ------------------------------
    procedure Test_Tool_Get (T : in out Test) is
-      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.akt");
-      Output : constant String := Util.Tests.Get_Path ("regtests/result/test-get.txt");
-      Expect : constant String := Util.Tests.Get_Test_Path ("regtests/expect/test-stream.txt");
+      Path   : constant String := Util.Tests.Get_Path ("regtests/files/test-keystore.akt");
+      Output : constant String := Util.Tests.Get_Test_Path ("test-get.txt");
+      Expect : constant String := Util.Tests.Get_Path ("regtests/expect/test-stream.txt");
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " get -k " & Path
@@ -546,7 +546,7 @@ package body Keystore.Tests is
    --  Test the akt get command with errors.
    --  ------------------------------
    procedure Test_Tool_Get_Error (T : in out Test) is
-      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.akt");
+      Path   : constant String := Util.Tests.Get_Path ("regtests/files/test-keystore.akt");
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " get -k " & Path
@@ -865,7 +865,7 @@ package body Keystore.Tests is
    --  Test the akt config command.
    --  ------------------------------
    procedure Test_Tool_Set_Config (T : in out Test) is
-      Path   : constant String := Util.Tests.Get_Test_Path (TEST_CONFIG_PATH);
+      Path   : constant String := Util.Tests.Get_Path (TEST_CONFIG_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       if Ada.Directories.Exists (Path) then
@@ -963,7 +963,7 @@ package body Keystore.Tests is
    end Test_Tool_With_Wallet_Key_File;
 
    procedure Test_Tool_Corrupted_1 (T : in out Test) is
-      Path    : constant String := Util.Tests.Get_Test_Path (TEST_CORRUPTED_1_PATH);
+      Path    : constant String := Util.Tests.Get_Path (TEST_CORRUPTED_1_PATH);
       Result  : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " list " & Path & " -p mypassword", Result, 1);
@@ -972,7 +972,7 @@ package body Keystore.Tests is
    end Test_Tool_Corrupted_1;
 
    procedure Test_Tool_Corrupted_2 (T : in out Test) is
-      Path    : constant String := Util.Tests.Get_Test_Path (TEST_CORRUPTED_2_PATH);
+      Path    : constant String := Util.Tests.Get_Path (TEST_CORRUPTED_2_PATH);
       Result  : Ada.Strings.Unbounded.Unbounded_String;
    begin
       --  This keystore file was corrupted while implementing the Write procedure.
@@ -983,7 +983,7 @@ package body Keystore.Tests is
    end Test_Tool_Corrupted_2;
 
    procedure Test_Tool_Missing_Storage (T : in out Test) is
-      Path    : constant String := Util.Tests.Get_Test_Path (TEST_SPLIT_PATH);
+      Path    : constant String := Util.Tests.Get_Path (TEST_SPLIT_PATH);
       Result  : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " list " & Path & " -p admin", Result, 1);
@@ -1009,7 +1009,7 @@ package body Keystore.Tests is
    end Test_Tool_Bad_File;
 
    procedure Test_Tool_Nested_Wallet (T : in out Test) is
-      Path    : constant String := Util.Tests.Get_Test_Path (TEST_WALLET_PATH);
+      Path    : constant String := Util.Tests.Get_Path (TEST_WALLET_PATH);
       Result  : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " list " & Path & " -p mypassword", Result, 0);

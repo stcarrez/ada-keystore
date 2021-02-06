@@ -106,7 +106,7 @@ package body Keystore.Files.Tests is
    --  Test creation of a keystore and re-opening it.
    --  ------------------------------
    procedure Test_Create (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-create.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-create.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       Config   : Keystore.Wallet_Config := Unsecure_Config;
    begin
@@ -157,7 +157,7 @@ package body Keystore.Files.Tests is
         := Util.Tests.Get_Path ("regtests/files/test-keystore.akt");
 
       Corrupt_Path : constant String
-        := Util.Tests.Get_Test_Path ("regtests/result/test-corrupt.akt");
+        := Util.Tests.Get_Test_Path ("test-corrupt.akt");
 
       procedure Corrupt (Block : in IO.Block_Number;
                          Pos   : in IO.Block_Index) is
@@ -237,7 +237,7 @@ package body Keystore.Files.Tests is
    --  Test adding values to a keystore.
    --  ------------------------------
    procedure Test_Add (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-add.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-add.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       Config   : Keystore.Wallet_Config := Unsecure_Config;
    begin
@@ -274,7 +274,7 @@ package body Keystore.Files.Tests is
    --  Test adding values and getting them back.
    --  ------------------------------
    procedure Test_Add_Get (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-add-get.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-add-get.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword-add-get");
       Config   : Keystore.Wallet_Config := Unsecure_Config;
    begin
@@ -310,7 +310,7 @@ package body Keystore.Files.Tests is
    --  Test deleting values.
    --  ------------------------------
    procedure Test_Delete (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-delete.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-delete.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword-delete");
       Config   : Keystore.Wallet_Config := Unsecure_Config;
    begin
@@ -383,7 +383,7 @@ package body Keystore.Files.Tests is
    procedure Test_List (T : in out Test) is
       procedure Verify_Entry (Name : in String; Size : in Integer);
 
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.akt");
+      Path     : constant String := Util.Tests.Get_Path ("regtests/files/test-keystore.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       W        : Keystore.Files.Wallet_File;
       Items    : Keystore.Entry_Map;
@@ -414,7 +414,7 @@ package body Keystore.Files.Tests is
    --  Test update values.
    --  ------------------------------
    procedure Test_Update (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-update.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-update.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       Count    : constant Natural := 10;
    begin
@@ -492,7 +492,7 @@ package body Keystore.Files.Tests is
 
       function Large (Len : in Positive; Content : in Character) return String;
 
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-sequence.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-sequence.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
 
       function Large (Len : in Positive; Content : in Character) return String is
@@ -598,7 +598,7 @@ package body Keystore.Files.Tests is
    --  Test opening and closing keystore.
    --  ------------------------------
    procedure Test_Open_Close (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.akt");
+      Path     : constant String := Util.Tests.Get_Path ("regtests/files/test-keystore.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       W        : Keystore.Files.Wallet_File;
    begin
@@ -616,7 +616,7 @@ package body Keystore.Files.Tests is
    --  Test adding values that already exist.
    --  ------------------------------
    procedure Test_Add_Error (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.akt");
+      Path     : constant String := Util.Tests.Get_Path ("regtests/files/test-keystore.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       W        : Keystore.Files.Wallet_File;
    begin
@@ -656,9 +656,9 @@ package body Keystore.Files.Tests is
    --  ------------------------------
    procedure Test_Set_Key (T : in out Test) is
       Path         : constant String
-        := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.akt");
+        := Util.Tests.Get_Path ("regtests/files/test-keystore.akt");
       Test_Path    : constant String
-        := Util.Tests.Get_Test_Path ("regtests/result/test-set-key.akt");
+        := Util.Tests.Get_Test_Path ("test-set-key.akt");
       Password     : Keystore.Secret_Key := Keystore.Create ("mypassword");
       New_Password : Keystore.Secret_Key := Keystore.Create ("new-password");
    begin
@@ -749,7 +749,7 @@ package body Keystore.Files.Tests is
    --  Test adding empty values to a keystore.
    --  ------------------------------
    procedure Test_Add_Empty (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-empty.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-empty.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       Config   : Keystore.Wallet_Config := Unsecure_Config;
    begin
@@ -788,8 +788,8 @@ package body Keystore.Files.Tests is
    --  Test getting values through an Output_Stream.
    --  ------------------------------
    procedure Test_Get_Stream (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.akt");
-      Output   : constant String := Util.Tests.Get_Path ("regtests/result/test-stream.txt");
+      Path     : constant String := Util.Tests.Get_Path ("regtests/files/test-keystore.akt");
+      Output   : constant String := Util.Tests.Get_Test_Path ("test-stream.txt");
       Expect   : constant String := Util.Tests.Get_Path ("regtests/expect/test-stream.txt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       W        : Keystore.Files.Wallet_File;
@@ -815,8 +815,8 @@ package body Keystore.Files.Tests is
                                Name   : in String;
                                Input  : in String;
                                Create : in Boolean) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-stream.akt");
-      Output   : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-" & Name);
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-stream.akt");
+      Output   : constant String := Util.Tests.Get_Test_Path ("test-" & Name);
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       W        : Keystore.Files.Wallet_File;
       File     : Util.Streams.Files.File_Stream;
@@ -881,7 +881,7 @@ package body Keystore.Files.Tests is
    --  Test updating values through an Input and Output_Stream.
    --  ------------------------------
    procedure Test_Read (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-stream.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-stream.akt");
       Input1   : constant String := Util.Tests.Get_Path ("LICENSE.txt");
    begin
       T.Test_File_Stream ("Update_Stream", Input1, Create => True);
@@ -953,7 +953,7 @@ package body Keystore.Files.Tests is
    --  Test writing values through an Input and Output_Stream.
    --  ------------------------------
    procedure Test_Write (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-stream.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-stream.akt");
       Input1   : constant String := Util.Tests.Get_Path ("LICENSE.txt");
    begin
       T.Test_File_Stream ("Update_Stream", Input1, Create => True);
@@ -1095,7 +1095,7 @@ package body Keystore.Files.Tests is
                                         Name   => Keystore.Task_Manager_Access);
 
       Path     : constant String
-        := Util.Tests.Get_Test_Path ("regtests/result/test-stream-workers.akt");
+        := Util.Tests.Get_Test_Path ("test-stream-workers.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       Config   : Keystore.Wallet_Config := Unsecure_Config;
       Worker   : Keystore.Task_Manager_Access := new Keystore.Task_Manager (3);
@@ -1197,7 +1197,7 @@ package body Keystore.Files.Tests is
    --  Perforamce test adding values.
    --  ------------------------------
    procedure Test_Perf_Add (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-perf.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-perf.akt");
       Password : constant Keystore.Secret_Key := Keystore.Create ("mypassword");
       W        : Keystore.Files.Wallet_File;
       Items    : Keystore.Entry_Map;
@@ -1283,7 +1283,7 @@ package body Keystore.Files.Tests is
    --  Test setting and getting header data.
    --  ------------------------------
    procedure Test_Header_Data_1 (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-header.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-header.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
    begin
       Create_With_Header (Path, Password, 1);
@@ -1291,7 +1291,7 @@ package body Keystore.Files.Tests is
    end Test_Header_Data_1;
 
    procedure Test_Header_Data_10 (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-header.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-header.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
    begin
       Create_With_Header (Path, Password, 10);
@@ -1303,7 +1303,7 @@ package body Keystore.Files.Tests is
       W        : Keystore.Files.Wallet_File;
       Kind     : Keystore.Header_Slot_Type := 123;
       Value    : Ada.Streams.Stream_Element := 3;
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-header.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-header.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
    begin
       Config.Overwrite := True;
@@ -1330,7 +1330,7 @@ package body Keystore.Files.Tests is
       W        : Keystore.Files.Wallet_File;
       Kind     : Keystore.Header_Slot_Type := 123;
       Value    : Ada.Streams.Stream_Element := 3;
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-header.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-header.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
    begin
       Config.Overwrite := True;
@@ -1359,7 +1359,7 @@ package body Keystore.Files.Tests is
    --  Test creating a wallet.
    --  ------------------------------
    procedure Test_Add_Wallet (T : in out Test) is
-      Path      : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-wallet.akt");
+      Path      : constant String := Util.Tests.Get_Test_Path ("test-wallet.akt");
       Password  : Keystore.Secret_Key := Keystore.Create ("mypassword");
       Password2 : Keystore.Secret_Key := Keystore.Create ("admin");
       Config    : Keystore.Wallet_Config := Unsecure_Config;
@@ -1410,7 +1410,7 @@ package body Keystore.Files.Tests is
    end Test_Add_Wallet;
 
    procedure Test_Child_Wallet_Error (T : in out Test) is
-      Path      : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-wallet.akt");
+      Path      : constant String := Util.Tests.Get_Test_Path ("test-wallet.akt");
       Password  : Keystore.Secret_Key := Keystore.Create ("mypassword");
       Password2 : Keystore.Secret_Key := Keystore.Create ("admin");
       Config    : Keystore.Wallet_Config := Unsecure_Config;
@@ -1513,7 +1513,7 @@ package body Keystore.Files.Tests is
    --  ------------------------------
    procedure Test_Corrupted_1 (T : in out Test) is
       Path      : constant String
-        := Util.Tests.Get_Test_Path ("regtests/files/test-corrupted-1.akt");
+        := Util.Tests.Get_Path ("regtests/files/test-corrupted-1.akt");
       Password  : Keystore.Secret_Key := Keystore.Create ("mypassword");
       W         : Keystore.Files.Wallet_File;
    begin
@@ -1530,7 +1530,7 @@ package body Keystore.Files.Tests is
    --  ------------------------------
    procedure Test_Corrupted_2 (T : in out Test) is
       Path      : constant String
-        := Util.Tests.Get_Test_Path ("regtests/files/test-corrupted-2.akt");
+        := Util.Tests.Get_Path ("regtests/files/test-corrupted-2.akt");
       Password  : Keystore.Secret_Key := Keystore.Create ("mypassword");
       W         : Keystore.Files.Wallet_File;
       Items     : Keystore.Entry_Map;

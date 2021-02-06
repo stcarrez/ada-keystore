@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-tools-tests -- Tests for files
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2021 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,7 +50,7 @@ package body Keystore.Tools.Tests is
          end if;
       end Filter;
 
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-store.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-store.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       Config   : Keystore.Wallet_Config := Unsecure_Config;
    begin

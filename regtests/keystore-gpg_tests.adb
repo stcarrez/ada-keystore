@@ -29,10 +29,10 @@ package body Keystore.GPG_Tests is
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.GPG_Tests");
 
-   TEST_TOOL_PATH  : constant String := "regtests/result/test-gpg-1.akt";
-   TEST_TOOL2_PATH : constant String := "regtests/result/test-gpg-2.akt";
-   TEST_TOOL3_PATH : constant String := "regtests/result/test-gpg-3.akt";
-   TEST_TOOL4_PATH : constant String := "regtests/result/test-gpg-4.akt";
+   TEST_TOOL_PATH  : constant String := "test-gpg-1.akt";
+   TEST_TOOL2_PATH : constant String := "test-gpg-2.akt";
+   TEST_TOOL3_PATH : constant String := "test-gpg-3.akt";
+   TEST_TOOL4_PATH : constant String := "test-gpg-4.akt";
 
    type User_Type is (User_1, User_2, User_3);
 
@@ -64,7 +64,7 @@ package body Keystore.GPG_Tests is
    --  Get the tool command for a given user
    --  ------------------------------
    function Tool (User : in User_Type) return String is
-      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/files/gnupg/");
+      Path   : constant String := Util.Tests.Get_Path ("regtests/files/gnupg/");
    begin
       case User is
          when User_1 =>
@@ -124,8 +124,8 @@ package body Keystore.GPG_Tests is
                       Command : in String;
                       Expect  : in String;
                       Status  : in Natural := 0) is
-      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/expect/" & Expect);
-      Output : constant String := Util.Tests.Get_Test_Path ("regtests/result/" & Expect);
+      Path   : constant String := Util.Tests.Get_Path ("regtests/expect/" & Expect);
+      Output : constant String := Util.Tests.Get_Test_Path (Expect);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Command, "", Output, Result, Status);
@@ -366,7 +366,7 @@ package body Keystore.GPG_Tests is
    --  Test when gpg execution fails
    --  ------------------------------
    procedure Test_GPG_Error (T : in out Test) is
-      Config : constant String := Util.Tests.Get_Test_Path ("regtests/files/gnupg/");
+      Config : constant String := Util.Tests.Get_Path ("regtests/files/gnupg/");
       Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
