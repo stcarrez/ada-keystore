@@ -48,7 +48,7 @@ package body AKT.Commands.Create is
 
          exception
             when others =>
-               AKT.Commands.Log.Error (-("Split counter is invalid or out of range: {0}"),
+               AKT.Commands.Log.Error (-("split counter is invalid or out of range: {0}"),
                                        Command.Storage_Count.all);
                raise Error;
          end;
@@ -59,7 +59,7 @@ package body AKT.Commands.Create is
 
       if Command.Gpg_Mode then
          if Args.Get_Count < Context.First_Arg then
-            AKT.Commands.Log.Error (-("Missing GPG user name"));
+            AKT.Commands.Log.Error (-("missing GPG user name"));
             raise Error;
          end if;
 
