@@ -401,7 +401,7 @@ package body AKT.Commands is
          Cmd_Name : constant String := Arguments.Get_Command_Name;
       begin
          if Cmd_Name'Length = 0 then
-            AKT.Commands.Log.Error (-("Missing command name to execute."));
+            AKT.Commands.Log.Error (-("missing command name to execute."));
             AKT.Commands.Usage (Arguments, Context);
             Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
             return;
@@ -410,7 +410,7 @@ package body AKT.Commands is
 
       exception
          when GNAT.Command_Line.Invalid_Parameter =>
-            AKT.Commands.Log.Error (-("Missing option parameter"));
+            AKT.Commands.Log.Error (-("missing option parameter"));
             raise Error;
       end;
 
@@ -432,11 +432,11 @@ package body AKT.Commands is
          end if;
       end if;
       if not (Low in Positive'Range) or not (High in Positive'Range) then
-         AKT.Commands.Log.Error (-("Value is out of range"));
+         AKT.Commands.Log.Error (-("value is out of range"));
          raise Error;
       end if;
       if Low > High then
-         AKT.Commands.Log.Error (-("The min counter is greater than max counter"));
+         AKT.Commands.Log.Error (-("the min counter is greater than max counter"));
          raise Error;
       end if;
       Config.Min_Counter := Positive (Low);
@@ -447,10 +447,10 @@ package body AKT.Commands is
          raise;
 
       when others =>
-         AKT.Commands.Log.Error (-("Invalid counter range: {0}"), Value);
-         AKT.Commands.Log.Error (-("Valid format are 'MAX_COUNTER' or "
+         AKT.Commands.Log.Error (-("invalid counter range: {0}"), Value);
+         AKT.Commands.Log.Error (-("valid format are 'MAX_COUNTER' or "
                                  & "'MIN_COUNTER:MAX_COUNTER'"));
-         AKT.Commands.Log.Error (-("Counters must be positive integers."));
+         AKT.Commands.Log.Error (-("counters must be positive integers"));
          raise Error;
 
    end Parse_Range;
