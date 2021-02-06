@@ -63,7 +63,7 @@ package body AKT.Commands.Extract is
 
       exception
          when Keystore.Not_Found =>
-            AKT.Commands.Log.Error (-("Value '{0}' not found"), Name);
+            AKT.Commands.Log.Error (-("value '{0}' not found"), Name);
             Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
       end Extract_File;
@@ -78,7 +78,7 @@ package body AKT.Commands.Extract is
                               Filter  => (Keystore.T_FILE => True, others => False),
                               Content => List);
          if List.Is_Empty then
-            AKT.Commands.Log.Error (-("Value '{0}' not found"), Path);
+            AKT.Commands.Log.Error (-("value '{0}' not found"), Path);
             Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
             return;
          end if;
@@ -104,7 +104,7 @@ package body AKT.Commands.Extract is
 
       exception
          when Keystore.Not_Found =>
-            AKT.Commands.Log.Error (-("Value '{0}' not found"), Name);
+            AKT.Commands.Log.Error (-("value '{0}' not found"), Name);
             Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
       end Extract_Standard_Output;
@@ -113,7 +113,7 @@ package body AKT.Commands.Extract is
       Context.Open_Keystore (Args, Use_Worker => True);
 
       if Context.First_Arg > Args.Get_Count then
-         AKT.Commands.Log.Error (-("Missing file or directory to extract"));
+         AKT.Commands.Log.Error (-("missing file or directory to extract"));
          raise Error;
       end if;
 
@@ -137,7 +137,7 @@ package body AKT.Commands.Extract is
                      Extract_File (Name, Command.Output.all);
                   end if;
                else
-                  AKT.Commands.Log.Error (-("Value '{0}' not found"), Name);
+                  AKT.Commands.Log.Error (-("value '{0}' not found"), Name);
                   Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
                end if;
             end;
