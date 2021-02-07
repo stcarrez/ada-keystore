@@ -55,7 +55,7 @@ package body AKT.Commands.Mount is
             Result : constant Integer := Sys_Daemon (1, 0);
          begin
             if Result /= 0 then
-               AKT.Commands.Log.Error ("Cannot run in background");
+               AKT.Commands.Log.Error (-("cannot run in background"));
             end if;
          end;
       end if;

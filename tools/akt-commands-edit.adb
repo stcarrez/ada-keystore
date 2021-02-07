@@ -59,7 +59,7 @@ package body AKT.Commands.Edit is
                                       Mode  => 8#600#);
       Interfaces.C.Strings.Free (P);
       if Fd < 0 then
-         AKT.Commands.Log.Error (-("Cannot create file for the editor"));
+         AKT.Commands.Log.Error (-("cannot create file for the editor"));
          raise Error;
       end if;
       File.Initialize (Fd);
@@ -131,7 +131,7 @@ package body AKT.Commands.Edit is
       Result := Util.Systems.Os.Sys_Chmod (P, 8#0700#);
       Interfaces.C.Strings.Free (P);
       if Result /= 0 then
-         AKT.Commands.Log.Error (-("Cannot set the permission of {0}"), Path);
+         AKT.Commands.Log.Error (-("cannot set the permission of {0}"), Path);
          raise Error;
       end if;
    end Make_Directory;
@@ -184,7 +184,7 @@ package body AKT.Commands.Edit is
 
          exception
             when Util.Processes.Process_Error =>
-               AKT.Commands.Log.Error (-("Cannot execute editor '{0}'"), Editor);
+               AKT.Commands.Log.Error (-("cannot execute editor '{0}'"), Editor);
                Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
                Cleanup;
 

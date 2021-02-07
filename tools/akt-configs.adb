@@ -83,7 +83,7 @@ package body AKT.Configs is
          Ada.Directories.Create_Path (Dir);
          P := Interfaces.C.Strings.New_String (Dir);
          if Util.Systems.Os.Sys_Chmod (P, 8#0700#) /= 0 then
-            Log.Error (-("Cannot set the permission of {0}"), Dir);
+            Log.Error (-("cannot set the permission of {0}"), Dir);
          end if;
          Interfaces.C.Strings.Free (P);
       end if;
@@ -92,7 +92,7 @@ package body AKT.Configs is
       --  Set the permission on the file to allow only the user to read/write that file.
       P := Interfaces.C.Strings.New_String (Path);
       if Util.Systems.Os.Sys_Chmod (P, 8#0600#) /= 0 then
-         Log.Error (-("Cannot set the permission of {0}"), Path);
+         Log.Error (-("cannot set the permission of {0}"), Path);
       end if;
       Interfaces.C.Strings.Free (P);
    end Save;
