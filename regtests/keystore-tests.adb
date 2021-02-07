@@ -566,7 +566,7 @@ package body Keystore.Tests is
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " unkown-cmd -k " & Path & " -p admin", Result, 1);
-      Util.Tests.Assert_Matches (T, "^akt: unkown command 'unkown-cmd'",
+      Util.Tests.Assert_Matches (T, "^akt: unknown command 'unkown-cmd'",
                                  Result, "Wrong message when command was not found");
 
       T.Execute (Tool & " create -k " & Path & " -p admin -q", Result, 1);
