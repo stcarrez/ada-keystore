@@ -15,6 +15,10 @@ msgstr ""
 msgid "Available subcommands:"
 msgstr ""
 
+#: util-commands-drivers.adb
+msgid "Type '{0} help {command}' for help on a specific command."
+msgstr ""
+
 #: akt-commands-store.adb
 msgid "'{0}' does not exist"
 msgstr ""
