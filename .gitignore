@@ -22,6 +22,7 @@ keystore-tests.xml
 keystore-test.xml
 keystore-aunit.xml
 autom4te.cache
+bin
 lib/
 obj/
 keystoreada.gpr
@@ -30,4 +31,7 @@ keystoreada_gtk.gpr
 keystoreada_tests.gpr
 docs/Keystore_Random.md
 regtests/files/gnupg
-regtests/result/
+regtests/results/
+wiki
+alire
+cover
