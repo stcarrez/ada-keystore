@@ -967,7 +967,8 @@ package body Keystore.Tests is
       Result  : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " list " & Path & " -p mypassword", Result, 1);
-      Util.Tests.Assert_Matches (T, "akt: the keystore file is corrupted: invalid meta data content",
+      Util.Tests.Assert_Matches (T, "akt: the keystore file is corrupted: "
+                                   & "invalid meta data content",
                                  Result, "list command failed");
    end Test_Tool_Corrupted_1;
 
@@ -978,7 +979,8 @@ package body Keystore.Tests is
       --  This keystore file was corrupted while implementing the Write procedure.
       --  The data HMAC is invalid but every block is correctly signed and encrypted.
       T.Execute (Tool & " get " & Path & " -p mypassword Update_Stream", Result, 1);
-      Util.Tests.Assert_Matches (T, "akt: the keystore file is corrupted: invalid meta data content",
+      Util.Tests.Assert_Matches (T, "akt: the keystore file is corrupted: "
+                                   & "invalid meta data content",
                                  Result, "list command failed");
    end Test_Tool_Corrupted_2;
 
