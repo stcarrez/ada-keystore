@@ -666,7 +666,7 @@ package body Keystore.Tests is
                  "bin/akt" & EXE, "",
                  Result, 0);
       T.Execute (Tool & " extract -k " & Path & " -p admin -- store-extract",
-                 "", "regtests/result/akt",
+                 "", Util.Tests.Get_Test_Path ("akt"),
                  Result, 0);
 
       --  Check extract command with invalid value
@@ -687,27 +687,29 @@ package body Keystore.Tests is
    --  ------------------------------
    procedure Test_Tool_Store_Extract_Tree (T : in out Test) is
       Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
+      Dir    : constant String := Util.Tests.Get_Test_Path ("extract");
+      Obj    : constant String := Util.Tests.Get_Test_Path ("extract-obj");
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " create " & Path & " -p admin -c 1:10 --force", Result, 0);
       T.Execute (Tool & " store " & Path & " -p admin obj bin", Result, 0);
-      T.Execute (Tool & " extract " & Path & " -p admin -o regtests/result/extract bin",
+      T.Execute (Tool & " extract " & Path & " -p admin -o " & Dir & " bin",
                  Result, 0);
 
-      T.Assert (Compare ("bin/akt" & EXE, "regtests/result/extract/bin/akt" & EXE),
+      T.Assert (Compare ("bin/akt" & EXE, Dir & "/bin/akt" & EXE),
                 "store+extract failed for bin/akt");
 
       T.Assert (Compare ("bin/keystore_harness" & EXE,
-                "regtests/result/extract/bin/keystore_harness" & EXE),
+                Dir & "/bin/keystore_harness" & EXE),
                 "store+extract failed for bin/keystore_harness");
 
-      T.Execute (Tool & " extract " & Path & " -p admin -o regtests/result/extract-obj obj",
+      T.Execute (Tool & " extract " & Path & " -p admin -o " & Obj & " obj",
                  Result, 0);
 
-      T.Assert (Compare ("obj/akt.o", "regtests/result/extract-obj/obj/akt.o"),
+      T.Assert (Compare ("obj/akt.o", Obj & "/obj/akt.o"),
                 "store+extract failed for obj/akt.o");
 
-      T.Assert (Compare ("obj/akt-commands.o", "regtests/result/extract-obj/obj/akt-commands.o"),
+      T.Assert (Compare ("obj/akt-commands.o", Obj & "/obj/akt-commands.o"),
                 "store+extract failed for obj/akt-commands.o");
 
    end Test_Tool_Store_Extract_Tree;

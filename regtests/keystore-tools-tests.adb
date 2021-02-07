@@ -46,7 +46,7 @@ package body Keystore.Tools.Tests is
          if Kind = Ada.Directories.Ordinary_File then
             return Util.Strings.Ends_With (Name, ".ads");
          else
-            return Name /= ".git" and Name /= "result";
+            return Name /= ".git" and Name /= "results";
          end if;
       end Filter;
 

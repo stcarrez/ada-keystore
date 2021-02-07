@@ -6,52 +6,52 @@ if test $# -ne 1; then
 fi
 
 function umount_akt () {
-	umount regtests/result/mount 2>/dev/null
+	umount regtests/results/mount 2>/dev/null
 }
 
 case $1 in
     START)
-        rm -rf regtests/result/mount
-        mkdir -p regtests/result/mount &&
-        bin/akt create regtests/result/test-mount.akt --password=mount -c 100:1000 -f &&
+        rm -rf regtests/results/mount
+        mkdir -p regtests/results/mount &&
+        bin/akt create regtests/results/test-mount.akt --password=mount -c 100:1000 -f &&
         echo "PASS"
         res=$?
         ;;
 
     FILL)
         trap umount_akt 0
-        bin/akt mount --password=mount regtests/result/test-mount.akt regtests/result/mount &&
+        bin/akt mount --password=mount regtests/results/test-mount.akt regtests/results/mount &&
         sleep 1 &&
-        cp -r obj regtests/result/mount &&
-        diff -rup obj regtests/result/mount/obj &&
-        cp -r src regtests/result/mount &&
-        diff -rup src regtests/result/mount/src &&
+        cp -r obj regtests/results/mount &&
+        diff -rup obj regtests/results/mount/obj &&
+        cp -r src regtests/results/mount &&
+        diff -rup src regtests/results/mount/src &&
         echo "PASS"
         res=$?
         ;;
 
     CLEAN)
         trap umount_akt 0
-        bin/akt mount -f --password=mount regtests/result/test-mount.akt regtests/result/mount &
+        bin/akt mount -f --password=mount regtests/results/test-mount.akt regtests/results/mount &
         sleep 1
-        rm -rf regtests/result/mount/obj &&
-        rm -rf regtests/result/mount/src &&
-        cp configure LICENSE.txt regtests/result/mount/ &&
-        diff -rup LICENSE.txt regtests/result/mount/ &&
+        rm -rf regtests/results/mount/obj &&
+        rm -rf regtests/results/mount/src &&
+        cp configure LICENSE.txt regtests/results/mount/ &&
+        diff -rup LICENSE.txt regtests/results/mount/ &&
         echo "PASS"
         res=$?
         ;;
 
     BIG)
         trap umount_akt 0
-        bin/akt mount -f --password=mount regtests/result/test-mount.akt regtests/result/mount &
+        bin/akt mount -f --password=mount regtests/results/test-mount.akt regtests/results/mount &
         sleep 1
         for i in 1 2 3 ; do
-            rm -rf regtests/result/mount/bin &&
-            cp -r bin regtests/result/mount/bin &&
-            diff -r bin regtests/result/mount/bin &&
-            cp configure LICENSE.txt regtests/result/mount/ &&
-            diff -rup LICENSE.txt regtests/result/mount/
+            rm -rf regtests/results/mount/bin &&
+            cp -r bin regtests/results/mount/bin &&
+            diff -r bin regtests/results/mount/bin &&
+            cp configure LICENSE.txt regtests/results/mount/ &&
+            diff -rup LICENSE.txt regtests/results/mount/
         done
         echo "PASS"
         res=$?
@@ -59,26 +59,26 @@ case $1 in
 
     MIX)
         trap umount_akt 0
-        bin/akt mount -f --password=mount regtests/result/test-mount.akt regtests/result/mount &
+        bin/akt mount -f --password=mount regtests/results/test-mount.akt regtests/results/mount &
         sleep 1
         for i in 1 2 3 4 5; do
-            rm -rf regtests/result/mount/bin &&
-            cp -r bin regtests/result/mount/bin &&
-            diff -r bin regtests/result/mount/bin &&
-            rm -rf regtests/result/mount/obj &&
-            cp -r obj regtests/result/mount/obj &&
-            diff -r obj regtests/result/mount/obj &&
-            cp configure LICENSE.txt regtests/result/mount/ &&
-            diff -rup LICENSE.txt regtests/result/mount/
+            rm -rf regtests/results/mount/bin &&
+            cp -r bin regtests/results/mount/bin &&
+            diff -r bin regtests/results/mount/bin &&
+            rm -rf regtests/results/mount/obj &&
+            cp -r obj regtests/results/mount/obj &&
+            diff -r obj regtests/results/mount/obj &&
+            cp configure LICENSE.txt regtests/results/mount/ &&
+            diff -rup LICENSE.txt regtests/results/mount/
         done
         echo "PASS"
         res=$?
         ;;
 
     CHECK)
-        bin/akt list --password=mount regtests/result/test-mount.akt > /dev/null &&
-        bin/akt get -n --password=mount regtests/result/test-mount.akt LICENSE.txt > regtests/result/LICENSE.txt &&
-        cmp LICENSE.txt regtests/result/LICENSE.txt
+        bin/akt list --password=mount regtests/results/test-mount.akt > /dev/null &&
+        bin/akt get -n --password=mount regtests/results/test-mount.akt LICENSE.txt > regtests/results/LICENSE.txt &&
+        cmp LICENSE.txt regtests/results/LICENSE.txt
         echo "PASS"
         res=$?
         ;;
