@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-repository-entries -- Repository management for the keystore
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2021 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -282,7 +282,8 @@ package body Keystore.Repository.Entries is
    begin
       --  We need a new wallet directory block.
       Directory := new Wallet_Directory_Entry;
-      Directory.Available := IO.Block_Index'Last - IO.BT_DATA_START - Space - 4 - 2 - DATA_KEY_SEPARATOR;
+      Directory.Available := IO.Block_Index'Last - IO.BT_DATA_START
+        - Space - 4 - 2 - DATA_KEY_SEPARATOR;
       Directory.Count := 0;
       Directory.Key_Pos := IO.Block_Index'Last;
       Directory.Last_Pos := IO.BT_DATA_START + 4 + 2 - 1;
