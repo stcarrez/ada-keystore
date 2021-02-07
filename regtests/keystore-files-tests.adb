@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-files-tests -- Tests for files
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2021 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -1326,6 +1326,8 @@ package body Keystore.Files.Tests is
    end Test_Header_Data_Error;
 
    procedure Test_Header_Data_Update (T : in out Test) is
+      pragma Unreferenced (T);
+
       Config   : Keystore.Wallet_Config := Unsecure_Config;
       W        : Keystore.Files.Wallet_File;
       Kind     : Keystore.Header_Slot_Type := 123;
