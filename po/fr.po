@@ -349,7 +349,7 @@ msgid "there is no available key slot to add the password"
 msgstr "il n'y a pas de slot de clé disponible pour ajouter le mot de passe"
 
 #: util-commands-drivers.adb
-msgid "Unknown command '{0}'"
+msgid "unknown command '{0}'"
 msgstr "command inconnue '{0}'"
 
 #: util-commands-drivers.adb

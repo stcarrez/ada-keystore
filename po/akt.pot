@@ -340,11 +340,7 @@ msgid "there is no available key slot to add the password"
 msgstr ""
 
 #: util-commands-drivers.adb
-msgid "Unknown command '{0}'"
-msgstr ""
-
-#: util-commands-drivers.adb
-msgid "Unkown command '{0}'"
+msgid "unknown command '{0}'"
 msgstr ""
 
 #: util-commands-drivers.adb
