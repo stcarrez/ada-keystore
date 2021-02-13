@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-edit -- Edit content in keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2021 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,7 +59,7 @@ package body AKT.Commands.Edit is
                                       Mode  => 8#600#);
       Interfaces.C.Strings.Free (P);
       if Fd < 0 then
-         AKT.Commands.Log.Error (-("Cannot create file for the editor"));
+         AKT.Commands.Log.Error (-("cannot create file for the editor"));
          raise Error;
       end if;
       File.Initialize (Fd);
@@ -83,7 +83,7 @@ package body AKT.Commands.Edit is
                                       Mode  => 0);
       Interfaces.C.Strings.Free (P);
       if Fd < 0 then
-         AKT.Commands.Log.Error (-("Cannot read the editor's output"));
+         AKT.Commands.Log.Error (-("cannot read the editor's output"));
          raise Error;
       end if;
       File.Initialize (Fd);
@@ -131,7 +131,7 @@ package body AKT.Commands.Edit is
       Result := Util.Systems.Os.Sys_Chmod (P, 8#0700#);
       Interfaces.C.Strings.Free (P);
       if Result /= 0 then
-         AKT.Commands.Log.Error (-("Cannot set the permission of {0}"), Path);
+         AKT.Commands.Log.Error (-("cannot set the permission of {0}"), Path);
          raise Error;
       end if;
    end Make_Directory;
@@ -174,7 +174,7 @@ package body AKT.Commands.Edit is
             Util.Processes.Spawn (Proc, Editor & " " & Path);
             Util.Processes.Wait (Proc);
             if Util.Processes.Get_Exit_Status (Proc) /= 0 then
-               AKT.Commands.Log.Error (-("Editor exited with status{0}"),
+               AKT.Commands.Log.Error (-("editor exited with status{0}"),
                                        Natural'Image (Util.Processes.Get_Exit_Status (Proc)));
                Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
             else
@@ -184,7 +184,7 @@ package body AKT.Commands.Edit is
 
          exception
             when Util.Processes.Process_Error =>
-               AKT.Commands.Log.Error (-("Cannot execute editor '{0}'"), Editor);
+               AKT.Commands.Log.Error (-("cannot execute editor '{0}'"), Editor);
                Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
                Cleanup;
 

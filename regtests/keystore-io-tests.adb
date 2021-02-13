@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-io-tests -- Tests for keystore IO
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2021 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,7 +37,7 @@ package body Keystore.IO.Tests is
    end Add_Tests;
 
    procedure Test_File_IO (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-io.ks");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-io.ks");
       Secret   : Secret_Key := Util.Encoders.Create ("0123456789abcdef");
       Secret2  : Secret_Key := Util.Encoders.Create ("0123456789abcdef0123456789abcdef");
       Block    : Storage_Block;
@@ -130,7 +130,7 @@ package body Keystore.IO.Tests is
    end Test_File_IO;
 
    procedure Test_Perf_IO (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-io-perf.ks");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-io-perf.ks");
       Secret   : Secret_Key := Util.Encoders.Create ("0123456789abcdef");
       Block    : Storage_Block;
       Sign     : constant Secret_Key := Util.Encoders.Create ("123456789abcdef0");

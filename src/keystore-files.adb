@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-files -- Ada keystore files
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,6 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Util.Encoders.AES;
 with Util.Log.Loggers;
 with Keystore.IO.Refs;
 with Keystore.IO.Files;
@@ -380,6 +379,34 @@ package body Keystore.Files is
    begin
       Container.Container.Update (Name, Kind, Content);
    end Update;
+
+   --  ------------------------------
+   --  Read from the wallet the named entry starting at the given position.
+   --  Upon successful completion, Last will indicate the last valid position of
+   --  the Content array.
+   --  ------------------------------
+   overriding
+   procedure Read (Container : in out Wallet_File;
+                   Name      : in String;
+                   Offset    : in Ada.Streams.Stream_Element_Offset;
+                   Content   : out Ada.Streams.Stream_Element_Array;
+                   Last      : out Ada.Streams.Stream_Element_Offset) is
+   begin
+      Container.Container.Read (Name, Offset, Content, Last);
+   end Read;
+
+   --  ------------------------------
+   --  Write in the wallet the named entry starting at the given position.
+   --  The existing content is overwritten or new content is appended.
+   --  ------------------------------
+   overriding
+   procedure Write (Container : in out Wallet_File;
+                    Name      : in String;
+                    Offset    : in Ada.Streams.Stream_Element_Offset;
+                    Content   : in Ada.Streams.Stream_Element_Array) is
+   begin
+      Container.Container.Write (Name, Offset, Content);
+   end Write;
 
    --  ------------------------------
    --  Delete from the wallet the named entry.

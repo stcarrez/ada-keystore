@@ -12,6 +12,12 @@ ifeq ($(HAVE_FUSE),yes)
 FUSE_LIBS := $(shell pkg-config --libs fuse)
 
 export FUSE_LIBS
+
+ifeq ($(USE_GIT_FUSE),yes)
+ADA_FUSE_SYSTEM := $(shell uname -sm)
+export ADA_FUSE_SYSTEM
+endif
+
 endif
 
 include Makefile.defaults
@@ -105,6 +111,8 @@ endif
 	cat docs/Tool.md docs/akt.md > docs/Keystore_Tool.md
 	cat docs/Design.md \
 	    docs/Keystore_IO_Headers.md \
+	    docs/Keystore_Passwords_GPG.md \
+	    docs/Keystore_Keys.md \
 	    docs/Keystore_Repository_Entries.md \
 		docs/Keystore_Repository_Data.md \
         docs/Design_Implementation.md > docs/Keystore_Design.md

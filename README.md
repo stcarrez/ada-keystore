@@ -46,9 +46,15 @@ Get a content:
    akt extract secure.akt -- backup | tar xzf -
 ```
 
-## Version 1.2.1 - Nov 2020
+Mount the keystore:
+```
+   akt mount secure.akt /mnt
+   # access the keystore content in /mnt
+   umount /mnt
+```
 
-- Add Alire template crate
+## Version 1.3.1  - Feb 2021
+- Improvement of message localization
 
 [List all versions](https://github.com/stcarrez/ada-keystore/blob/master/NEWS.md)
 
@@ -104,6 +110,7 @@ It provides the following commands:
 * `help`:     print some help
 * `info`:     print information about the keystore
 * `list`:     list values of the keystore
+* `mount`:    mount the keystore on the filesystem for a direct access
 * `password-add`:      add a password
 * `password-remove`:   remove a password
 * `password-set`:      change the password
@@ -200,6 +207,31 @@ and defined the GPG key for each user you want to share the keystore:
 ```
 
 To unlock the keystore, GPG will use the private key.
+
+## Mounting the keystore on the filesystem
+
+The keystore content can be mounted as a filesystem so that the
+encrypted content are directly available to existing application
+as regular files.  The `mount` command starts the fuse daemon
+and puts the command as a background fuse daemon to serve as
+a fuse filesystem and make the content visible through the
+mount point.
+
+```
+   akt mount secure.akt /mnt
+```
+
+To unmount the filesystem, you must use the `umount` command.
+
+```
+   umount /mnt
+```
+
+Sometimes, you may have to force the umount by running:
+
+```
+   sudo umount /mnt
+```
 
 # AKT Debian Binaries
 
@@ -307,7 +339,7 @@ To use the AKT docker container you can run the following commands:
 
 # Documents
 
-* [Ada Keystore Guide](https://ada-keystore.readthedocs.io/en/latest/) [PDF](https://github.com/stcarrez/ada-keystore/blob/master/docs/keystore-book.pdf)
+* [Ada Keystore Guide](https://ada-keystore.readthedocs.io/en/latest/) [PDF](https://github.com/stcarrez/ada-keystore/blob/master/docs/keystoreada-book.pdf)
 * Man page: [akt (1)](https://github.com/stcarrez/ada-keystore/blob/master/docs/akt.md)
 
 # Presentations

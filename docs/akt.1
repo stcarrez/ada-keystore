@@ -1,6 +1,6 @@
 .\"
 .\"
-.TH AKT 1 "Feb 7, 2020" "Ada Keystore Tool"
+.TH AKT 1 "Dec 23, 2020" "Ada Keystore Tool"
 .SH NAME
 akt - Tool to protect your sensitive data with secure storage
 .SH SYNOPSIS
@@ -236,7 +236,6 @@ option, it is possible to protect the keystore for several users, thus
 being able to share the secure file with each of them.
 .\"
 .SS The extract command
-.RE
 .RS 0
 akt \fBextract\fP \fIkeystore.akt\fR -- \fIname\fR
 .RE
@@ -253,6 +252,38 @@ When the
 option is passed, the command accepts only one
 argument.  It extracts the specified name and writes the result
 on the standard output.  It can be used as a target for a pipe command.
+.\"
+.\"
+.SS The mount command
+.RS 0
+akt \fBmount\fP \fIkeystore.akt\fR [-f] [--enable-cache] \fImount-point\fR
+.RE
+.PP
+This command is available when the
+.IR fuse (8)
+support is enabled.  It allows to mount the keystore content on the
+.I mount-point
+directory and access the encrypted content through the filesystem.
+The
+.I akt
+tool works as a daemon to serve
+.IR fuse (8)
+requests that come from the kernel.  The
+.I -f
+option allows to run this daemon as a foreground process.
+By default, the kernel cache are disabled because the keystore content
+is decrypted and given as clear content to the kernel.  This could be
+a security issue for some system and users.
+The kernel cache can be enabled by using the
+.I --enable-cache
+option.
+.PP
+To unmount the file system, one must use the
+.IR mount (8)
+command.
+.RS 0
+umount \fImount-point\fR
+.RE
 .\"
 .\"
 .SS The set command
@@ -481,7 +512,7 @@ must fill unused data areas with zeros or with random bytes.
 .\"
 .SH SEE ALSO
 \fIeditor(1)\fR, \fIupdate-alternative(1)\fR, \fIssh-askpass(1)\fR,
-\fIgpg2(1)\fR
+\fIgpg2(1)\fR, \fImount(8)\fR, \fIfuse(8)\fR
 .\"
 .\"
 .SH AUTHOR

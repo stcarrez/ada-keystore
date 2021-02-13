@@ -125,6 +125,17 @@ private package Keystore.Repository is
                        Name       : in String;
                        Output     : in out Util.Streams.Output_Stream'Class);
 
+   procedure Read (Repository : in out Wallet_Repository;
+                   Name       : in String;
+                   Offset     : in Ada.Streams.Stream_Element_Offset;
+                   Content    : out Ada.Streams.Stream_Element_Array;
+                   Last       : out Ada.Streams.Stream_Element_Offset);
+
+   procedure Write (Repository : in out Wallet_Repository;
+                    Name       : in String;
+                    Offset     : in Ada.Streams.Stream_Element_Offset;
+                    Content    : in Ada.Streams.Stream_Element_Array);
+
    --  Get the list of entries contained in the wallet that correspond to the optional filter.
    procedure List (Repository : in out Wallet_Repository;
                    Filter     : in Filter_Type;
@@ -163,6 +174,7 @@ private
    DATA_NAME_ENTRY_SIZE : constant := 4 + 2 + 2 + 8 + 8 + 8;
    DATA_KEY_HEADER_SIZE : constant := 4 + 2 + 4;
    DATA_KEY_ENTRY_SIZE  : constant := 4 + 4 + 2 + 16 + 32;
+   DATA_KEY_SEPARATOR   : constant := 4;
    DATA_IV_OFFSET       : constant := 32;
    DATA_ENTRY_SIZE      : constant := 4 + 2 + 2 + 8 + 32;
    DATA_MAX_SIZE        : constant := IO.Block_Size - IO.BT_HMAC_HEADER_SIZE

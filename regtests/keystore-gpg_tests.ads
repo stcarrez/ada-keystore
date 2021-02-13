@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-gpg_tests -- Test AKT with GPG2
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2021 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -26,6 +26,9 @@ package Keystore.GPG_Tests is
 
    --  Test the akt keystore creation.
    procedure Test_Create (T : in out Test);
+
+   --  Test the akt keystore creation with missing parameter.
+   procedure Test_Create_Bad_Usage (T : in out Test);
 
    --  Test the akt keystore for several users each having their own GPG key.
    procedure Test_Create_Multi_User (T : in out Test);

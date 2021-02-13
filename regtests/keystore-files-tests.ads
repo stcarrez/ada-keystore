@@ -69,12 +69,22 @@ package Keystore.Files.Tests is
    --  Test updating values through an Input and Output_Stream.
    procedure Test_Update_Stream (T : in out Test);
 
+   --  Test reading partial value starting at a given position.
+   procedure Test_Read (T : in out Test);
+
+   --  Test writing partial value starting at a given position.
+   procedure Test_Write (T : in out Test);
+
+   --  Test writing partial value with several workers.
+   procedure Test_Write_Workers (T : in out Test);
+
    --  Perforamce test adding values.
    procedure Test_Perf_Add (T : in out Test);
 
    procedure Test_File_Stream (T     : in out Test;
                                Name  : in String;
-                               Input : in String);
+                               Input : in String;
+                               Create : in Boolean);
 
    --  Test setting and getting header data.
    procedure Test_Header_Data_1 (T : in out Test);
@@ -88,5 +98,6 @@ package Keystore.Files.Tests is
 
    --  Test operation on corrupted keystore.
    procedure Test_Corrupted_1 (T : in out Test);
+   procedure Test_Corrupted_2 (T : in out Test);
 
 end Keystore.Files.Tests;

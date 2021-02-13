@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore -- Ada keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -180,17 +180,19 @@ package Keystore is
 
    --  Configuration to create or open a keystore.
    type Wallet_Config is record
-      Randomize     : Boolean := True;
-      Overwrite     : Boolean := False;
-      Max_Counter   : Positive := 300_000;
-      Min_Counter   : Positive := 100_000;
-      Max_File_Size : Positive := Positive'Last;
-      Storage_Count : Positive := 1;
+      Randomize       : Boolean := True;
+      Overwrite       : Boolean := False;
+      Cache_Directory : Boolean := True;
+      Max_Counter     : Positive := 300_000;
+      Min_Counter     : Positive := 100_000;
+      Max_File_Size   : Positive := Positive'Last;
+      Storage_Count   : Positive := 1;
    end record;
 
    --  Fast configuration but less secure.
    Unsecure_Config : constant Wallet_Config
      := (Randomize => False, Overwrite => False,
+         Cache_Directory => True,
          Min_Counter => 10_000, Max_Counter => 100_000,
          Max_File_Size => Positive'Last,
          Storage_Count => 1);
@@ -198,6 +200,7 @@ package Keystore is
    --  Slow configuration but more secure.
    Secure_Config : constant Wallet_Config
      := (Randomize => True, Overwrite => False,
+         Cache_Directory => True,
          Min_Counter => 500_000, Max_Counter => 1_000_000,
          Max_File_Size => Positive'Last,
          Storage_Count => 1);
@@ -303,6 +306,26 @@ package Keystore is
                      Name      : in String;
                      Kind      : in Entry_Type := T_BINARY;
                      Content   : in Ada.Streams.Stream_Element_Array) is abstract with
+     Pre'Class  => Container.Is_Open,
+     Post'Class => Container.Contains (Name);
+
+   --  Read from the wallet the named entry starting at the given position.
+   --  Upon successful completion, Last will indicate the last valid position of
+   --  the Content array.
+   procedure Read (Container : in out Wallet;
+                   Name      : in String;
+                   Offset    : in Ada.Streams.Stream_Element_Offset;
+                   Content   : out Ada.Streams.Stream_Element_Array;
+                   Last      : out Ada.Streams.Stream_Element_Offset) is abstract with
+     Pre'Class  => Container.Is_Open,
+     Post'Class => Container.Contains (Name);
+
+   --  Write in the wallet the named entry starting at the given position.
+   --  The existing content is overwritten or new content is appended.
+   procedure Write (Container : in out Wallet;
+                    Name      : in String;
+                    Offset    : in Ada.Streams.Stream_Element_Offset;
+                    Content   : in Ada.Streams.Stream_Element_Array) is abstract with
      Pre'Class  => Container.Is_Open,
      Post'Class => Container.Contains (Name);
 

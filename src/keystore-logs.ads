@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-logs -- Log support for the keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -42,10 +42,5 @@ private package Keystore.Logs is
                     Message : in String;
                     Block1  : in IO.Storage_Block;
                     Block2  : in IO.Storage_Block);
-
-   procedure Debug (Log     : in Util.Log.Loggers.Logger;
-                    Message : in String;
-                    Block   : in IO.Storage_Block;
-                    Size    : in IO.Block_Index);
 
 end Keystore.Logs;

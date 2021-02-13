@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-filesystem -- Fuse filesystem operations
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,8 @@ with Keystore.Files;
 package AKT.Filesystem is
 
    type User_Data_Type is record
-      Wallet : access Keystore.Files.Wallet_File;
+      Wallet     : access Keystore.Files.Wallet_File;
+      Direct_IO  : Boolean := False;
    end record;
 
    pragma Warnings (Off, "* bits of * unused");
@@ -106,4 +107,3 @@ private
    package Keystore_ReadDir is new Fuse_Keystore.ReadDir;
 
 end AKT.Filesystem;
-

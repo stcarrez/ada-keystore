@@ -16,6 +16,7 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Util.Log.Loggers;
+with Util.Strings;
 with Ada.Unchecked_Deallocation;
 with Keystore.Marshallers;
 with Keystore.Repository.Data;
@@ -60,6 +61,9 @@ package body Keystore.Repository is
      new Ada.Unchecked_Deallocation (Object => Keystore.Repository.Workers.Wallet_Worker,
                                      Name   => Wallet_Worker_Access);
 
+   procedure Mkdir (Repository : in out Wallet_Repository;
+                    Name       : in String);
+
    function Hash (Value : in Wallet_Entry_Index) return Ada.Containers.Hash_Type is
    begin
       return Ada.Containers.Hash_Type (Value);
@@ -80,6 +84,7 @@ package body Keystore.Repository is
       Repository.Next_Id := 1;
       Repository.Next_Wallet_Id := Ident + 1;
       Repository.Config.Randomize := Config.Randomize;
+      Repository.Config.Cache_Directory := Config.Cache_Directory;
    end Open;
 
    procedure Open (Repository : in out Wallet_Repository;
@@ -132,6 +137,7 @@ package body Keystore.Repository is
       Repository.Next_Wallet_Id := Ident + 1;
       Repository.Stream := Stream;
       Repository.Config.Randomize := Config.Randomize;
+      Repository.Config.Cache_Directory := Config.Cache_Directory;
       Repository.Config.Max_Counter := Interfaces.Unsigned_32 (Config.Max_Counter);
       Repository.Config.Min_Counter := Interfaces.Unsigned_32 (Config.Min_Counter);
       Keystore.Keys.Create (Keys, Password, 1, Ident, Block, Repository.Root,
@@ -173,6 +179,34 @@ package body Keystore.Repository is
       Entries.Load_Complete_Directory (Repository, Repository.Root);
    end Unlock;
 
+   procedure Mkdir (Repository : in out Wallet_Repository;
+                    Name       : in String) is
+      First  : Positive := Name'First;
+      Pos    : Natural;
+   begin
+      while First <= Name'Last loop
+         Pos := Util.Strings.Index (Name, '/', First);
+         if Pos = 0 then
+            Pos := Name'Last;
+         else
+            Pos := Pos - 1;
+         end if;
+
+         declare
+            Path : constant String := Name (Name'First .. Pos);
+            Item : Wallet_Entry_Access;
+         begin
+            if not Repository.Map.Contains (Path) then
+               Log.Info ("Mkdir {0}", Path);
+
+               Entries.Add_Entry (Repository, Path, T_DIRECTORY, Item);
+               Entries.Update_Entry (Repository, Item, T_DIRECTORY, 0);
+            end if;
+         end;
+         First := Pos + 2;
+      end loop;
+   end Mkdir;
+
    procedure Add (Repository : in out Wallet_Repository;
                   Name       : in String;
                   Kind       : in Entry_Type;
@@ -180,7 +214,16 @@ package body Keystore.Repository is
       Item        : Wallet_Entry_Access;
       Data_Offset : Interfaces.Unsigned_64 := 0;
       Iterator    : Keys.Data_Key_Iterator;
+      Pos         : Natural;
    begin
+      --  For a new file, make sure we have a T_DIRECTORY entry for each path component.
+      if Kind = T_FILE then
+         Pos := Util.Strings.Rindex (Name, '/');
+         if Pos > 0 then
+            Mkdir (Repository, Name (Name'First .. Pos - 1));
+         end if;
+      end if;
+
       Entries.Add_Entry (Repository, Name, Kind, Item);
       Entries.Update_Entry (Repository, Item, Kind, Content'Length);
 
@@ -202,7 +245,16 @@ package body Keystore.Repository is
       Item        : Wallet_Entry_Access;
       Data_Offset : Interfaces.Unsigned_64 := 0;
       Iterator    : Keys.Data_Key_Iterator;
+      Pos         : Natural;
    begin
+      --  For a new file, make sure we have a T_DIRECTORY entry for each path component.
+      if Kind = T_FILE then
+         Pos := Util.Strings.Rindex (Name, '/');
+         if Pos > 0 then
+            Mkdir (Repository, Name (Name'First .. Pos - 1));
+         end if;
+      end if;
+
       Entries.Add_Entry (Repository, Name, Kind, Item);
       Entries.Update_Entry (Repository, Item, Kind, 1);
 
@@ -312,7 +364,11 @@ package body Keystore.Repository is
          Item.Kind := Kind;
          Keys.Initialize (Repository, Iterator, Item);
 
-         Data.Update_Data (Repository, Iterator, Content, Last_Pos, Data_Offset);
+         if Content'Length > 0 then
+            Data.Update_Data (Repository, Iterator, Content, Last_Pos, Data_Offset);
+         else
+            Last_Pos := Content'Last + 1;
+         end if;
 
          if Last_Pos > Content'Last then
             Data.Delete_Data (Repository, Iterator);
@@ -354,9 +410,7 @@ package body Keystore.Repository is
          Keys.Initialize (Repository, Iterator, Item);
 
          Data.Update_Data (Repository, Iterator, Input, End_Of_Stream, Data_Offset);
-         if End_Of_Stream then
-            Data.Delete_Data (Repository, Iterator);
-         else
+         if not End_Of_Stream then
             Data.Add_Data (Repository, Iterator, Input, Data_Offset);
          end if;
 
@@ -472,6 +526,67 @@ package body Keystore.Repository is
       end;
    end Get_Data;
 
+   procedure Read (Repository : in out Wallet_Repository;
+                   Name       : in String;
+                   Offset     : in Ada.Streams.Stream_Element_Offset;
+                   Content    : out Ada.Streams.Stream_Element_Array;
+                   Last       : out Ada.Streams.Stream_Element_Offset) is
+      Pos : constant Wallet_Maps.Cursor := Repository.Map.Find (Name);
+   begin
+      if not Wallet_Maps.Has_Element (Pos) then
+         Log.Info ("Data entry '{0}' not found", Name);
+         raise Not_Found;
+      end if;
+      declare
+         Item     : constant Wallet_Entry_Access := Wallet_Maps.Element (Pos);
+         Iterator : Keys.Data_Key_Iterator;
+      begin
+         if Item.Is_Wallet then
+            Log.Info ("Data entry '{0}' is a wallet", Name);
+            raise No_Content;
+         end if;
+         if Item.Size <= Interfaces.Unsigned_64 (Offset) then
+            Last := Content'First - 1;
+            return;
+         end if;
+
+         Keys.Initialize (Repository, Iterator, Item);
+         Data.Read (Repository, Iterator, Offset, Content, Last);
+      end;
+   end Read;
+
+   procedure Write (Repository : in out Wallet_Repository;
+                    Name       : in String;
+                    Offset     : in Ada.Streams.Stream_Element_Offset;
+                    Content    : in Ada.Streams.Stream_Element_Array) is
+      Pos : constant Wallet_Maps.Cursor := Repository.Map.Find (Name);
+   begin
+      if not Wallet_Maps.Has_Element (Pos) then
+         Log.Info ("Data entry '{0}' not found", Name);
+         raise Not_Found;
+      end if;
+      declare
+         Item        : constant Wallet_Entry_Access := Wallet_Maps.Element (Pos);
+         Iterator    : Keys.Data_Key_Iterator;
+         Data_Offset : Interfaces.Unsigned_64 := 0;
+      begin
+         if Item.Is_Wallet then
+            Log.Info ("Data entry '{0}' is a wallet", Name);
+            raise No_Content;
+         end if;
+
+         Keys.Initialize (Repository, Iterator, Item);
+         Data.Write (Repository, Iterator, Offset, Content, Data_Offset);
+
+         --  The item is now bigger, update its size.
+         if Item.Size < Data_Offset then
+            Entries.Update_Entry (Repository, Item, Item.Kind, Data_Offset);
+         end if;
+
+         Entries.Save (Repository);
+      end;
+   end Write;
+
    procedure Get_Data (Repository : in out Wallet_Repository;
                        Name       : in String;
                        Output     : in out Util.Streams.Output_Stream'Class) is
@@ -568,6 +683,9 @@ package body Keystore.Repository is
       First : Wallet_Maps.Cursor;
       Item  : Wallet_Entry_Access;
    begin
+      Entries.Save (Manager => Repository);
+      Repository.Cache.Clear;
+
       while not Repository.Directory_List.Is_Empty loop
          Dir := Repository.Directory_List.First_Element;
          Repository.Directory_List.Delete_First;

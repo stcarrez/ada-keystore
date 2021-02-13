@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-containers -- Container protected keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -108,6 +108,15 @@ private package Keystore.Containers is
 
       procedure Get_Data (Name      : in String;
                           Output    : in out Util.Streams.Output_Stream'Class);
+
+      procedure Read (Name      : in String;
+                      Offset    : in Ada.Streams.Stream_Element_Offset;
+                      Content   : out Ada.Streams.Stream_Element_Array;
+                      Last      : out Ada.Streams.Stream_Element_Offset);
+
+      procedure Write (Name      : in String;
+                       Offset    : in Ada.Streams.Stream_Element_Offset;
+                       Content   : in Ada.Streams.Stream_Element_Array);
 
       procedure Delete (Name     : in String);
 

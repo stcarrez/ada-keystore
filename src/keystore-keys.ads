@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-keys -- Keystore key management
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,6 +50,8 @@ private package Keystore.Keys is
       Max_Counter : Interfaces.Unsigned_32 := 300_000;
       Min_Counter : Interfaces.Unsigned_32 := 100_000;
       Randomize   : Boolean := True;
+      Cache_Directory  : Boolean := False;
+      Ignore_Bad_Entry : Boolean := False;
    end record;
 
    type Key_Manager is limited private;

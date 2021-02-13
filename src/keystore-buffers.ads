@@ -17,8 +17,8 @@
 -----------------------------------------------------------------------
 with Ada.Streams;
 with Ada.Containers.Ordered_Maps;
-with Util.Encoders.AES;
 with Util.Refs;
+with Util.Strings;
 private package Keystore.Buffers is
 
    use Ada.Streams;
@@ -37,6 +37,9 @@ private package Keystore.Buffers is
    subtype IO_Block_Type is Stream_Element_Array (1 .. Block_Size);
 
    subtype Block_Type is Stream_Element_Array (Block_Index);
+
+   function Image (Value : Block_Index) return String is
+      (Util.Strings.Image (Natural (Value)));
 
    type Block_Count is new Interfaces.Unsigned_32;
 

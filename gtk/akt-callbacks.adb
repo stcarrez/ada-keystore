@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-callbacks -- Callbacks for Ada Keystore GTK application
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -175,6 +175,7 @@ package body AKT.Callbacks is
    --  Callback executed when the "tool-add" action is executed from the toolbar.
    --  ------------------------------
    procedure On_Tool_Add (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
+      pragma Unreferenced (Object);
    begin
       App.Save_Current;
       App.Refresh_Toolbar;
@@ -184,6 +185,7 @@ package body AKT.Callbacks is
    --  Callback executed when the "tool-save" action is executed from the toolbar.
    --  ------------------------------
    procedure On_Tool_Save (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
+      pragma Unreferenced (Object);
    begin
       App.Save_Current;
       App.Refresh_Toolbar;
@@ -193,6 +195,7 @@ package body AKT.Callbacks is
    --  Callback executed when the "tool-edit" action is executed from the toolbar.
    --  ------------------------------
    procedure On_Tool_Edit (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
+      pragma Unreferenced (Object);
    begin
       App.Edit_Current;
       App.Refresh_Toolbar;
@@ -202,6 +205,7 @@ package body AKT.Callbacks is
    --  Callback executed when the "tool-lock" action is executed from the toolbar.
    --  ------------------------------
    procedure On_Tool_Lock (Object : access Gtkada.Builder.Gtkada_Builder_Record'Class) is
+      pragma Unreferenced (Object);
    begin
       if not App.Is_Locked then
          App.Lock;
@@ -261,7 +265,8 @@ package body AKT.Callbacks is
       Chooser  : constant Gtk.Widget.Gtk_Widget := Get_Widget (Object, "create_file_chooser");
       Password : constant Gtk.GEntry.Gtk_Entry := Get_Entry (Object, "create_file_password");
       Filename : constant Gtk.GEntry.Gtk_Entry := Get_Entry (Object, "create_file_name");
-      Count    : constant Gtk.Spin_Button.Gtk_Spin_Button := Get_Spin_Button (Object, "split_data_count");
+      Count    : constant Gtk.Spin_Button.Gtk_Spin_Button
+        := Get_Spin_Button (Object, "split_data_count");
       File_Chooser : Gtk.File_Chooser.Gtk_File_Chooser;
    begin
       if Chooser /= null and Password /= null then

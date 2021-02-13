@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-create -- Create a keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2021 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -48,7 +48,7 @@ package body AKT.Commands.Create is
 
          exception
             when others =>
-               AKT.Commands.Log.Error (-("Split counter is invalid or out of range: {0}"),
+               AKT.Commands.Log.Error (-("split counter is invalid or out of range: {0}"),
                                        Command.Storage_Count.all);
                raise Error;
          end;
@@ -58,6 +58,10 @@ package body AKT.Commands.Create is
       end if;
 
       if Command.Gpg_Mode then
+         if Args.Get_Count < Context.First_Arg then
+            AKT.Commands.Log.Error (-("missing GPG user name"));
+            raise Error;
+         end if;
 
          Context.GPG.Create_Secret;
          Context.Wallet.Set_Master_Key (Context.GPG);

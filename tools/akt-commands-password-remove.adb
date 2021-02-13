@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-password-remove -- Remove a wallet password
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2021 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,8 +29,8 @@ package body AKT.Commands.Password.Remove is
 
    exception
       when others =>
-         AKT.Commands.Log.Error (-("Invalid key slot number. "
-                                    & "It must be a number in range 1..7."));
+         AKT.Commands.Log.Error (-("invalid key slot number: "
+                                     & "it must be a number in range 1..7"));
          raise Error;
    end Get_Slot;
 
@@ -45,7 +45,7 @@ package body AKT.Commands.Password.Remove is
       pragma Unreferenced (Name);
 
       Path  : constant String := Context.Get_Keystore_Path (Args);
-      Slot  : constant Keystore.Key_Slot := Get_Slot (Command.Slot.all);
+      Slot  : Keystore.Key_Slot;
    begin
       Setup_Password_Provider (Context);
       Setup_Key_Provider (Context);
@@ -58,6 +58,10 @@ package body AKT.Commands.Password.Remove is
             Context.Wallet.Set_Master_Key (Context.Key_Provider.all);
          end if;
          Context.Wallet.Unlock (Context.Provider.all, Context.Slot);
+         Slot := Context.Slot;
+         if Command.Slot'Length > 0 then
+            Slot := Get_Slot (Command.Slot.all);
+         end if;
 
          Context.Wallet.Remove_Key (Password => Context.Provider.all,
                                     Slot     => Slot,
@@ -66,6 +70,11 @@ package body AKT.Commands.Password.Remove is
          Context.GPG.Load_Secrets (Context.Wallet);
          Context.Wallet.Set_Master_Key (Context.GPG);
          Context.Wallet.Unlock (Context.GPG, Context.Slot);
+         Slot := Context.Slot;
+         if Command.Slot'Length > 0 then
+            Slot := Get_Slot (Command.Slot.all);
+         end if;
+
          Context.Wallet.Remove_Key (Password => Context.GPG,
                                     Slot     => Slot,
                                     Force    => Command.Force);
@@ -75,9 +84,9 @@ package body AKT.Commands.Password.Remove is
 
    exception
       when Keystore.Used_Key_Slot =>
-         AKT.Commands.Log.Error (-("Refusing to erase the key slot used by current password."));
-         AKT.Commands.Log.Error (-("Use the --force option if you really want "
-                                 & "to erase this slot."));
+         AKT.Commands.Log.Error (-("refusing to erase the key slot used by current password"));
+         AKT.Commands.Log.Error (-("use the --force option if you really want "
+                                 & "to erase this slot"));
          raise Error;
 
    end Execute;
@@ -101,7 +110,7 @@ package body AKT.Commands.Password.Remove is
                         Switch => "-s:",
                         Long_Switch => "--slot:",
                         Argument => "SLOT",
-                        Help   => -("Defines the key slot to erase (1..7)"));
+                        Help   => -("Defines the key slot to erase in range 1..7"));
    end Setup;
 
 end AKT.Commands.Password.Remove;

@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-gpg_tests -- Test AKT with GPG2
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2021 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,9 +29,10 @@ package body Keystore.GPG_Tests is
 
    Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.GPG_Tests");
 
-   TEST_TOOL_PATH  : constant String := "regtests/result/test-gpg-1.akt";
-   TEST_TOOL2_PATH : constant String := "regtests/result/test-gpg-2.akt";
-   TEST_TOOL3_PATH : constant String := "regtests/result/test-gpg-3.akt";
+   TEST_TOOL_PATH  : constant String := "test-gpg-1.akt";
+   TEST_TOOL2_PATH : constant String := "test-gpg-2.akt";
+   TEST_TOOL3_PATH : constant String := "test-gpg-3.akt";
+   TEST_TOOL4_PATH : constant String := "test-gpg-4.akt";
 
    type User_Type is (User_1, User_2, User_3);
 
@@ -43,6 +44,8 @@ package body Keystore.GPG_Tests is
    begin
       Caller.Add_Test (Suite, "Test AKT.Commands.Create (GPG)",
                        Test_Create'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Create (GPG+error)",
+                       Test_Create_Bad_Usage'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Create (GPG++)",
                        Test_Create_Multi_User'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Info (GPG)",
@@ -61,7 +64,7 @@ package body Keystore.GPG_Tests is
    --  Get the tool command for a given user
    --  ------------------------------
    function Tool (User : in User_Type) return String is
-      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/files/gnupg/");
+      Path   : constant String := Util.Tests.Get_Path ("regtests/files/gnupg/");
    begin
       case User is
          when User_1 =>
@@ -121,8 +124,8 @@ package body Keystore.GPG_Tests is
                       Command : in String;
                       Expect  : in String;
                       Status  : in Natural := 0) is
-      Path   : constant String := Util.Tests.Get_Test_Path ("regtests/expect/" & Expect);
-      Output : constant String := Util.Tests.Get_Test_Path ("regtests/result/" & Expect);
+      Path   : constant String := Util.Tests.Get_Path ("regtests/expect/" & Expect);
+      Output : constant String := Util.Tests.Get_Test_Path (Expect);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Command, "", Output, Result, Status);
@@ -165,10 +168,31 @@ package body Keystore.GPG_Tests is
 
       --  Open keystore with another user GPG configuration should fail
       T.Execute (Tool (User_2) & " list -k " & Path, Result, 1);
-      Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
+      Util.Tests.Assert_Matches (T, "^akt: invalid password to unlock the keystore file",
                                  Result, "list command failed");
 
    end Test_Create;
+
+   --  ------------------------------
+   --  Test the akt keystore creation with missing parameter.
+   --  ------------------------------
+   procedure Test_Create_Bad_Usage (T : in out Test) is
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL4_PATH);
+      Result : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      if Ada.Directories.Exists (Path) then
+         Ada.Directories.Delete_File (Path);
+      end if;
+
+      --  Create keystore
+      T.Execute (Tool (User_1) & " create -k " & Path & " --gpg",
+                 Result, 1);
+      T.Assert (not Ada.Directories.Exists (Path),
+                "Keystore file exist but create failed");
+      Util.Tests.Assert_Matches (T, "^akt: missing GPG user name",
+                                 Result, "invalid create --gpg error message");
+
+   end Test_Create_Bad_Usage;
 
    --  ------------------------------
    --  Test the akt keystore for several users each having their own GPG key.
@@ -289,18 +313,18 @@ package body Keystore.GPG_Tests is
       --  User_2 must not have access to the keystore
       T.Execute (Tool (User_2) & " get " & Path & " testing2",
                  Result, 1);
-      Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
+      Util.Tests.Assert_Matches (T, "^akt: invalid password to unlock the keystore file",
                                  Result, "get command returned unexpected result");
 
       --  Try remove current key
       T.Execute (Tool (User_1) & " password-remove " & Path & " -p gpg-admin --slot 1",
                  Result, 1);
-      Util.Tests.Assert_Matches (T, "^Refusing to erase the key slot",
+      Util.Tests.Assert_Matches (T, "^akt: refusing to erase the key slot",
                                  Result, "password-remove command returned unexpected result");
 
       T.Execute (Tool (User_1) & " password-remove " & Path & " -p gpg-admin --slot 0",
                  Result, 1);
-      Util.Tests.Assert_Matches (T, "^Invalid key slot number",
+      Util.Tests.Assert_Matches (T, "^akt: invalid key slot number",
                                  Result, "password-remove command returned unexpected result");
 
       --  Add again GPG password for User_2
@@ -342,7 +366,7 @@ package body Keystore.GPG_Tests is
    --  Test when gpg execution fails
    --  ------------------------------
    procedure Test_GPG_Error (T : in out Test) is
-      Config : constant String := Util.Tests.Get_Test_Path ("regtests/files/gnupg/");
+      Config : constant String := Util.Tests.Get_Path ("regtests/files/gnupg/");
       Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
@@ -351,7 +375,7 @@ package body Keystore.GPG_Tests is
                  "Makefile.conf", "",
                  Result, 1);
 
-      Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
+      Util.Tests.Assert_Matches (T, "^akt: invalid password to unlock the keystore file",
                                  Result, "password-set command failed");
 
       T.Execute ("bin/akt --config " & Config & "bad-decrypt-user1-akt.properties store "
@@ -359,7 +383,7 @@ package body Keystore.GPG_Tests is
                  "Makefile.conf", "",
                  Result, 1);
 
-      Util.Tests.Assert_Matches (T, "^Invalid password to unlock the keystore file",
+      Util.Tests.Assert_Matches (T, "^akt: invalid password to unlock the keystore file",
                                  Result, "password-set command failed");
 
    end Test_GPG_Error;

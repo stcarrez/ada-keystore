@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-get -- Get content from keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2021 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -52,7 +52,7 @@ package body AKT.Commands.Get is
 
             exception
                when Keystore.Not_Found =>
-                  AKT.Commands.Log.Error (-("Value '{0}' not found"), Key);
+                  AKT.Commands.Log.Error (-("value '{0}' not found"), Key);
                   Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
             end;

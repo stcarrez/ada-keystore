@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-repository-data -- Data access and management for the keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,6 @@
 -----------------------------------------------------------------------
 with Ada.Streams;
 with Util.Streams;
-with Util.Encoders.AES;
 with Keystore.IO;
 with Keystore.Repository.Keys;
 
@@ -60,6 +59,18 @@ private package Keystore.Repository.Data is
                        Iterator   : in out Keys.Data_Key_Iterator;
                        Output     : out Ada.Streams.Stream_Element_Array);
 
+   procedure Read (Manager  : in out Wallet_Repository;
+                   Iterator : in out Keys.Data_Key_Iterator;
+                   Offset   : in Ada.Streams.Stream_Element_Offset;
+                   Output   : out Ada.Streams.Stream_Element_Array;
+                   Last     : out Ada.Streams.Stream_Element_Offset);
+
+   procedure Write (Manager  : in out Wallet_Repository;
+                    Iterator : in out Keys.Data_Key_Iterator;
+                    Offset   : in Ada.Streams.Stream_Element_Offset;
+                    Content  : in Ada.Streams.Stream_Element_Array;
+                    Result   : in out Interfaces.Unsigned_64);
+
    --  Get the data associated with the named entry and write it in the output stream.
    procedure Get_Data (Manager    : in out Wallet_Repository;
                        Iterator   : in out Keys.Data_Key_Iterator;
@@ -73,5 +84,10 @@ private
    procedure Allocate_Data_Block (Manager    : in out Wallet_Repository;
                                   Space      : in IO.Block_Index;
                                   Work       : in Workers.Data_Work_Access);
+
+   --  Erase the data fragments starting at the key iterator current position.
+   procedure Delete_Data (Manager    : in out Wallet_Repository;
+                          Iterator   : in out Keys.Data_Key_Iterator;
+                          Mark       : in out Keys.Data_Key_Marker);
 
 end Keystore.Repository.Data;

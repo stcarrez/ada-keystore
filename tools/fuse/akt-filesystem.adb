@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-filesystem -- Fuse filesystem operations
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2020 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,11 +18,14 @@
 with Interfaces;
 with Ada.Calendar.Conversions;
 
+with Util.Strings;
 with Util.Log.Loggers;
 package body AKT.Filesystem is
 
    use type System.St_Mode_Type;
    use type Interfaces.Unsigned_64;
+   use type Keystore.Entry_Type;
+   use Ada.Streams;
 
    Log     : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Filesystem");
 
@@ -45,7 +48,7 @@ package body AKT.Filesystem is
       St_Buf.St_Atime := 0;
       St_Buf.St_Mtime := 0;
       St_Buf.St_Ctime := 0;
-      St_Buf.St_Blksize := 4096;
+      St_Buf.St_Blksize := 8192;
       St_Buf.St_Blocks := 0;
       St_Buf.St_Mode := System.Mode_T_to_St_Mode (8#700#) or Mode;
    end Initialize;
@@ -69,8 +72,13 @@ package body AKT.Filesystem is
 
          Info := Data.Wallet.Find (Path (Path'First + 1 .. Path'Last));
 
-         St_Buf.St_Mode := System.Mode_T_to_St_Mode (8#600#);
-         St_Buf.St_Mode := St_Buf.St_Mode or System.S_IFREG;
+         if Info.Kind = Keystore.T_DIRECTORY then
+            St_Buf.St_Mode := System.Mode_T_to_St_Mode (8#700#);
+            St_Buf.St_Mode := St_Buf.St_Mode or System.S_IFDIR;
+         else
+            St_Buf.St_Mode := System.Mode_T_to_St_Mode (8#600#);
+            St_Buf.St_Mode := St_Buf.St_Mode or System.S_IFREG;
+         end if;
          St_Buf.St_Size := Interfaces.Integer_64 (Info.Size);
          St_Buf.St_Ctime := To_Unix (Info.Create_Date);
          St_Buf.St_Mtime := To_Unix (Info.Update_Date);
@@ -83,8 +91,6 @@ package body AKT.Filesystem is
       when Keystore.Not_Found =>
          return System.ENOENT;
 
-      when others =>
-         return System.EIO;
    end GetAttr;
 
    --------------------------
@@ -93,10 +99,21 @@ package body AKT.Filesystem is
    function MkDir (Path   : in String;
                    Mode   : in System.St_Mode_Type) return System.Error_Type is
       pragma Unreferenced (Mode);
-   begin
-      Log.Debug ("Mkdir {0}", Path);
 
-      return System.EROFS;
+      Data   : constant User_Data_Type := General.Get_User_Data;
+      Empty  : constant Ada.Streams.Stream_Element_Array (1 .. 0) := (others => <>);
+   begin
+      Log.Info ("Mkdir {0}", Path);
+
+      Data.Wallet.Add (Name => Path (Path'First + 1 .. Path'Last),
+                       Kind => Keystore.T_DIRECTORY,
+                       Content => Empty);
+      return System.EXIT_SUCCESS;
+
+   exception
+      when Keystore.Name_Exist =>
+         return System.EEXIST;
+
    end MkDir;
 
    --------------------------
@@ -105,7 +122,7 @@ package body AKT.Filesystem is
    function Unlink (Path   : in String) return System.Error_Type is
       Data   : constant User_Data_Type := General.Get_User_Data;
    begin
-      Log.Debug ("Unlink {0}", Path);
+      Log.Info ("Unlink {0}", Path);
 
       Data.Wallet.Delete (Name => Path (Path'First + 1 .. Path'Last));
       return System.EXIT_SUCCESS;
@@ -114,18 +131,32 @@ package body AKT.Filesystem is
       when Keystore.Not_Found =>
          return System.ENOENT;
 
-      when others =>
-         return System.EIO;
    end Unlink;
 
    --------------------------
    --          RmDir       --
    --------------------------
    function RmDir (Path   : in String) return System.Error_Type is
+      Data   : constant User_Data_Type := General.Get_User_Data;
    begin
-      Log.Debug ("Rmdir {0}", Path);
+      Log.Info ("Rmdir {0}", Path);
 
-      return System.EROFS;
+      declare
+         Item : constant Keystore.Entry_Info
+           := Data.Wallet.Find (Path (Path'First + 1 .. Path'Last));
+      begin
+         if Item.Kind /= Keystore.T_DIRECTORY then
+            return System.ENOTDIR;
+         end if;
+
+         Data.Wallet.Delete (Path (Path'First + 1 .. Path'Last));
+         return System.EXIT_SUCCESS;
+      end;
+
+   exception
+      when Keystore.Not_Found =>
+         return System.ENOENT;
+
    end RmDir;
 
    --------------------------
@@ -134,11 +165,20 @@ package body AKT.Filesystem is
    function Create (Path   : in String;
                     Mode   : in System.St_Mode_Type;
                     Fi     : access System.File_Info_Type) return System.Error_Type is
-      pragma Unreferenced (Fi, Mode);
-   begin
-      Log.Error ("Create {0}", Path);
+      pragma Unreferenced (Mode);
 
-      return System.EROFS;
+      Data   : constant User_Data_Type := General.Get_User_Data;
+   begin
+      Log.Info ("Create {0}", Path);
+
+      Fi.Direct_IO := Data.Direct_IO;
+      Fi.Keep_Cache := not Data.Direct_IO;
+      Data.Wallet.Add (Path (Path'First + 1 .. Path'Last), "");
+      return System.EXIT_SUCCESS;
+
+   exception
+      when Keystore.Name_Exist =>
+         return System.EEXIST;
    end Create;
 
    --------------------------
@@ -146,21 +186,17 @@ package body AKT.Filesystem is
    --------------------------
    function Open (Path   : in String;
                   Fi     : access System.File_Info_Type) return System.Error_Type is
-      pragma Unreferenced (Fi);
-
       Data   : constant User_Data_Type := General.Get_User_Data;
    begin
-      Log.Error ("Open {0}", Path);
+      Log.Info ("Open {0}", Path);
 
+      Fi.Direct_IO := Data.Direct_IO;
+      Fi.Keep_Cache := not Data.Direct_IO;
       if not Data.Wallet.Contains (Path (Path'First + 1 .. Path'Last)) then
          return System.ENOENT;
       else
          return System.EXIT_SUCCESS;
       end if;
-
-   exception
-      when others =>
-         return System.EIO;
    end Open;
 
    --------------------------
@@ -170,7 +206,7 @@ package body AKT.Filesystem is
                      Fi     : access System.File_Info_Type) return System.Error_Type is
       pragma Unreferenced (Fi);
    begin
-      Log.Error ("Release {0}", Path);
+      Log.Info ("Release {0}", Path);
 
       return System.EXIT_SUCCESS;
    end Release;
@@ -184,38 +220,28 @@ package body AKT.Filesystem is
                   Size   : in out Natural;
                   Offset : in Natural;
                   Fi     : access System.File_Info_Type) return System.Error_Type is
-      pragma Unreferenced (Fi);
-
       Data   : constant User_Data_Type := General.Get_User_Data;
-      Info   : Keystore.Entry_Info;
+      Last   : Stream_Element_Offset;
 
       Buf    : Ada.Streams.Stream_Element_Array (1 .. Ada.Streams.Stream_Element_Offset (Size));
       for Buf'Address use Buffer.all'Address;
+
    begin
-      Log.Error ("Read {0}", Path);
+      Log.Info ("Read {0}", Path);
 
-      Info := Data.Wallet.Find (Path (Path'First + 1 .. Path'Last));
+      Fi.Direct_IO := Data.Direct_IO;
+      Fi.Keep_Cache := not Data.Direct_IO;
+      Data.Wallet.Read (Name    => Path (Path'First + 1 .. Path'Last),
+                        Offset  => Stream_Element_Offset (Offset),
+                        Content => Buf,
+                        Last    => Last);
 
-      if Interfaces.Unsigned_64 (Offset) >= Info.Size then
-         Size := 0;
-
-      elsif Interfaces.Unsigned_64 (Offset + Size) > Info.Size then
-         Size := Natural (Info.Size) - Offset;
-
-      end if;
-
-      Data.Wallet.Get (Name => Path (Path'First + 1 .. Path'Last),
-                       Info => Info,
-                       Content => Buf (1 .. Ada.Streams.Stream_Element_Offset (Size)));
-
+      Size := Natural (Last - Buf'First + 1);
       return System.EXIT_SUCCESS;
 
    exception
       when Keystore.Not_Found =>
          return System.EINVAL;
-
-      when others =>
-         return System.EIO;
    end Read;
 
 
@@ -227,7 +253,6 @@ package body AKT.Filesystem is
                    Size   : in out Natural;
                    Offset : in Natural;
                    Fi     : access System.File_Info_Type) return System.Error_Type is
-      pragma Unreferenced (Offset, Fi);
       pragma Unmodified (Size);
 
       Data   : constant User_Data_Type := General.Get_User_Data;
@@ -235,20 +260,20 @@ package body AKT.Filesystem is
       Buf    : Ada.Streams.Stream_Element_Array (1 .. Ada.Streams.Stream_Element_Offset (Size));
       for Buf'Address use Buffer.all'Address;
    begin
-      Log.Debug ("Write {0}", Path);
+      Log.Info ("Write {0} at {1}", Path,
+                Natural'Image (Offset) & " size" & Natural'Image (Size));
 
-      Data.Wallet.Set (Name => Path (Path'First + 1 .. Path'Last),
-                       Kind => Keystore.T_BINARY,
-                       Content => Buf);
+      Fi.Direct_IO := Data.Direct_IO;
+      Fi.Keep_Cache := not Data.Direct_IO;
+      Data.Wallet.Write (Name    => Path (Path'First + 1 .. Path'Last),
+                         Offset  => Stream_Element_Offset (Offset),
+                         Content => Buf);
 
       return System.EXIT_SUCCESS;
 
    exception
       when Keystore.Not_Found =>
          return System.EINVAL;
-
-      when others =>
-         return System.EIO;
    end Write;
 
 
@@ -263,30 +288,45 @@ package body AKT.Filesystem is
                      Fi     : access System.File_Info_Type) return System.Error_Type is
       pragma Unreferenced (Offset, Fi);
 
-      Data   : constant User_Data_Type := General.Get_User_Data;
-      List   : Keystore.Entry_Map;
-      Iter   : Keystore.Entry_Cursor;
-      St_Buf : aliased System.Stat_Type;
+      Data    : constant User_Data_Type := General.Get_User_Data;
+      List    : Keystore.Entry_Map;
+      Iter    : Keystore.Entry_Cursor;
+      St_Buf  : aliased System.Stat_Type;
    begin
-      Log.Error ("Read directory {0}", Path);
+      Log.Info ("Read directory {0}", Path);
 
       Initialize (St_Buf'Unchecked_Access, System.S_IFDIR);
-      Filler (".", St_Buf'Unchecked_Access, 0);
-      Filler ("..", St_Buf'Unchecked_Access, 0);
+      St_Buf.St_Mode := (S_IFDIR => True, S_IRUSR => True, S_IWUSR => True, others => False);
 
       Data.Wallet.List (Content => List);
       Iter := List.First;
+      St_Buf.St_Mode := (S_IFREG => True, S_IRUSR => True, S_IWUSR => True, others => False);
       while Keystore.Entry_Maps.Has_Element (Iter) loop
          declare
-            Name : constant String := Keystore.Entry_Maps.Key (Iter);
-            Item : constant Keystore.Entry_Info := Keystore.Entry_Maps.Element (Iter);
+            Name  : constant String := Keystore.Entry_Maps.Key (Iter);
+            Pos   : Natural := Util.Strings.Rindex (Name, '/');
          begin
-            Initialize (St_Buf'Unchecked_Access, System.S_IFREG);
-            St_Buf.St_Size := Interfaces.Integer_64 (Item.Size);
-            St_Buf.St_Ctime := To_Unix (Item.Create_Date);
-            St_Buf.St_Mtime := To_Unix (Item.Update_Date);
-            St_Buf.St_Blocks := Interfaces.Integer_64 (Item.Block_Count);
-            Filler.all (Name, St_Buf'Unchecked_Access, 0);
+            if Pos = 0 then
+               Pos := Name'First - 1;
+            end if;
+            if Name (Name'First .. Pos - 1) = Path (Path'First + 1 .. Path'Last) then
+               declare
+                  Item : constant Keystore.Entry_Info := Keystore.Entry_Maps.Element (Iter);
+               begin
+                  if Item.Kind = Keystore.T_DIRECTORY then
+                     Log.Info ("Directory {0}", Name);
+                     Initialize (St_Buf'Unchecked_Access, System.S_IFDIR);
+                  else
+                     Initialize (St_Buf'Unchecked_Access, System.S_IFREG);
+                     Log.Info ("Item {0}", Name);
+                  end if;
+                  St_Buf.St_Size := Interfaces.Integer_64 (Item.Size);
+                  St_Buf.St_Ctime := To_Unix (Item.Create_Date);
+                  St_Buf.St_Mtime := To_Unix (Item.Update_Date);
+                  St_Buf.St_Blocks := Interfaces.Integer_64 (Item.Block_Count);
+                  Filler.all (Name (Pos + 1 .. Name'Last), St_Buf'Unchecked_Access, 0);
+               end;
+            end if;
          end;
          Keystore.Entry_Maps.Next (Iter);
       end loop;
@@ -296,9 +336,6 @@ package body AKT.Filesystem is
    exception
       when Keystore.Not_Found =>
          return System.ENOENT;
-
-      when others =>
-         return System.EIO;
    end ReadDir;
 
    function Truncate (Path   : in String;
@@ -306,8 +343,14 @@ package body AKT.Filesystem is
                       return System.Error_Type is
       Data   : constant User_Data_Type := General.Get_User_Data;
    begin
+      Log.Info ("Truncate {0} to {1}", Path, Natural'Image (Size));
+
+      if Size /= 0 then
+         return System.EPERM;
+      end if;
+
+      Data.Wallet.Set (Path (Path'First + 1 .. Path'Last), "");
       return System.EXIT_SUCCESS;
    end Truncate;
 
 end AKT.Filesystem;
-

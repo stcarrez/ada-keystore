@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-repository-entries -- Repository management for the keystore
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2021 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,12 +54,10 @@ with Keystore.Marshallers;
 --  +------------------+
 --  | ...              |
 --  +------------------+--
---  | 0 0 0 0          | 16b (End of name entry list)
+--  | 0 0 0 0          | 4b (End of name entry list = DATA_KEY_SEPARATOR)
 --  +------------------+--
 --  | ...              |     (random or zero)
---  +------------------+--
---  | 0 0 0 0          | 16b (End of data key list)
---  +------------------+--
+--  +------------------+--  <- = Data key offset
 --  | ...              |
 --  +------------------+
 --  | Storage ID       | 4b   ^ Repeats "Data key count" times
@@ -99,8 +97,6 @@ package body Keystore.Repository.Entries is
       Wid   : Interfaces.Unsigned_32;
       Size  : IO.Block_Index;
    begin
-      Keystore.Logs.Debug (Log, "Load directory block{0}", Directory.Block);
-
       --  Get the directory block from the cache.
       Into.Buffer := Buffers.Find (Manager.Cache, Directory.Block);
       if not Buffers.Is_Null (Into.Buffer) then
@@ -112,6 +108,8 @@ package body Keystore.Repository.Entries is
       if not Buffers.Is_Null (Into.Buffer) then
          return;
       end if;
+
+      Keystore.Logs.Info (Log, "Loading directory block{0}", Directory.Block);
 
       --  Allocate block storage.
       Into.Buffer := Buffers.Allocate (Directory.Block);
@@ -161,9 +159,13 @@ package body Keystore.Repository.Entries is
                declare
                   Kind : constant Entry_Type := Marshallers.Get_Kind (Into);
                   Len  : constant Natural := Natural (Marshallers.Get_Unsigned_16 (Into));
-                  Name : constant String := Marshallers.Get_String (Into, Len);
                begin
+                  --  Verify the length before allocating the entry.
+                  exit when Len > Buffers.BT_DATA_SIZE;
+
+                  --  Allocate the wallet entry.
                   Item := new Wallet_Entry (Length => Len, Is_Wallet => Kind = T_WALLET);
+                  Marshallers.Get_String (Into, Item.Name);
                   Item.Entry_Offset := Offset;
                   Item.Kind := Kind;
                   Item.Id := Wallet_Entry_Index (Index);
@@ -176,13 +178,12 @@ package body Keystore.Repository.Entries is
                      Item.Size := Marshallers.Get_Unsigned_64 (Into);
                   end if;
                   Item.Header := Directory;
-                  Item.Name := Name;
 
                   if Item.Id >= Manager.Next_Id then
                      Manager.Next_Id := Item.Id + 1;
                   end if;
 
-                  Manager.Map.Insert (Key => Name, New_Item => Item);
+                  Manager.Map.Insert (Key => Item.Name, New_Item => Item);
                   Manager.Entry_Indexes.Insert (Key => Item.Id, New_Item => Item);
                   Directory.Count := Directory.Count + 1;
 
@@ -190,6 +191,9 @@ package body Keystore.Repository.Entries is
                   when others =>
                      Free (Item);
                      Logs.Error (Log, "Block{0} contains invalid data entry", Directory.Block);
+                     --  It is better not to raise a corruption error but continue, this data block
+                     --  is corrupted but we can still have valid entries in other blocks.
+                     exit when Manager.Config.Ignore_Bad_Entry;
                      raise Keystore.Corrupted;
                end;
             end loop;
@@ -229,12 +233,17 @@ package body Keystore.Repository.Entries is
 
             end loop;
          end;
-         if Directory.Last_Pos + 4 < Directory.Key_Pos then
-            Directory.Available := Directory.Key_Pos - Directory.Last_Pos - 4;
+         if Directory.Last_Pos + DATA_KEY_SEPARATOR < Directory.Key_Pos then
+            Directory.Available := Directory.Key_Pos - Directory.Last_Pos - DATA_KEY_SEPARATOR;
          else
             Directory.Available := 0;
          end if;
          Directory.Ready := True;
+      end if;
+
+      --  Add the directory block in the cache if enabled.
+      if Manager.Config.Cache_Directory then
+         Manager.Cache.Include (Directory.Block, Into.Buffer.Data);
       end if;
 
    exception
@@ -273,7 +282,8 @@ package body Keystore.Repository.Entries is
    begin
       --  We need a new wallet directory block.
       Directory := new Wallet_Directory_Entry;
-      Directory.Available := IO.Block_Index'Last - IO.BT_DATA_START - Space - 4 - 2;
+      Directory.Available := IO.Block_Index'Last - IO.BT_DATA_START
+        - Space - 4 - 2 - DATA_KEY_SEPARATOR;
       Directory.Count := 0;
       Directory.Key_Pos := IO.Block_Index'Last;
       Directory.Last_Pos := IO.BT_DATA_START + 4 + 2 - 1;
@@ -339,7 +349,14 @@ package body Keystore.Repository.Entries is
       Marshallers.Put_Block_Index (Manager.Current, IO.Block_Index'Last);
       Marshallers.Put_Unsigned_32 (Manager.Current, 0);
 
+      Keystore.Logs.Info (Log, "Allocated directory block{0}", Directory.Block);
+
       Manager.Modified.Include (Manager.Current.Buffer.Block, Manager.Current.Buffer.Data);
+
+      --  Add the directory block in the cache if enabled.
+      if Manager.Config.Cache_Directory then
+         Manager.Cache.Include (Directory.Block, Manager.Current.Buffer.Data);
+      end if;
    end Find_Directory_Block;
 
    --  ------------------------------
@@ -378,6 +395,8 @@ package body Keystore.Repository.Entries is
       --  Remember the last valid position for the next entry to add.
       Item.Header.Last_Pos := Item.Entry_Offset + Entry_Size (Item);
       Item.Header.Count := Item.Header.Count + 1;
+
+      pragma Assert (Check => Item.Header.Last_Pos + DATA_KEY_SEPARATOR <= Item.Header.Key_Pos);
 
       --  Register it in the local repository.
       Manager.Map.Insert (Name, Item);
@@ -455,16 +474,20 @@ package body Keystore.Repository.Entries is
          end if;
          if Manager.Config.Randomize then
             --  When strong security is necessary, fill with random values
-            --  (except the first 4 bytes).
-            Buf.Data (Directory.Last_Pos - Size + 1 .. Directory.Last_Pos - Size + 4)
+            --  (except the first DATA_KEY_SEPARATOR = 4 bytes).
+            Buf.Data (Directory.Last_Pos - Size + 1
+                        .. Directory.Last_Pos - Size + DATA_KEY_SEPARATOR)
               := (others => 0);
             Manager.Random.Generate
-              (Buf.Data (Directory.Last_Pos - Size + 5 .. Directory.Last_Pos));
+              (Buf.Data (Directory.Last_Pos - Size + DATA_KEY_SEPARATOR + 1
+                           .. Directory.Last_Pos));
          else
             Buf.Data (Directory.Last_Pos - Size + 1 .. Directory.Last_Pos) := (others => 0);
          end if;
 
          Directory.Last_Pos := Directory.Last_Pos - Size;
+
+         pragma Assert (Check => Directory.Last_Pos + DATA_KEY_SEPARATOR <= Directory.Key_Pos);
 
          Manager.Modified.Include (Manager.Current.Buffer.Block, Manager.Current.Buffer.Data);
       end;

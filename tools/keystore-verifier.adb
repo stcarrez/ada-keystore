@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-verifier -- Toolbox to explore raw content of keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2021 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,6 +29,7 @@ with Keystore.Buffers;
 with Keystore.Marshallers;
 with Keystore.IO.Headers;
 with Keystore.Passwords.GPG;
+with Intl;
 package body Keystore.Verifier is
 
    use type Interfaces.Unsigned_16;
@@ -41,6 +42,7 @@ package body Keystore.Verifier is
    use type Keystore.Buffers.Block_Count;
    use type Keystore.IO.Storage_Identifier;
 
+   function "-" (Message : in String) return String is (Intl."-" (Message));
    function Sys_Error return String;
    function Get_Storage_Id (Path : in String) return IO.Storage_Identifier;
 
@@ -101,14 +103,14 @@ package body Keystore.Verifier is
       Interfaces.C.Strings.Free (P);
 
       if Fd = Util.Systems.Os.NO_FILE then
-         Log.Error ("Cannot open keystore '{0}': {1}", Path, Sys_Error);
+         Log.Error (-("cannot open keystore '{0}': {1}"), Path, Sys_Error);
          raise Ada.IO_Exceptions.Name_Error with Path;
       end if;
 
       Result := Util.Systems.Os.Sys_Fstat (Fd, Stat'Access);
       if Result /= 0 then
          Result := Util.Systems.Os.Sys_Close (Fd);
-         Log.Error ("Invalid keystore file '{0}': {1}", Path, Sys_Error);
+         Log.Error (-("invalid keystore file '{0}': {1}"), Path, Sys_Error);
          raise Ada.IO_Exceptions.Name_Error with Path;
       end if;
 
@@ -122,7 +124,7 @@ package body Keystore.Verifier is
 
       if Stat.st_size mod IO.Block_Size /= 0 then
          Result := Util.Systems.Os.Sys_Close (Fd);
-         Log.Error ("Invalid or truncated keystore file '{0}': size is incorrect", Path);
+         Log.Error (-("invalid or truncated keystore file '{0}': size is incorrect"), Path);
          raise Ada.IO_Exceptions.Name_Error with Path;
       end if;
 

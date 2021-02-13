@@ -6,7 +6,7 @@ AC_INIT(src/keystore.ads)
 
 # Current release settings
 KEYSTORE_MAJOR_VERSION=1
-KEYSTORE_MINOR_VERSION=2
+KEYSTORE_MINOR_VERSION=3
 KEYSTORE_MICRO_VERSION=1
 KEYSTORE_VERSION=$KEYSTORE_MAJOR_VERSION.$KEYSTORE_MINOR_VERSION.$KEYSTORE_MICRO_VERSION
 
@@ -73,6 +73,9 @@ AC_ARG_ENABLE(nls,
 AC_MSG_RESULT($USE_NLS)
 AC_SUBST(USE_NLS)
 
+##########################################
+# GtkAda library
+##########################################
 ac_enable_gtk=no
 AC_ARG_ENABLE(gtk,
 [  --enable-gtk            enable compilation of Gtk tool (disabled)],
@@ -81,37 +84,17 @@ AC_ARG_ENABLE(gtk,
   *)        ac_enable_gtk=yes
 esac])dnl
 
+AC_MSG_CHECKING([whether GtkAda is enabled])
+AC_MSG_RESULT($ac_enable_gtk)
+
 GTKADA_DIR=
 if test x$ac_enable_gtk = 'xyes'; then
-
-##########################################
-# GtkAda library
-##########################################
-AC_MSG_CHECKING([GtkAda library (libre.adacore.com/tools/gtkada)])
-AC_ARG_WITH(gtkada,
-AS_HELP_STRING([--with-gtkada=x], [Path for the Gtk Ada library (libre.adacore.com/tools/gtkada)]),
-[
-  GTKADA_DIR=${withval}/
-],
-[
-  echo "with \"gtkada\"; project t is for Source_Dirs use (); end t;" > t.gpr
-  gnatmake -p -Pt >/dev/null 2>/dev/null
-  if test $? -eq 0; then
-    GTKADA_DIR=
-  else
-    GTKADA_DIR=../gtkada/
-  fi;
-])
-echo "with \"${GTKADA_DIR}gtkada\"; project t is for Source_Dirs use (); end t;" > t.gpr
-gnatmake -p -Pt >/dev/null 2>/dev/null
-if test $? -ne 0 ; then
-   rm -f t.gpr
-   ac_enable_gtk=
-   # AC_MSG_ERROR([GtkAda library not found in ${GTKADA_DIR}])
- fi
-rm -f t.gpr
-AC_MSG_RESULT(${GTKADA_DIR})
-
+  AM_GNAT_FIND_PROJECT([gtkada],[Gtk Ada Library],[gtkada],
+    [libre.adacore.com/tools/gtkada],
+    [Building Ada Keystore requires the Gtk Ada Library.],
+    [
+      GTKADA_DIR=${ac_cv_gnat_project_dir_gtkada}
+    ])
 fi
 
 HAVE_GTK=$ac_enable_gtk
@@ -119,53 +102,50 @@ AC_SUBST(HAVE_GTK)
 
 AC_SUBST(GTKADA_DIR)
 
-ac_enable_fuse=no
+if test -f ada-fuse/ada_fuse.gpr; then
+   ac_enable_fuse=yes
+   FUSEADA_DIR=ada-fuse
+   WITH_FUSE_ADA='with "ada-fuse/ada_fuse";'
+   USE_GIT_FUSE=yes
+else
+   ac_enable_fuse=no
+   FUSEADA_DIR=
+   USE_GIT_FUSE=no
+fi
+AC_SUBST(USE_GIT_FUSE)
+
 AC_ARG_ENABLE(fuse,
 [  --enable-fuse           enable support for Fuse (disabled)],
 [case "${enableval}" in
-  no|none)  ac_enable_fuse= ;;
-  *)        ac_enable_fuse=yes
+  no|none)
+     ac_enable_fuse=no
+     USE_GIT_FUSE=no
+     ;;
+  *)
+     ac_enable_fuse=yes
 esac])dnl
 
-FUSEADA_DIR=
+AC_MSG_CHECKING([whether Fuse is enabled])
+AC_MSG_RESULT($ac_enable_fuse)
+
+if test x$ac_enable_fuse = 'xyes' && test x$FUSEADA_DIR = 'x'; then
+
+  AM_GNAT_FIND_PROJECT([ada-fuse],[Fuse Ada Library],[ada_fuse],
+    [git@github.com:medsec/ada-fuse.git],
+    [Building Ada Keystore requires the Ada Fuse Library.],
+    [
+      FUSEADA_DIR=${ac_cv_gnat_project_dir_ada_fuse}
+      WITH_FUSE_ADA=${ac_cv_gnat_project_with_ada_fuse}
+    ])
+fi
+
 if test x$ac_enable_fuse = 'xyes'; then
-
-##########################################
-# FuseAda library
-##########################################
-AC_MSG_CHECKING([FuseAda library (https://github.com/medsec/ada-fuse)])
-AC_ARG_WITH(fuseada,
-AS_HELP_STRING([--with-fuseada=x], [Path for the Fuse Ada library (https://github.com/medsec/ada-fuse)]),
-[
-  FUSEADA_DIR=${withval}/
-  WITH_FUSE_ADA="with \"${FUSEADA_DIR}ada_fuse\";";
-],
-[
-  echo "with \"ada_fuse\"; project t is for Source_Dirs use (); end t;" > t.gpr
-  gnatmake -p -Pt >/dev/null 2>/dev/null
-  if test $? -eq 0; then
-    FUSEADA_DIR=
-    WITH_FUSE_ADA="with \"ada_fuse\";";
-  else
-    FUSEADA_DIR=../ada-fuse/
-    WITH_FUSE_ADA="with \"${FUSEADA_DIR}ada_fuse\";";
-  fi;
-])
-echo "with \"${FUSEADA_DIR}ada_fuse\"; project t is for Source_Dirs use (); end t;" > t.gpr
-gnatmake -p -Pt >/dev/null 2>/dev/null
-if test $? -ne 0 ; then
-   rm -f t.gpr
-   ac_enable_fuse=
-   # AC_MSG_ERROR([GtkAda library not found in ${GTKADA_DIR}])
- fi
-rm -f t.gpr
-AC_MSG_RESULT(${FUSEADA_DIR})
-
+  AC_CHECK_PROG(HAVE_PKG_CONFIG,pkg-config,yes)
+  if test x$HAVE_PKG_CONFIG != 'xyes'; then
+    AC_MSG_ERROR([Please install pkg-config when fuse support is enabled.])     
+  fi
 fi
 
-if test $ac_enable_fuse = no; then
-  WITH_FUSE_ADA=""
-fi
 HAVE_FUSE=$ac_enable_fuse
 AC_SUBST(HAVE_FUSE)
 AC_SUBST(WITH_FUSE_ADA)

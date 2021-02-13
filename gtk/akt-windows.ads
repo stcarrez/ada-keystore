@@ -19,6 +19,7 @@ with Ada.Finalization;
 with Gtk.Widget;
 with Gtkada.Builder;
 with Keystore.Files;
+with Keystore.Passwords.GPG;
 with Util.Log.Loggers;
 private with Ada.Strings.Unbounded;
 private with Gtk.Scrolled_Window;
@@ -70,6 +71,9 @@ package AKT.Windows is
 
    procedure List_Keystore (Application : in out Application_Type);
 
+   procedure Edit_Value (Application : in out Application_Type;
+                         Name        : in String);
+
    procedure Edit_Current (Application : in out Application_Type);
 
    procedure Save_Current (Application : in out Application_Type);
@@ -108,6 +112,10 @@ private
       Chooser     : Gtk.Widget.Gtk_Widget;
       Status      : Gtk.Status_Bar.Gtk_Status_Bar;
       Wallet      : Keystore.Files.Wallet_File;
+      Info        : Keystore.Wallet_Info;
+      Config      : Keystore.Wallet_Config := Keystore.Secure_Config;
+      GPG         : Keystore.Passwords.GPG.Context_Type;
+      Slot        : Keystore.Key_Slot;
       Path        : Ada.Strings.Unbounded.Unbounded_String;
       Frame       : Gtk.Frame.Gtk_Frame;
       Scrolled    : Gtk.Scrolled_Window.Gtk_Scrolled_Window;

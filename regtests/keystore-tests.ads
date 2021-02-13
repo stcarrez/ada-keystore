@@ -64,6 +64,7 @@ package Keystore.Tests is
 
    --  Test the akt edit command.
    procedure Test_Tool_Edit (T : in out Test);
+   procedure Test_Tool_Edit_Error (T : in out Test);
 
    --  Test the akt store and akt extract commands.
    procedure Test_Tool_Store_Extract (T : in out Test);
@@ -95,6 +96,7 @@ package Keystore.Tests is
    procedure Test_Tool_With_Wallet_Key_File (T : in out Test);
 
    procedure Test_Tool_Corrupted_1 (T : in out Test);
+   procedure Test_Tool_Corrupted_2 (T : in out Test);
 
    procedure Test_Tool_Missing_Storage (T : in out Test);
 

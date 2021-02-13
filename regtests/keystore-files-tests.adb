@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-files-tests -- Tests for files
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2021 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,12 +15,12 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-
 with Util.XUnit;
 with Ada.Directories;
 with Ada.Exceptions;
 with Ada.IO_Exceptions;
 with Ada.Streams.Stream_IO;
+with Ada.Unchecked_Deallocation;
 with Util.Test_Caller;
 with Util.Streams.Files;
 with Util.Measures;
@@ -92,13 +92,21 @@ package body Keystore.Files.Tests is
                        Test_Child_Wallet_Error'Access);
       Caller.Add_Test (Suite, "Test Keystore.Open (Corrupted)",
                        Test_Corrupted_1'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Open (Corrupted data)",
+                       Test_Corrupted_2'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Read",
+                       Test_Read'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Write",
+                       Test_Write'Access);
+      Caller.Add_Test (Suite, "Test Keystore.Write (Workers)",
+                       Test_Write_Workers'Access);
    end Add_Tests;
 
    --  ------------------------------
    --  Test creation of a keystore and re-opening it.
    --  ------------------------------
    procedure Test_Create (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-create.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-create.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       Config   : Keystore.Wallet_Config := Unsecure_Config;
    begin
@@ -149,7 +157,7 @@ package body Keystore.Files.Tests is
         := Util.Tests.Get_Path ("regtests/files/test-keystore.akt");
 
       Corrupt_Path : constant String
-        := Util.Tests.Get_Test_Path ("regtests/result/test-corrupt.akt");
+        := Util.Tests.Get_Test_Path ("test-corrupt.akt");
 
       procedure Corrupt (Block : in IO.Block_Number;
                          Pos   : in IO.Block_Index) is
@@ -229,7 +237,7 @@ package body Keystore.Files.Tests is
    --  Test adding values to a keystore.
    --  ------------------------------
    procedure Test_Add (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-add.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-add.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       Config   : Keystore.Wallet_Config := Unsecure_Config;
    begin
@@ -266,7 +274,7 @@ package body Keystore.Files.Tests is
    --  Test adding values and getting them back.
    --  ------------------------------
    procedure Test_Add_Get (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-add-get.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-add-get.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword-add-get");
       Config   : Keystore.Wallet_Config := Unsecure_Config;
    begin
@@ -302,7 +310,7 @@ package body Keystore.Files.Tests is
    --  Test deleting values.
    --  ------------------------------
    procedure Test_Delete (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-delete.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-delete.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword-delete");
       Config   : Keystore.Wallet_Config := Unsecure_Config;
    begin
@@ -329,6 +337,17 @@ package body Keystore.Files.Tests is
                    "Last property should still be present");
          T.Assert (W.Contains ("my-secret-4"),
                    "Last property should still be present");
+
+         --  Verify we can read the values that are not removed.
+         Util.Tests.Assert_Equals (T, "the secret 1",
+                                   W.Get ("my-secret-1"),
+                                   "Cannot get property my-secret-1");
+         Util.Tests.Assert_Equals (T, "the secret 3",
+                                   W.Get ("my-secret-3"),
+                                   "Cannot get property my-secret-3");
+         Util.Tests.Assert_Equals (T, "the secret 4",
+                                   W.Get ("my-secret-4"),
+                                   "Cannot get property my-secret-4");
       end;
 
       --  Re-open the keystore to verify the files and correct removal.
@@ -344,6 +363,17 @@ package body Keystore.Files.Tests is
                    "Last property should still be present");
          T.Assert (W.Contains ("my-secret-4"),
                    "Last property should still be present");
+
+         --  Verify we can read the values that are not removed.
+         Util.Tests.Assert_Equals (T, "the secret 1",
+                                   W.Get ("my-secret-1"),
+                                   "Cannot get property my-secret-1");
+         Util.Tests.Assert_Equals (T, "the secret 3",
+                                   W.Get ("my-secret-3"),
+                                   "Cannot get property my-secret-3");
+         Util.Tests.Assert_Equals (T, "the secret 4",
+                                   W.Get ("my-secret-4"),
+                                   "Cannot get property my-secret-4");
       end;
    end Test_Delete;
 
@@ -353,7 +383,7 @@ package body Keystore.Files.Tests is
    procedure Test_List (T : in out Test) is
       procedure Verify_Entry (Name : in String; Size : in Integer);
 
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.akt");
+      Path     : constant String := Util.Tests.Get_Path ("regtests/files/test-keystore.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       W        : Keystore.Files.Wallet_File;
       Items    : Keystore.Entry_Map;
@@ -384,7 +414,7 @@ package body Keystore.Files.Tests is
    --  Test update values.
    --  ------------------------------
    procedure Test_Update (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-update.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-update.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       Count    : constant Natural := 10;
    begin
@@ -462,7 +492,7 @@ package body Keystore.Files.Tests is
 
       function Large (Len : in Positive; Content : in Character) return String;
 
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-sequence.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-sequence.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
 
       function Large (Len : in Positive; Content : in Character) return String is
@@ -498,9 +528,6 @@ package body Keystore.Files.Tests is
          Util.Tests.Assert_Equals (T, "klmn",
                                    W.Get ("e"),
                                    "Cannot get property e");
-         if W.Get ("e") = "klmn" then
-            return;
-         end if;
 
          --  Update with size > 16 (a new AES block is necessary, hence shifting data in block).
          W.Update ("a", "0123456789abcdef12345");
@@ -571,7 +598,7 @@ package body Keystore.Files.Tests is
    --  Test opening and closing keystore.
    --  ------------------------------
    procedure Test_Open_Close (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.akt");
+      Path     : constant String := Util.Tests.Get_Path ("regtests/files/test-keystore.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       W        : Keystore.Files.Wallet_File;
    begin
@@ -589,7 +616,7 @@ package body Keystore.Files.Tests is
    --  Test adding values that already exist.
    --  ------------------------------
    procedure Test_Add_Error (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.akt");
+      Path     : constant String := Util.Tests.Get_Path ("regtests/files/test-keystore.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       W        : Keystore.Files.Wallet_File;
    begin
@@ -629,19 +656,21 @@ package body Keystore.Files.Tests is
    --  ------------------------------
    procedure Test_Set_Key (T : in out Test) is
       Path         : constant String
-        := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.akt");
+        := Util.Tests.Get_Path ("regtests/files/test-keystore.akt");
       Test_Path    : constant String
-        := Util.Tests.Get_Test_Path ("regtests/result/test-set-key.akt");
+        := Util.Tests.Get_Test_Path ("test-set-key.akt");
       Password     : Keystore.Secret_Key := Keystore.Create ("mypassword");
       New_Password : Keystore.Secret_Key := Keystore.Create ("new-password");
    begin
       Ada.Directories.Copy_File (Source_Name => Path,
                                  Target_Name => Test_Path);
       declare
-         W            : Keystore.Files.Wallet_File;
+         S     : Util.Measures.Stamp;
+         W     : Keystore.Files.Wallet_File;
       begin
          W.Open (Path => Test_Path, Password => Password);
          W.Set_Key (Password, New_Password, Keystore.Unsecure_Config, Keystore.KEY_REPLACE);
+         Util.Measures.Report (S, "Keystore.Set_Key");
       end;
 
       declare
@@ -658,15 +687,19 @@ package body Keystore.Files.Tests is
             T.Fail ("Bad exception raised after Set_Key");
       end;
       declare
-         W            : Keystore.Files.Wallet_File;
+         S     : Util.Measures.Stamp;
+         W     : Keystore.Files.Wallet_File;
       begin
          W.Open (Path => Test_Path, Password => New_Password);
          W.Set_Key (New_Password, Password, Keystore.Unsecure_Config, Keystore.KEY_REPLACE);
+         Util.Measures.Report (S, "Keystore.Set_Key (Update)");
       end;
       declare
-         W            : Keystore.Files.Wallet_File;
+         S     : Util.Measures.Stamp;
+         W     : Keystore.Files.Wallet_File;
       begin
          W.Open (Path => Test_Path, Password => Password);
+         Util.Measures.Report (S, "Keystore.Open");
          begin
             W.Set_Key (New_Password, New_Password, Keystore.Unsecure_Config, Keystore.KEY_REPLACE);
             T.Fail ("No exception raised by Set_Key");
@@ -677,30 +710,38 @@ package body Keystore.Files.Tests is
          end;
       end;
       declare
-         W            : Keystore.Files.Wallet_File;
+         S     : Util.Measures.Stamp;
+         W     : Keystore.Files.Wallet_File;
       begin
          W.Open (Path => Test_Path, Password => Password);
          W.Set_Key (Password, New_Password, Keystore.Unsecure_Config, Keystore.KEY_ADD);
+         Util.Measures.Report (S, "Keystore.Set_Key (Add)");
       end;
 
       --  Open the wallet with a first password and then the second one.
       declare
-         W            : Keystore.Files.Wallet_File;
+         S     : Util.Measures.Stamp;
+         W     : Keystore.Files.Wallet_File;
       begin
          W.Open (Path => Test_Path, Password => Password);
+         Util.Measures.Report (S, "Keystore.Open2");
       end;
       declare
-         W            : Keystore.Files.Wallet_File;
+         S     : Util.Measures.Stamp;
+         W     : Keystore.Files.Wallet_File;
       begin
          W.Open (Path => Test_Path, Password => New_Password);
+         Util.Measures.Report (S, "Keystore.Open3");
       end;
 
       --  Remove the password we added.
       declare
-         W            : Keystore.Files.Wallet_File;
+         S     : Util.Measures.Stamp;
+         W     : Keystore.Files.Wallet_File;
       begin
          W.Open (Path => Test_Path, Password => Password);
          W.Set_Key (New_Password, New_Password, Keystore.Unsecure_Config, Keystore.KEY_REMOVE);
+         Util.Measures.Report (S, "Keystore.Set_Key (Remove)");
       end;
    end Test_Set_Key;
 
@@ -708,7 +749,7 @@ package body Keystore.Files.Tests is
    --  Test adding empty values to a keystore.
    --  ------------------------------
    procedure Test_Add_Empty (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-empty.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-empty.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       Config   : Keystore.Wallet_Config := Unsecure_Config;
    begin
@@ -747,8 +788,8 @@ package body Keystore.Files.Tests is
    --  Test getting values through an Output_Stream.
    --  ------------------------------
    procedure Test_Get_Stream (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/files/test-keystore.akt");
-      Output   : constant String := Util.Tests.Get_Path ("regtests/result/test-stream.txt");
+      Path     : constant String := Util.Tests.Get_Path ("regtests/files/test-keystore.akt");
+      Output   : constant String := Util.Tests.Get_Test_Path ("test-stream.txt");
       Expect   : constant String := Util.Tests.Get_Path ("regtests/expect/test-stream.txt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       W        : Keystore.Files.Wallet_File;
@@ -770,20 +811,25 @@ package body Keystore.Files.Tests is
                                      Message => "Write operation failed");
    end Test_Get_Stream;
 
-   procedure Test_File_Stream (T     : in out Test;
-                               Name  : in String;
-                               Input : in String) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-stream.akt");
-      Output   : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-" & Name);
+   procedure Test_File_Stream (T      : in out Test;
+                               Name   : in String;
+                               Input  : in String;
+                               Create : in Boolean) is
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-stream.akt");
+      Output   : constant String := Util.Tests.Get_Test_Path ("test-" & Name);
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
       W        : Keystore.Files.Wallet_File;
       File     : Util.Streams.Files.File_Stream;
       Config   : Keystore.Wallet_Config := Unsecure_Config;
    begin
-      Config.Overwrite := True;
       File.Open (Mode => Ada.Streams.Stream_IO.In_File,
                  Name => Input);
-      W.Create (Path => Path, Password => Password, Config => Config);
+      if Create then
+         Config.Overwrite := True;
+         W.Create (Path => Path, Password => Password, Config => Config);
+      else
+         W.Open (Path => Path, Password => Password, Config => Config);
+      end if;
       W.Set (Name => Name, Kind => Keystore.T_STRING, Input => File);
       File.Close;
       W.Close;
@@ -807,13 +853,13 @@ package body Keystore.Files.Tests is
    procedure Test_Set_From_Stream (T : in out Test) is
       Input    : constant String := Util.Tests.Get_Path ("Makefile");
    begin
-      T.Test_File_Stream ("makefile.txt", Input);
+      T.Test_File_Stream ("makefile.txt", Input, Create => True);
    end Test_Set_From_Stream;
 
    procedure Test_Set_From_Larger_Stream (T : in out Test) is
       Input    : constant String := Util.Tests.Get_Path ("LICENSE.txt");
    begin
-      T.Test_File_Stream ("LICENSE.txt", Input);
+      T.Test_File_Stream ("LICENSE.txt", Input, Create => True);
    end Test_Set_From_Larger_Stream;
 
    --  ------------------------------
@@ -825,17 +871,333 @@ package body Keystore.Files.Tests is
       Input3   : constant String := Util.Tests.Get_Path ("aclocal.m4");
       Input4   : constant String := Util.Tests.Get_Path ("config.gpr");
    begin
-      T.Test_File_Stream ("Update_Stream", Input1);
-      T.Test_File_Stream ("Update_Stream", Input2);
-      T.Test_File_Stream ("Update_Stream", Input3);
-      T.Test_File_Stream ("Update_Stream", Input4);
+      T.Test_File_Stream ("Update_Stream", Input1, Create => True);
+      T.Test_File_Stream ("Update_Stream", Input2, Create => False);
+      T.Test_File_Stream ("Update_Stream", Input3, Create => False);
+      T.Test_File_Stream ("Update_Stream", Input4, Create => False);
    end Test_Update_Stream;
+
+   --  ------------------------------
+   --  Test updating values through an Input and Output_Stream.
+   --  ------------------------------
+   procedure Test_Read (T : in out Test) is
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-stream.akt");
+      Input1   : constant String := Util.Tests.Get_Path ("LICENSE.txt");
+   begin
+      T.Test_File_Stream ("Update_Stream", Input1, Create => True);
+
+      declare
+         W        : Keystore.Files.Wallet_File;
+         Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
+         Data     : Ada.Streams.Stream_Element_Array (1 .. 10);
+         Last     : Ada.Streams.Stream_Element_Offset;
+         S        : String (1 .. 10);
+      begin
+         W.Open (Path => Path, Password => Password, Config => Unsecure_Config);
+         W.Read ("Update_Stream", 33, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "Apache Lic", S, "Invalid Read at 34");
+
+         W.Read ("Update_Stream", 165, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "TERMS AND ", S, "Invalid Read at 165");
+
+         W.Read ("Update_Stream", 1085, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "dividual o", S, "Invalid Read at 1085");
+
+         --  Verify reading a 10 byte content when we overlap two data blocks.
+         W.Read ("Update_Stream", 3960, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "s in Sourc", S, "Invalid Read at 3960");
+
+         W.Read ("Update_Stream", 3961, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, " in Source", S, "Invalid Read at 3961");
+
+         W.Read ("Update_Stream", 3962, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "in Source ", S, "Invalid Read at 3962");
+
+         W.Read ("Update_Stream", 3963, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "n Source o", S, "Invalid Read at 3963");
+
+         W.Read ("Update_Stream", 3964, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, " Source or", S, "Invalid Read at 3964");
+
+         W.Read ("Update_Stream", 3965, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "Source or ", S, "Invalid Read at 3965");
+
+         W.Read ("Update_Stream", 3966, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "ource or O", S, "Invalid Read at 3966");
+
+         W.Read ("Update_Stream", 3967, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "urce or Ob", S, "Invalid Read at 3967");
+
+         W.Read ("Update_Stream", 3968, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "rce or Obj", S, "Invalid Read at 3968");
+
+         W.Read ("Update_Stream", 3969, Data, Last);
+         Util.Streams.Copy (Data, S);
+         Util.Tests.Assert_Equals (T, "ce or Obje", S, "Invalid Read at 3969");
+      end;
+   end Test_Read;
+
+   --  ------------------------------
+   --  Test writing values through an Input and Output_Stream.
+   --  ------------------------------
+   procedure Test_Write (T : in out Test) is
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-stream.akt");
+      Input1   : constant String := Util.Tests.Get_Path ("LICENSE.txt");
+   begin
+      T.Test_File_Stream ("Update_Stream", Input1, Create => True);
+
+      declare
+         Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
+         Last     : Ada.Streams.Stream_Element_Offset;
+      begin
+         declare
+            W        : Keystore.Files.Wallet_File;
+            Data     : Ada.Streams.Stream_Element_Array (1 .. 10);
+            S        : String (1 .. 10);
+         begin
+            W.Open (Path => Path, Password => Password, Config => Unsecure_Config);
+            W.Read ("Update_Stream", 33, Data, Last);
+            Util.Streams.Copy (Data, S);
+            Util.Tests.Assert_Equals (T, "Apache Lic", S, "Invalid Read at 34");
+
+            Util.Streams.Copy (Data, S);
+            W.Write ("Update_Stream", 165, Data);
+            W.Read ("Update_Stream", 165, Data, Last);
+            Util.Streams.Copy (Data, S);
+            Util.Tests.Assert_Equals (T, "Apache Lic", S, "Invalid Read after Write at 165");
+
+            W.Write ("Update_Stream", 3960, Data);
+            W.Read ("Update_Stream", 3960, Data, Last);
+            Util.Streams.Copy (Data, S);
+            Util.Tests.Assert_Equals (T, "Apache Lic", S, "Invalid Read after Write at 3966");
+
+            W.Write ("Update_Stream", 3966, Data);
+            W.Read ("Update_Stream", 3966, Data, Last);
+            Util.Streams.Copy (Data, S);
+            Util.Tests.Assert_Equals (T, "Apache Lic", S, "Invalid Read after Write at 3966");
+         end;
+
+         --  Test Write() on a short data block: the content is extended.
+         declare
+            W        : Keystore.Files.Wallet_File;
+            Data     : Ada.Streams.Stream_Element_Array (1 .. 100);
+         begin
+            W.Open (Path => Path, Password => Password, Config => Unsecure_Config);
+
+            W.Set ("Update_Value", "a first short value");
+            Util.Tests.Assert_Equals (T, "a first short value", W.Get ("Update_Value"),
+                                      "Invalid Get()");
+
+            Data := (others => Character'Pos ('x'));
+            W.Write ("Update_Value", 1, Data);
+            W.Read ("Update_Value", 1, Data, Last);
+            Util.Tests.Assert_Equals (T, 100, Natural (Last), "Invalid read at 1");
+            T.Assert ((for all C of Data => C = Character'Pos ('x')), "Invalid read at 1");
+         end;
+
+         --  Check that after re-opening the keystore we still have the correct content!!!!
+         declare
+            W        : Keystore.Files.Wallet_File;
+            Data     : Ada.Streams.Stream_Element_Array (1 .. 100);
+            Items    : Keystore.Entry_Map;
+         begin
+            W.Open (Path => Path, Password => Password, Config => Unsecure_Config);
+            W.List (Content => Items);
+
+            --  List must succeed and gets one entry.
+            Util.Tests.Assert_Equals (T, 2, Natural (Items.Length), "Invalid length");
+            T.Assert (Items.Contains ("Update_Value"));
+            Util.Tests.Assert_Equals (T, 101, Natural (Items.Element ("Update_Value").Size),
+                                      "Invalid size for Update_Value");
+
+            W.Read ("Update_Value", 1, Data, Last);
+            Util.Tests.Assert_Equals (T, 100, Natural (Last), "Invalid read at 1");
+            T.Assert ((for all C of Data => C = Character'Pos ('x')), "Invalid read at 1");
+         end;
+
+         --  Check writing on two data blocks
+         declare
+            W        : Keystore.Files.Wallet_File;
+            Data     : Ada.Streams.Stream_Element_Array (1 .. 1000);
+            S        : String (1 .. 1000);
+         begin
+            W.Open (Path => Path, Password => Password, Config => Unsecure_Config);
+            W.Read ("Update_Stream", 165, Data, Last);
+            Util.Tests.Assert_Equals (T, 1000, Natural (Last), "Invalid read at 3800");
+            Util.Streams.Copy (Data, S);
+            Util.Tests.Assert_Matches (T, ".*CONDITIONS FOR USE", S,
+                                       "Invalid Read at 165");
+
+            Data := (others => Character'Pos ('A'));
+            W.Write ("Update_Stream", 1000, Data);
+            W.Read ("Update_Stream", 1000, Data, Last);
+            Util.Tests.Assert_Equals (T, 1000, Natural (Last),
+                                      "Invalid read at 1000");
+            T.Assert ((for all C of Data => C = Character'Pos ('A')),
+                      "Invalid read at 1000");
+
+            Data := (others => Character'Pos ('B'));
+            W.Write ("Update_Stream", 3800, Data);
+
+            W.Read ("Update_Stream", 3800, Data, Last);
+            Util.Tests.Assert_Equals (T, 1000, Natural (Last),
+                                      "Invalid read at 3800");
+            T.Assert ((for all C of Data => C = Character'Pos ('B')),
+                      "Invalid read at 3800");
+         end;
+
+         --  Check writing on several data blocks
+         declare
+            W        : Keystore.Files.Wallet_File;
+            Data     : Ada.Streams.Stream_Element_Array (1 .. IO.Block_Size * 3);
+         begin
+            W.Open (Path => Path, Password => Password, Config => Unsecure_Config);
+
+            Data := (others => Character'Pos ('C'));
+            W.Write ("Update_Stream", 1000, Data);
+            W.Read ("Update_Stream", 1000, Data, Last);
+            Util.Tests.Assert_Equals (T, Natural (Data'Last), Natural (Last),
+                                      "Invalid read at 1000");
+            T.Assert ((for all C of Data => C = Character'Pos ('C')),
+                      "Invalid read at 1000");
+
+            Data := (others => Character'Pos ('D'));
+            W.Write ("Update_Stream", 3800, Data);
+
+            W.Read ("Update_Stream", 3800, Data, Last);
+            Util.Tests.Assert_Equals (T, Natural (Data'Last), Natural (Last),
+                                      "Invalid read at 3800");
+            T.Assert ((for all C of Data => C = Character'Pos ('D')),
+                      "Invalid read at 3800");
+         end;
+
+      end;
+   end Test_Write;
+
+   --  ------------------------------
+   --  Test writing values through an Input and Output_Stream.
+   --  ------------------------------
+   procedure Test_Write_Workers (T : in out Test) is
+      procedure Free is
+        new Ada.Unchecked_Deallocation (Object => Keystore.Task_Manager,
+                                        Name   => Keystore.Task_Manager_Access);
+
+      Path     : constant String
+        := Util.Tests.Get_Test_Path ("test-stream-workers.akt");
+      Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
+      Config   : Keystore.Wallet_Config := Unsecure_Config;
+      Worker   : Keystore.Task_Manager_Access := new Keystore.Task_Manager (3);
+   begin
+      Keystore.Start (Worker);
+      begin
+         Config.Overwrite := True;
+
+         --  Step 1: fill two big values by using the Write procedure.
+         --          markers are inserted between the two values.
+         --          this has an effect on how encryption keys are organized.
+         declare
+            W        : Keystore.Files.Wallet_File;
+            Data     : Ada.Streams.Stream_Element_Array (1 .. 60000);
+            Offset   : Ada.Streams.Stream_Element_Offset := 0;
+            Pattern  : constant String := "abcdef01234567";
+         begin
+            W.Create (Path => Path, Password => Password, Config => Config);
+            W.Set_Work_Manager (Worker);
+            W.Set ("Write_Stream", "");
+            for C of Pattern loop
+               Data := (others => Character'Pos (C));
+               W.Write ("Write_Stream", Offset, Data);
+               Offset := Offset + Data'Length - 1367;
+            end loop;
+            W.Set ("Mark1", "Marker1");
+
+            Offset := 0;
+            W.Set ("Write_Stream_2", "");
+            for C of Pattern loop
+               Data := (others => Character'Pos (C));
+               W.Write ("Write_Stream_2", Offset, Data);
+               Offset := Offset + Data'Length - 1873;
+            end loop;
+            W.Set ("Mark2", "Marker2");
+            Util.Tests.Assert_Equals (T, "Marker1", W.Get ("Mark1"), "Invalid marker1");
+            Util.Tests.Assert_Equals (T, "Marker2", W.Get ("Mark2"), "Invalid marker2");
+         end;
+
+         --  Step 2: read the two big values by using the Read and verify the content.
+         --          once the content is verified, erase but keep the first big value.
+         --          verify that markers are still valid.
+         declare
+            W        : Keystore.Files.Wallet_File;
+            Data     : Ada.Streams.Stream_Element_Array (1 .. 60000);
+            Offset   : Ada.Streams.Stream_Element_Offset := 0;
+            Last     : Ada.Streams.Stream_Element_Offset;
+            Pattern  : constant String := "abcdef01234567";
+         begin
+            W.Open (Path => Path, Password => Password, Config => Config);
+            W.Set_Work_Manager (Worker);
+            for C of Pattern loop
+               Data := (others => Character'Pos (C));
+               W.Read ("Write_Stream", Offset, Data, Last);
+               Util.Tests.Assert_Equals (T, 60_000, Natural (Last),
+                                         "Invalid last position after Read");
+               Offset := Offset + Data'Length - 1367;
+            end loop;
+            Util.Tests.Assert_Equals (T, "Marker1", W.Get ("Mark1"), "Invalid marker1");
+            Util.Tests.Assert_Equals (T, "Marker2", W.Get ("Mark2"), "Invalid marker2");
+
+            W.Set ("Write_Stream", "");
+            Util.Tests.Assert_Equals (T, "", W.Get ("Write_Stream"), "Invalid value after Set");
+
+            Offset := 0;
+            for C of Pattern loop
+               Data := (others => Character'Pos (C));
+               W.Read ("Write_Stream_2", Offset, Data, Last);
+               Util.Tests.Assert_Equals (T, 60_000, Natural (Last),
+                                         "Invalid last position after Read");
+               Offset := Offset + Data'Length - 1873;
+            end loop;
+
+            Util.Tests.Assert_Equals (T, "Marker1", W.Get ("Mark1"), "Invalid marker1");
+            Util.Tests.Assert_Equals (T, "Marker2", W.Get ("Mark2"), "Invalid marker2");
+         end;
+
+         --  Step 3: re-open the keystore and verify the values.
+         declare
+            W        : Keystore.Files.Wallet_File;
+         begin
+            W.Open (Path => Path, Password => Password, Config => Config);
+            Util.Tests.Assert_Equals (T, "", W.Get ("Write_Stream"), "Invalid value after Set");
+            Util.Tests.Assert_Equals (T, "Marker1", W.Get ("Mark1"), "Invalid marker1");
+            Util.Tests.Assert_Equals (T, "Marker2", W.Get ("Mark2"), "Invalid marker2");
+         end;
+      end;
+      Keystore.Stop (Worker);
+      Free (Worker);
+
+   exception
+      when others =>
+         Keystore.Stop (Worker);
+         Free (Worker);
+         raise;
+   end Test_Write_Workers;
 
    --  ------------------------------
    --  Perforamce test adding values.
    --  ------------------------------
    procedure Test_Perf_Add (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-perf.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-perf.akt");
       Password : constant Keystore.Secret_Key := Keystore.Create ("mypassword");
       W        : Keystore.Files.Wallet_File;
       Items    : Keystore.Entry_Map;
@@ -921,7 +1283,7 @@ package body Keystore.Files.Tests is
    --  Test setting and getting header data.
    --  ------------------------------
    procedure Test_Header_Data_1 (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-header.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-header.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
    begin
       Create_With_Header (Path, Password, 1);
@@ -929,7 +1291,7 @@ package body Keystore.Files.Tests is
    end Test_Header_Data_1;
 
    procedure Test_Header_Data_10 (T : in out Test) is
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-header.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-header.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
    begin
       Create_With_Header (Path, Password, 10);
@@ -941,7 +1303,7 @@ package body Keystore.Files.Tests is
       W        : Keystore.Files.Wallet_File;
       Kind     : Keystore.Header_Slot_Type := 123;
       Value    : Ada.Streams.Stream_Element := 3;
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-header.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-header.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
    begin
       Config.Overwrite := True;
@@ -964,11 +1326,13 @@ package body Keystore.Files.Tests is
    end Test_Header_Data_Error;
 
    procedure Test_Header_Data_Update (T : in out Test) is
+      pragma Unreferenced (T);
+
       Config   : Keystore.Wallet_Config := Unsecure_Config;
       W        : Keystore.Files.Wallet_File;
       Kind     : Keystore.Header_Slot_Type := 123;
       Value    : Ada.Streams.Stream_Element := 3;
-      Path     : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-header.akt");
+      Path     : constant String := Util.Tests.Get_Test_Path ("test-header.akt");
       Password : Keystore.Secret_Key := Keystore.Create ("mypassword");
    begin
       Config.Overwrite := True;
@@ -997,7 +1361,7 @@ package body Keystore.Files.Tests is
    --  Test creating a wallet.
    --  ------------------------------
    procedure Test_Add_Wallet (T : in out Test) is
-      Path      : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-wallet.akt");
+      Path      : constant String := Util.Tests.Get_Test_Path ("test-wallet.akt");
       Password  : Keystore.Secret_Key := Keystore.Create ("mypassword");
       Password2 : Keystore.Secret_Key := Keystore.Create ("admin");
       Config    : Keystore.Wallet_Config := Unsecure_Config;
@@ -1048,7 +1412,7 @@ package body Keystore.Files.Tests is
    end Test_Add_Wallet;
 
    procedure Test_Child_Wallet_Error (T : in out Test) is
-      Path      : constant String := Util.Tests.Get_Test_Path ("regtests/result/test-wallet.akt");
+      Path      : constant String := Util.Tests.Get_Test_Path ("test-wallet.akt");
       Password  : Keystore.Secret_Key := Keystore.Create ("mypassword");
       Password2 : Keystore.Secret_Key := Keystore.Create ("admin");
       Config    : Keystore.Wallet_Config := Unsecure_Config;
@@ -1146,10 +1510,12 @@ package body Keystore.Files.Tests is
       end;
    end Test_Child_Wallet_Error;
 
+   --  ------------------------------
    --  Test operation on corrupted keystore.
+   --  ------------------------------
    procedure Test_Corrupted_1 (T : in out Test) is
       Path      : constant String
-        := Util.Tests.Get_Test_Path ("regtests/files/test-corrupted-1.akt");
+        := Util.Tests.Get_Path ("regtests/files/test-corrupted-1.akt");
       Password  : Keystore.Secret_Key := Keystore.Create ("mypassword");
       W         : Keystore.Files.Wallet_File;
    begin
@@ -1160,5 +1526,45 @@ package body Keystore.Files.Tests is
       when Keystore.Corrupted =>
          null;
    end Test_Corrupted_1;
+
+   --  ------------------------------
+   --  Test operation on corrupted keystore.
+   --  ------------------------------
+   procedure Test_Corrupted_2 (T : in out Test) is
+      Path      : constant String
+        := Util.Tests.Get_Path ("regtests/files/test-corrupted-2.akt");
+      Password  : Keystore.Secret_Key := Keystore.Create ("mypassword");
+      W         : Keystore.Files.Wallet_File;
+      Items     : Keystore.Entry_Map;
+   begin
+      W.Open (Password, Path);
+      W.List (Content => Items);
+
+      --  List must succeed and gets one entry.
+      Util.Tests.Assert_Equals (T, 1, Natural (Items.Length), "Invalid length");
+
+      --  Reading the entry fails because it contained an invalid data HMAC.
+      begin
+         Util.Tests.Assert_Equals (T, "", W.Get ("Update_Stream"), "?");
+         T.Fail ("No exception raised by Get() for corrupted file");
+
+      exception
+         when Keystore.Corrupted =>
+            null;
+      end;
+
+      declare
+         D    : Ada.Streams.Stream_Element_Array (1 .. 10);
+         Last : Ada.Streams.Stream_Element_Offset;
+      begin
+         W.Read ("Update_Stream", 12, D, Last);
+         T.Fail ("No exception raised by Read() for corrupted file");
+
+      exception
+         when Keystore.Corrupted =>
+            null;
+      end;
+
+   end Test_Corrupted_2;
 
 end Keystore.Files.Tests;
