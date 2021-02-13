@@ -53,12 +53,8 @@ Mount the keystore:
    umount /mnt
 ```
 
-## Version 1.3.0  - Dec 2020
-
-- Added Write and Read direct data access
-- Finalize and fix the Fuse filesystem
-- Document the mount command
-- Fix deleting large data contents
+## Version 1.3.1  - Feb 2021
+- Improvement of message localization
 
 [List all versions](https://github.com/stcarrez/ada-keystore/blob/master/NEWS.md)
 
