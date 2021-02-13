@@ -32,3 +32,10 @@ docs/Keystore_Keys.md
 docs/Keystore_Random.md
 regtests/files/gnupg
 regtests/result/
+*.substvars
+debian/lib*
+debian/.debhelper/
+debian/autoreconf.after
+debian/autoreconf.before
+debian/debhelper-build-stamp
+debian/files
