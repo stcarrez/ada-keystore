@@ -3,11 +3,11 @@ Upstream-Name: ada-keystore
 Source: https://github.com/stcarrez/ada-keystore/
 
 Files: *
-Copyright: 2019-2020 Stephane Carrez <Stephane.Carrez@gmail.com>
+Copyright: 2019-2021 Stephane Carrez <Stephane.Carrez@gmail.com>
 License: Apache-2.0
 
 Files: debian/*
-Copyright: 2019-2020 Stephane Carrez <Stephane.Carrez@gmail.com>
+Copyright: 2019-2021 Stephane Carrez <Stephane.Carrez@gmail.com>
 License: GPL-3.0+
 
 License: Apache-2.0
