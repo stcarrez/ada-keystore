@@ -11,7 +11,7 @@ $(foreach line,$(shell sed -n '\
     GNAT_VERSION:=\1 \
   /p;\
   s/^Package: libkeystoreada\([0-9.]\+\)$$/ \
-    soname:=libkeystoreadaada.so.\1 \
+    soname:=libkeystoreada.so.\1 \
   /p;\
   ' debian/control),$(eval $(line)))
 
@@ -27,7 +27,7 @@ ADAFLAGS += -gnatafno -gnatVa -gnatwa
 	dh $@ --with ada-library
 
 override_dh_auto_configure:
-	dh_auto_configure -- --enable-shared --enable-default-shared --with-ada-util
+	dh_auto_configure -- --enable-shared --enable-default-shared --with-ada-util --enable-fuse
 
 override_dh_auto_build:
 	make GPRFLAGS="-R -m -q"
@@ -45,6 +45,12 @@ override_dh_auto_install:
         for i in $$files; do \
 	  dir=`dirname $$i`; \
 	  dh_install debian/tmp/usr/share/akt/$$i usr/share/akt/$$dir ; \
+        done
+	files=`cd $(CURDIR)/debian/tmp/usr/share/locale && find . -type f`; \
+        for i in $$files; do \
+	  dir=`dirname $$i`; \
+	  dh_installdirs usr/share/locale/$$dir; \
+	  dh_install debian/tmp/usr/share/locale/$$i usr/share/locale/$$dir ; \
         done
 
 .PHONY: override_dh_installdocs-indep
