@@ -56,7 +56,7 @@ else
   WITH_ADA_UTIL_SYS=''
   UTIL_DIR='./ada-util/'
 
-  ac_configure_args="${ac_configure_args} --with-build-root="`pwd`
+  ac_configure_args="${ac_configure_args} --disable-lzma --disable-aws --disable-curl --with-xmlada=no --with-build-root="`pwd`
 
   AC_CONFIG_SUBDIRS(ada-util)
 fi

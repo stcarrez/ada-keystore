@@ -14,7 +14,7 @@ FUSE_LIBS := $(shell pkg-config --libs fuse)
 export FUSE_LIBS
 
 ifeq ($(USE_GIT_FUSE),yes)
-ADA_FUSE_SYSTEM := $(shell uname -sm)
+ADA_FUSE_SYSTEM := $(shell uname -sm | sed "s- -_-g")
 export ADA_FUSE_SYSTEM
 endif
 
@@ -28,7 +28,7 @@ build-test::	setup
 
 build:: tools
 
-tools:  tools/akt-configs.ads
+tools:  tools/akt-configs.ads setup
 	$(GNATMAKE) $(GPRFLAGS) -p -P$(NAME)_tools $(MAKE_ARGS)
 
 tools/akt-configs.ads:   Makefile.conf tools/akt-configs.gpb
@@ -57,6 +57,15 @@ install::
 	mkdir -p $(DESTDIR)$(prefix)/share/gakt
 	$(INSTALL) gakt.glade $(DESTDIR)$(prefix)/share/gakt/gakt.glade
 
+endif
+
+ifeq ($(HAVE_FUSE),yes)
+ifeq ($(USE_GIT_FUSE),yes)
+
+setup:: ada-fuse/ada_fuse.gpr
+	cd ada-fuse && ./setup.py
+
+endif
 endif
 
 # Build and run the unit tests
