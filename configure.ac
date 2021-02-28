@@ -65,13 +65,32 @@ AC_SUBST(WITH_ADA_UTIL)
 AC_SUBST(WITH_ADA_UTIL_SYS)
 AC_SUBST(KEYSTORE_USE_ADA_UTIL)
 
-AC_MSG_CHECKING([whether NLS is requested])
-dnl Default is enabled NLS
-AC_ARG_ENABLE(nls,
-  [  --disable-nls           do not use Native Language Support],
-  USE_NLS=$enableval, USE_NLS=yes)
-AC_MSG_RESULT($USE_NLS)
+case "${target_os}" in
+  mingw32*|cygwin*|mingw64*|msys)
+    HAVE_GETTEXT=False
+    GETTEXT_INTL=False
+    ;;
+
+  *)
+    AM_GNU_GETTEXT([external])
+    ;;
+
+esac
+
+if test T$HAVE_GETTEXT = TTrue; then
+  USE_NLS=yes
+else
+  USE_NLS=no
+fi
 AC_SUBST(USE_NLS)
+
+
+if test T$GETTEXT_INTL = TTrue; then
+  USE_LIBINTL=yes
+else
+  USE_LIBINTL=no
+fi
+AC_SUBST(USE_LIBINTL)
 
 ##########################################
 # GtkAda library
@@ -103,12 +122,24 @@ AC_SUBST(HAVE_GTK)
 AC_SUBST(GTKADA_DIR)
 
 if test -f ada-fuse/ada_fuse.gpr; then
-   ac_enable_fuse=yes
+   case "${target_os}" in
+      mingw32*|cygwin*|mingw64*|msys)
+        ac_enable_fuse=no
+        ;;
+
+      *)
+        ac_enable_fuse=yes
+       ;;
+
+    esac
+else
+   ac_enable_fuse=no
+fi
+if test ${ac_enable_fuse} = 'yes'; then
    FUSEADA_DIR=ada-fuse
    WITH_FUSE_ADA='with "ada-fuse/ada_fuse";'
    USE_GIT_FUSE=yes
 else
-   ac_enable_fuse=no
    FUSEADA_DIR=
    USE_GIT_FUSE=no
 fi
@@ -137,9 +168,6 @@ if test x$ac_enable_fuse = 'xyes' && test x$FUSEADA_DIR = 'x'; then
       FUSEADA_DIR=${ac_cv_gnat_project_dir_ada_fuse}
       WITH_FUSE_ADA=${ac_cv_gnat_project_with_ada_fuse}
     ])
-else
-  FUSEADA_DIR=""
-  WITH_FUSE_ADA=""
 fi
 
 if test x$ac_enable_fuse = 'xyes'; then
