@@ -65,14 +65,25 @@ AC_SUBST(WITH_ADA_UTIL)
 AC_SUBST(WITH_ADA_UTIL_SYS)
 AC_SUBST(KEYSTORE_USE_ADA_UTIL)
 
-dnl I18N feature
-AM_GNU_GETTEXT([external])
+case "${target_os}" in
+  mingw32*|cygwin*|mingw64*|msys)
+    HAVE_GETTEXT=False
+    GETTEXT_INTL=False
+    ;;
+
+  *)
+    AM_GNU_GETTEXT([external])
+    ;;
+
+esac
+
 if test T$HAVE_GETTEXT = TTrue; then
   USE_NLS=yes
 else
   USE_NLS=no
 fi
 AC_SUBST(USE_NLS)
+
 
 if test T$GETTEXT_INTL = TTrue; then
   USE_LIBINTL=yes
