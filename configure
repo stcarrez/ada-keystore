@@ -591,6 +591,7 @@ HAVE_PKG_CONFIG
 USE_GIT_FUSE
 GTKADA_DIR
 HAVE_GTK
+USE_LIBINTL
 HAVE_GETTEXT
 GETTEXT_INTL
 OBJEXT
@@ -3783,6 +3784,13 @@ else
 fi
 
 
+if test T$GETTEXT_INTL = TTrue; then
+  USE_LIBINTL=yes
+else
+  USE_LIBINTL=no
+fi
+
+
 ##########################################
 # GtkAda library
 ##########################################
@@ -4095,9 +4103,6 @@ $as_echo "no" >&6; }
     fi
   fi
 
-else
-  FUSEADA_DIR=""
-  WITH_FUSE_ADA=""
 fi
 
 if test x$ac_enable_fuse = 'xyes'; then
