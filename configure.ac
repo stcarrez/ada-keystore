@@ -65,12 +65,13 @@ AC_SUBST(WITH_ADA_UTIL)
 AC_SUBST(WITH_ADA_UTIL_SYS)
 AC_SUBST(KEYSTORE_USE_ADA_UTIL)
 
-AC_MSG_CHECKING([whether NLS is requested])
-dnl Default is enabled NLS
-AC_ARG_ENABLE(nls,
-  [  --disable-nls           do not use Native Language Support],
-  USE_NLS=$enableval, USE_NLS=yes)
-AC_MSG_RESULT($USE_NLS)
+dnl I18N feature
+AM_GNU_GETTEXT([external])
+if test T$HAVE_GETTEXT = TTrue; then
+  USE_NLS=yes
+else
+  USE_NLS=no
+fi
 AC_SUBST(USE_NLS)
 
 ##########################################
