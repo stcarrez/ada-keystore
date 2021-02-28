@@ -2831,7 +2831,14 @@ fi
 
 
 
-ac_ext=c
+case "${target_os}" in
+  mingw32*|cygwin*|mingw64*|msys)
+    HAVE_GETTEXT=False
+    GETTEXT_INTL=False
+    ;;
+
+  *)
+    ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -3777,11 +3784,16 @@ fi
 
 
 
+    ;;
+
+esac
+
 if test T$HAVE_GETTEXT = TTrue; then
   USE_NLS=yes
 else
   USE_NLS=no
 fi
+
 
 
 if test T$GETTEXT_INTL = TTrue; then
