@@ -3067,6 +3067,9 @@ $as_echo "no" >&6; }
     fi
   fi
 
+else
+  FUSEADA_DIR=""
+  WITH_FUSE_ADA=""
 fi
 
 if test x$ac_enable_fuse = 'xyes'; then
