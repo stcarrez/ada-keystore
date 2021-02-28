@@ -88,12 +88,6 @@ install-samples:
 	cp -p $(srcdir)/samples.gpr $(samplesdir)
 	cp -p $(srcdir)/config.gpr $(samplesdir)
 
-ifeq ($(HAVE_PANDOC),yes)
-doc::  docs/keystoreada-book.pdf docs/keystoreada-book.html
-ifeq ($(HAVE_DYNAMO),yes)
-	$(DYNAMO) build-doc -markdown wiki
-endif
-
 KEYSTORE_DOC= \
   title.md \
   pagebreak.tex \
@@ -112,29 +106,20 @@ KEYSTORE_DOC= \
 DOC_OPTIONS=-f markdown -o keystoreada-book.pdf --listings --number-sections --toc
 HTML_OPTIONS=-f markdown -o keystoreada-book.html --listings --number-sections --toc --css pandoc.css
 
-docs/keystoreada-book.pdf: $(KEYSTORE_DOC_DEP) force
-ifeq ($(HAVE_DYNAMO),yes)
-	$(DYNAMO) build-doc -pandoc docs
-endif
-	cat docs/Programming.md docs/Keystore.md > docs/Keystore_Programming.md
-	cat docs/Tool.md docs/akt.md > docs/Keystore_Tool.md
+$(eval $(call pandoc_build,keystoreada-book,$(KEYSTORE_DOC),\
+	cat docs/Programming.md docs/Keystore.md > docs/Keystore_Programming.md; \
+	cat docs/Tool.md docs/akt.md > docs/Keystore_Tool.md; \
 	cat docs/Design.md \
 	    docs/Keystore_IO_Headers.md \
 	    docs/Keystore_Passwords_GPG.md \
 	    docs/Keystore_Keys.md \
 	    docs/Keystore_Repository_Entries.md \
 		docs/Keystore_Repository_Data.md \
-        docs/Design_Implementation.md > docs/Keystore_Design.md
-	cd docs && pandoc $(DOC_OPTIONS) --template=./eisvogel.tex $(KEYSTORE_DOC)
-
-docs/keystoreada-book.html: docs/keystoreada-book.pdf force
-	cd docs && pandoc $(HTML_OPTIONS) $(KEYSTORE_DOC)
-
-endif
+        docs/Design_Implementation.md > docs/Keystore_Design.md))
 
 $(eval $(call ada_library,$(NAME)))
 
-DIST_DIRS=ada-util
+DIST_DIRS=ada-util ada-fuse
 dist::
 	rm -f $(DIST_FILE)
 	git archive -o $(DIST_DIR).tar --prefix=$(DIST_DIR)/ HEAD
