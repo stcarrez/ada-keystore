@@ -74,6 +74,13 @@ else
 fi
 AC_SUBST(USE_NLS)
 
+if test T$GETTEXT_INTL = TTrue; then
+  USE_LIBINTL=yes
+else
+  USE_LIBINTL=no
+fi
+AC_SUBST(USE_LIBINTL)
+
 ##########################################
 # GtkAda library
 ##########################################
@@ -150,9 +157,6 @@ if test x$ac_enable_fuse = 'xyes' && test x$FUSEADA_DIR = 'x'; then
       FUSEADA_DIR=${ac_cv_gnat_project_dir_ada_fuse}
       WITH_FUSE_ADA=${ac_cv_gnat_project_with_ada_fuse}
     ])
-else
-  FUSEADA_DIR=""
-  WITH_FUSE_ADA=""
 fi
 
 if test x$ac_enable_fuse = 'xyes'; then
