@@ -103,12 +103,24 @@ AC_SUBST(HAVE_GTK)
 AC_SUBST(GTKADA_DIR)
 
 if test -f ada-fuse/ada_fuse.gpr; then
-   ac_enable_fuse=yes
+   case "${target_os}" in
+      mingw32*|cygwin*|mingw64*|msys)
+        ac_enable_fuse=no
+        ;;
+
+      *)
+        ac_enable_fuse=yes
+       ;;
+
+    esac
+else
+   ac_enable_fuse=no
+fi
+if test ${ac_enable_fuse} = 'yes'; then
    FUSEADA_DIR=ada-fuse
    WITH_FUSE_ADA='with "ada-fuse/ada_fuse";'
    USE_GIT_FUSE=yes
 else
-   ac_enable_fuse=no
    FUSEADA_DIR=
    USE_GIT_FUSE=no
 fi
