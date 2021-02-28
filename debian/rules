@@ -35,7 +35,6 @@ override_dh_auto_build:
 override_dh_auto_test::
 
 override_dh_auto_install:
-	#chrpath -d bin/akt
 	$(MAKE) DESTDIR=$(CURDIR)/debian/tmp prefix=/usr install
 	dh_installdirs usr/bin
 	dh_install debian/tmp/usr/bin/akt /usr/bin
@@ -52,6 +51,7 @@ override_dh_auto_install:
 	  dh_installdirs usr/share/locale/$$dir; \
 	  dh_install debian/tmp/usr/share/locale/$$i usr/share/locale/$$dir ; \
         done
+	rm -rf debian/tmp
 
 .PHONY: override_dh_installdocs-indep
 
