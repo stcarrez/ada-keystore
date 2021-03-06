@@ -11,8 +11,8 @@ Build-Depends: debhelper (>= 10), autotools-dev,
  libfuse-dev,
 # 2015-2 is compatible with gnat-7
 # dh-ada-library (>= 6.7)
- libutilada-sys3-dev,
- libutilada-unit3-dev,
+ libutilada-sys2-dev,
+ libutilada-unit2-dev,
 # pandoc requires texlive-fonts-extra for PDF
  pandoc, texlive-fonts-extra
 Standards-Version: 4.1.4
@@ -43,7 +43,7 @@ Description: Ada Keystore library (runtime)
  bank accounts and even documents.  The library allows one to manage the
  secure wallets from an Ada program.
 
-Package: libkeystoreada3-dev
+Package: libkeystoreada2-dev
 Section: libdevel
 Architecture: any
 Depends: ${misc:Depends}, ${ada:Depends}
