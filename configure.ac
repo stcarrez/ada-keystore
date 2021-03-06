@@ -42,24 +42,31 @@ AS_HELP_STRING([--with-ada-util=x], [Path for Ada Utility Library]),
 ])
 AC_MSG_RESULT(${KEYSTORE_USE_ADA_UTIL})
 
-if test T${KEYSTORE_USE_ADA_UTIL} = Tyes; then
-  AM_GNAT_FIND_PROJECT([ada-util],[Ada Utility Library],[utilada_sys],
-  [git@github.com:stcarrez/ada-util.git],
-  [Building Ada Keystore requires the Ada Utility Library.],
-  [
-    UTIL_DIR=${ac_cv_gnat_project_dir_utilada_sys}
-  ])
-  WITH_ADA_UTIL="with \"${UTIL_DIR}utilada_core\";";
-  WITH_ADA_UTIL_SYS="with \"${UTIL_DIR}utilada_sys\";";
+AM_GNAT_CHECK_PROJECT([utilada_sys],[utilada_sys])
+if test T$ac_cv_gnat_project_utilada_sys = Tno; then
+
+  if test T${KEYSTORE_USE_ADA_UTIL} = Tyes; then
+    AM_GNAT_FIND_PROJECT([ada-util],[Ada Utility Library],[utilada_sys],
+    [git@github.com:stcarrez/ada-util.git],
+    [Building Ada Keystore requires the Ada Utility Library.],
+    [
+      UTIL_DIR=${ac_cv_gnat_project_dir_utilada_sys}
+    ])
+    WITH_ADA_UTIL="with \"${UTIL_DIR}utilada_core\";";
+    WITH_ADA_UTIL_SYS="with \"${UTIL_DIR}utilada_sys\";";
+  else
+    WITH_ADA_UTIL=''
+    WITH_ADA_UTIL_SYS=''
+    UTIL_DIR='./ada-util/'
+
+    ac_configure_args="${ac_configure_args} --disable-lzma --disable-aws --disable-curl --with-xmlada=no --with-build-root="`pwd`
+
+    AC_CONFIG_SUBDIRS(ada-util)
+  fi
 else
-  WITH_ADA_UTIL=''
-  WITH_ADA_UTIL_SYS=''
-  UTIL_DIR='./ada-util/'
-
-  ac_configure_args="${ac_configure_args} --disable-lzma --disable-aws --disable-curl --with-xmlada=no --with-build-root="`pwd`
-
-  AC_CONFIG_SUBDIRS(ada-util)
+  AM_GNAT_FIND_ADA_UTIL([Ada Keystore])
 fi
+
 AC_SUBST(UTIL_DIR)
 AC_SUBST(WITH_ADA_UTIL)
 AC_SUBST(WITH_ADA_UTIL_SYS)
