@@ -4,7 +4,7 @@ Section: libdevel
 Maintainer: Stephane Carrez <Stephane.Carrez@gmail.com>
 Build-Depends: debhelper (>= 10), autotools-dev,
  dh-ada-library,
- gnat, gnat-9,
+ gnat, gnat-8,
 # This line is parsed by debian/rules.
  gprbuild (>= 2015-2),
 # 2015-2 is compatible with gnat-7
@@ -15,8 +15,8 @@ Build-Depends: debhelper (>= 10), autotools-dev,
  pandoc, texlive-fonts-extra
 Standards-Version: 4.1.4
 Homepage: https://github.com/stcarrez/ada-keystore/
-Vcs-Git: https://github.com/stcarrez/ada-keystore.git -b debian-gnat-9
-Vcs-Browser: https://github.com/stcarrez/ada-keystore/tree/debian-gnat-9
+Vcs-Git: https://github.com/stcarrez/ada-keystore.git -b debian-gnat-8
+Vcs-Browser: https://github.com/stcarrez/ada-keystore/tree/debian-gnat-8
 
 Package: akt
 Section: utils
