@@ -2724,30 +2724,30 @@ if test T$ac_cv_gnat_project_utilada_sys = Tno; then
 if test "${with_ada_util+set}" = set; then :
   withval=$with_ada_util;
       if test "${withval}/" = "yes/"; then
-        ac_cv_gnat_project_name_utilada_sys=${awa_build_root}ada-util
+        ac_cv_gnat_project_name_utilada_base=${awa_build_root}ada-util
       else
-        ac_cv_gnat_project_name_utilada_sys=${withval}/
+        ac_cv_gnat_project_name_utilada_base=${withval}/
         if test -d "${withval}"; then
-	      ac_cv_gnat_project_name_utilada_sys=${withval}/utilada_sys
+	      ac_cv_gnat_project_name_utilada_base=${withval}/utilada_base
 	    fi
       fi
 
 else
 
-      ac_cv_gnat_project_name_utilada_sys=${awa_build_root}utilada_sys
+      ac_cv_gnat_project_name_utilada_base=${awa_build_root}utilada_base
 
 fi
 
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking Ada Utility Library" >&5
 $as_echo_n "checking Ada Utility Library... " >&6; }
-if ${ac_cv_gnat_project_utilada_sys+:} false; then :
+if ${ac_cv_gnat_project_utilada_base+:} false; then :
   $as_echo_n "(cached) " >&6
 else
 
     rm -f conftest.gpr
     # Search in the GNAT project path.
-    echo "with \"${ac_cv_gnat_project_name_utilada_sys}\"; project conftest is for Source_Dirs use (); end conftest;" > conftest.gpr
+    echo "with \"${ac_cv_gnat_project_name_utilada_base}\"; project conftest is for Source_Dirs use (); end conftest;" > conftest.gpr
     if { ac_try='$GNATCHECK -Pconftest.gpr $GNATCHECK_ARG > /dev/null 2>conftest.out'
   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
   (eval $ac_try) 2>&5
@@ -2755,13 +2755,13 @@ else
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; }
     then
-      ac_cv_gnat_project_utilada_sys=yes
+      ac_cv_gnat_project_utilada_base=yes
     else
-      ac_cv_gnat_project_utilada_sys=no
+      ac_cv_gnat_project_utilada_base=no
 
-      # Search in ../ada-util-*/utilada_sys.gpr
+      # Search in ../ada-util-*/utilada_base.gpr
       dir=`cd .. && pwd ${awa_pwd_option}`
-      files=`ls -r $dir/ada-util/utilada_sys.gpr $dir/utilada_sys/utilada_sys.gpr $dir/ada-util-*/utilada_sys.gpr 2>/dev/null`
+      files=`ls -r $dir/ada-util/utilada_base.gpr $dir/utilada_base/utilada_base.gpr $dir/ada-util-*/utilada_base.gpr 2>/dev/null`
       for name in $files; do
         dir=`dirname $name`
         # AC_MSG_CHECKING([for Ada Utility Library project in ${dir}])
@@ -2773,17 +2773,17 @@ else
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; }
         then
-           ac_cv_gnat_project_utilada_sys=yes
-		   ac_cv_gnat_project_name_utilada_sys=${name}
+           ac_cv_gnat_project_utilada_base=yes
+		   ac_cv_gnat_project_name_utilada_base=${name}
            # AC_MSG_RESULT(yes, using ${name})
            break
         else
-           ac_cv_gnat_project_utilada_sys=no
+           ac_cv_gnat_project_utilada_base=no
            # AC_MSG_RESULT(no)
         fi
       done
-      if test x${ac_cv_gnat_project_utilada_sys} != xyes; then
-        echo "with \"utilada_sys\"; project conftest is for Source_Dirs use (); end conftest;" > conftest.gpr
+      if test x${ac_cv_gnat_project_utilada_base} != xyes; then
+        echo "with \"utilada_base\"; project conftest is for Source_Dirs use (); end conftest;" > conftest.gpr
         if { ac_try='$GNATCHECK -Pconftest.gpr $GNATCHECK_ARG > /dev/null 2>conftest.out'
   { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_try\""; } >&5
   (eval $ac_try) 2>&5
@@ -2791,35 +2791,35 @@ else
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; }
         then
-           ac_cv_gnat_project_utilada_sys=yes
-           ac_cv_gnat_project_name_utilada_sys=utilada_sys
+           ac_cv_gnat_project_utilada_base=yes
+           ac_cv_gnat_project_name_utilada_base=utilada_base
         else
-           ac_cv_gnat_project_utilada_sys=no
+           ac_cv_gnat_project_utilada_base=no
         fi
       fi
     fi
     rm -f conftest.gpr
 
-    if test x${ac_cv_gnat_project_utilada_sys} = xyes; then
-      ac_cv_gnat_project_with_utilada_sys="with \"${ac_cv_gnat_project_name_utilada_sys}\";";
-      ac_cv_gnat_project_dir_utilada_sys=`dirname ${ac_cv_gnat_project_name_utilada_sys}`
-      if test ${ac_cv_gnat_project_dir_utilada_sys} = . ; then
-        ac_cv_gnat_project_dir_utilada_sys=
+    if test x${ac_cv_gnat_project_utilada_base} = xyes; then
+      ac_cv_gnat_project_with_utilada_base="with \"${ac_cv_gnat_project_name_utilada_base}\";";
+      ac_cv_gnat_project_dir_utilada_base=`dirname ${ac_cv_gnat_project_name_utilada_base}`
+      if test ${ac_cv_gnat_project_dir_utilada_base} = . ; then
+        ac_cv_gnat_project_dir_utilada_base=
       else
-        ac_cv_gnat_project_dir_utilada_sys="${ac_cv_gnat_project_dir_utilada_sys}/"
+        ac_cv_gnat_project_dir_utilada_base="${ac_cv_gnat_project_dir_utilada_base}/"
       fi
     else
-      ac_cv_gnat_project_dir_utilada_sys=
-      ac_cv_gnat_project_name_utilada_sys=
+      ac_cv_gnat_project_dir_utilada_base=
+      ac_cv_gnat_project_name_utilada_base=
     fi
 
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_gnat_project_utilada_sys" >&5
-$as_echo "$ac_cv_gnat_project_utilada_sys" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_gnat_project_utilada_base" >&5
+$as_echo "$ac_cv_gnat_project_utilada_base" >&6; }
 
-  if test x${ac_cv_gnat_project_utilada_sys} = xyes; then
+  if test x${ac_cv_gnat_project_utilada_base} = xyes; then
 
-      UTIL_DIR=${ac_cv_gnat_project_dir_utilada_sys}
+      UTIL_DIR=${ac_cv_gnat_project_dir_utilada_base}
 
   else
     if test x"Building Ada Keystore requires the Ada Utility Library." != x; then
@@ -2829,7 +2829,7 @@ $as_echo "no" >&6; }
   You should build and install the Ada Utility Library component.
   It must be available and found by ${GNATMAKE}.
   This project was not found in the ADA_PROJECT_PATH environment variable.
-  This project was not found in ../utilada_sys nor in ../ada-util-*.
+  This project was not found in ../utilada_base nor in ../ada-util-*.
   The component is available at git@github.com:stcarrez/ada-util.git.
   Please, download and configure Ada Utility Library.
   The current configuration was using:
@@ -2840,7 +2840,7 @@ $as_echo "no" >&6; }
   fi
 
     WITH_ADA_UTIL="with \"${UTIL_DIR}utilada_core\";";
-    WITH_ADA_UTIL_SYS="with \"${UTIL_DIR}utilada_sys\";";
+    WITH_ADA_UTIL_SYS="with \"${UTIL_DIR}utilada_base\";";
   else
     WITH_ADA_UTIL=''
     WITH_ADA_UTIL_SYS=''
