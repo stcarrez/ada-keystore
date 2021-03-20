@@ -5,9 +5,9 @@
 [![Test Status](https://img.shields.io/jenkins/t/https/jenkins.vacs.fr/Bionic-Ada-Keystore.svg)](http://jenkins.vacs.fr/job/Bionic-Ada-Keystore/)
 [![codecov](https://codecov.io/gh/stcarrez/ada-keystore/branch/master/graph/badge.svg)](https://codecov.io/gh/stcarrez/ada-keystore)
 [![Documentation Status](https://readthedocs.org/projects/ada-keystore/badge/?version=latest)](https://ada-keystore.readthedocs.io/en/latest/?badge=latest)
-[![Download](https://img.shields.io/badge/download-1.2.1-brightgreen.svg)](http://download.vacs.fr/ada-keystore/ada-keystore-1.2.1.tar.gz)
+[![Download](https://img.shields.io/badge/download-1.3.1-brightgreen.svg)](http://download.vacs.fr/ada-keystore/ada-keystore-1.3.1.tar.gz)
 [![License](http://img.shields.io/badge/license-APACHE2-blue.svg)](LICENSE)
-![Commits](https://img.shields.io/github/commits-since/stcarrez/ada-keystore/1.2.1.svg)
+![Commits](https://img.shields.io/github/commits-since/stcarrez/ada-keystore/1.3.1.svg)
 ![semver](https://img.shields.io/badge/semver-2.0.0-blue.svg?cacheSeconds=2592000)
 
 # TL;DR
