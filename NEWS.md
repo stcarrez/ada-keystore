@@ -1,3 +1,6 @@
+Version 1.3.2  - Jul 2021
+  - Minor compilation warning fixes
+
 Version 1.3.1  - Feb 2021
   - Improvement of message localization
 
