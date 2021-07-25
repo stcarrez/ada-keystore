@@ -53,8 +53,8 @@ Mount the keystore:
    umount /mnt
 ```
 
-## Version 1.3.1  - Feb 2021
-- Improvement of message localization
+## Version 1.3.2  - Jul 2021
+- Minor compilation warning fixes
 
 [List all versions](https://github.com/stcarrez/ada-keystore/blob/master/NEWS.md)
 
