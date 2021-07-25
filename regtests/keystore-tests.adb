@@ -24,7 +24,6 @@ with GNAT.Regpat;
 with Util.Files;
 with Util.Strings;
 with Util.Test_Caller;
-with Util.Encoders.AES;
 with Util.Log.Loggers;
 with Util.Processes;
 with Util.Streams.Buffered;
