@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-passwords-gpg -- Password protected by GPG
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -54,7 +54,8 @@ package body Keystore.Passwords.GPG is
                               Value : in Interfaces.Unsigned_32);
 
    --  Headers of GPG packet.
-   GPG_OLD_TAG_1 : constant Ada.Streams.Stream_Element := 16#85#;
+   GPG_OLD_TAG_1   : constant Ada.Streams.Stream_Element := 16#85#;
+   GPG_TAG_2       : constant Ada.Streams.Stream_Element := 16#84#;
    GPG_NEW_VERSION : constant Ada.Streams.Stream_Element := 16#03#;
 
    function Get_Unsigned_32 (Data : in Stream_Element_Array) return Interfaces.Unsigned_32 is
@@ -97,6 +98,17 @@ package body Keystore.Passwords.GPG is
       if Data'Length < 16 then
          return "";
       end if;
+      --  Look for: 84 5e 03 <key-id>
+      if Data (Data'First + 4) = GPG_TAG_2 then
+         if Data (Data'First + 6) /= GPG_NEW_VERSION then
+            return "";
+         end if;
+
+         L1 := Get_Le_Long (Data (Data'First + 4 + 3 .. Data'Last));
+         L2 := Get_Le_Long (Data (Data'First + 8 + 3 .. Data'Last));
+         return Encode.Encode_Unsigned_32 (L1) & Encode.Encode_Unsigned_32 (L2);
+      end if;
+      --  Look for: 85 01 0C 03 <key-id>
       if Data (Data'First + 4) /= GPG_OLD_TAG_1 then
          return "";
       end if;
@@ -127,7 +139,7 @@ package body Keystore.Passwords.GPG is
       --  GPG2 command output:
       --  ssb:u:<key-size>:<key-algo>:<key-id>:<create-date>:<expire-date>:::::<e>:
       REGEX2 : constant String
-        := "^(ssb|sec):u?:[1-9][0-9][0-9][0-9]:[0-9]:([0-9a-fA-F]+):[0-9]+:[0-9]*:::::[esa]+::.*";
+        := "^(ssb|sec):u?:[1-9][0-9]+:[0-9]+:([0-9a-fA-F]+):[0-9]+:[0-9]*:::::[esa]+::.*";
 
       Pattern1 : constant GNAT.Regpat.Pattern_Matcher := GNAT.Regpat.Compile (REGEX1);
       Pattern2 : constant GNAT.Regpat.Pattern_Matcher := GNAT.Regpat.Compile (REGEX2);
@@ -135,9 +147,11 @@ package body Keystore.Passwords.GPG is
       procedure Parse (Line : in String) is
          Matches : GNAT.Regpat.Match_Array (0 .. 2);
       begin
+         Log.Debug ("Check {0}", Line);
          if GNAT.Regpat.Match (Pattern2, Line) then
             GNAT.Regpat.Match (Pattern2, Line, Matches);
             List.Include (Line (Matches (2).First .. Matches (2).Last));
+            Log.Debug ("Found key '{0}'", Line (Matches (2).First .. Matches (2).Last));
 
          elsif GNAT.Regpat.Match (Pattern1, Line) then
             GNAT.Regpat.Match (Pattern1, Line, Matches);
@@ -166,7 +180,7 @@ package body Keystore.Passwords.GPG is
          declare
             Line : Ada.Strings.Unbounded.Unbounded_String;
          begin
-            Reader.Read_Line (Line);
+            Reader.Read_Line (Line, True);
             Parse (To_String (Line));
          end;
       end loop;
@@ -305,6 +319,7 @@ package body Keystore.Passwords.GPG is
             declare
                Key_Id : constant String := Extract_Key_Id (Data (Data'First .. Last));
             begin
+               Log.Info ("Extracted key {0}", Key_Id);
                if List.Contains (Key_Id) then
                   Context.Decrypt_GPG_Secret (Data (Data'First .. Last));
                   exit when Context.Valid_Key;
