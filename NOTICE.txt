@@ -1,5 +1,5 @@
 Ada Keystore
-Copyright 2019-2021 Stephane Carrez
+Copyright 2019-2022 Stephane Carrez
 
 This product includes software developed by:
 Stephane Carrez (https://blog.vacs.fr/).
