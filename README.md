@@ -53,6 +53,9 @@ Mount the keystore:
    umount /mnt
 ```
 
+## Version 1.3.3  - Under development
+- Fix GPG support on MacOS
+
 ## Version 1.3.2  - Jul 2021
 - Minor compilation warning fixes
 
