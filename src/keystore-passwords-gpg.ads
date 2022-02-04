@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-passwords-gpg -- Password protected by GPG
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,9 +27,9 @@ package Keystore.Passwords.GPG is
 
    MAX_ENCRYPT_SIZE : constant := 1024;
 
-   LIST_COMMAND    : constant String := "gpg2 --list-secret-keys --with-colons --with-fingerprint";
-   ENCRYPT_COMMAND : constant String := "gpg2 --encrypt --batch --yes -r $USER";
-   DECRYPT_COMMAND : constant String := "gpg2 --decrypt --batch --yes --quiet";
+   LIST_COMMAND    : constant String := "gpg --list-secret-keys --with-colons --with-fingerprint";
+   ENCRYPT_COMMAND : constant String := "gpg --encrypt --batch --yes -r $USER";
+   DECRYPT_COMMAND : constant String := "gpg --decrypt --batch --yes --quiet";
 
    --  Extract the Key ID from the data content when it is encrypted by GPG2.
    function Extract_Key_Id (Data : in Ada.Streams.Stream_Element_Array) return String;
