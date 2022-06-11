@@ -19,7 +19,6 @@ with Ada.Streams;
 with Ada.Strings.Unbounded;
 with Ada.Finalization;
 with Util.Strings.Sets;
-with Keystore;
 with Keystore.Files;
 with Keystore.Passwords.Keys;
 private with Keystore.IO;
