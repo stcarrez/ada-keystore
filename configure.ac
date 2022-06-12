@@ -2,7 +2,8 @@ dnl Autoconf configure script for keystore
 
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT(src/keystore.ads)
+AC_INIT
+AC_CONFIG_SRCDIR([src/keystore.ads])
 
 # Current release settings
 KEYSTORE_MAJOR_VERSION=1
@@ -188,10 +189,10 @@ HAVE_FUSE=$ac_enable_fuse
 AC_SUBST(HAVE_FUSE)
 AC_SUBST(WITH_FUSE_ADA)
 
-AC_OUTPUT(
-Makefile.conf
+AC_CONFIG_FILES([Makefile.conf
 keystoreada.gpr
 keystoreada_tools.gpr
 keystoreada_tests.gpr
 keystoreada_gtk.gpr
-)
+])
+AC_OUTPUT
