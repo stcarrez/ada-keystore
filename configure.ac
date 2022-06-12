@@ -192,6 +192,8 @@ if test x$ac_enable_fuse = 'xyes' && test x$FUSEADA_DIR = 'x'; then
       FUSEADA_DIR=${ac_cv_gnat_project_dir_ada_fuse}
       WITH_FUSE_ADA=${ac_cv_gnat_project_with_ada_fuse}
     ])
+else
+  WITH_FUSE_ADA=''
 fi
 
 HAVE_FUSE=$ac_enable_fuse
