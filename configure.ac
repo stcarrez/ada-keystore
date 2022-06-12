@@ -167,17 +167,6 @@ esac])dnl
 AC_MSG_CHECKING([whether Fuse is enabled])
 AC_MSG_RESULT($ac_enable_fuse)
 
-if test x$ac_enable_fuse = 'xyes' && test x$FUSEADA_DIR = 'x'; then
-
-  AM_GNAT_FIND_PROJECT([ada-fuse],[Fuse Ada Library],[ada_fuse],
-    [git@github.com:medsec/ada-fuse.git],
-    [Building Ada Keystore requires the Ada Fuse Library.],
-    [
-      FUSEADA_DIR=${ac_cv_gnat_project_dir_ada_fuse}
-      WITH_FUSE_ADA=${ac_cv_gnat_project_with_ada_fuse}
-    ])
-fi
-
 if test x$ac_enable_fuse = 'xyes'; then
   AC_CHECK_PROG(HAVE_PKG_CONFIG,pkg-config,yes)
   if test x$HAVE_PKG_CONFIG != 'xyes'; then
@@ -192,6 +181,17 @@ if test x$ac_enable_fuse = 'xyes'; then
     ac_enable_fuse=no
   fi
   AC_MSG_RESULT($ac_enable_fuse)
+fi
+
+if test x$ac_enable_fuse = 'xyes' && test x$FUSEADA_DIR = 'x'; then
+
+  AM_GNAT_FIND_PROJECT([ada-fuse],[Fuse Ada Library],[ada_fuse],
+    [git@github.com:medsec/ada-fuse.git],
+    [Building Ada Keystore requires the Ada Fuse Library.],
+    [
+      FUSEADA_DIR=${ac_cv_gnat_project_dir_ada_fuse}
+      WITH_FUSE_ADA=${ac_cv_gnat_project_with_ada_fuse}
+    ])
 fi
 
 HAVE_FUSE=$ac_enable_fuse
