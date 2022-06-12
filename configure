@@ -4329,6 +4329,8 @@ $as_echo "no" >&6; }
     fi
   fi
 
+else
+  WITH_FUSE_ADA=''
 fi
 
 HAVE_FUSE=$ac_enable_fuse
