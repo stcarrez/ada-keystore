@@ -183,6 +183,15 @@ if test x$ac_enable_fuse = 'xyes'; then
   if test x$HAVE_PKG_CONFIG != 'xyes'; then
     AC_MSG_ERROR([Please install pkg-config when fuse support is enabled.])     
   fi
+
+  AC_MSG_CHECKING([whether Fuse is supported])
+  if AC_TRY_COMMAND([pkg-config --libs fuse > /dev/null 2>conftest.out])
+  then
+    ac_enable_fuse=yes
+  else
+    ac_enable_fuse=no
+  fi
+  AC_MSG_RESULT($ac_enable_fuse)
 fi
 
 HAVE_FUSE=$ac_enable_fuse
