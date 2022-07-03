@@ -22,7 +22,7 @@ keystore-tests.xml
 keystore-test.xml
 keystore-aunit.xml
 autom4te.cache
-bin
+bin/
 lib/
 obj/
 keystoreada.gpr
