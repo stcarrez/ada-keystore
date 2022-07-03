@@ -42,6 +42,7 @@ maintainers = ["Stephane.Carrez@gmail.com"]
 maintainers-logins = ["stcarrez"]
 project-files = [".alire/keystoreada.gpr"]
 tags = ["security", "storage", "nosql"]
+website = "https://gitlab.com/stcarrez/ada-keystore"
 
 [[depends-on]]
 utilada = "^2.5.0"
