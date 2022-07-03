@@ -44,8 +44,11 @@ project-files = [".alire/keystoreada.gpr"]
 tags = ["security", "storage", "nosql"]
 
 [[depends-on]]
-utilada = "^2.4.1"
+utilada = "^2.5.0"
 
 [gpr-externals]
 BUILD = ["distrib", "debug", "optimize", "profile", "coverage"]
 KEYSTORE_LIBRARY_TYPE = ["relocatable", "static", "static-pic"]
+
+[configuration]
+disabled = true
