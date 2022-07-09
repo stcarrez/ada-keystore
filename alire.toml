@@ -44,6 +44,13 @@ project-files = [".alire/keystoreada.gpr", ".alire/keystoreada_tools.gpr"]
 tags = ["security", "storage", "nosql"]
 website = "https://gitlab.com/stcarrez/ada-keystore"
 
+[[actions]]
+type = "post-fetch"
+command = ["gnatprep", "-DPREFIX=\"/usr/local\"", "-DVERSION=\"1.3.3\"",
+  "tools/akt-configs.gpb",
+  "tools/akt-configs.ads"
+]
+
 [[depends-on]]
 utilada = "^2.5.0"
 
