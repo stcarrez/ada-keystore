@@ -55,6 +55,7 @@ maintainers-logins = ["stcarrez"]
 project-files = [".alire/keystoreada_tools.gpr"]
 tags = ["security", "storage", "nosql"]
 website = "https://gitlab.com/stcarrez/ada-keystore"
+executables = ["akt"]
 
 [[actions]]
 type = "post-fetch"
