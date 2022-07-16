@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-io-files -- Ada keystore IO for files
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -214,6 +214,7 @@ package body Keystore.IO.Files is
    --  ------------------------------
    --  Close the wallet stream and release any resource.
    --  ------------------------------
+   overriding
    procedure Close (Stream : in out Wallet_Stream) is
    begin
       Stream.Descriptor.Close;
@@ -318,7 +319,7 @@ package body Keystore.IO.Files is
       --  ------------------------------
       function Is_Used (Block  : in Block_Number) return Boolean is
       begin
-         return Block <= Size and not Free_Blocks.Contains (Block);
+         return Block <= Size and then not Free_Blocks.Contains (Block);
       end Is_Used;
 
       --  ------------------------------
@@ -415,7 +416,6 @@ package body Keystore.IO.Files is
 
    end File_Stream;
 
-
    protected body Stream_Descriptor is
 
       function Get_Storage_Path (Storage_Id : in Storage_Identifier) return String is
@@ -450,7 +450,7 @@ package body Keystore.IO.Files is
 
          Result := Util.Systems.Os.Sys_Fstat (Fd, Stat'Access);
 
-         if Result /= 0 or Stat.st_size mod IO.Block_Size /= 0 then
+         if Result /= 0 or else Stat.st_size mod IO.Block_Size /= 0 then
             Result := Util.Systems.Os.Sys_Close (Fd);
             Log.Error ("Invalid or truncated keystore file '{0}': size is incorrect", Path);
             raise Keystore.Invalid_Keystore with Path;
@@ -585,8 +585,8 @@ package body Keystore.IO.Files is
                           Storage : out Storage_Identifier;
                           File    : out File_Stream_Access) is
       begin
-         if Kind = IO.MASTER_BLOCK or Kind = IO.DIRECTORY_BLOCK
-           or Last_Id = DEFAULT_STORAGE_ID
+         if Kind in IO.MASTER_BLOCK | IO.DIRECTORY_BLOCK
+           or else Last_Id = DEFAULT_STORAGE_ID
          then
             Storage := DEFAULT_STORAGE_ID;
          else

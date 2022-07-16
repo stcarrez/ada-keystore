@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-io-files -- Ada keystore IO for files
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -89,6 +89,7 @@ package Keystore.IO.Files is
                           Count   : in Positive);
 
    --  Close the wallet stream and release any resource.
+   overriding
    procedure Close (Stream : in out Wallet_Stream);
 
 private

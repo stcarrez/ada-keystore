@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-repository-data -- Data access and management for the keystore
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -221,7 +221,7 @@ package body Keystore.Repository.Workers is
             if Status = SUCCESS then
                Status := Work.Status;
             end if;
-            if Process /= null and Status = SUCCESS then
+            if Process /= null and then Status = SUCCESS then
                Process (Work);
             end if;
             Put_Work (Workers.all, Work);
@@ -452,7 +452,7 @@ package body Keystore.Repository.Workers is
          Encrypt_Size : IO.Block_Index;
       begin
          --  This is a new block, fill empty area with zero or random values.
-         if Work.Data_Need_Setup and Data_Block.Pos < Work.Start_Data then
+         if Work.Data_Need_Setup and then Data_Block.Pos < Work.Start_Data then
             if Work.Manager.Config.Randomize then
                Work.Random.Generate (Buf.Data (Data_Block.Pos + 1 .. Work.Start_Data - 1));
             else
