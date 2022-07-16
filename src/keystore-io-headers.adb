@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-io-headers -- Keystore file header operations
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -289,7 +289,7 @@ package body Keystore.IO.Headers is
       end if;
 
       --  Shift
-      if Index < Header.Data_Count and Space /= 0 then
+      if Index < Header.Data_Count and then Space /= 0 then
          Start := Buffer.Pos + 4 + Size;
          Buf.Data (Start + Space .. Last + Space) := Buf.Data (Start .. Last);
       end if;

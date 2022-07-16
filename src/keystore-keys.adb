@@ -272,7 +272,7 @@ package body Keystore.Keys is
       Counter_IV := Marshallers.Get_Unsigned_32 (Buffer);
       if Counter_Key = 0
         or else Counter_IV = 0
-        or else Size /= Util.Encoders.AES.Aes_256_Length
+        or else Size /= Util.Encoders.AES.AES_256_Length
       then
          return False;
       end if;

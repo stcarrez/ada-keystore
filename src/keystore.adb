@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore -- Ada keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -117,6 +117,7 @@ package body Keystore is
       Manager.Stop;
    end Stop;
 
+   overriding
    procedure Execute (Manager : in out Task_Manager;
                       Work    : in Work_Type_Access) is
    begin

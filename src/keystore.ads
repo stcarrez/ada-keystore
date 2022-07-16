@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore -- Ada keystore
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -401,6 +401,7 @@ private
    type Task_Manager (Count : Positive) is limited
    new Executors.Executor_Manager (Count) with null record;
 
+   overriding
    procedure Execute (Manager : in out Task_Manager;
                       Work    : in Work_Type_Access);
 

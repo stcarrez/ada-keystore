@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-repository-keys -- Data keys management
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -96,7 +96,7 @@ package body Keystore.Repository.Keys is
 
    function Is_Last_Key (Iterator : in Data_Key_Iterator) return Boolean is
    begin
-      return Iterator.Count = 0 and Iterator.Directory /= null;
+      return Iterator.Count = 0 and then Iterator.Directory /= null;
    end Is_Last_Key;
 
    procedure Seek (Manager  : in out Wallet_Repository;
