@@ -180,6 +180,9 @@ if test x$ac_enable_fuse = 'xyes'; then
     ac_enable_fuse=yes
   else
     ac_enable_fuse=no
+    USE_GIT_FUSE=no
+    FUSEADA_DIR=
+    WITH_FUSE_ADA=''
   fi
   AC_MSG_RESULT($ac_enable_fuse)
 fi
