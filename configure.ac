@@ -150,6 +150,7 @@ if test ${ac_enable_fuse} = 'yes'; then
 else
    FUSEADA_DIR=
    USE_GIT_FUSE=no
+   WITH_FUSE_ADA=''
 fi
 AC_SUBST(USE_GIT_FUSE)
 
@@ -184,16 +185,15 @@ if test x$ac_enable_fuse = 'xyes'; then
 fi
 
 if test x$ac_enable_fuse = 'xyes' && test x$FUSEADA_DIR = 'x'; then
-
-  AM_GNAT_FIND_PROJECT([ada-fuse],[Fuse Ada Library],[ada_fuse],
+  if test x$USE_GIT_FUSE = 'xno'; then
+   AM_GNAT_FIND_PROJECT([ada-fuse],[Fuse Ada Library],[ada_fuse],
     [git@github.com:medsec/ada-fuse.git],
     [Building Ada Keystore requires the Ada Fuse Library.],
     [
       FUSEADA_DIR=${ac_cv_gnat_project_dir_ada_fuse}
       WITH_FUSE_ADA=${ac_cv_gnat_project_with_ada_fuse}
     ])
-else
-  WITH_FUSE_ADA=''
+  fi
 fi
 
 HAVE_FUSE=$ac_enable_fuse
