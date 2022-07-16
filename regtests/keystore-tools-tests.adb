@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-tools-tests -- Tests for files
---  Copyright (C) 2019, 2021 Stephane Carrez
+--  Copyright (C) 2019, 2021, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,7 +46,7 @@ package body Keystore.Tools.Tests is
          if Kind = Ada.Directories.Ordinary_File then
             return Util.Strings.Ends_With (Name, ".ads");
          else
-            return Name /= ".git" and Name /= "results";
+            return Name /= ".git" and then Name /= "results";
          end if;
       end Filter;
 

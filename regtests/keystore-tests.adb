@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-tests -- Tests for akt command
---  Copyright (C) 2019, 2020, 2021 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2021, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -630,7 +630,6 @@ package body Keystore.Tests is
 
    end Test_Tool_Edit;
 
-
    --  ------------------------------
    --  Test the akt edit command.
    --  ------------------------------
@@ -743,7 +742,6 @@ package body Keystore.Tests is
       Util.Tests.Assert_Matches (T, "^akt: value 'missing-2' not found", Result,
                                  "Invalid value for extract command");
    end Test_Tool_Extract_Error;
-
 
    --  ------------------------------
    --  Test the akt password-set command.
