@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-io -- IO low level operation for the keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -129,6 +129,6 @@ private package Keystore.IO is
                     Cipher       : in out Util.Encoders.AES.Encoder;
                     Sign         : in Secret_Key;
                     From         : in out Buffers.Storage_Buffer) with
-     Pre => Encrypt_Size mod 16 = 0 and Encrypt_Size <= BT_DATA_LENGTH;
+     Pre => Encrypt_Size mod 16 = 0 and then Encrypt_Size <= BT_DATA_LENGTH;
 
 end Keystore.IO;

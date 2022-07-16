@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-keys -- Keystore key management
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -270,7 +270,10 @@ package body Keystore.Keys is
    begin
       Counter_Key := Marshallers.Get_Unsigned_32 (Buffer);
       Counter_IV := Marshallers.Get_Unsigned_32 (Buffer);
-      if Counter_Key = 0 or Counter_IV = 0 or Size /= Util.Encoders.AES.AES_256_Length then
+      if Counter_Key = 0
+        or else Counter_IV = 0
+        or else Size /= Util.Encoders.AES.Aes_256_Length
+      then
          return False;
       end if;
 
@@ -562,7 +565,7 @@ package body Keystore.Keys is
             Value := Marshallers.Get_Unsigned_32 (Buffer);
             if Value = WH_KEY_PBKDF2 then
                Value := Marshallers.Get_Unsigned_32 (Buffer);
-               if Value > 0 and Value <= WH_KEY_SIZE then
+               if Value > 0 and then Value <= WH_KEY_SIZE then
                   if Verify_PBKDF2 (Manager, Buffer, Password, Positive (Value), Config) then
                      Config.Slot := Slot;
                      if Process /= null then
@@ -744,7 +747,7 @@ package body Keystore.Keys is
       procedure Process (Buffer : in out Marshallers.Marshaller;
                          Password_Slot   : in Key_Slot) is
       begin
-         if Slot /= Password_Slot or Remove_Current then
+         if Slot /= Password_Slot or else Remove_Current then
             Erase_Key (Manager, Buffer, Slot, Stream);
          else
             Log.Info ("Refusing to delete key slot used by current password");

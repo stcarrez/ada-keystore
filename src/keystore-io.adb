@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-ios -- IO low level operation for the keystore
---  Copyright (C) 2019, 2021 Stephane Carrez
+--  Copyright (C) 2019, 2021, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -124,7 +124,7 @@ package body Keystore.IO is
                              Encoded => Encoded);
          Decipher.Finish (Into => Buf.Data (Last + 1 .. Last_Pos),
                           Last => Last);
-         if Encoded /= Last_Pos or Last /= Last_Pos then
+         if Encoded /= Last_Pos or else Last /= Last_Pos then
             Keystore.Logs.Warn (Log, "Bloc{0} decryption failed", Into.Block);
             raise Invalid_Block;
          end if;

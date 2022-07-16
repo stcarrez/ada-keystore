@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-marshallers -- Data marshaller for the keystore
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -132,7 +132,7 @@ private package Keystore.Marshallers is
 
    procedure Get_String (From   : in out Marshaller;
                          Result : in out String) with
-     Pre => Stream_Element_Offset (Result'Length) < Block_Type'Last and
+     Pre => Stream_Element_Offset (Result'Length) < Block_Type'Last and then
      From.Pos <= Block_Type'Length - Stream_Element_Offset (Result'Length);
 
    function Get_Date (From : in out Marshaller) return Ada.Calendar.Time with

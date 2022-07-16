@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-passwords-keys -- Key provider
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,7 +30,7 @@ package Keystore.Passwords.Keys is
                        Key  : out Secret_Key;
                        IV   : out Secret_Key;
                        Sign : out Secret_Key) is abstract with
-     Post'Class => Key.Length = 32 and IV.Length = 16 and Sign.Length = 32;
+     Post'Class => Key.Length in 32 | 16 and then Sign.Length = 32;
 
    --  Create a key, iv, sign provider from the string.
    function Create (Password : in String;

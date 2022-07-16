@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-files -- Ada keystore files
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -87,7 +87,7 @@ package Keystore.Files is
                               Index     : in Header_Slot_Index_Type;
                               Kind      : in Header_Slot_Type;
                               Data      : in Ada.Streams.Stream_Element_Array) with
-     Pre => Container.State in S_OPEN | S_PROTECTED and Data'Length <= 1024;
+     Pre => Container.State in S_OPEN | S_PROTECTED and then Data'Length <= 1024;
 
    --  Get the header data information from the keystore file.
    procedure Get_Header_Data (Container : in out Wallet_File;
@@ -104,30 +104,30 @@ package Keystore.Files is
                   Name      : in String;
                   Password  : in out Keystore.Passwords.Provider'Class;
                   Wallet    : in out Wallet_File'Class) with
-     Pre  => Container.Is_Open and not Wallet.Is_Open,
-     Post => Container.Is_Open and Wallet.Is_Open;
+     Pre  => Container.Is_Open and then not Wallet.Is_Open,
+     Post => Container.Is_Open and then Wallet.Is_Open;
 
    procedure Add (Container : in out Wallet_File;
                   Name      : in String;
                   Password  : in Keystore.Secret_Key;
                   Wallet    : in out Wallet_File'Class) with
-     Pre  => Container.Is_Open and not Wallet.Is_Open,
-     Post => Container.Is_Open and Wallet.Is_Open;
+     Pre  => Container.Is_Open and then not Wallet.Is_Open,
+     Post => Container.Is_Open and then Wallet.Is_Open;
 
    --  Load from the container the named children wallet.
    procedure Open (Container : in out Wallet_File;
                    Name      : in String;
                    Password  : in out Keystore.Passwords.Provider'Class;
                    Wallet    : in out Wallet_File'Class) with
-     Pre  => Container.Is_Open and not Wallet.Is_Open,
-     Post => Container.Is_Open and Wallet.Is_Open;
+     Pre  => Container.Is_Open and then not Wallet.Is_Open,
+     Post => Container.Is_Open and then Wallet.Is_Open;
 
    procedure Open (Container : in out Wallet_File;
                    Name      : in String;
                    Password  : in Secret_Key;
                    Wallet    : in out Wallet_File'Class) with
-     Pre  => Container.Is_Open and not Wallet.Is_Open,
-     Post => Container.Is_Open and Wallet.Is_Open;
+     Pre  => Container.Is_Open and then not Wallet.Is_Open,
+     Post => Container.Is_Open and then Wallet.Is_Open;
 
    --  Return True if the container was configured.
    overriding
@@ -211,6 +211,7 @@ package Keystore.Files is
 
    --  Update in the wallet the named entry and associate it the new content.
    --  The secret key and IV vectors are not changed.
+   overriding
    procedure Update (Container : in out Wallet_File;
                      Name      : in String;
                      Kind      : in Entry_Type := T_BINARY;
@@ -270,6 +271,7 @@ package Keystore.Files is
 
    --  Get the list of entries contained in the wallet that correspond to the optiona filter
    --  and whose name matches the pattern.
+   overriding
    procedure List (Container : in out Wallet_File;
                    Pattern   : in GNAT.Regpat.Pattern_Matcher;
                    Filter    : in Filter_Type := (others => True);

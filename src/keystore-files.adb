@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-files -- Ada keystore files
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -372,6 +372,7 @@ package body Keystore.Files is
    --  Update in the wallet the named entry and associate it the new content.
    --  The secret key and IV vectors are not changed.
    --  ------------------------------
+   overriding
    procedure Update (Container : in out Wallet_File;
                      Name      : in String;
                      Kind      : in Entry_Type := T_BINARY;
@@ -453,6 +454,7 @@ package body Keystore.Files is
    --  Get the list of entries contained in the wallet that correspond to the optiona filter
    --  and whose name matches the pattern.
    --  ------------------------------
+   overriding
    procedure List (Container : in out Wallet_File;
                    Pattern   : in GNAT.Regpat.Pattern_Matcher;
                    Filter    : in Filter_Type := (others => True);

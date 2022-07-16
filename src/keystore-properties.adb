@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-properties -- Property manager on top of keystore
---  Copyright (C) 2020 Stephane Carrez
+--  Copyright (C) 2020, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -58,6 +58,7 @@ package body Keystore.Properties is
                                                   Item : in Util.Beans.Objects.Object));
 
    --  Deep copy of properties stored in 'From' to 'To'.
+   overriding
    function Create_Copy (Self : in Wallet_Manager)
                          return Util.Properties.Implementation.Manager_Access;
 
@@ -74,6 +75,7 @@ package body Keystore.Properties is
    procedure Check_And_Create_Impl is
       new Util.Properties.Implementation.Create (Allocator => Allocate_Property);
 
+   overriding
    procedure Initialize (Object : in out Manager) is
    begin
       Check_And_Create_Impl (Object);
@@ -118,6 +120,7 @@ package body Keystore.Properties is
    --  ------------------------------
    --  Returns TRUE if the property exists.
    --  ------------------------------
+   overriding
    function Exists (Self : in Wallet_Manager;
                     Name : in String)
                     return Boolean is
@@ -128,6 +131,7 @@ package body Keystore.Properties is
    --  ------------------------------
    --  Remove the property given its name.
    --  ------------------------------
+   overriding
    procedure Remove (Self : in out Wallet_Manager;
                      Name : in String) is
    begin
@@ -140,6 +144,7 @@ package body Keystore.Properties is
    --  Iterate over the properties and execute the given procedure passing the
    --  property name and its value.
    --  ------------------------------
+   overriding
    procedure Iterate (Self    : in Wallet_Manager;
                       Process : access procedure (Name : in String;
                                                   Item : in Util.Beans.Objects.Object)) is
@@ -162,6 +167,7 @@ package body Keystore.Properties is
    --  ------------------------------
    --  Deep copy of properties stored in 'From' to 'To'.
    --  ------------------------------
+   overriding
    function Create_Copy (Self : in Wallet_Manager)
                          return Util.Properties.Implementation.Manager_Access is
       Result : constant Keystore_Manager_Access := new Property_Map;

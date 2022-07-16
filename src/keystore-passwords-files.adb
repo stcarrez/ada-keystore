@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-passwords-files -- File based password provider
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -82,7 +82,9 @@ package body Keystore.Passwords.Files is
       end if;
 
       pragma Warnings (Off, "*condition is always*");
-      if (Stat.st_mode and 8#0077#) /= 0 and Util.Systems.Os.Directory_Separator = '/' then
+      if (Stat.st_mode and 8#0077#) /= 0
+        and then Util.Systems.Os.Directory_Separator = '/'
+      then
          Log.Info ("Password file {0} is not safe", Path);
          raise Keystore.Bad_Password with "Password file is not safe";
       end if;
@@ -110,7 +112,9 @@ package body Keystore.Passwords.Files is
       end if;
 
       pragma Warnings (Off, "*condition is always*");
-      if (Stat.st_mode and 8#0077#) /= 0 and Util.Systems.Os.Directory_Separator = '/' then
+      if (Stat.st_mode and 8#0077#) /= 0
+        and then Util.Systems.Os.Directory_Separator = '/'
+      then
          Log.Info ("Directory {0} is not safe for password file", Dir);
          raise Keystore.Bad_Password
          with "Directory that contains password file is not safe";

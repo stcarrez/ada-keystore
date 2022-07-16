@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-repository-data -- Data access and management for the keystore
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -182,7 +182,7 @@ package body Keystore.Repository.Data is
    begin
       Workers.Initialize_Queue (Manager);
       Keys.Next_Data_Key (Manager, Iterator);
-      while Input_Pos <= Content'Last and Keys.Has_Data_Key (Iterator) loop
+      while Input_Pos <= Content'Last and then Keys.Has_Data_Key (Iterator) loop
          Workers.Allocate_Work (Manager, Workers.DATA_ENCRYPT, null, Iterator, Work);
 
          Size := Content'Last - Input_Pos + 1;
@@ -443,7 +443,7 @@ package body Keystore.Repository.Data is
       Workers.Initialize_Queue (Manager);
       Keys.Seek (Manager, Seek_Offset, Iterator);
       Length := Length + Seek_Offset;
-      while Keys.Has_Data_Key (Iterator) and Length > 0 loop
+      while Keys.Has_Data_Key (Iterator) and then Length > 0 loop
          Workers.Allocate_Work (Manager, Workers.DATA_DECRYPT, Process'Access, Iterator, Work);
          Work.Seek_Offset := Seek_Offset;
 
@@ -493,7 +493,7 @@ package body Keystore.Repository.Data is
 
       --  First part that overlaps an existing data block:
       --  read the current block, update the content.
-      if Keys.Has_Data_Key (Iterator) and Length > 0 then
+      if Keys.Has_Data_Key (Iterator) and then Length > 0 then
          Workers.Allocate_Work (Manager, Workers.DATA_DECRYPT, null, Iterator, Work);
 
          --  Run the decipher work ourselves.
@@ -536,7 +536,7 @@ package body Keystore.Repository.Data is
          Keys.Next_Data_Key (Manager, Iterator);
       end if;
 
-      while Keys.Has_Data_Key (Iterator) and Length >= DATA_MAX_SIZE loop
+      while Keys.Has_Data_Key (Iterator) and then Length >= DATA_MAX_SIZE loop
          Workers.Allocate_Work (Manager, Workers.DATA_ENCRYPT, null, Iterator, Work);
 
          Work.Buffer_Pos := 1;
@@ -558,7 +558,7 @@ package body Keystore.Repository.Data is
 
       --  Last part that overlaps an existing data block:
       --  read the current block, update the content.
-      if Keys.Has_Data_Key (Iterator) and Length > 0 then
+      if Keys.Has_Data_Key (Iterator) and then Length > 0 then
          Workers.Allocate_Work (Manager, Workers.DATA_DECRYPT, null, Iterator, Work);
 
          --  Run the decipher work ourselves.

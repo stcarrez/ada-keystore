@@ -281,7 +281,7 @@ package body Keystore.Passwords.GPG is
       end loop;
 
       Util.Processes.Wait (Proc);
-      if Util.Processes.Get_Exit_Status (Proc) /= 0 or Last <= 4 then
+      if Util.Processes.Get_Exit_Status (Proc) /= 0 or else Last <= 4 then
          Log.Warn ("GPG encrypt command '{0}' terminated with exit code{1}", Cmd,
                    Natural'Image (Util.Processes.Get_Exit_Status (Proc)));
          raise Keystore.Bad_Password;
@@ -449,7 +449,7 @@ package body Keystore.Passwords.GPG is
 
       Util.Processes.Wait (Proc);
       Status := Util.Processes.Get_Exit_Status (Proc);
-      Context.Valid_Key := Status = 0 and Last > 4;
+      Context.Valid_Key := Status = 0 and then Last > 4;
       if Context.Valid_Key then
          Context.Create_Secret (Context.Data);
       elsif Status /= 0 then

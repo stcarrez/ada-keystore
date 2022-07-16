@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-repository-entries -- Repository management for the keystore
---  Copyright (C) 2019, 2020, 2021 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2021, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -222,7 +222,7 @@ package body Keystore.Repository.Entries is
 
                --  Compute sum of sizes of every data block.
                Data_Key.Size := 0;
-               while Count > 0 and Offset > Directory.Key_Pos loop
+               while Count > 0 and then Offset > Directory.Key_Pos loop
                   Offset := Offset - DATA_KEY_ENTRY_SIZE;
 
                   --  Set marshaller to the data key size position.
