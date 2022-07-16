@@ -4126,6 +4126,7 @@ if test ${ac_enable_fuse} = 'yes'; then
 else
    FUSEADA_DIR=
    USE_GIT_FUSE=no
+   WITH_FUSE_ADA=''
 fi
 
 
@@ -4206,7 +4207,7 @@ $as_echo "$ac_enable_fuse" >&6; }
 fi
 
 if test x$ac_enable_fuse = 'xyes' && test x$FUSEADA_DIR = 'x'; then
-
+  if test x$USE_GIT_FUSE = 'xno'; then
 
 
 # Check whether --with-ada-fuse was given.
@@ -4329,8 +4330,7 @@ $as_echo "no" >&6; }
     fi
   fi
 
-else
-  WITH_FUSE_ADA=''
+  fi
 fi
 
 HAVE_FUSE=$ac_enable_fuse
