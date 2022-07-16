@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-verifier -- Toolbox to explore raw content of keystore
---  Copyright (C) 2019, 2021 Stephane Carrez
+--  Copyright (C) 2019, 2021, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -245,7 +245,7 @@ package body Keystore.Verifier is
             Btype := Marshallers.Get_Header_16 (Buffer);
             Esize := Marshallers.Get_Unsigned_16 (Buffer);
             Id := Marshallers.Get_Unsigned_32 (Buffer);
-            if Btype /= Current_Type or Id /= Current_Id then
+            if Btype /= Current_Type or else Id /= Current_Id then
                if Current_Id > 0 then
                   Report;
                end if;

@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-get -- Get content from keystore
---  Copyright (C) 2019, 2021 Stephane Carrez
+--  Copyright (C) 2019, 2021, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -63,6 +63,7 @@ package body AKT.Commands.Get is
    --  ------------------------------
    --  Setup the command before parsing the arguments and executing it.
    --  ------------------------------
+   overriding
    procedure Setup (Command : in out Command_Type;
                     Config  : in out GNAT.Command_Line.Command_Line_Configuration;
                     Context : in out Context_Type) is

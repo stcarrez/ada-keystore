@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-filesystem -- Fuse filesystem operations
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -211,7 +211,6 @@ package body AKT.Filesystem is
       return System.EXIT_SUCCESS;
    end Release;
 
-
    --------------------------
    --          Read        --
    --------------------------
@@ -244,7 +243,6 @@ package body AKT.Filesystem is
          return System.EINVAL;
    end Read;
 
-
    --------------------------
    --         Write        --
    --------------------------
@@ -275,7 +273,6 @@ package body AKT.Filesystem is
       when Keystore.Not_Found =>
          return System.EINVAL;
    end Write;
-
 
    --------------------------
    --       Read Dir       --

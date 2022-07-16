@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-mount -- Mount the keystore on the filesystem for direct access
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -50,7 +50,7 @@ package body AKT.Commands.Mount is
 
       --  If daemon(3) is available and -d is defined, run it so that the parent
       --  process terminates and the child process continues.
-      if not Command.Foreground and Sys_Daemon'Address /= System.Null_Address then
+      if not Command.Foreground and then Sys_Daemon'Address /= System.Null_Address then
          declare
             Result : constant Integer := Sys_Daemon (1, 0);
          begin
@@ -88,6 +88,7 @@ package body AKT.Commands.Mount is
    --  ------------------------------
    --  Setup the command before parsing the arguments and executing it.
    --  ------------------------------
+   overriding
    procedure Setup (Command : in out Command_Type;
                     Config  : in out GNAT.Command_Line.Command_Line_Configuration;
                     Context : in out Context_Type) is

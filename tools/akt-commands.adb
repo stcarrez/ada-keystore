@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands -- Ada Keystore Tool commands
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -382,7 +382,7 @@ package body AKT.Commands is
       GC.Getopt (Config => Context.Command_Config);
       Util.Commands.Parsers.GNAT_Parser.Get_Arguments (Arguments, GC.Get_Argument);
 
-      if Context.Debug or Context.Verbose or Context.Dump then
+      if Context.Debug or else Context.Verbose or else Context.Dump then
          AKT.Configure_Logs (Debug   => Context.Debug,
                              Dump    => Context.Dump,
                              Verbose => Context.Verbose);
@@ -431,7 +431,7 @@ package body AKT.Commands is
             Low := High;
          end if;
       end if;
-      if not (Low in Positive'Range) or not (High in Positive'Range) then
+      if not (Low in Positive'Range) or else not (High in Positive'Range) then
          AKT.Commands.Log.Error (-("value is out of range"));
          raise Error;
       end if;

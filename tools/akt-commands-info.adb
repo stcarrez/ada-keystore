@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-info -- Info command of keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,7 +49,7 @@ package body AKT.Commands.Info is
       Context.Wallet.Open (Path => Path,
                            Data_Path => Context.Data_Path.all,
                            Info => Context.Info);
-      if Context.No_Password_Opt and Context.Info.Header_Count = 0 then
+      if Context.No_Password_Opt and then Context.Info.Header_Count = 0 then
          return;
       end if;
       if not Context.No_Password_Opt then

@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-create -- Create a keystore
---  Copyright (C) 2019, 2021 Stephane Carrez
+--  Copyright (C) 2019, 2021, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -53,7 +53,7 @@ package body AKT.Commands.Create is
                raise Error;
          end;
       end if;
-      if Context.Data_Path'Length > 0 and Context.Config.Storage_Count = 1 then
+      if Context.Data_Path'Length > 0 and then Context.Config.Storage_Count = 1 then
          Context.Config.Storage_Count := 10;
       end if;
 
@@ -105,6 +105,7 @@ package body AKT.Commands.Create is
    --  ------------------------------
    --  Setup the command before parsing the arguments and executing it.
    --  ------------------------------
+   overriding
    procedure Setup (Command : in out Command_Type;
                     Config  : in out GNAT.Command_Line.Command_Line_Configuration;
                     Context : in out Context_Type) is
