@@ -118,6 +118,8 @@ $(eval $(call pandoc_build,keystoreada-book,$(KEYSTORE_DOC),\
         docs/Design_Implementation.md > docs/Keystore_Design.md))
 
 $(eval $(call ada_library,$(NAME)))
+$(eval $(call alire_publish,alire.toml,ke/keystoreada,keystoreada-$(VERSION).toml))
+$(eval $(call alire_publish,alire-akt.toml,ak/akt,akt-$(VERSION).toml))
 
 DIST_DIRS=ada-util ada-fuse
 dist::
