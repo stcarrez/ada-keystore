@@ -39,7 +39,7 @@ install::
 	mkdir -p $(DESTDIR)$(prefix)/bin
 	$(INSTALL) bin/akt $(DESTDIR)$(prefix)/bin/akt
 	mkdir -p $(DESTDIR)$(prefix)/share/man/man1
-	$(INSTALL) docs/akt.1 $(DESTDIR)$(prefix)/share/man/man1/akt.1
+	$(INSTALL) man/man1/akt.1 $(DESTDIR)$(prefix)/share/man/man1/akt.1
 	(cd share && tar --exclude='*~' -cf - .) \
        | (cd $(DESTDIR)$(prefix)/share/ && tar xf -)
 	mkdir -p $(DESTDIR)$(prefix)/share/locale/fr/LC_MESSAGES
@@ -53,7 +53,7 @@ gtk:
 
 install::
 	$(INSTALL) bin/gakt $(DESTDIR)$(prefix)/bin/gakt
-	$(INSTALL) docs/akt.1 $(DESTDIR)$(prefix)/share/man/man1/gakt.1
+	$(INSTALL) man/man1/akt.1 $(DESTDIR)$(prefix)/share/man/man1/gakt.1
 	mkdir -p $(DESTDIR)$(prefix)/share/gakt
 	$(INSTALL) gakt.glade $(DESTDIR)$(prefix)/share/gakt/gakt.glade
 
