@@ -77,3 +77,4 @@ disabled = true
 
 [environment]
 PATH.prepend = "${CRATE_ROOT}/bin"
+MANPATH.prepend = "${CRATE_ROOT}/man"
