@@ -1,4 +1,4 @@
-Version 1.3.3  -
+Version 1.3.3  - Aug 2022
   - Fix GPG support on MacOS
 
 Version 1.3.2  - Jul 2021
