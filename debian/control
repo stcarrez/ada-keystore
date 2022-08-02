@@ -7,10 +7,12 @@ Build-Depends: debhelper (>= 10), autotools-dev,
  gnat, gnat-9,
 # This line is parsed by debian/rules.
  gprbuild (>= 2015-2),
+ pkg-config,
+ libfuse-dev,
 # 2015-2 is compatible with gnat-7
 # dh-ada-library (>= 6.7)
- libutilada-sys2-dev,
- libutilada-unit2-dev,
+ libutilada-sys3-dev,
+ libutilada-unit3-dev,
 # pandoc requires texlive-fonts-extra for PDF
  pandoc, texlive-fonts-extra
 Standards-Version: 4.1.4
@@ -29,7 +31,7 @@ Description: protect your sensitive data with secure local storage
  its content.  AKT can be used to safely store passwords,
  credentials, bank accounts and even documents.
 
-Package: libkeystoreada1.2.1
+Package: libkeystoreada1.3.2
 Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
@@ -41,7 +43,7 @@ Description: Ada Keystore library (runtime)
  bank accounts and even documents.  The library allows one to manage the
  secure wallets from an Ada program.
 
-Package: libkeystoreada2-dev
+Package: libkeystoreada3-dev
 Section: libdevel
 Architecture: any
 Depends: ${misc:Depends}, ${ada:Depends}
