@@ -143,16 +143,6 @@ if test -f ada-fuse/ada_fuse.gpr; then
 else
    ac_enable_fuse=no
 fi
-if test ${ac_enable_fuse} = 'yes'; then
-   FUSEADA_DIR=ada-fuse
-   WITH_FUSE_ADA='with "ada-fuse/ada_fuse";'
-   USE_GIT_FUSE=yes
-else
-   FUSEADA_DIR=
-   USE_GIT_FUSE=no
-   WITH_FUSE_ADA=''
-fi
-AC_SUBST(USE_GIT_FUSE)
 
 AC_ARG_ENABLE(fuse,
 [  --enable-fuse           enable support for Fuse (disabled)],
@@ -167,6 +157,17 @@ esac])dnl
 
 AC_MSG_CHECKING([whether Fuse is enabled])
 AC_MSG_RESULT($ac_enable_fuse)
+
+if test ${ac_enable_fuse} = 'yes'; then
+   FUSEADA_DIR=ada-fuse
+   WITH_FUSE_ADA='with "ada-fuse/ada_fuse";'
+   USE_GIT_FUSE=yes
+else
+   FUSEADA_DIR=
+   USE_GIT_FUSE=no
+   WITH_FUSE_ADA=''
+fi
+AC_SUBST(USE_GIT_FUSE)
 
 if test x$ac_enable_fuse = 'xyes'; then
   AC_CHECK_PROG(HAVE_PKG_CONFIG,pkg-config,yes)
