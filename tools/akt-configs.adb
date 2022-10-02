@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-configs -- Configuration
---  Copyright (C) 2019, 2021 Stephane Carrez
+--  Copyright (C) 2019, 2021, 2022 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,10 +39,15 @@ package body AKT.Configs is
    --  Get the default configuration path.
    --  ------------------------------
    function Get_Default_Path return String is
-      Home     : constant String := Ada.Environment_Variables.Value ("HOME");
-      Def_Path : constant String := Util.Files.Compose (Home, ".config/akt/akt.properties");
    begin
-      return Def_Path;
+      if not Ada.Environment_Variables.Exists ("HOME") then
+         return "akt.properties";
+      end if;
+      declare
+         Home : constant String := Ada.Environment_Variables.Value ("HOME");
+      begin
+         return Util.Files.Compose (Home, ".config/akt/akt.properties");
+      end;
    end Get_Default_Path;
 
    --  ------------------------------
