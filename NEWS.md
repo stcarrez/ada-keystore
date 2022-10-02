@@ -1,3 +1,8 @@
+Version 1.3.4  - Under development
+  - Fix #14: Constraint_Error raised if the HOME environment variable is not defined
+  - Fix fuse detection on FreeBSD
+  - Fix building docker image
+
 Version 1.3.3  - Aug 2022
   - Fix GPG support on MacOS
 
