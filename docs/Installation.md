@@ -12,7 +12,7 @@ AdaCore GNAT Community 2019 edition.
 
 Install the following packages:
 ```
-sudo apt-get install -y make gnat-7 gprbuild git gnupg2
+sudo apt-get install -y make gnat gprbuild git gnupg2
 ```
 
 ### FreeBSD 12
@@ -42,7 +42,7 @@ The project uses a sub-module to help you in the integration and build
 process.  You should checkout the project with the following commands:
 
 ```
-   git clone --recursive https://github.com/stcarrez/ada-keystore.git
+   git clone --recursive https://gitlab.com/stcarrez/ada-keystore.git
    cd ada-keystore
 ```
 
