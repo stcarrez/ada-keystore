@@ -131,7 +131,7 @@ AC_SUBST(GTKADA_DIR)
 
 if test -f ada-fuse/ada_fuse.gpr; then
    case "${target_os}" in
-      mingw32*|cygwin*|mingw64*|msys)
+      mingw32*|cygwin*|mingw64*|msys|freebsd*|netbsd*)
         ac_enable_fuse=no
         ;;
 
