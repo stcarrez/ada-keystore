@@ -54,7 +54,7 @@ Mount the keystore:
    umount /mnt
 ```
 
-## Version 1.3.4  - Under development
+## Version 1.3.4  - Feb 2023
 - Fix #14: Constraint_Error raised if the HOME environment variable is not defined
 - Fix fuse detection on FreeBSD
 - Fix building docker image
