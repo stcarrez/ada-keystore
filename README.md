@@ -54,13 +54,13 @@ Mount the keystore:
    umount /mnt
 ```
 
+## Version 1.4.0  - Under development
+  - Feature #15: Authenticator with TOTP support
+
 ## Version 1.3.4  - Feb 2023
 - Fix #14: Constraint_Error raised if the HOME environment variable is not defined
 - Fix fuse detection on FreeBSD
 - Fix building docker image
-
-## Version 1.3.3  - Aug 2022
-- Fix GPG support on MacOS
 
 [List all versions](https://github.com/stcarrez/ada-keystore/blob/master/NEWS.md)
 
