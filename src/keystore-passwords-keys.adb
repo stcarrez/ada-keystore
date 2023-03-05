@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-passwords-keys -- Key provider
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2023 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,12 +46,17 @@ package body Keystore.Passwords.Keys is
       Hash   : Util.Encoders.SHA256.Hash_Array;
    begin
       Result := new Raw_Key_Provider '(Len => Length, others => <>);
+
+      --  Cancel the warning: writable actual for "Data" overlaps with actual for "Into".
+      pragma Warnings (Off);
       Hash := Util.Encoders.HMAC.SHA256.Sign (Password, Password);
 
       for I in 1 .. Length loop
          Result.Password (I) := Hash (I mod Hash'Length);
          Util.Encoders.HMAC.SHA256.Sign (Hash, Hash, Hash);
       end loop;
+      pragma Warnings (On);
+
       return Result.all'Access;
    end Create;
 
