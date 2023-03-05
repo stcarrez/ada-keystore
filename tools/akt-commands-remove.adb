@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-remove -- Remove content from keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2023 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -29,7 +29,8 @@ package body AKT.Commands.Remove is
    begin
       Context.Open_Keystore (Args);
       if Args.Get_Count < Context.First_Arg then
-         AKT.Commands.Usage (Args, Context, Name);
+         AKT.Commands.Usage (Args, Context, Name,
+                             -("missing value name to remove"));
       else
          for I in Context.First_Arg .. Args.Get_Count loop
             if Context.Wallet.Contains (Args.Get_Argument (I)) then

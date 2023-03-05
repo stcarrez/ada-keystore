@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-set -- Set content in keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2023 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -31,7 +31,8 @@ package body AKT.Commands.Set is
       --  Open keystore without use workers because we expect small data.
       Context.Open_Keystore (Args, Use_Worker => False);
       if Args.Get_Count /= Context.First_Arg + 1 then
-         AKT.Commands.Usage (Args, Context, Name);
+         AKT.Commands.Usage (Args, Context, Name,
+                             -("missing name and value to set"));
 
       else
          Context.Wallet.Set (Name    => Args.Get_Argument (Context.First_Arg),
