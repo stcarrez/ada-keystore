@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands -- Ada Keystore Tool commands
---  Copyright (C) 2019, 2020, 2022 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022, 2023 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -37,6 +37,7 @@ with AKT.Commands.Password.Remove;
 with AKT.Commands.Info;
 with AKT.Commands.Config;
 with AKT.Commands.Mount;
+with AKT.Commands.OTP;
 with Keystore.Passwords.Input;
 with Keystore.Passwords.Files;
 with Keystore.Passwords.Unsafe;
@@ -61,6 +62,7 @@ package body AKT.Commands is
    Remove_Password_Command : aliased AKT.Commands.Password.Remove.Command_Type;
    Info_Command            : aliased AKT.Commands.Info.Command_Type;
    Config_Command          : aliased AKT.Commands.Config.Command_Type;
+   OTP_Command             : aliased AKT.Commands.OTP.Command_Type;
    Driver                  : Drivers.Driver_Type;
 
    --  ------------------------------
@@ -68,11 +70,16 @@ package body AKT.Commands is
    --  ------------------------------
    procedure Usage (Args    : in Argument_List'Class;
                     Context : in out Context_Type;
-                    Name    : in String := "") is
+                    Name    : in String := "";
+                    Error   : in String := "") is
    begin
-      GC.Display_Help (Context.Command_Config);
+      if Error'Length > 0 then
+         Log.Error ("{0}", Error);
+      end if;
       if Name'Length > 0 then
          Driver.Usage (Args, Context, Name);
+      else
+         GC.Display_Help (Context.Command_Config);
       end if;
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
    end Usage;
@@ -275,8 +282,42 @@ package body AKT.Commands is
       Driver.Add_Command ("info",
                           -("report information about the keystore"),
                           Info_Command'Access);
+      Driver.Add_Command ("otp",
+                          -("generate a one time password or manage OATH secrets"),
+                          OTP_Command'Access);
       AKT.Commands.Mount.Register (Driver);
    end Initialize;
+
+   procedure Flush_Input is
+      C         : Character;
+      Available : Boolean;
+   begin
+      loop
+         Ada.Text_IO.Get_Immediate (C, Available);
+         exit when not Available;
+      end loop;
+
+   exception
+      when Ada.Text_IO.End_Error =>
+         null;
+   end Flush_Input;
+
+   function Confirm (Message : in String) return Boolean is
+   begin
+      Flush_Input;
+      Ada.Text_IO.Put ("akt: ");
+      Ada.Text_IO.Put (Message);
+      Ada.Text_IO.Put (" ");
+      declare
+         Answer : constant String := Ada.Text_IO.Get_Line;
+      begin
+         return Answer = "Y" or else Answer = "y";
+      end;
+
+   exception
+      when Ada.Text_IO.End_Error =>
+         return False;
+   end Confirm;
 
    --  ------------------------------
    --  Setup the command before parsing the arguments and executing it.
