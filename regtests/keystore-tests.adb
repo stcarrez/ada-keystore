@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-tests -- Tests for akt command
---  Copyright (C) 2019, 2020, 2021, 2022 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2021, 2022, 2023 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,11 +45,13 @@ package body Keystore.Tests is
    DATA_TOOL3_PATH  : constant String := "test-tool-3";
    TEST_TOOL4_PATH  : constant String := "test-tool-4.akt";
    TEST_TOOL5_PATH  : constant String := "test-tool-5.akt";
+   TEST_TOOL6_PATH  : constant String := "test-tool-6.akt";
    TEST_WALLET_KEY_PATH  : constant String := "keys/wallet.keys";
    TEST_CORRUPTED_1_PATH : constant String := "regtests/files/test-corrupted-1.akt";
    TEST_CORRUPTED_2_PATH : constant String := "regtests/files/test-corrupted-2.akt";
    TEST_WALLET_PATH      : constant String := "regtests/files/test-wallet.akt";
    TEST_SPLIT_PATH       : constant String := "regtests/files/test-split.akt";
+   TEST_OTP_PATH         : constant String := "regtests/files/test-otp.akt";
 
    function Tool return String;
    function Compare (Path1 : in String;
@@ -177,6 +179,8 @@ package body Keystore.Tests is
                        Test_Tool_Bad_File'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.List (Nested wallet)",
                        Test_Tool_Nested_Wallet'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.OTP",
+                       Test_Tool_OTP'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -1023,5 +1027,55 @@ package body Keystore.Tests is
       Util.Tests.Assert_Matches (T, "akt: no content for an item of type wallet",
                                  Result, "get command on wallet");
    end Test_Tool_Nested_Wallet;
+
+   --  ------------------------------
+   --  Test the OTP command.
+   --  ------------------------------
+   procedure Test_Tool_OTP (T : in out Test) is
+      Ref_Path : constant String := Util.Tests.Get_Path (TEST_OTP_PATH);
+      Path     : constant String := Util.Tests.Get_Test_Path (TEST_TOOL6_PATH);
+      Result   : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " otp " & Ref_Path & " -p mypassword", Result, 0);
+      Util.Tests.Assert_Matches (T, "GitHub:bob",
+                                 Result, "otp command failed");
+
+      T.Execute (Tool & " otp " & Ref_Path & " -p mypassword bob", Result, 0);
+      Util.Tests.Assert_Matches (T, "GitHub:bob: Code: [0-9]+",
+                                 Result, "otp command failed");
+
+      T.Execute (Tool & " otp " & Ref_Path & " -p mypassword harry", Result, 0);
+      Util.Tests.Assert_Matches (T, "Gitlab:harry: Code: [0-9]+",
+                                 Result, "otp command failed");
+
+      if Ada.Directories.Exists (Path) then
+         Ada.Directories.Delete_File (Path);
+      end if;
+
+      --  Create keystore
+      T.Execute (Tool & " create " & Path & " -p admin --counter-range 10:100", Result);
+      Util.Tests.Assert_Equals (T, "", Result, "create command failed");
+      T.Assert (Ada.Directories.Exists (Path),
+                "Keystore file does not exist");
+
+      T.Execute (Tool & " otp " & Path & " -p admin '"
+                 & "otpauth://totp/Test:bob?secret=ONSWG4TFOQYTEMZU&issuer=Test'",
+                 Result, 0);
+      Util.Tests.Assert_Matches (T, "Code: [0-9]+",
+                                 Result, "otp command failed");
+
+      T.Execute (Tool & " otp " & Path & " -p admin '"
+                 & "otpauth://totp/Unit:harry?secret=KNSWG4TFOQYTEMZU&issuer=Unit'",
+                 Result, 0);
+      Util.Tests.Assert_Matches (T, "Code: [0-9]+",
+                                 Result, "otp command failed");
+
+      T.Execute (Tool & " otp " & Path & " -p admin", Result, 0);
+      Util.Tests.Assert_Matches (T, "Test:bob",
+                                 Result, "otp command failed");
+      Util.Tests.Assert_Matches (T, "Unit:harry",
+                                 Result, "otp command failed");
+
+   end Test_Tool_OTP;
 
 end Keystore.Tests;

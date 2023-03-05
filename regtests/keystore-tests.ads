@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-tests -- Tests for akt command
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2023 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -105,6 +105,9 @@ package Keystore.Tests is
    procedure Test_Tool_Bad_File (T : in out Test);
 
    procedure Test_Tool_Nested_Wallet (T : in out Test);
+
+   --  Test the OTP command.
+   procedure Test_Tool_OTP (T : in out Test);
 
    procedure Execute (T       : in out Test;
                       Command : in String;
