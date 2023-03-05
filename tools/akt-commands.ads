@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands -- Ada Keystore Tool commands
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2023 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -36,7 +36,8 @@ package AKT.Commands is
    --  Print the command usage.
    procedure Usage (Args    : in Argument_List'Class;
                     Context : in out Context_Type;
-                    Name    : in String := "");
+                    Name    : in String := "";
+                    Error   : in String := "");
 
    --  Open the keystore file using the password password.
    --  When `Use_Worker` is set, a workers of N tasks is created and assigned to the keystore
@@ -72,6 +73,10 @@ private
    Log     : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Commands");
 
    package GC renames GNAT.Command_Line;
+
+   procedure Flush_Input;
+
+   function Confirm (Message : in String) return Boolean;
 
    procedure Initialize (Context : in out Keystore.Passwords.GPG.Context_Type);
 
