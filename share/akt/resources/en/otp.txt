@@ -1,0 +1,10 @@
+akt otp: generate a one time password or manage OATH secrets
+
+Usage: otp <keystore>.akt {<name>|otpauth://totp/<account>?secret=<secret>}
+
+  The otp command manages OATH secrets and provides TOTP code
+  generation.  When a otpauth://totp/ string is given, the account
+  is extracted and it is inserted in the wallet.  When an account name
+  or issuer name is given, the command uses the secret to generate
+  the 6 digit codes for the authentication.  When no parameter are given
+  the command gives a list of known otpauth URI.
