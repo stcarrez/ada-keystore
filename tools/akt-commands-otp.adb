@@ -15,7 +15,6 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Ada.Text_IO;
 with Ada.Command_Line;
 with Ada.Calendar.Conversions;
 with Util.Strings;
@@ -29,7 +28,8 @@ package body AKT.Commands.OTP is
    use type Interfaces.C.long;
 
    procedure Generate (Account : in String;
-                       Secret  : in String);
+                       Secret  : in String;
+                       Context : in out Context_Type);
    function Get_Account (URI : in String) return String;
    function Get_Param (URI  : in String;
                        Name : in String) return String;
@@ -102,7 +102,8 @@ package body AKT.Commands.OTP is
    end Get_Issuer;
 
    procedure Generate (Account : in String;
-                       Secret  : in String) is
+                       Secret  : in String;
+                       Context : in out Context_Type) is
       Now     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Time    : constant Interfaces.C.long := Ada.Calendar.Conversions.To_Unix_Time (Now);
       Steps   : constant Interfaces.C.long := Time / 30;
@@ -112,10 +113,10 @@ package body AKT.Commands.OTP is
    begin
       Code := HOTP_SHA1 (Key, Interfaces.Unsigned_64 (Steps), 6);
       if Account'Length > 0 then
-         Ada.Text_IO.Put (Account);
-         Ada.Text_IO.Put (": ");
+         Context.Console.Notice (N_INFO, Account & ": code:" & Natural'Image (Code));
+      else
+         Context.Console.Notice (N_INFO, "Code:" & Natural'Image (Code));
       end if;
-      Ada.Text_IO.Put_Line ("Code:" & Natural'Image (Code));
    end Generate;
 
    --  Register or update an otpauth URI.
@@ -163,7 +164,7 @@ package body AKT.Commands.OTP is
       end if;
 
       Context.Wallet.Set (Name => Key, Content => URI);
-      Generate ("", Secret);
+      Generate ("", Secret, Context);
    end Register;
 
    --  ------------------------------
@@ -212,7 +213,7 @@ package body AKT.Commands.OTP is
                URI     : constant String := Context.Wallet.Get (Name);
                Secret  : constant String := Get_Param (URI, "secret");
             begin
-               Generate (Get_Account (URI), Secret);
+               Generate (Get_Account (URI), Secret, Context);
                Found := True;
             end;
          end if;
@@ -236,7 +237,7 @@ package body AKT.Commands.OTP is
             URI : constant String := Context.Wallet.Get (Name);
             Account : constant String := Get_Account (URI);
          begin
-            Ada.Text_IO.Put_Line (Account);
+            Context.Console.Notice (N_INFO, Account);
          end;
       end loop;
    end List;

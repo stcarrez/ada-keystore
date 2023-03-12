@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-password-remove -- Remove a wallet password
---  Copyright (C) 2019, 2021, 2022 Stephane Carrez
+--  Copyright (C) 2019, 2021, 2022, 2023 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,6 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Ada.Text_IO;
 package body AKT.Commands.Password.Remove is
 
    use type Keystore.Header_Slot_Count_Type;
@@ -80,7 +79,7 @@ package body AKT.Commands.Password.Remove is
                                     Force    => Command.Force);
       end if;
 
-      Ada.Text_IO.Put_Line (-("The password was successfully removed."));
+      Context.Console.Notice (N_INFO, -("The password was successfully removed."));
 
    exception
       when Keystore.Used_Key_Slot =>

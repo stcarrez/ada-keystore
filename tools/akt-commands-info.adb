@@ -15,7 +15,6 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Ada.Text_IO;
 with Keystore.Verifier;
 package body AKT.Commands.Info is
 
@@ -31,6 +30,20 @@ package body AKT.Commands.Info is
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
       pragma Unreferenced (Command, Name);
+      function Get_Stat_Info (Stats : in Keystore.Wallet_Stats) return String;
+
+      function Get_Stat_Info (Stats : in Keystore.Wallet_Stats) return String is
+         Slots : String (1 .. Stats.Keys'Length) := (others => ' ');
+         C     : Character := '1';
+      begin
+         for Slot in Stats.Keys'Range loop
+            if Stats.Keys (Slot) then
+               Slots (Positive (Slot) * 2) := C;
+            end if;
+            C := Character'Succ (C);
+         end loop;
+         return Slots;
+      end Get_Stat_Info;
 
       Path  : constant String := Context.Get_Keystore_Path (Args);
       Stats : Keystore.Wallet_Stats;
@@ -64,18 +77,17 @@ package body AKT.Commands.Info is
       end if;
 
       Context.Wallet.Get_Stats (Stats);
-      Ada.Text_IO.Put ("Key slots used: ");
-      Ada.Text_IO.Set_Col (29);
-      for Slot in Stats.Keys'Range loop
-         if Stats.Keys (Slot) then
-            Ada.Text_IO.Put (Keystore.Key_Slot'Image (Slot));
-         end if;
-      end loop;
+      Context.Console.Clear_Fields;
+      Context.Console.Set_Field_Length (1, 30);
+      Context.Console.Set_Field_Length (2, 70);
+      Context.Console.Start_Row;
+      Context.Console.Print_Field (1, -("Key slots used: "));
+      Context.Console.Print_Field (2, Get_Stat_Info (Stats));
+      Context.Console.End_Row;
 
-      Ada.Text_IO.New_Line;
-      Ada.Text_IO.Put ("Entry count: ");
-      Ada.Text_IO.Set_Col (29);
-      Ada.Text_IO.Put_Line (Natural'Image (Stats.Entry_Count));
+      Context.Console.Print_Field (1, -("Entry count: "));
+      Context.Console.Print_Field (2, Stats.Entry_Count);
+      Context.Console.End_Row;
 
    end Execute;
 

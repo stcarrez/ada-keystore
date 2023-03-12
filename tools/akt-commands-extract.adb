@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-extract -- Get content from keystore
---  Copyright (C) 2019, 2020, 2022 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022, 2023 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,6 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Ada.Text_IO;
 with Ada.Command_Line;
 with Ada.Directories;
 with Ada.Streams.Stream_IO;
@@ -90,7 +89,7 @@ package body AKT.Commands.Extract is
                Item : constant Keystore.Entry_Info := Keystore.Entry_Maps.Element (Iter);
             begin
                if Item.Kind /= Keystore.T_DIRECTORY then
-                  Ada.Text_IO.Put_Line (-("Extract ") & Name);
+                  Context.Console.Notice (N_INFO, -("Extract ") & Name);
                   Extract_File (Name, Output);
                end if;
             end;

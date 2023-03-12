@@ -16,7 +16,6 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Interfaces;
-with Ada.Text_IO;
 with Ada.Calendar.Formatting;
 package body AKT.Commands.List is
 
@@ -29,31 +28,33 @@ package body AKT.Commands.List is
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
       pragma Unreferenced (Command, Name);
+      use AKT.Commands.Consoles;
 
       List : Keystore.Entry_Map;
       Iter : Keystore.Entry_Cursor;
    begin
       Context.Open_Keystore (Args);
       Context.Wallet.List (Content => List);
+
+      Context.Console.Start_Title;
+      Context.Console.Print_Title (1, -("Name"), 53);
+      Context.Console.Print_Title (2, -("Size"), 9, J_RIGHT);
+      Context.Console.Print_Title (3, -("Block"), 7, J_RIGHT);
+      Context.Console.Print_Title (4, -("Date"), 20);
+      Context.Console.End_Title;
+
       Iter := List.First;
       while Keystore.Entry_Maps.Has_Element (Iter) loop
          declare
             Name : constant String := Keystore.Entry_Maps.Key (Iter);
             Item : constant Keystore.Entry_Info := Keystore.Entry_Maps.Element (Iter);
          begin
-            if Name'Length > 50 then
-               Ada.Text_IO.Put (Name (Name'First .. Name'First + 50));
-            else
-               Ada.Text_IO.Put (Name);
-            end if;
-            Ada.Text_IO.Set_Col (53);
-            Ada.Text_IO.Put (Interfaces.Unsigned_64'Image (Item.Size));
-            Ada.Text_IO.Set_Col (64);
-            Ada.Text_IO.Put (Natural'Image (Item.Block_Count));
-            Ada.Text_IO.Set_Col (72);
-            Ada.Text_IO.Put (Ada.Calendar.Formatting.Image (Item.Create_Date));
-
-            Ada.Text_IO.New_Line;
+            Context.Console.Start_Row;
+            Context.Console.Print_Field (1, Name);
+            Context.Console.Print_Field (2, Interfaces.Unsigned_64'Image (Item.Size), J_RIGHT);
+            Context.Console.Print_Field (3, Natural'Image (Item.Block_Count), J_RIGHT);
+            Context.Console.Print_Field (4, Ada.Calendar.Formatting.Image (Item.Create_Date));
+            Context.Console.End_Row;
          end;
          Keystore.Entry_Maps.Next (Iter);
       end loop;

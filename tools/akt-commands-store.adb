@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-store -- Store content read from standard input in keystore
---  Copyright (C) 2019, 2021, 2022 Stephane Carrez
+--  Copyright (C) 2019, 2021, 2022, 2023 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,6 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Ada.Text_IO;
 with Ada.Directories;
 with Ada.Streams.Stream_IO;
 with Util.Systems.Os;
@@ -43,7 +42,7 @@ package body AKT.Commands.Store is
 
       function Accept_File (Ent : in Keystore.Tools.Directory_Entry_Type) return Boolean is
       begin
-         Ada.Text_IO.Put_Line (Ada.Directories.Full_Name (Ent));
+         Context.Console.Notice (N_INFO, Ada.Directories.Full_Name (Ent));
          return True;
       end Accept_File;
 
