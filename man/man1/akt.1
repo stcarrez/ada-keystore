@@ -380,13 +380,17 @@ option prevents the output of the trailing newline.
 .\"
 .SS The otp command
 .RS 0
-akt \fBotp \fIkeystore.akt\fR {\fIname\fR|otpauth://totp/\fIaccount\fR?secret=\fIsecret\fR&issuer=\fIissuer\fR}\fR...
+.nf
+akt \fBotp \fIkeystore.akt\fR \fIname\fR
+.br
+akt \fBotp \fIkeystore.akt\fR otpauth://totp/\fIaccount\fR?secret=\fIsecret\fR&issuer=\fIissuer\fR
+.fi
 .RE
 .PP
 The
 .I otp
 command manages OATH secrets and provides TOTP code
-generation.  When a otpauth://totp/ string is given, the account
+generation for a two factor authentication.  When an otpauth://totp/ string is given, the account
 is extracted and it is inserted in the wallet.  When an account name
 or issuer name is given, the command uses the secret to generate
 the 6 digit codes for the authentication.  When no parameter are given
