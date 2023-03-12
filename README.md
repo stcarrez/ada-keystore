@@ -117,6 +117,7 @@ It provides the following commands:
 * `info`:     print information about the keystore
 * `list`:     list values of the keystore
 * `mount`:    mount the keystore on the filesystem for a direct access
+* `otp`:      generate a one time password or manage OATH secrets
 * `password-add`:      add a password
 * `password-remove`:   remove a password
 * `password-set`:      change the password
@@ -271,12 +272,12 @@ Install the following packages:
 sudo apt-get install -y make gnat-7 gprbuild git gnupg2
 ```
 
-### FreeBSD 12
+### FreeBSD 13
 
 Install the following packages:
 
 ```
-pkg install gmake gcc6-aux-20180516_1,1 gprbuild-20160609_1 git gnupg-2.2.17_2
+pkg install gmake gnat12 gprbuild gnupg
 ```
 
 ### Windows
