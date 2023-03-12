@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt -- Ada Keystore Tool
---  Copyright (C) 2019, 2021 Stephane Carrez
+--  Copyright (C) 2019, 2021, 2023 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -34,6 +34,7 @@ package body AKT is
       Log_Config.Set ("log4j.appender.errorConsole.layout", "message");
       Log_Config.Set ("log4j.appender.errorConsole.stderr", "true");
       Log_Config.Set ("log4j.appender.errorConsole.prefix", "akt: ");
+      Log_Config.Set ("log4j.appender.errorConsole.utf8", "true");
       Log_Config.Set ("log4j.logger.Util", "FATAL");
       Log_Config.Set ("log4j.logger.Util.Events", "ERROR");
       Log_Config.Set ("log4j.logger.Keystore", "ERROR");
