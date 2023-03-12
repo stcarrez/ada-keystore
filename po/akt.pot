@@ -15,6 +15,10 @@ msgstr ""
 msgid "Available subcommands:"
 msgstr ""
 
+#: akt-commands-list.adb
+msgid "Block"
+msgstr ""
+
 #: util-commands-drivers.adb
 msgid "Type '{0} help {command}' for help on a specific command."
 msgstr ""
@@ -81,6 +85,10 @@ msgstr ""
 
 #: akt-commands.adb
 msgid "create the keystore"
+msgstr ""
+
+#: akt-commands-list.adb
+msgid "Date"
 msgstr ""
 
 #: akt-commands-edit.adb
@@ -235,6 +243,10 @@ msgstr ""
 msgid "mount the keystore on the filesystem for a direct access"
 msgstr ""
 
+#: akt-commands-list.adb
+msgid "Name"
+msgstr ""
+
 #: akt-commands-password.adb
 msgid "New password: "
 msgstr ""
@@ -317,6 +329,10 @@ msgstr ""
 
 #: akt-commands-password.adb akt-commands-create.adb
 msgid "Set the range for the PBKDF2 counter"
+msgstr ""
+
+#: akt-commands-list.adb
+msgid "Size"
 msgstr ""
 
 #: akt-main.adb
