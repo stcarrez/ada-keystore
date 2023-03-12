@@ -19,7 +19,6 @@ with System.Multiprocessors;
 with Ada.Command_Line;
 with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
-with Util.Strings;
 with Util.Commands.Parsers.GNAT_Parser;
 with AKT.Configs;
 with AKT.Commands.Drivers;
@@ -305,9 +304,7 @@ package body AKT.Commands is
    function Confirm (Message : in String) return Boolean is
    begin
       Flush_Input;
-      Ada.Text_IO.Put ("akt: ");
-      Ada.Text_IO.Put (Message);
-      Ada.Text_IO.Put (" ");
+      Util.Commands.Put_Raw ("akt: " & Message & " ");
       declare
          Answer : constant String := Ada.Text_IO.Get_Line;
       begin
@@ -433,7 +430,7 @@ package body AKT.Commands is
       Initialize (Context.GPG);
 
       if Context.Version then
-         Ada.Text_IO.Put_Line (AKT.Configs.RELEASE);
+         Util.Commands.Put_Raw_Line (AKT.Configs.RELEASE);
          return;
       end if;
 

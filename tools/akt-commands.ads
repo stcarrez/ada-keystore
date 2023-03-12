@@ -19,6 +19,9 @@ with Keystore.Passwords;
 with Keystore.Passwords.GPG;
 with Util.Commands;
 with Keystore;
+with Util.Strings;
+with Util.Commands.Consoles.Text;
+with Util.Commands.Raw_IO;
 private with Util.Log.Loggers;
 private with Keystore.Files;
 private with Keystore.Passwords.Keys;
@@ -68,6 +71,22 @@ package AKT.Commands is
    function Get_Keystore_Path (Context : in out Context_Type;
                                Args    : in Argument_List'Class) return String;
 
+   type Field_Number is range 1 .. 256;
+
+   type Notice_Type is (N_USAGE, N_INFO, N_ERROR);
+
+   function To_String (S : in String) return String is (S);
+
+   package Consoles is
+     new Util.Commands.Consoles (Field_Type   => Field_Number,
+                                 Notice_Type  => Notice_Type,
+                                 Element_Type => Character,
+                                 Input_Type   => String,
+                                 To_Input     => Util.Strings.Image);
+
+   package Text_Consoles is
+      new Consoles.Text (IO => Util.Commands.Raw_IO);
+
 private
 
    Log     : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Commands");
@@ -82,6 +101,7 @@ private
 
    type Context_Type is limited new Ada.Finalization.Limited_Controlled with record
       Wallet            : aliased Keystore.Files.Wallet_File;
+      Console           : Text_Consoles.Console_Type;
       Info              : Keystore.Wallet_Info;
       Config            : Keystore.Wallet_Config := Keystore.Secure_Config;
       Workers           : Keystore.Task_Manager_Access;
