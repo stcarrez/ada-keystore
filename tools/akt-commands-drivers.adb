@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-drivers -- Ada Keystore command driver
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2023 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +15,6 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Ada.Text_IO;
 with Ada.Directories;
 with Ada.Command_Line;
 with Util.Files;
@@ -84,10 +83,10 @@ package body AKT.Commands.Drivers is
    begin
       if Ada.Directories.Exists (Path) then
          Util.Files.Read_File (Path    => Path,
-                               Process => Ada.Text_IO.Put_Line'Access);
+                               Process => Util.Commands.Put_Raw_Line'Access);
       else
          Util.Files.Read_File (Path    => Get_Help (Dir, Name, "en"),
-                               Process => Ada.Text_IO.Put_Line'Access);
+                               Process => Util.Commands.Put_Raw_Line'Access);
       end if;
    end Help;
 

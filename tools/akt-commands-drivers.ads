@@ -17,12 +17,14 @@
 -----------------------------------------------------------------------
 with Util.Commands.Drivers;
 with Util.Commands.Parsers.GNAT_Parser;
+with Util.Commands.Raw_IO;
 private package AKT.Commands.Drivers is
 
    package Main_Driver is
      new Util.Commands.Drivers (Context_Type  => Context_Type,
                                 Config_Parser => Util.Commands.Parsers.GNAT_Parser.Config_Parser,
                                 Translate     => Intl.Gettext,
+                                IO            => Util.Commands.Raw_IO,
                                 Driver_Name   => "akt");
 
    subtype Help_Command_Type is Main_Driver.Help_Command_Type;
