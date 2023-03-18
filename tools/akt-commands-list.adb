@@ -36,6 +36,10 @@ package body AKT.Commands.List is
       Context.Open_Keystore (Args);
       Context.Wallet.List (Content => List);
 
+      if List.Is_Empty then
+         return;
+      end if;
+
       Context.Console.Start_Title;
       Context.Console.Print_Title (1, -("Name"), 53);
       Context.Console.Print_Title (2, -("Size"), 9, J_RIGHT);
