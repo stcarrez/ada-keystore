@@ -1041,11 +1041,11 @@ package body Keystore.Tests is
                                  Result, "otp command failed");
 
       T.Execute (Tool & " otp " & Ref_Path & " -p mypassword bob", Result, 0);
-      Util.Tests.Assert_Matches (T, "GitHub:bob: Code: [0-9]+",
+      Util.Tests.Assert_Matches (T, "GitHub:bob: code: [0-9]+",
                                  Result, "otp command failed");
 
       T.Execute (Tool & " otp " & Ref_Path & " -p mypassword harry", Result, 0);
-      Util.Tests.Assert_Matches (T, "Gitlab:harry: Code: [0-9]+",
+      Util.Tests.Assert_Matches (T, "Gitlab:harry: code: [0-9]+",
                                  Result, "otp command failed");
 
       if Ada.Directories.Exists (Path) then
