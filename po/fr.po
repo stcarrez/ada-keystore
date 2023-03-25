@@ -44,6 +44,10 @@ msgstr "akt - outil pour stocker et protéger vos données sensibles"
 msgid "algorithm '{0}' is not supported"
 msgstr "l'algorithme '{0}' n'est pas supporté"
 
+#: akt-commands-otp.adb
+msgid "algorithm not supported '{0}'"
+msgstr "l'algorithme '{0}' n'est pas supporté"
+
 #: akt-commands-mount.adb
 msgid "Allow the kernel to cache data from this file system"
 msgstr "Permettre au noyau de cacher les données pour ce système de fichiers"
@@ -136,6 +140,10 @@ msgstr "Activer l'execution du débogage de la librairie fuse"
 msgid "Enter password: "
 msgstr "Mot de passe: "
 
+#: akt-commands-info.adb
+msgid "Entry count: "
+msgstr "Nombre d'entrées: "
+
 #: akt-commands.adb
 msgid "Erase and fill with zeros instead of random values"
 msgstr "Effacer et remplir avec des zéros au lieu de valeurs aléatoires"
@@ -154,9 +162,17 @@ msgstr ""
 msgid "Force the creation of the keystore"
 msgstr "Forcer la création du magasin de clés"
 
+#: akt-commands-otp.adb
+msgid "Force update of existing otpauth URI"
+msgstr "Forcer la mise à jour de l'entrée otpauth existante"
+
 #: akt-commands.adb
 msgid "generate a one time password or manage OATH secrets"
 msgstr "générer un mot de passe à usage unique ou gérer les secrets OATH"
+
+#: akt-commands.adb
+msgid "generate or manage named keys"
+msgstr "génération et gestion des clefs nommées"
 
 #: akt-commands.adb
 msgid "get a value from the keystore"
@@ -207,6 +223,14 @@ msgstr "mot de passe invalide pour déverrouiller le fichier de clés"
 #: akt-commands-otp.adb
 msgid "invalid period '{0}'"
 msgstr "period invalide '{0}'"
+
+#: akt-commands-genkey.adb
+msgid "key '{0}' is already defined"
+msgstr "la clef '{0}' est déjà définie"
+
+#: akt-commands-info.adb
+msgid "Key slots used: "
+msgstr "Nombre de clefs utilisées: "
 
 #: akt-commands.adb
 msgid "list values of the keystore"
@@ -265,13 +289,37 @@ msgstr "pas de contenu pour une entrée de type wallet"
 msgid "no otpauth matching account '{0}'"
 msgstr "pas de otpauth correspondant au compte '{0}'"
 
+#: akt-commands.adb akt-commands-genkey.adb
+msgid "no valid directory keys can be created"
+msgstr "pas de répertoire de clef pouvant être créé"
+
 #: akt-commands.adb
 msgid "Number of threads for the encryption/decryption process"
 msgstr "Nombre de threads pour le processus de cryptage/décryptage"
 
 #: akt-commands-otp.adb
+msgid "only 'totp' otpauth URI is supported"
+msgstr "seul le format 'totp' est supporté pour les URI otpauth"
+
+#: akt-commands-otp.adb
 msgid "override existing otpauth entry ?"
 msgstr "écraser l'entrée otpauth existante ?"
+
+#: akt-main.adb
+msgid "password file does not exist"
+msgstr "le fichier de mot de passe n'existe pas"
+
+#: akt-main.adb
+msgid "password file is not safe"
+msgstr "le fichier de mot de passe n'est pas sûr"
+
+#: akt-main.adb
+msgid "password is empty"
+msgstr "le mot de passe est vide"
+
+#: akt-main.adb
+msgid "password is too big"
+msgstr "le mot de passe est trop long"
 
 #: akt-commands.adb
 msgid "print some help"
@@ -312,6 +360,10 @@ msgstr "refus d'éffacer la clé utilisée par le mot de passe actuel"
 #: akt-commands.adb
 msgid "remove a password"
 msgstr "supprimer un mot de passe"
+
+#: akt-commands-genkey.adb
+msgid "Remove the named key"
+msgstr "Supprime la clef nommée"
 
 #: akt-commands-otp.adb
 msgid "Remove the otpauth URI"
@@ -399,6 +451,10 @@ msgstr "Le mot de passe est passé dans la ligne de commande (non sécurisé)"
 #: akt-commands.adb akt-commands-password.adb
 msgid "The password is passed within the socket connection"
 msgstr "Le mot de passe est passé dans la connexion socket"
+
+#: akt-commands.adb
+msgid "The password is read from a key file"
+msgstr "Le mot de passe est lu à partir d'une clef nommée"
 
 #: akt-commands-password-remove.adb
 msgid "The password was successfully removed."

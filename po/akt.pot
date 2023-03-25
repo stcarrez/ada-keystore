@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: akt 1.3.0\n"
 "Report-Msgid-Bugs-To: Stephane.Carrez@gmail.com\n"
 "POT-Creation-Date: 2019-11-02\n"
-"PO-Revision-Date: 2023-03-05\\n"
+"PO-Revision-Date: 2023-03-25\\n"
 "Last-Translator: Carrez\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -41,6 +41,10 @@ msgstr ""
 
 #: akt-commands-otp.adb
 msgid "algorithm '{0}' is not supported"
+msgstr ""
+
+#: akt-commands-otp.adb
+msgid "algorithm not supported '{0}'"
 msgstr ""
 
 #: akt-commands-mount.adb
@@ -135,6 +139,10 @@ msgstr ""
 msgid "Enter password: "
 msgstr ""
 
+#: akt-commands-info.adb
+msgid "Entry count: "
+msgstr ""
+
 #: akt-commands.adb
 msgid "Erase and fill with zeros instead of random values"
 msgstr ""
@@ -151,8 +159,16 @@ msgstr ""
 msgid "Force the creation of the keystore"
 msgstr ""
 
+#: akt-commands-otp.adb
+msgid "Force update of existing otpauth URI"
+msgstr ""
+
 #: akt-commands.adb
 msgid "generate a one time password or manage OATH secrets"
+msgstr ""
+
+#: akt-commands.adb
+msgid "generate or manage named keys"
 msgstr ""
 
 #: akt-commands.adb
@@ -201,6 +217,14 @@ msgstr ""
 
 #: akt-commands-otp.adb
 msgid "invalid period '{0}'"
+msgstr ""
+
+#: akt-commands-genkey.adb
+msgid "key '{0}' is already defined"
+msgstr ""
+
+#: akt-commands-info.adb
+msgid "Key slots used: "
 msgstr ""
 
 #: akt-commands.adb
@@ -259,12 +283,36 @@ msgstr ""
 msgid "no otpauth matching account '{0}'"
 msgstr ""
 
+#: akt-commands.adb akt-commands-genkey.adb
+msgid "no valid directory keys can be created"
+msgstr ""
+
 #: akt-commands.adb
 msgid "Number of threads for the encryption/decryption process"
 msgstr ""
 
 #: akt-commands-otp.adb
+msgid "only 'totp' otpauth URI is supported"
+msgstr ""
+
+#: akt-commands-otp.adb
 msgid "override existing otpauth entry ?"
+msgstr ""
+
+#: akt-main.adb
+msgid "password file does not exist"
+msgstr ""
+
+#: akt-main.adb
+msgid "password file is not safe"
+msgstr ""
+
+#: akt-main.adb
+msgid "password is empty"
+msgstr ""
+
+#: akt-main.adb
+msgid "password is too big"
 msgstr ""
 
 #: akt-commands.adb
@@ -301,6 +349,10 @@ msgstr ""
 
 #: akt-commands.adb
 msgid "remove a password"
+msgstr ""
+
+#: akt-commands-genkey.adb
+msgid "Remove the named key"
 msgstr ""
 
 #: akt-commands-otp.adb
@@ -385,6 +437,10 @@ msgstr ""
 
 #: akt-commands.adb akt-commands-password.adb
 msgid "The password is passed within the socket connection"
+msgstr ""
+
+#: akt-commands.adb
+msgid "The password is read from a key file"
 msgstr ""
 
 #: akt-commands-password-remove.adb
