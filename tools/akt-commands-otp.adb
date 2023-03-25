@@ -15,20 +15,19 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
-with Ada.Command_Line;
 with Ada.Calendar.Conversions;
 with Util.Strings;
 with Interfaces.C;
 with GNAT.Command_Line;
-with Util.Encoders.SHA1;
 with Util.Encoders.HMAC.SHA1;
+with Util.Encoders.HMAC.SHA256;
 with Util.Encoders.HMAC.HOTP;
 package body AKT.Commands.OTP is
 
    use type Interfaces.C.long;
 
    procedure Generate (Account : in String;
-                       Secret  : in String;
+                       URI     : in String;
                        Context : in out Context_Type);
    function Get_Account (URI : in String) return String;
    function Get_Param (URI  : in String;
@@ -36,8 +35,16 @@ package body AKT.Commands.OTP is
    function Get_Issuer (URI : in String) return String;
 
    function HOTP_SHA1 is
-     new Util.Encoders.HMAC.HOTP (Util.Encoders.SHA1.HASH_SIZE,
+     new Util.Encoders.HMAC.HOTP (Util.Encoders.HMAC.SHA1.HASH_SIZE,
                                   Util.Encoders.HMAC.SHA1.Sign);
+
+   function HOTP_SHA256 is
+     new Util.Encoders.HMAC.HOTP (Util.Encoders.HMAC.SHA256.HASH_SIZE,
+                                  Util.Encoders.HMAC.SHA256.Sign);
+
+   function To_Positive (Value : in String;
+                         Def   : in Positive) return Positive is
+     (if Value'Length = 0 then Def else Positive'Value (Value));
 
    --  otpauth://totp/issuer:account?secret=XXX&issuer=issuer
    function Get_Account (URI : in String) return String is
@@ -102,39 +109,20 @@ package body AKT.Commands.OTP is
    end Get_Issuer;
 
    procedure Generate (Account : in String;
-                       Secret  : in String;
-                       Context : in out Context_Type) is
-      Now     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
-      Time    : constant Interfaces.C.long := Ada.Calendar.Conversions.To_Unix_Time (Now);
-      Steps   : constant Interfaces.C.long := Time / 30;
-      Decoder : constant Util.Encoders.Decoder := Util.Encoders.Create (Util.Encoders.BASE_32);
-      Key     : constant Util.Encoders.Secret_Key := Decoder.Decode_Key (Secret);
-      Code    : Natural;
-   begin
-      Code := HOTP_SHA1 (Key, Interfaces.Unsigned_64 (Steps), 6);
-      if Account'Length > 0 then
-         Context.Console.Notice (N_INFO, Account & ": code:" & Natural'Image (Code));
-      else
-         Context.Console.Notice (N_INFO, "Code:" & Natural'Image (Code));
-      end if;
-   end Generate;
-
-   --  Register or update an otpauth URI.
-   --  ------------------------------
-   procedure Register (Command : in out Command_Type;
                        URI     : in String;
                        Context : in out Context_Type) is
 
-      function Is_Number (S : in String) return Boolean
-        is (for all I in S'Range => S (I) in '0' .. '9');
+      function Is_Number (S   : in String;
+                          Min : in Positive;
+                          Max : in Positive) return Boolean is
+        (for all I in S'Range => S (I) in '0' .. '9'
+         and then Integer'Value (S) in Min .. Max);
 
-      Account : constant String := Get_Account (URI);
       Issuer  : constant String := Get_Issuer (URI);
       Secret  : constant String := Get_Param (URI, "secret");
       Algo    : constant String := Get_Param (URI, "algorithm");
       Digit   : constant String := Get_Param (URI, "digits");
       Period  : constant String := Get_Param (URI, "period");
-      Key     : constant String := "otpauth." & Account;
    begin
       if Secret'Length = 0 then
          AKT.Commands.Log.Error (-("invalid otpauth URI: missing '{0}'"), "secret");
@@ -144,18 +132,54 @@ package body AKT.Commands.OTP is
          AKT.Commands.Log.Error (-("invalid otpauth URI: missing '{0}'"), "issuer");
          raise Error;
       end if;
-      if Algo'Length /= 0 and then Algo /= "SHA1" then
+      if Algo'Length /= 0 and then Algo /= "SHA1" and then Algo /= "SHA256" then
          AKT.Commands.Log.Error (-("algorithm '{0}' is not supported"), Algo);
          raise Error;
       end if;
-      if Period'Length /= 0 and then Is_Number (Period) then
+      if Period'Length /= 0 and then not Is_Number (Period, 15, 60) then
          AKT.Commands.Log.Error (-("invalid period '{0}'"), Period);
          raise Error;
       end if;
-      if Digit'Length /= 0 and then Is_Number (Digit) then
+      if Digit'Length /= 0 and then not Is_Number (Digit, 1, 10) then
          AKT.Commands.Log.Error (-("invalid digits '{0}'"), Digit);
          raise Error;
       end if;
+
+      declare
+         P       : constant Positive := To_Positive (Period, 30);
+         D       : constant Positive := To_Positive (Digit, 6);
+         Now     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+         Time    : constant Interfaces.C.long := Ada.Calendar.Conversions.To_Unix_Time (Now);
+         Steps   : constant Interfaces.C.long := Time / Interfaces.C.long (P);
+         Decoder : constant Util.Encoders.Decoder := Util.Encoders.Create (Util.Encoders.BASE_32);
+         Key     : constant Util.Encoders.Secret_Key := Decoder.Decode_Key (Secret);
+         Code    : Natural;
+      begin
+         if Algo = "SHA1" then
+            Code := HOTP_SHA1 (Key, Interfaces.Unsigned_64 (Steps), D);
+         elsif Algo = "SHA256" then
+            Code := HOTP_SHA256 (Key, Interfaces.Unsigned_64 (Steps), D);
+         else
+            AKT.Commands.Log.Error (-("algorithm not supported '{0}'"), Algo);
+            raise Error;
+         end if;
+         if Account'Length > 0 then
+            Context.Console.Notice (N_INFO, Account & ": code:" & Natural'Image (Code));
+         else
+            Context.Console.Notice (N_INFO, "Code:" & Natural'Image (Code));
+         end if;
+      end;
+   end Generate;
+
+   --  Register or update an otpauth URI.
+   --  ------------------------------
+   procedure Register (Command : in out Command_Type;
+                       URI     : in String;
+                       Context : in out Context_Type) is
+      Account : constant String := Get_Account (URI);
+      Key     : constant String := "otpauth." & Account;
+   begin
+      Generate ("", URI, Context);
 
       if Context.Wallet.Contains (Key)
         and then not Confirm (-("override existing otpauth entry ?"))
@@ -164,7 +188,6 @@ package body AKT.Commands.OTP is
       end if;
 
       Context.Wallet.Set (Name => Key, Content => URI);
-      Generate ("", Secret, Context);
    end Register;
 
    --  ------------------------------
@@ -211,9 +234,8 @@ package body AKT.Commands.OTP is
          if Match (Name) then
             declare
                URI     : constant String := Context.Wallet.Get (Name);
-               Secret  : constant String := Get_Param (URI, "secret");
             begin
-               Generate (Get_Account (URI), Secret, Context);
+               Generate (Get_Account (URI), URI, Context);
                Found := True;
             end;
          end if;
@@ -261,6 +283,9 @@ package body AKT.Commands.OTP is
          begin
             if Util.Strings.Starts_With (URI, "otpauth://totp/") then
                Command.Register (URI, Context);
+            elsif Util.Strings.Starts_With (URI, "otpauth://") then
+               AKT.Commands.Log.Error (-("only 'totp' otpauth URI is supported"));
+               raise Error;
             else
                Command.Generate (URI, Context);
             end if;
@@ -268,7 +293,7 @@ package body AKT.Commands.OTP is
          exception
             when Keystore.Not_Found =>
                AKT.Commands.Log.Error (-("value '{0}' not found"), URI);
-               Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
+               raise Error;
 
          end;
       end if;
@@ -286,6 +311,8 @@ package body AKT.Commands.OTP is
       Drivers.Command_Type (Command).Setup (Config, Context);
       GC.Define_Switch (Config, Command.Remove'Access,
                         "-r", "--remove", -("Remove the otpauth URI"));
+      GC.Define_Switch (Config, Command.Force'Access,
+                        "-f", "--force", -("Force update of existing otpauth URI"));
    end Setup;
 
 end AKT.Commands.OTP;

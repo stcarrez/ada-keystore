@@ -38,6 +38,7 @@ private
 
    type Command_Type is new AKT.Commands.Drivers.Command_Type with record
       Remove : aliased Boolean := False;
+      Force  : aliased Boolean := False;
    end record;
 
    --  Register or update an otpauth URI.
