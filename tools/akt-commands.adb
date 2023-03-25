@@ -19,6 +19,7 @@ with System.Multiprocessors;
 with Ada.Command_Line;
 with Ada.Text_IO;
 with Ada.Unchecked_Deallocation;
+with Util.Files;
 with Util.Commands.Parsers.GNAT_Parser;
 with AKT.Configs;
 with AKT.Commands.Drivers;
@@ -37,6 +38,7 @@ with AKT.Commands.Info;
 with AKT.Commands.Config;
 with AKT.Commands.Mount;
 with AKT.Commands.OTP;
+with AKT.Commands.Genkey;
 with Keystore.Passwords.Input;
 with Keystore.Passwords.Files;
 with Keystore.Passwords.Unsafe;
@@ -62,6 +64,7 @@ package body AKT.Commands is
    Info_Command            : aliased AKT.Commands.Info.Command_Type;
    Config_Command          : aliased AKT.Commands.Config.Command_Type;
    OTP_Command             : aliased AKT.Commands.OTP.Command_Type;
+   Genkey_Command          : aliased AKT.Commands.Genkey.Command_Type;
    Driver                  : Drivers.Driver_Type;
 
    --  ------------------------------
@@ -284,6 +287,9 @@ package body AKT.Commands is
       Driver.Add_Command ("otp",
                           -("generate a one time password or manage OATH secrets"),
                           OTP_Command'Access);
+      Driver.Add_Command ("genkey",
+                          -("generate or manage named keys"),
+                          Genkey_Command'Access);
       AKT.Commands.Mount.Register (Driver);
    end Initialize;
 
@@ -370,6 +376,11 @@ package body AKT.Commands is
                         Argument => "COMMAND",
                         Help   => -("Run the command to get the password"));
       GC.Define_Switch (Config => Config,
+                        Output => Context.Password_Key'Access,
+                        Long_Switch => "--passkey=",
+                        Argument => "NAME",
+                        Help   => -("The password is read from a key file"));
+      GC.Define_Switch (Config => Config,
                         Output => Context.Wallet_Key_File'Access,
                         Long_Switch => "--wallet-key-file=",
                         Argument => "PATH",
@@ -388,6 +399,12 @@ package body AKT.Commands is
          Context.Provider := Keystore.Passwords.Cmds.Create (Context.Password_Command.all);
       elsif Context.Unsafe_Password'Length > 0 then
          Context.Provider := Keystore.Passwords.Unsafe.Create (Context.Unsafe_Password.all);
+      elsif Context.Password_Key'Length > 0 then
+         declare
+            Path : constant String := Get_Named_Key_Path (Context, Context.Password_Key.all);
+         begin
+            Context.Provider := Keystore.Passwords.Files.Create (Path);
+         end;
       else
          Context.No_Password_Opt := True;
       end if;
@@ -509,6 +526,20 @@ package body AKT.Commands is
          raise No_Keystore_File;
       end if;
    end Get_Keystore_Path;
+
+   --  ------------------------------
+   --  Get the path to the named key (created and managed by genkey command).
+   --  ------------------------------
+   function Get_Named_Key_Path (Context : in Context_Type;
+                                Name    : in String) return String is
+      Dir : constant String := AKT.Configs.Get_Directory_Key_Path;
+   begin
+      if Dir'Length = 0 then
+         Log.Error (-("no valid directory keys can be created"));
+         raise Error with "no valid directory keys";
+      end if;
+      return Util.Files.Compose (Dir, Name & ".key");
+   end Get_Named_Key_Path;
 
    overriding
    procedure Finalize (Context : in out Context_Type) is

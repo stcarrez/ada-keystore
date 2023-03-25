@@ -71,6 +71,10 @@ package AKT.Commands is
    function Get_Keystore_Path (Context : in out Context_Type;
                                Args    : in Argument_List'Class) return String;
 
+   --  Get the path to the named key (created and managed by genkey command).
+   function Get_Named_Key_Path (Context : in Context_Type;
+                                Name    : in String) return String;
+
    type Field_Number is range 1 .. 256;
 
    type Notice_Type is (N_USAGE, N_INFO, N_ERROR);
@@ -120,6 +124,7 @@ private
       Wallet_Key_File   : aliased GNAT.Strings.String_Access;
       Password_File     : aliased GNAT.Strings.String_Access;
       Password_Env      : aliased GNAT.Strings.String_Access;
+      Password_Key      : aliased GNAT.Strings.String_Access;
       Unsafe_Password   : aliased GNAT.Strings.String_Access;
       Password_Socket   : aliased GNAT.Strings.String_Access;
       Password_Command  : aliased GNAT.Strings.String_Access;
