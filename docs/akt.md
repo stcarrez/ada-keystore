@@ -6,26 +6,28 @@ akt - Tool to protect your sensitive data with secure storage
 ## SYNOPSIS
 
 *akt* [ -v ] [-vv] [-vv] [-V] [ -c
-_config-file_ ] [-t
-_count_ ] [-z]
-_command_  [-k
-_file_ ] [ -d
-_dir_ ] [ -p
-_password_ ] [--password
-_password_ ] [--passfile
-_file_ ] [--passenv
-_name_ ] [--passfd
-_fd_ ] [--passask] [--passcmd
-_cmd_ ] [--wallet-key-file
-_file_ ]
+*config-file* ] [-t
+*count* ] [-z]
+*command*  [-k
+*file* ] [ -d
+*dir* ] [ -p
+*password* ] [--password
+*password* ] [--passfile
+*file* ] [--passenv
+*name* ] [--passfd
+*fd* ] [--passask] [--passcmd
+*cmd* ] [--passkey
+*name* ] [--wallet-key-file
+*file* ] [--wallet-key
+*name* ]
 
 
 ## DESCRIPTION
 
-_akt_ is a tool to store information in secure wallets
+**akt** is a tool to store information in secure wallets
 and protect the stored information by encrypting the content.
 It is necessary to know one of the wallet password to access its content.
-_akt_ can be used to safely store passwords, credentials,
+**akt** can be used to safely store passwords, credentials,
 bank accounts and even documents.
 
 Wallets are protected by a master key using AES-256 and the wallet
@@ -58,41 +60,55 @@ store your passwords, your secret keys and even your documents.
 
 Passwords are retrieved using one of the following options:
 
+
 * by reading a file that contains the password,
+
 * by looking at an environment variable,
+
 * by using a command line argument,
+
 * by getting the password through the
-_ssh-askpass_(1) external command,
+**ssh-askpass**(1) external command,
+
 * by running an external command,
+
 * by asking interactively the user for the password,
+
 * by asking through a network socket for the password.
 
 
 ## OPTIONS
 
-The following options are recognized by _akt_:
+The following options are recognized by **akt**:
+
 
 -V
 Prints the
-_akt_ version.
+*akt* version.
+
 
 -v
 Enable the verbose mode.
 
+
 -vv
 Enable debugging output.
 
+
 -c
-_config-file_ Defines the path of the global
-_akt_ configuration file.
+*config-file* Defines the path of the global
+*akt* configuration file.
+
 
 -t
-_count_ Defines the number of threads for the encryption and decryption process.
+*count* Defines the number of threads for the encryption and decryption process.
 By default, it uses the number of system CPU cores.
+
 
 -k file
 
 Specifies the path of the keystore file to open.
+
 
 -d directory
 
@@ -101,10 +117,12 @@ When this option is used, the data blocks are written in separate
 files.  The data blocks do not contain the encryption keys and each of
 them is encrypted with its own secure key.
 
+
 -p password
 
 The keystore password is passed within the command line.
 Using this method is convenient but is not safe.
+
 
 --passenv envname
 
@@ -112,13 +130,16 @@ The keystore password is passed within an environment variable with the
 given name.  Using this method is considered safer but still provides
 some security leaks.
 
+
 --passfile path
 
 The keystore password is passed within a file that is read.
 The file must not be readable or writable by other users or group:
 its mode must be r??------.  The directory that contains the file
 must also satisfy the not readable by other users or group members,
-This method is safer.
+This method is safer and provides the same security level as the
+*--passkey* option.
+
 
 --passfd fd
 
@@ -126,23 +147,43 @@ The keystore password is passed within a pipe whose file descriptor
 number is given.  The file descriptor is read to obtain the password.
 This method is safer.
 
+
 --passask
 
 The keystore password is retrieved by the running the external tool
-_ssh-askpass_(1) which will ask the password through either KDE, Gnome or another
+**ssh-askpass**(1) which will ask the password through either KDE, Gnome or another
 desktop interactive application.
 The password is retrieved through a pipe that
-_akt_ sets while launching the command.
+*akt* sets while launching the command.
+
 
 --passcmd cmd
 
 The keystore password is retrieved by the running the external command defined in
-_cmd_. The command should print the password on its standard output without end of line.
+**cmd**. The command should print the password on its standard output without end of line.
 The password is retrieved through a pipe that
-_akt_ sets while launching the command.
+*akt* sets while launching the command.
+
+
+--passkey name
+
+The keystore password is retrieved from a keyfile with the given basename.
+The keyfile is created by the
+*genkey* command and they are stored on the file system in a specific directory.
+Unlike the
+*--passfile* option, only the basename of the file is given to the option and this avoid
+to give a full path name in some cases.
+This provides the same security level as the
+*--passfile* option.
+
 
 --wallet-key-file file
 Defines the path of a file which contains the wallet master key file.
+
+
+--wallet-key name
+Defines the name of the key file which contains the wallet master key.
+
 
 -z
 Erase and fill with zeros instead of random values.
@@ -161,10 +202,7 @@ file already exist, the create operation will fail unless the
 *--force* option is passed.
 
 The password to protect the wallet is passed using one of the following options:
-*--passfile* ,
-*--passenv* ,
-*--password* ,
-*--passsocket* or
+*--passfile*, *--passkey*, *--passenv*, *--password*, *--passsocket* or
 *--gpg*. When none of these options are passed, the password is asked interactively.
 
 The
@@ -186,9 +224,9 @@ The option argument defines the GPG user's name or GPG key.
 When the keystore password is protected by the user's GPG key,
 a random password is generated to protect the keystore.
 The
-_gpg2_(1) command is used to encrypt that password using the user's public key
+**gpg2**(1) command is used to encrypt that password using the user's public key
 and save it in the keystore header.  The
-_gpg2_(1) command is then used to decrypt that and be able to unlock the keystore
+**gpg2**(1) command is then used to decrypt that and be able to unlock the keystore
 provided that the user's private key is known.  When using the
 *--gpg* option, it is possible to protect the keystore for several users, thus
 being able to share the secure file with each of them.
@@ -207,9 +245,22 @@ keystore.  It is possible to extract several files and directories
 at the same time.
 
 When the
-_--_ option is passed, the command accepts only one
+*--* option is passed, the command accepts only one
 argument.  It extracts the specified name and writes the result
 on the standard output.  It can be used as a target for a pipe command.
+
+
+### The genkey command
+```
+akt genkey [--remove] name
+```
+
+The
+*genkey* command is used to generate or remove a password key file stored in some safe location
+on the file system (see the
+*keys* configuration variable).  The password key file can then be used with the
+*--passkey* option.  It provides the same security level as using the
+*--passfile* option but helps in setting up and using separate key files for different wallets.
 
 
 ### The mount command
@@ -218,20 +269,20 @@ akt mount keystore.akt [-f] [--enable-cache] mount-point
 ```
 
 This command is available when the
-_fuse_(8) support is enabled.  It allows to mount the keystore content on the
-_mount-point_ directory and access the encrypted content through the filesystem.
+**fuse**(8) support is enabled.  It allows to mount the keystore content on the
+*mount-point* directory and access the encrypted content through the filesystem.
 The
-_akt_ tool works as a daemon to serve
-_fuse_(8) requests that come from the kernel.  The
-_-f_ option allows to run this daemon as a foreground process.
+*akt* tool works as a daemon to serve
+**fuse**(8) requests that come from the kernel.  The
+*-f* option allows to run this daemon as a foreground process.
 By default, the kernel cache are disabled because the keystore content
 is decrypted and given as clear content to the kernel.  This could be
 a security issue for some system and users.
 The kernel cache can be enabled by using the
-_--enable-cache_ option.
+*--enable-cache* option.
 
 To unmount the file system, one must use the
-_mount_(8) command.
+**mount**(8) command.
 ```
 umount mount-point
 ```
@@ -243,7 +294,7 @@ akt set keystore.akt name value
 ```
 
 The
-_set_ command is used to store a content passed as command
+*set* command is used to store a content passed as command
 line argument in the wallet.  If the wallet already contains
 the name, the value is updated.
 
@@ -261,7 +312,7 @@ keystore.  It is possible to store several files and directories
 at the same time.
 
 When the
-_--_ option is passed, the command accepts only one
+*--* option is passed, the command accepts only one
 argument.  It reads the standard input and stores it under the
 specified name.  It can be used as a target for a pipe command.
 
@@ -272,7 +323,7 @@ akt remove keystore.akt name ...
 ```
 
 The
-_remove_ command is used to erase a content from the wallet.  The data block that contained
+*remove* command is used to erase a content from the wallet.  The data block that contained
 the content to protect is erased and replaced by zeros.
 The secure key that protected the wallet entry is also cleared.
 It is possible to remove several contents.
@@ -284,16 +335,16 @@ akt edit keystore.akt [-e editor] name
 ```
 
 The
-_edit_ command can be used to edit the protected wallet entry by calling the
+*edit* command can be used to edit the protected wallet entry by calling the
 user's prefered editor with the content.  The content is saved in a
 temporary directory and in a temporary file.  The editor is launched
 with the path and when editing is finished the temporary file is read.
 The temporary directory and files are erased when the editor terminates
 successfully or not.  The editor can be specified by using the
-_-e_ option, by setting up the
-_EDITOR_ environment variable or by updating the
-_editor_(1) alternative with
-_update-alternative_(1). 
+*-e* option, by setting up the
+*EDITOR* environment variable or by updating the
+**editor**(1) alternative with
+**update-alternative**(1). 
 
 ### The list command
 ```
@@ -301,7 +352,7 @@ akt list keystore.akt
 ```
 
 The
-_list_ command describes the entries stored in the keystore with
+*list* command describes the entries stored in the keystore with
 their name, size, type, creation date and number of keys which
 protect the entry.
 
@@ -312,12 +363,28 @@ akt get keystore.akt [-n] name...
 ```
 
 The
-_get_ command allows to retrieve the value associated with a wallet entry.
+*get* command allows to retrieve the value associated with a wallet entry.
 It retrieves the value for each name passed to the command.
 The value is printed on the standard output.
 By default a newline is emitted after each value.
 The
-_-n_ option prevents the output of the trailing newline.
+*-n* option prevents the output of the trailing newline.
+
+
+### The otp command
+```
+akt otp keystore.akt name
+
+akt otp keystore.akt otpauth://totp/account?secret=secret&issuer=issuer
+```
+
+The
+*otp* command manages OATH secrets and provides TOTP code
+generation for a two factor authentication.  When an otpauth://totp/ string is given, the account
+is extracted and it is inserted in the wallet.  When an account name
+or issuer name is given, the command uses the secret to generate
+the 6 digit codes for the authentication.  When no parameter are given
+the command gives a list of known otpauth URI.
 
 
 ### The password-add command
@@ -326,7 +393,7 @@ akt password-add keystore.akt [--new-passfile file] [--new-password password] [-
 ```
 
 The
-_password-add_ command allows to add a new password in one of the wallet key slot.  Up to seven
+*password-add* command allows to add a new password in one of the wallet key slot.  Up to seven
 passwords can be defined to protect the wallet.  The overall security of the wallet
 is that of the weakest password.  To add a new password, one must know an existing
 password.
@@ -338,10 +405,10 @@ akt password-remove keystore.akt [--force]
 ```
 
 The
-_password-remove_ command can be used to erase a password from the wallet master key slots.
+*password-remove* command can be used to erase a password from the wallet master key slots.
 Removing the last password makes the keystore unusable and it is necessary
 to pass the
-_--force_ option for that.
+*--force* option for that.
 
 
 ### The password-set command
@@ -350,7 +417,7 @@ akt password-set [--new-passfile file] [--new-password password] [--new-passenv 
 ```
 
 The
-_password-set_ command allows to change the current wallet password.
+*password-set* command allows to change the current wallet password.
 
 ## SECURITY
 
@@ -371,7 +438,7 @@ use another method such as using the interactive form, passing the password
 through a file or passing using a socket based communication.
 
 When the wallet master key is protected using
-_gpg2_(1) a 32-bytes random binary key and a 16-bytes random binary IV is created
+**gpg2**(1) a 32-bytes random binary key and a 16-bytes random binary IV is created
 to protect the wallet master key.  Another set of 80 bytes of random
 binary data is used to encrypt and sign the whole wallet master key block.
 The 128 bytes that form these random binary keys are encrypted using
@@ -380,7 +447,7 @@ block.  The
 *--gpg* option is specified only for the creation of the keystore and allows
 to encrypt a master key slot for several GPG keys.
 To unlock the keystore file, the
-_gpg2_(1) command will be used to decrypt the keystore header content automatically.
+**gpg2**(1) command will be used to decrypt the keystore header content automatically.
 When the user's GPG private key is not found, it is not possible
 to unlock the keystore with this method.
 
@@ -402,7 +469,7 @@ They do not contain any encryption key.  The data storage files use the
 ## CONFIGURATION
 
 The
-_akt_ global configuration file contains several configuration properties
+*akt* global configuration file contains several configuration properties
 which are used to customize several commands.  These properties can
 be modified with the
 *config* command.
@@ -410,36 +477,43 @@ be modified with the
 
 ### gpg-encrypt
 This property defines the
-_gpg2_(1) command to be used to encrypt a content.  The content to encrypt is
+**gpg2**(1) command to be used to encrypt a content.  The content to encrypt is
 passed in the standard input and the encrypted content is read from
 the standard output.  The GPG key parameter can be retrieved
 by using the
-_$USER_ pattern.
+*$USER* pattern.
 
 
 ### gpg-decrypt
 This property defines the
-_gpg2_(1) command to be used to decrypt a content.  The content to decrypt is
+**gpg2**(1) command to be used to decrypt a content.  The content to decrypt is
 passed in the standard input and the decrypted content is read from
 the standard output.
 
 
 ### gpg-list-keys
 This property defines the
-_gpg2_(1) command to be used to retrieve the list of available secret keys.
+**gpg2**(1) command to be used to retrieve the list of available secret keys.
 This command is executed when the keystore file is protected by a
 GPG key to identify the possible GPG Key ids that
 are capable of decrypting it.
 
 
+### keys
+This property defines the directory path where the key files generated by the
+*genkey* and specified with the
+*--passkey* option are stored.  The default location is the
+*$HOME/.config/akt/keys* directory.
+
+
 ### fill-zero
 This property controls whether
-_akt_ must fill unused data areas with zeros or with random bytes.
+*akt* must fill unused data areas with zeros or with random bytes.
 
 ## SEE ALSO
 
-_editor(1)_, _update-alternative(1)_, _ssh-askpass(1)_,
-_gpg2(1)_, _mount(8)_, _fuse(8)_
+**editor(1)**, **update-alternative(1)**, **ssh-askpass(1)**,
+**gpg2(1)**, **mount(8)**, **fuse(8)**
 
 ## AUTHOR
 
