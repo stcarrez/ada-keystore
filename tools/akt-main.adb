@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-main -- Ada Keystore Tool main procedure
---  Copyright (C) 2019, 2021 Stephane Carrez
+--  Copyright (C) 2019, 2021, 2023 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ with Ada.Exceptions;
 with GNAT.Command_Line;
 
 with Util.Log.Loggers;
+with Util.Strings;
 with Util.Commands;
 with AKT.Commands;
 with Keystore;
@@ -44,7 +45,20 @@ exception
       Log.Error (-("missing the keystore file name"));
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
-   when Keystore.Bad_Password =>
+   when E : Keystore.Bad_Password =>
+      declare
+         Reason : constant String := Ada.Exceptions.Exception_Message (E);
+      begin
+         if Util.Strings.Contains (Reason, "is empty") then
+            Log.Error (-("password is empty"));
+         elsif Util.Strings.Contains (Reason, "is too big") then
+            Log.Error (-("password is too big"));
+         elsif Util.Strings.Contains (Reason, "file does not exist") then
+            Log.Error (-("password file does not exist"));
+         elsif Util.Strings.Contains (Reason, "file is not safe") then
+            Log.Error (-("password file is not safe"));
+         end if;
+      end;
       Log.Error (-("invalid password to unlock the keystore file"));
       Ada.Command_Line.Set_Exit_Status (Ada.Command_Line.Failure);
 
