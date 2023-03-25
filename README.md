@@ -54,9 +54,21 @@ Mount the keystore:
    umount /mnt
 ```
 
+Store a new OTP secret:
+```
+   akt otp secure.akt otpauth://totp/GitHub:...
+```
+
+Generate the TOTP code:
+```
+   akt otp secure.akt GitHub
+```
+
+
 ## Version 1.4.0  - Under development
   - Feature #15: Authenticator with TOTP support
   - Bug #16: Support to build with -gnatW8
+  - New genkey command
 
 ## Version 1.3.4  - Feb 2023
 - Fix #14: Constraint_Error raised if the HOME environment variable is not defined
@@ -113,6 +125,7 @@ It provides the following commands:
 * `create`:   create the keystore
 * `edit`:     edit the value with an external editor
 * `extract`:  get a value from the keystore
+* `genkey`:   generate or manage named keys
 * `get`:      get a value from the keystore
 * `help`:     print some help
 * `info`:     print information about the keystore
@@ -243,12 +256,12 @@ Sometimes, you may have to force the umount by running:
 
 # AKT Debian Binaries
 
-Ubuntu 18.04 packages are available to help you install the `akt` command
+Ubuntu 22.04 packages are available to help you install the `akt` command
 more easily.  You can configure your Ubuntu system as follows:
 
 ```
-wget -O - http://apt.vacs.fr/apt.vacs.fr.gpg.key | sudo apt-key add -
-sudo add-apt-repository "deb http://apt.vacs.fr/ubuntu-bionic bionic main"
+wget -O - https://apt.vacs.fr/apt.vacs.fr.gpg.key | sudo apt-key add -
+sudo add-apt-repository "deb https://apt.vacs.fr/ubuntu-jammy jammy main"
 ```
 
 And then install the `akt` package:
