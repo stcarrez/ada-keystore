@@ -22,10 +22,12 @@ with Interfaces.C.Strings;
 with Util.Files;
 with Util.Log.Loggers;
 with Util.Systems.Os;
+with Util.Beans.Objects;
 with Util.Properties;
 package body AKT.Configs is
 
    use Ada.Strings.Unbounded;
+   package UBO renames Util.Beans.Objects;
 
    --  The logger
    Log   : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Configs");
@@ -49,6 +51,25 @@ package body AKT.Configs is
          return Util.Files.Compose (Home, ".config/akt/akt.properties");
       end;
    end Get_Default_Path;
+
+   --  ------------------------------
+   --  Get the directory which contains the named keys.
+   --  ------------------------------
+   function Get_Directory_Key_Path return String is
+      Val : constant UBO.Object := Cfg.Get_Value (NAMED_KEY_DIR);
+   begin
+      if not UBO.Is_Null (Val) then
+         return UBO.To_String (Val);
+      end if;
+      if not Ada.Environment_Variables.Exists ("HOME") then
+         return "";
+      end if;
+      declare
+         Home : constant String := Ada.Environment_Variables.Value ("HOME");
+      begin
+         return Util.Files.Compose (Home, ".config/akt/keys");
+      end;
+   end Get_Directory_Key_Path;
 
    --  ------------------------------
    --  Initialize the configuration.

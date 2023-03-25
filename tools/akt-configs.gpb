@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-configs -- Configuration
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2023 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +27,7 @@ package AKT.Configs is
    GPG_CRYPT_CONFIG   : constant String := "gpg-encrypt";
    GPG_DECRYPT_CONFIG : constant String := "gpg-decrypt";
    GPG_LIST_CONFIG    : constant String := "gpg-list-keys";
+   NAMED_KEY_DIR      : constant String := "keys";
 
    --  Initialize the configuration.
    procedure Initialize (Path : in String);
@@ -40,6 +41,9 @@ package AKT.Configs is
 
    --  Returns true if the configuration parameter is defined.
    function Exists (Name : in String) return Boolean;
+
+   --  Get the directory which contains the named keys.
+   function Get_Directory_Key_Path return String;
 
    --  Save the configuration.
    procedure Save;
