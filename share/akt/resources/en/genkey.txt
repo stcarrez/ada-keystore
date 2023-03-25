@@ -1,0 +1,10 @@
+akt genkey: generate or manage simple named keys to lock/unlock wallets
+
+Usage: genkey [--remove] {<name> ...}
+
+  The genkey command is used to generate or remove a password key file
+  stored in some safe location on the file system (see the keys
+  configuration variable).  The password key file can then be used
+  with the --passkey option.  It provides the same security level as using the
+  --passfile option but helps in setting up and using separate key files
+  for different wallets.
