@@ -401,7 +401,7 @@ package body AKT.Commands is
          Context.Provider := Keystore.Passwords.Unsafe.Create (Context.Unsafe_Password.all);
       elsif Context.Password_Key'Length > 0 then
          declare
-            Path : constant String := Get_Named_Key_Path (Context, Context.Password_Key.all);
+            Path : constant String := Get_Named_Key_Path (Context.Password_Key.all);
          begin
             Context.Provider := Keystore.Passwords.Files.Create (Path);
          end;
@@ -530,8 +530,7 @@ package body AKT.Commands is
    --  ------------------------------
    --  Get the path to the named key (created and managed by genkey command).
    --  ------------------------------
-   function Get_Named_Key_Path (Context : in Context_Type;
-                                Name    : in String) return String is
+   function Get_Named_Key_Path (Name : in String) return String is
       Dir : constant String := AKT.Configs.Get_Directory_Key_Path;
    begin
       if Dir'Length = 0 then

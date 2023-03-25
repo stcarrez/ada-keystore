@@ -29,6 +29,8 @@ package body AKT.Commands.Genkey is
                       Name      : in String;
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
+      pragma Unreferenced (Name);
+
       Dir : constant String := AKT.Configs.Get_Directory_Key_Path;
    begin
       if Dir'Length = 0 then
@@ -38,7 +40,7 @@ package body AKT.Commands.Genkey is
       for I in 1 .. Args.Get_Count loop
          declare
             Key_Name : constant String := Args.Get_Argument (I);
-            Path     : constant String := Get_Named_Key_Path (Context, Key_Name);
+            Path     : constant String := Get_Named_Key_Path (Key_Name);
          begin
             if Ada.Directories.Exists (Path) then
                if Command.Remove then

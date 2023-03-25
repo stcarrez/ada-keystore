@@ -72,8 +72,7 @@ package AKT.Commands is
                                Args    : in Argument_List'Class) return String;
 
    --  Get the path to the named key (created and managed by genkey command).
-   function Get_Named_Key_Path (Context : in Context_Type;
-                                Name    : in String) return String;
+   function Get_Named_Key_Path (Name    : in String) return String;
 
    type Field_Number is range 1 .. 256;
 
