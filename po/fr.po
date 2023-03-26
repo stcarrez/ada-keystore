@@ -460,6 +460,10 @@ msgstr "Le mot de passe est lu à partir d'une clef nommée"
 msgid "The password was successfully removed."
 msgstr "Le mot de passe a été supprimé avec succès."
 
+#: akt-commands.adb
+msgid "The wallet master key is read from a named key file"
+msgstr "Le mot de passe est lu à partir d'une clef nommée"
+
 #: akt-main.adb
 msgid "there is no available key slot to add the password"
 msgstr "il n'y a pas de slot de clé disponible pour ajouter le mot de passe"

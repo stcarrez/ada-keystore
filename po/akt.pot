@@ -447,6 +447,10 @@ msgstr ""
 msgid "The password was successfully removed."
 msgstr ""
 
+#: akt-commands.adb
+msgid "The wallet master key is read from a named key file"
+msgstr ""
+
 #: akt-main.adb
 msgid "there is no available key slot to add the password"
 msgstr ""
