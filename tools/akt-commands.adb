@@ -385,6 +385,11 @@ package body AKT.Commands is
                         Long_Switch => "--wallet-key-file=",
                         Argument => "PATH",
                         Help   => -("Read the file that contains the wallet keys"));
+      GC.Define_Switch (Config => Config,
+                        Output => Context.Wallet_Key'Access,
+                        Long_Switch => "--wallet-key=",
+                        Argument => "NAME",
+                        Help   => -("The wallet master key is read from a named key file"));
    end Setup;
 
    procedure Setup_Password_Provider (Context : in out Context_Type) is
@@ -415,6 +420,12 @@ package body AKT.Commands is
    begin
       if Context.Wallet_Key_File'Length > 0 then
          Context.Key_Provider := Keystore.Passwords.Files.Create (Context.Wallet_Key_File.all);
+      elsif Context.Wallet_Key'Length > 0 then
+         declare
+            Path : constant String := Get_Named_Key_Path (Context.Wallet_Key.all);
+         begin
+            Context.Key_Provider := Keystore.Passwords.Files.Create (Path);
+         end;
       end if;
    end Setup_Key_Provider;
 

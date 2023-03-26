@@ -121,6 +121,7 @@ private
       Wallet_File       : aliased GNAT.Strings.String_Access;
       Data_Path         : aliased GNAT.Strings.String_Access;
       Wallet_Key_File   : aliased GNAT.Strings.String_Access;
+      Wallet_Key        : aliased GNAT.Strings.String_Access;
       Password_File     : aliased GNAT.Strings.String_Access;
       Password_Env      : aliased GNAT.Strings.String_Access;
       Password_Key      : aliased GNAT.Strings.String_Access;

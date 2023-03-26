@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-create -- Create a keystore
---  Copyright (C) 2019, 2021, 2022 Stephane Carrez
+--  Copyright (C) 2019, 2021, 2022, 2023 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +15,7 @@
 --  See the License for the specific language governing permissions and
 --  limitations under the License.
 -----------------------------------------------------------------------
+with Ada.Directories;
 with Keystore.Passwords.Files;
 with Keystore.Passwords.Input;
 package body AKT.Commands.Create is
@@ -84,9 +85,13 @@ package body AKT.Commands.Create is
          end loop;
 
       else
-         if Context.Wallet_Key_File'Length > 0 then
+         if Context.Wallet_Key_File'Length > 0
+           and then not Ada.Directories.Exists (Context.Wallet_Key_File.all)
+         then
             Context.Key_Provider
               := Keystore.Passwords.Files.Generate (Context.Wallet_Key_File.all);
+         else
+            Setup_Key_Provider (Context);
          end if;
          if Context.Key_Provider /= null then
             Context.Wallet.Set_Master_Key (Context.Key_Provider.all);
