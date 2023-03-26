@@ -109,6 +109,9 @@ package Keystore.Tests is
    --  Test the OTP command.
    procedure Test_Tool_OTP (T : in out Test);
 
+   --  Test the genkey command.
+   procedure Test_Tool_Genkey (T : in out Test);
+
    procedure Execute (T       : in out Test;
                       Command : in String;
                       Input   : in String;

@@ -46,6 +46,7 @@ package body Keystore.Tests is
    TEST_TOOL4_PATH  : constant String := "test-tool-4.akt";
    TEST_TOOL5_PATH  : constant String := "test-tool-5.akt";
    TEST_TOOL6_PATH  : constant String := "test-tool-6.akt";
+   TEST_TOOL7_PATH  : constant String := "test-tool-7.akt";
    TEST_WALLET_KEY_PATH  : constant String := "keys/wallet.keys";
    TEST_CORRUPTED_1_PATH : constant String := "regtests/files/test-corrupted-1.akt";
    TEST_CORRUPTED_2_PATH : constant String := "regtests/files/test-corrupted-2.akt";
@@ -181,6 +182,8 @@ package body Keystore.Tests is
                        Test_Tool_Nested_Wallet'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.OTP",
                        Test_Tool_OTP'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Genkey",
+                       Test_Tool_Genkey'Access);
    end Add_Tests;
 
    --  ------------------------------
@@ -868,7 +871,7 @@ package body Keystore.Tests is
    --  Test the akt config command.
    --  ------------------------------
    procedure Test_Tool_Set_Config (T : in out Test) is
-      Path   : constant String := Util.Tests.Get_Path (TEST_CONFIG_PATH);
+      Path   : constant String := Util.Tests.Get_Test_Path (TEST_CONFIG_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       if Ada.Directories.Exists (Path) then
@@ -1077,5 +1080,82 @@ package body Keystore.Tests is
                                  Result, "otp command failed");
 
    end Test_Tool_OTP;
+
+   --  ------------------------------
+   --  Test the genkey command.
+   --  ------------------------------
+   procedure Test_Tool_Genkey (T : in out Test) is
+      Config_Path : constant String := Util.Tests.Get_Test_Path (TEST_CONFIG_PATH);
+      Keys_Path   : constant String := Util.Tests.Get_Test_Path ("keys");
+      Path        : constant String := Util.Tests.Get_Test_Path (TEST_TOOL7_PATH);
+      Result      : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      if Ada.Directories.Exists (Keys_Path) then
+         Ada.Directories.Delete_Tree (Keys_Path);
+      end if;
+      T.Execute (Tool & " --config " & Config_Path & " config keys " & Keys_Path,
+                 Result, 0);
+      Util.Tests.Assert_Equals (T, "", Result,
+                                "Bad output for config command");
+      T.Assert (Ada.Directories.Exists (Config_Path),
+                "Config file '" & Config_Path & "' does not exist after test");
+
+      --  Generate a first key.
+      T.Execute (Tool & " --config " & Config_Path & " genkey mykey", Result, 0);
+      Util.Tests.Assert_Equals (T, "", Result,
+                                "Bad output for genkey command");
+      T.Assert (Ada.Directories.Exists (Keys_Path),
+                "Keys directory '" & Keys_Path & "' was not created");
+      T.Assert (Ada.Directories.Exists (Keys_Path & "/mykey.key"),
+                "Generated namedkey 'mykey' was not created");
+
+      --  Generate a second key.
+      T.Execute (Tool & " --config " & Config_Path & " genkey second", Result, 0);
+      Util.Tests.Assert_Equals (T, "", Result,
+                                "Bad output for genkey command");
+      T.Assert (Ada.Directories.Exists (Keys_Path & "/mykey.key"),
+                "Generated namedkey 'mykey' was not created");
+      T.Assert (Ada.Directories.Exists (Keys_Path & "/second.key"),
+                "Generated namedkey 'second' was not created");
+
+      if Ada.Directories.Exists (Path) then
+         Ada.Directories.Delete_File (Path);
+      end if;
+
+      --  Create keystore
+      T.Execute (Tool & " --config " & Config_Path & " create " & Path
+                 & " --wallet-key second "
+                 & " --passkey mykey --counter-range 10:100", Result);
+      Util.Tests.Assert_Equals (T, "", Result, "create command failed");
+      T.Assert (Ada.Directories.Exists (Path),
+                "Keystore file does not exist");
+
+      --  Set a value in the keystore
+      T.Execute (Tool & " --config " & Config_Path & " set " & Path
+                 & " --wallet-key second "
+                 & " --passkey mykey test secret-data", Result);
+      Util.Tests.Assert_Equals (T, "", Result, "set command failed");
+
+      --  Get the value from the keystore
+      T.Execute (Tool & " --config " & Config_Path & " get -n " & Path
+                 & " --wallet-key second "
+                 & " --passkey mykey test", Result);
+      Util.Tests.Assert_Equals (T, "secret-data", Result, "get command failed");
+
+      --  Check reading the keystore with a wrong master key.
+      T.Execute (Tool & " --config " & Config_Path & " get -n " & Path
+                 & " --wallet-key mykey "
+                 & " --passkey mykey test", Result, 1);
+      Util.Tests.Assert_Matches (T, "invalid password to unlock the keystore file",
+                                 Result, "get command failed");
+
+      --  Likewise with a correct master key but invalid password key.
+      T.Execute (Tool & " --config " & Config_Path & " get -n " & Path
+                 & " --wallet-key second "
+                 & " --passkey second test", Result, 1);
+      Util.Tests.Assert_Matches (T, "invalid password to unlock the keystore file",
+                                 Result, "get command failed");
+
+   end Test_Tool_Genkey;
 
 end Keystore.Tests;
