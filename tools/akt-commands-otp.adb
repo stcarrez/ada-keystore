@@ -155,7 +155,7 @@ package body AKT.Commands.OTP is
          Key     : constant Util.Encoders.Secret_Key := Decoder.Decode_Key (Secret);
          Code    : Natural;
       begin
-         if Algo = "SHA1" then
+         if Algo = "SHA1" or else Algo = "" then
             Code := HOTP_SHA1 (Key, Interfaces.Unsigned_64 (Steps), D);
          elsif Algo = "SHA256" then
             Code := HOTP_SHA256 (Key, Interfaces.Unsigned_64 (Steps), D);
