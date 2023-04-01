@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-repository-data -- Data access and management for the keystore
---  Copyright (C) 2019, 2020, 2022 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022, 2023 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -185,10 +185,10 @@ package body Keystore.Repository.Workers is
          Work := Get_Work (Workers.all);
          exit when Work /= null;
          Workers.Data_Queue.Dequeue (Work, Seq);
-         if Process /= null then
+         Status := Work.Status;
+         if Process /= null and then Status = SUCCESS then
             Process (Work);
          end if;
-         Status := Work.Status;
          Put_Work (Workers.all, Work);
          Check_Raise_Error (Status);
       end loop;
