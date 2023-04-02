@@ -165,7 +165,7 @@ package body AKT.Commands.OTP is
          elsif Algo = "SHA256" then
             Code := HOTP_SHA256 (Key, Interfaces.Unsigned_64 (Steps), D);
          else
-            AKT.Commands.Log.Error (-("algorithm not supported '{0}'"), Algo);
+            AKT.Commands.Log.Error (-("algorithm '{0}' is not supported"), Algo);
             raise Error;
          end if;
          if Account'Length > 0 then
