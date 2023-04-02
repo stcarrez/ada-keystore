@@ -16,6 +16,7 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Ada.Calendar.Conversions;
+with Ada.Text_IO;
 with Util.Strings;
 with Interfaces.C;
 with GNAT.Command_Line;
@@ -33,6 +34,10 @@ package body AKT.Commands.OTP is
    function Get_Param (URI  : in String;
                        Name : in String) return String;
    function Get_Issuer (URI : in String) return String;
+   function Trim_Spaces (Line : in String) return String;
+   function Enter_Digits return String;
+   function Enter_Secret return String;
+   function Enter_Account return String;
 
    function HOTP_SHA1 is
      new Util.Encoders.HMAC.HOTP (Util.Encoders.HMAC.SHA1.HASH_SIZE,
@@ -264,6 +269,103 @@ package body AKT.Commands.OTP is
       end loop;
    end List;
 
+   function Trim_Spaces (Line : in String) return String is
+      Result : String (Line'Range);
+      Pos    : Natural := Line'First;
+   begin
+      for C of Line loop
+         if C /= ' ' then
+            Result (Pos) := C;
+            Pos := Pos + 1;
+         end if;
+      end loop;
+      return Result (Result'First .. Pos - 1);
+   end Trim_Spaces;
+
+   function Enter_Secret return String is
+      Decoder : constant Util.Encoders.Decoder := Util.Encoders.Create (Util.Encoders.BASE_32);
+   begin
+      loop
+         Util.Commands.Put_Raw (-("akt: secret key (base32): "));
+         declare
+            Secret : constant String := Trim_Spaces (Ada.Text_IO.Get_Line);
+         begin
+            if Secret'Length = 0 then
+               return "";
+            end if;
+
+            --  Decode the key to make sure it is valid.
+            declare
+               Key : constant Util.Encoders.Secret_Key := Decoder.Decode_Key (Secret);
+
+               pragma Unreferenced (Key);
+            begin
+               return Secret;
+            end;
+
+         exception
+            when others =>
+               AKT.Commands.Log.Error (-("invalid secret key"));
+         end;
+      end loop;
+   end Enter_Secret;
+
+   function Enter_Account return String is
+   begin
+      AKT.Commands.Flush_Input;
+      loop
+         Util.Commands.Put_Raw (-("akt: enter account name (<issuer>:<name>): "));
+         declare
+            Account : constant String := Ada.Text_IO.Get_Line;
+         begin
+            if Account'Length = 0 then
+               return Account;
+            end if;
+            if Util.Strings.Index (Account, ':') > 0 then
+               return Account;
+            end if;
+            AKT.Commands.Log.Error (-("invalid account name"));
+         end;
+      end loop;
+   end Enter_Account;
+
+   function Enter_Digits return String is
+   begin
+      AKT.Commands.Flush_Input;
+      loop
+         Util.Commands.Put_Raw (-("akt: number of digits (5..8, default 6): "));
+         declare
+            Value : constant String := Trim_Spaces (Ada.Text_IO.Get_Line);
+         begin
+            if Value'Length = 0 then
+               return "6";
+            end if;
+            if Value'Length = 1
+              and then Value (Value'First) in '5' | '6' | '7' | '8'
+            then
+               return Value;
+            end if;
+         end;
+      end loop;
+   end Enter_Digits;
+
+   procedure Interactive (Command : in out Command_Type;
+                          Context : in out Context_Type) is
+      Account : constant String := Enter_Account;
+      Secret  : constant String := Enter_Secret;
+   begin
+      if Account'Length = 0 or else Secret'Length = 0 then
+         return;
+      end if;
+      declare
+         D : constant String := Enter_Digits;
+      begin
+         Command.Register ("otpauth://totp/" & Account
+                           & "?secret=" & Secret & "&digits=" & D,
+                           Context);
+      end;
+   end Interactive;
+
    --  ------------------------------
    --  Store the otpauth secret or generate the OTP code.
    --  ------------------------------
@@ -274,8 +376,12 @@ package body AKT.Commands.OTP is
                       Context   : in out Context_Type) is
    begin
       Context.Open_Keystore (Args, Use_Worker => False);
-      if Context.First_Arg > Args.Get_Count  then
-         Command.List (Context);
+      if Context.First_Arg > Args.Get_Count then
+         if Command.Interactive then
+            Interactive (Command, Context);
+         else
+            Command.List (Context);
+         end if;
 
       else
          declare
@@ -313,6 +419,8 @@ package body AKT.Commands.OTP is
                         "-r", "--remove", -("Remove the otpauth URI"));
       GC.Define_Switch (Config, Command.Force'Access,
                         "-f", "--force", -("Force update of existing otpauth URI"));
+      GC.Define_Switch (Config, Command.Interactive'Access,
+                        "-i", "--interactive", -("Interactive insertion of otpauth"));
    end Setup;
 
 end AKT.Commands.OTP;

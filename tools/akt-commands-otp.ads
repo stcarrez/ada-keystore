@@ -37,8 +37,9 @@ private package AKT.Commands.OTP is
 private
 
    type Command_Type is new AKT.Commands.Drivers.Command_Type with record
-      Remove : aliased Boolean := False;
-      Force  : aliased Boolean := False;
+      Remove      : aliased Boolean := False;
+      Force       : aliased Boolean := False;
+      Interactive : aliased Boolean := False;
    end record;
 
    --  Register or update an otpauth URI.
@@ -54,6 +55,9 @@ private
    --  List the OTP authorizations that are registered.
    procedure List (Command   : in out Command_Type;
                    Context   : in out Context_Type);
+
+   procedure Interactive (Command : in out Command_Type;
+                          Context : in out Context_Type);
 
    --  Collect the list of OTP definitions in the keystore.
    procedure Collect_List (Context : in out Context_Type;
