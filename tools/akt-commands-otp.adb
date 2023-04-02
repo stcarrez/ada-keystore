@@ -227,6 +227,8 @@ package body AKT.Commands.OTP is
    procedure Generate (Command : in out Command_Type;
                        Account : in String;
                        Context : in out Context_Type) is
+      pragma Unreferenced (Command);
+
       Prefix : constant String := "otpauth.";
 
       function Match (Name : in String) return Boolean is
