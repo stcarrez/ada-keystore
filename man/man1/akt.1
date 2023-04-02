@@ -1,6 +1,6 @@
 .\"
 .\"
-.TH AKT 1 "Mar 25, 2023" "Ada Keystore Tool"
+.TH AKT 1 "Apr 2, 2023" "Ada Keystore Tool"
 .SH NAME
 akt - Tool to protect your sensitive data with secure storage
 .SH SYNOPSIS
@@ -419,9 +419,11 @@ option prevents the output of the trailing newline.
 .SS The otp command
 .RS 0
 .nf
-akt \fBotp \fIkeystore.akt\fR \fIname\fR\fR
+akt \fBotp \fIkeystore.akt\fR [--interactive] [--force]\fR
+.nf
+akt \fBotp \fIkeystore.akt\fR [--remove] \fIname\fR\fR
 .br
-akt \fBotp \fIkeystore.akt\fR otpauth://totp/\fIaccount\fR?secret=\fIsecret\fR&issuer=\fIissuer\fR\fR
+akt \fBotp \fIkeystore.akt\fR [--force] otpauth://totp/\fIaccount\fR?secret=\fIsecret\fR&issuer=\fIissuer\fR\fR
 .fi
 .RE
 .PP
@@ -432,7 +434,12 @@ generation for a two factor authentication.  When an otpauth://totp/ string is g
 is extracted and it is inserted in the wallet.  When an account name
 or issuer name is given, the command uses the secret to generate
 the 6 digit codes for the authentication.  When no parameter are given
-the command gives a list of known otpauth URI.
+the command gives a list of known otpauth URI.  The
+.I --interactive
+option can be used to let the command ask several questions to enter the different fields separately.
+The
+.I --force
+option can be used to force the update of the otpauth URI.
 .\"
 .\"
 .SS The password-add command
