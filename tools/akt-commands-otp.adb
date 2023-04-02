@@ -181,6 +181,8 @@ package body AKT.Commands.OTP is
    procedure Register (Command : in out Command_Type;
                        URI     : in String;
                        Context : in out Context_Type) is
+      pragma Unreferenced (Command);
+
       Account : constant String := Get_Account (URI);
       Key     : constant String := "otpauth." & Account;
    begin
@@ -256,6 +258,8 @@ package body AKT.Commands.OTP is
    --  ------------------------------
    procedure List (Command   : in out Command_Type;
                    Context   : in out Context_Type) is
+      pragma Unreferenced (Command);
+
       Names : Util.Strings.Vectors.Vector;
    begin
       Collect_List (Context, Names);
@@ -374,6 +378,7 @@ package body AKT.Commands.OTP is
                       Name      : in String;
                       Args      : in Argument_List'Class;
                       Context   : in out Context_Type) is
+      pragma Unreferenced (Name);
    begin
       Context.Open_Keystore (Args, Use_Worker => False);
       if Context.First_Arg > Args.Get_Count then
