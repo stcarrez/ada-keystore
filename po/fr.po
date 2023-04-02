@@ -41,11 +41,19 @@ msgid "akt - tool to store and protect your sensitive data"
 msgstr "akt - outil pour stocker et protéger vos données sensibles"
 
 #: akt-commands-otp.adb
-msgid "algorithm '{0}' is not supported"
-msgstr "l'algorithme '{0}' n'est pas supporté"
+msgid "akt: enter account name (<issuer>:<name>)"
+msgstr "akt: entrez le nom du compte (<issuer>:<nom>)"
 
 #: akt-commands-otp.adb
-msgid "algorithm not supported '{0}'"
+msgid "akt: number of digits (5..8, default 6)"
+msgstr "akt: nombre de digits (5..8, défaut 6)"
+
+#: akt-commands-otp.adb
+msgid "akt: secret key (base32)"
+msgstr "akt: clef secrète (base32)"
+
+#: akt-commands-otp.adb
+msgid "algorithm '{0}' is not supported"
 msgstr "l'algorithme '{0}' n'est pas supporté"
 
 #: akt-commands-mount.adb
@@ -186,6 +194,14 @@ msgstr "obtenir ou configurer une option global"
 msgid "insert or update a value in the keystore"
 msgstr "insérer ou mettre à jour une valeur dans le magasin de clés"
 
+#: akt-commands-otp.adb
+msgid "Interactive insertion of otpauth"
+msgstr "Ajout interactif d'une définition otpauth"
+
+#: akt-commands-otp.adb
+msgid "invalid account name"
+msgstr "le compte n'est pas valide"
+
 #: util-commands-drivers.adb
 msgid "Invalid command"
 msgstr "command invalide"
@@ -223,6 +239,10 @@ msgstr "mot de passe invalide pour déverrouiller le fichier de clés"
 #: akt-commands-otp.adb
 msgid "invalid period '{0}'"
 msgstr "period invalide '{0}'"
+
+#: akt-commands-otp.adb
+msgid "invalid secret key"
+msgstr "clef secrète invalide"
 
 #: akt-commands-genkey.adb
 msgid "key '{0}' is already defined"
