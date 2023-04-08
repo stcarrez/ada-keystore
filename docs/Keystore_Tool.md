@@ -374,9 +374,9 @@ The
 
 ### The otp command
 ```
-akt \fBotp keystore.akt name
+akt otp keystore.akt name
 
-akt \fBotp keystore.akt otpauth://totp/account?secret=secret&issuer=issuer
+akt otp keystore.akt otpauth://totp/account?secret=secret&issuer=issuer
 ```
 
 The

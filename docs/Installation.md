@@ -42,8 +42,8 @@ The project uses a sub-module to help you in the integration and build
 process.  You should checkout the project with the following commands:
 
 ```
-   git clone --recursive https://gitlab.com/stcarrez/ada-keystore.git
-   cd ada-keystore
+git clone --recursive https://gitlab.com/stcarrez/ada-keystore.git
+cd ada-keystore
 ```
 
 ## Configuration
