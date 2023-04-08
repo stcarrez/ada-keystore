@@ -47,6 +47,7 @@ package body Keystore.Tests is
    TEST_TOOL5_PATH  : constant String := "test-tool-5.akt";
    TEST_TOOL6_PATH  : constant String := "test-tool-6.akt";
    TEST_TOOL7_PATH  : constant String := "test-tool-7.akt";
+   TEST_TOOL8_PATH  : constant String := "test-tool-8.akt";
    TEST_WALLET_KEY_PATH  : constant String := "keys/wallet.keys";
    TEST_CORRUPTED_1_PATH : constant String := "regtests/files/test-corrupted-1.akt";
    TEST_CORRUPTED_2_PATH : constant String := "regtests/files/test-corrupted-2.akt";
@@ -184,6 +185,8 @@ package body Keystore.Tests is
                        Test_Tool_OTP'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.OTP (Errors)",
                        Test_Tool_OTP_Error'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.OTP (interactive)",
+                       Test_Tool_OTP_Interactive'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Genkey",
                        Test_Tool_Genkey'Access);
    end Add_Tests;
@@ -1114,6 +1117,56 @@ package body Keystore.Tests is
       Util.Tests.Assert_Matches (T, "akt: invalid digits '11'",
                                  Result, "otp command failed");
    end Test_Tool_OTP_Error;
+
+   --  ------------------------------
+   --  Test the OTP command with interactive mode.
+   --  ------------------------------
+   procedure Test_Tool_OTP_Interactive (T : in out Test) is
+      Path       : constant String := Util.Tests.Get_Test_Path (TEST_TOOL8_PATH);
+      Result     : Ada.Strings.Unbounded.Unbounded_String;
+      P          : aliased Util.Streams.Pipes.Pipe_Stream;
+      In_Buffer  : Util.Streams.Texts.Print_Stream;
+      Out_Buffer : Util.Streams.Texts.Reader_Stream;
+   begin
+      if Ada.Directories.Exists (Path) then
+         Ada.Directories.Delete_File (Path);
+      end if;
+
+      --  Create keystore
+      T.Execute (Tool & " create " & Path & " -p admin --counter-range 10:100", Result);
+      Util.Tests.Assert_Equals (T, "", Result, "create command failed");
+      T.Assert (Ada.Directories.Exists (Path),
+                "Keystore file does not exist");
+
+      P.Open (Tool & " otp " & Path & " -p admin --interactive",
+              Util.Processes.READ_WRITE);
+      Out_Buffer.Initialize (P'Unchecked_Access, 8192);
+      In_Buffer.Initialize (P'Unchecked_Access, 8192);
+
+      In_Buffer.Write ("test:inter" & ASCII.LF);
+      In_Buffer.Flush;
+
+      In_Buffer.Write ("ORSXG5DE" & ASCII.LF);
+      In_Buffer.Flush;
+
+      In_Buffer.Write ("5" & ASCII.LF);
+      In_Buffer.Flush;
+      P.Close;
+
+      Util.Tests.Assert_Equals (T, 0, P.Get_Exit_Status,
+                                "Failed to enter otpauth interactive mode");
+
+      Out_Buffer.Read (Result);
+
+      Util.Tests.Assert_Matches (T, "akt: enter account name.*",
+                                 Result, "otp account name message missing");
+      Util.Tests.Assert_Matches (T, ".*akt: secret key.*",
+                                 Result, "otp secret key message missing");
+
+      T.Execute (Tool & " get -n " & Path & " -p admin otpauth.test:inter", Result, 0);
+      Util.Tests.Assert_Equals (T, "otpauth://totp/test:inter?secret=ORSXG5DE&digits=5",
+                                Result, "otp command failed");
+   end Test_Tool_OTP_Interactive;
 
    --  ------------------------------
    --  Test the genkey command.
