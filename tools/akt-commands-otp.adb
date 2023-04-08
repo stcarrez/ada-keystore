@@ -16,6 +16,7 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 with Ada.Calendar.Conversions;
+with Ada.IO_Exceptions;
 with Ada.Text_IO;
 with Util.Strings;
 with Interfaces.C;
@@ -319,11 +320,14 @@ package body AKT.Commands.OTP is
                AKT.Commands.Log.Error (-("invalid secret key"));
          end;
       end loop;
+
+   exception
+      when Ada.IO_Exceptions.End_Error =>
+         return "";
    end Enter_Secret;
 
    function Enter_Account return String is
    begin
-      AKT.Commands.Flush_Input;
       loop
          Util.Commands.Put_Raw (-("akt: enter account name (<issuer>:<name>): "));
          declare
@@ -338,11 +342,15 @@ package body AKT.Commands.OTP is
             AKT.Commands.Log.Error (-("invalid account name"));
          end;
       end loop;
+
+   exception
+      when Ada.IO_Exceptions.End_Error =>
+         return "";
    end Enter_Account;
 
    function Enter_Digits return String is
    begin
-      AKT.Commands.Flush_Input;
+      --  AKT.Commands.Flush_Input;
       loop
          Util.Commands.Put_Raw (-("akt: number of digits (5..8, default 6): "));
          declare
@@ -358,22 +366,33 @@ package body AKT.Commands.OTP is
             end if;
          end;
       end loop;
+
+   exception
+      when Ada.IO_Exceptions.End_Error =>
+         return "6";
+
    end Enter_Digits;
 
    procedure Interactive (Command : in out Command_Type;
                           Context : in out Context_Type) is
       Account : constant String := Enter_Account;
-      Secret  : constant String := Enter_Secret;
    begin
-      if Account'Length = 0 or else Secret'Length = 0 then
+      if Account'Length = 0 then
          return;
       end if;
       declare
-         D : constant String := Enter_Digits;
+         Secret  : constant String := Enter_Secret;
       begin
-         Command.Register ("otpauth://totp/" & Account
-                           & "?secret=" & Secret & "&digits=" & D,
-                           Context);
+         if Secret'Length = 0 then
+            return;
+         end if;
+         declare
+            D : constant String := Enter_Digits;
+         begin
+            Command.Register ("otpauth://totp/" & Account
+                              & "?secret=" & Secret & "&digits=" & D,
+                              Context);
+         end;
       end;
    end Interactive;
 
