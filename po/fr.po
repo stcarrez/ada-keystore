@@ -244,6 +244,10 @@ msgstr "period invalide '{0}'"
 msgid "invalid secret key"
 msgstr "clef secrète invalide"
 
+#: akt-commands-otp.adb
+msgid "invalid secret key for '{0}'"
+msgstr "clef secrète invalide pour '{0}'"
+
 #: akt-commands-genkey.adb
 msgid "key '{0}' is already defined"
 msgstr "la clef '{0}' est déjà définie"
