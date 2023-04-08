@@ -182,6 +182,8 @@ package body Keystore.Tests is
                        Test_Tool_Nested_Wallet'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.OTP",
                        Test_Tool_OTP'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.OTP (Errors)",
+                       Test_Tool_OTP_Error'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Genkey",
                        Test_Tool_Genkey'Access);
    end Add_Tests;
@@ -1080,6 +1082,38 @@ package body Keystore.Tests is
                                  Result, "otp command failed");
 
    end Test_Tool_OTP;
+
+   --  ------------------------------
+   --  Test the OTP command with various errors.
+   --  ------------------------------
+   procedure Test_Tool_OTP_Error (T : in out Test) is
+      Ref_Path : constant String := Util.Tests.Get_Path (TEST_OTP_PATH);
+      Result   : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " otp " & Ref_Path & " -p mypassword bad-key", Result, 1);
+      Util.Tests.Assert_Matches (T, "invalid secret key for 'Fake:bad-key'",
+                                 Result, "otp command failed");
+
+      T.Execute (Tool & " otp " & Ref_Path & " -p mypassword empty-secret", Result, 1);
+      Util.Tests.Assert_Matches (T, "akt: invalid otpauth URI: missing 'secret'",
+                                 Result, "otp command failed");
+
+      T.Execute (Tool & " otp " & Ref_Path & " -p mypassword bad-algo", Result, 1);
+      Util.Tests.Assert_Matches (T, "akt: algorithm 'SHA8' is not supported",
+                                 Result, "otp command failed");
+
+      T.Execute (Tool & " otp " & Ref_Path & " -p mypassword bad-digit-1", Result, 1);
+      Util.Tests.Assert_Matches (T, "akt: invalid digits 'b'",
+                                 Result, "otp command failed");
+
+      T.Execute (Tool & " otp " & Ref_Path & " -p mypassword bad-digit-2", Result, 1);
+      Util.Tests.Assert_Matches (T, "akt: invalid digits '0'",
+                                 Result, "otp command failed");
+
+      T.Execute (Tool & " otp " & Ref_Path & " -p mypassword bad-digit-3", Result, 1);
+      Util.Tests.Assert_Matches (T, "akt: invalid digits '11'",
+                                 Result, "otp command failed");
+   end Test_Tool_OTP_Error;
 
    --  ------------------------------
    --  Test the genkey command.
