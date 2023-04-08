@@ -174,6 +174,11 @@ package body AKT.Commands.OTP is
             Context.Console.Notice (N_INFO, "Code:" & Natural'Image (Code));
          end if;
       end;
+
+   exception
+      when Util.Encoders.Encoding_Error =>
+         AKT.Commands.Log.Error (-("invalid secret key for '{0}'"), Account);
+         raise Error;
    end Generate;
 
    --  Register or update an otpauth URI.
