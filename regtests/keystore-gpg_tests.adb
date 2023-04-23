@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-gpg_tests -- Test AKT with GPG2
---  Copyright (C) 2019, 2020, 2021 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2021, 2023 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,17 +16,11 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 
-with Ada.Text_IO;
 with Ada.Directories;
+with Ada.Strings.Unbounded;
 with Util.Test_Caller;
-with Util.Log.Loggers;
-with Util.Processes;
-with Util.Streams.Buffered;
-with Util.Streams.Pipes;
 with Keystore.Tests;
 package body Keystore.GPG_Tests is
-
-   Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.GPG_Tests");
 
    TEST_TOOL_PATH  : constant String := "test-gpg-1.akt";
    TEST_TOOL2_PATH : constant String := "test-gpg-2.akt";
@@ -77,60 +71,6 @@ package body Keystore.GPG_Tests is
 
       end case;
    end Tool;
-
-   --  ------------------------------
-   --  Execute the command and get the output in a string.
-   --  ------------------------------
-   procedure Execute (T       : in out Test;
-                      Command : in String;
-                      Input   : in String;
-                      Output  : in String;
-                      Result  : out Ada.Strings.Unbounded.Unbounded_String;
-                      Status  : in Natural := 0) is
-      P        : aliased Util.Streams.Pipes.Pipe_Stream;
-      Buffer   : Util.Streams.Buffered.Input_Buffer_Stream;
-   begin
-      if Input'Length > 0 then
-         Log.Info ("Execute: {0} < {1}", Command, Input);
-      elsif Output'Length > 0 then
-         Log.Info ("Execute: {0} > {1}", Command, Output);
-      else
-         Log.Info ("Execute: {0}", Command);
-      end if;
-      P.Set_Input_Stream (Input);
-      P.Set_Output_Stream (Output);
-      P.Open (Command, Util.Processes.READ_ALL);
-
-      --  Write on the process input stream.
-      Result := Ada.Strings.Unbounded.Null_Unbounded_String;
-      Buffer.Initialize (P'Unchecked_Access, 8192);
-      Buffer.Read (Result);
-      P.Close;
-      Ada.Text_IO.Put_Line (Ada.Strings.Unbounded.To_String (Result));
-      Log.Info ("Command result: {0}", Result);
-      Util.Tests.Assert_Equals (T, Status, P.Get_Exit_Status, "Command '" & Command & "' failed");
-   end Execute;
-
-   procedure Execute (T       : in out Test;
-                      Command : in String;
-                      Result  : out Ada.Strings.Unbounded.Unbounded_String;
-                      Status  : in Natural := 0) is
-   begin
-      T.Execute (Command, "", "", Result, Status);
-   end Execute;
-
-   procedure Execute (T       : in out Test;
-                      Command : in String;
-                      Expect  : in String;
-                      Status  : in Natural := 0) is
-      Path   : constant String := Util.Tests.Get_Path ("regtests/expect/" & Expect);
-      Output : constant String := Util.Tests.Get_Test_Path (Expect);
-      Result : Ada.Strings.Unbounded.Unbounded_String;
-   begin
-      T.Execute (Command, "", Output, Result, Status);
-
-      Util.Tests.Assert_Equal_Files (T, Path, Output, "Command '" & Command & "' invalid output");
-   end Execute;
 
    --  ------------------------------
    --  Test the akt keystore creation.

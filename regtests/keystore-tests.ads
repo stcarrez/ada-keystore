@@ -16,7 +16,6 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;
 with Util.Tests;
 with Util.Systems.Os;
 package Keystore.Tests is
@@ -117,23 +116,6 @@ package Keystore.Tests is
 
    --  Test the genkey command.
    procedure Test_Tool_Genkey (T : in out Test);
-
-   procedure Execute (T       : in out Test;
-                      Command : in String;
-                      Input   : in String;
-                      Output  : in String;
-                      Result  : out Ada.Strings.Unbounded.Unbounded_String;
-                      Status  : in Natural := 0);
-
-   procedure Execute (T       : in out Test;
-                      Command : in String;
-                      Result  : out Ada.Strings.Unbounded.Unbounded_String;
-                      Status  : in Natural := 0);
-
-   procedure Execute (T       : in out Test;
-                      Command : in String;
-                      Expect  : in String;
-                      Status  : in Natural := 0);
 
    procedure Store_Extract (T       : in out Test;
                             Command : in String;

@@ -16,17 +16,15 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 
-with Ada.Text_IO;
 with Ada.Directories;
+with Ada.Strings.Unbounded;
 with Ada.Streams.Stream_IO;
 with Ada.Environment_Variables;
 with GNAT.Regpat;
 with Util.Files;
 with Util.Strings;
 with Util.Test_Caller;
-with Util.Log.Loggers;
 with Util.Processes;
-with Util.Streams.Buffered;
 with Util.Streams.Pipes;
 with Util.Streams.Texts;
 with Util.Streams.Files;
@@ -35,8 +33,6 @@ package body Keystore.Tests is
    use type Ada.Directories.File_Size;
    use type Ada.Streams.Stream_Element_Offset;
    use type Ada.Streams.Stream_Element_Array;
-
-   Log : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("Keystore.Tool");
 
    TEST_CONFIG_PATH : constant String := "test-config.properties";
    TEST_TOOL_PATH   : constant String := "test-tool.akt";
@@ -198,60 +194,6 @@ package body Keystore.Tests is
    begin
       return "bin/akt";
    end Tool;
-
-   --  ------------------------------
-   --  Execute the command and get the output in a string.
-   --  ------------------------------
-   procedure Execute (T       : in out Test;
-                      Command : in String;
-                      Input   : in String;
-                      Output  : in String;
-                      Result  : out Ada.Strings.Unbounded.Unbounded_String;
-                      Status  : in Natural := 0) is
-      P        : aliased Util.Streams.Pipes.Pipe_Stream;
-      Buffer   : Util.Streams.Buffered.Input_Buffer_Stream;
-   begin
-      if Input'Length > 0 then
-         Log.Info ("Execute: {0} < {1}", Command, Input);
-      elsif Output'Length > 0 then
-         Log.Info ("Execute: {0} > {1}", Command, Output);
-      else
-         Log.Info ("Execute: {0}", Command);
-      end if;
-      P.Set_Input_Stream (Input);
-      P.Set_Output_Stream (Output);
-      P.Open (Command, Util.Processes.READ_ALL);
-
-      --  Write on the process input stream.
-      Result := Ada.Strings.Unbounded.Null_Unbounded_String;
-      Buffer.Initialize (P'Unchecked_Access, 8192);
-      Buffer.Read (Result);
-      P.Close;
-      Ada.Text_IO.Put_Line (Ada.Strings.Unbounded.To_String (Result));
-      Log.Info ("Command result: {0}", Result);
-      Util.Tests.Assert_Equals (T, Status, P.Get_Exit_Status, "Command '" & Command & "' failed");
-   end Execute;
-
-   procedure Execute (T       : in out Test;
-                      Command : in String;
-                      Result  : out Ada.Strings.Unbounded.Unbounded_String;
-                      Status  : in Natural := 0) is
-   begin
-      T.Execute (Command, "", "", Result, Status);
-   end Execute;
-
-   procedure Execute (T       : in out Test;
-                      Command : in String;
-                      Expect  : in String;
-                      Status  : in Natural := 0) is
-      Path   : constant String := Util.Tests.Get_Path ("regtests/expect/" & Expect);
-      Output : constant String := Util.Tests.Get_Test_Path (Expect);
-      Result : Ada.Strings.Unbounded.Unbounded_String;
-   begin
-      T.Execute (Command, "", Output, Result, Status);
-
-      Util.Tests.Assert_Equal_Files (T, Path, Output, "Command '" & Command & "' invalid output");
-   end Execute;
 
    function Compare (Path1 : in String;
                      Path2 : in String) return Boolean is

@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-fuse_tests -- Test AKT with Fuse support
---  Copyright (C) 2020 Stephane Carrez
+--  Copyright (C) 2020, 2023 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,6 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;
 with Util.Tests;
 package Keystore.Fuse_Tests is
 
@@ -38,22 +37,5 @@ package Keystore.Fuse_Tests is
 
    --  Test the akt mount and stressing the filesystem.
    procedure Test_Mount_Stress (T : in out Test);
-
-   procedure Execute (T       : in out Test;
-                      Command : in String;
-                      Input   : in String;
-                      Output  : in String;
-                      Result  : out Ada.Strings.Unbounded.Unbounded_String;
-                      Status  : in Natural := 0);
-
-   procedure Execute (T       : in out Test;
-                      Command : in String;
-                      Result  : out Ada.Strings.Unbounded.Unbounded_String;
-                      Status  : in Natural := 0);
-
-   procedure Execute (T       : in out Test;
-                      Command : in String;
-                      Expect  : in String;
-                      Status  : in Natural := 0);
 
 end Keystore.Fuse_Tests;

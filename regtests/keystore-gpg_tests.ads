@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-gpg_tests -- Test AKT with GPG2
---  Copyright (C) 2019, 2020, 2021 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2021, 2023 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +16,6 @@
 --  limitations under the License.
 -----------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;
 with Util.Tests;
 package Keystore.GPG_Tests is
 
@@ -47,22 +46,5 @@ package Keystore.GPG_Tests is
 
    --  Test when gpg execution fails
    procedure Test_GPG_Error (T : in out Test);
-
-   procedure Execute (T       : in out Test;
-                      Command : in String;
-                      Input   : in String;
-                      Output  : in String;
-                      Result  : out Ada.Strings.Unbounded.Unbounded_String;
-                      Status  : in Natural := 0);
-
-   procedure Execute (T       : in out Test;
-                      Command : in String;
-                      Result  : out Ada.Strings.Unbounded.Unbounded_String;
-                      Status  : in Natural := 0);
-
-   procedure Execute (T       : in out Test;
-                      Command : in String;
-                      Expect  : in String;
-                      Status  : in Natural := 0);
 
 end Keystore.GPG_Tests;
