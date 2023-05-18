@@ -121,8 +121,8 @@ package body AKT.Commands.OTP is
       function Is_Number (S   : in String;
                           Min : in Positive;
                           Max : in Positive) return Boolean is
-        (for all I in S'Range => S (I) in '0' .. '9'
-         and then Integer'Value (S) in Min .. Max);
+        ((for all C of S => C in '0' .. '9')
+          and then Integer'Value (S) in Min .. Max);
 
       Issuer  : constant String := Get_Issuer (URI);
       Secret  : constant String := Get_Param (URI, "secret");
