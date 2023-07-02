@@ -7,7 +7,7 @@
 [![Documentation Status](https://readthedocs.org/projects/ada-keystore/badge/?version=latest)](https://ada-keystore.readthedocs.io/en/latest/?badge=latest)
 [![Download](https://img.shields.io/badge/download-1.3.3-brightgreen.svg)](http://download.vacs.fr/ada-keystore/ada-keystore-1.3.3.tar.gz)
 [![License](http://img.shields.io/badge/license-APACHE2-blue.svg)](LICENSE)
-![Commits](https://img.shields.io/github/commits-since/stcarrez/ada-keystore/1.3.3.svg)
+[![Commits](https://img.shields.io/github/commits-since/stcarrez/ada-keystore/1.3.3.svg)](Commits)
 [![GitLab](https://img.shields.io/badge/repo-GitLab-6C488A.svg)](https://gitlab.com/stcarrez/ada-keystore)
 ![semver](https://img.shields.io/badge/semver-2.0.0-blue.svg?cacheSeconds=2592000)
 
@@ -76,7 +76,7 @@ Generate the TOTP code:
 - Fix fuse detection on FreeBSD
 - Fix building docker image
 
-[List all versions](https://github.com/stcarrez/ada-keystore/blob/master/NEWS.md)
+[List all versions](https://gitlab.com/stcarrez/ada-keystore/blob/master/NEWS.md)
 
 # Overview
 
@@ -102,7 +102,7 @@ Because the child wallet has its own master key, it is necessary to known
 the primary password and the child password to unlock the parent wallet
 first and then the child wallet.
 
-![AKT Overview](https://github.com/stcarrez/ada-keystore/wiki/images/akt-overview.png)
+![AKT Overview](https://gitlab.com/stcarrez/ada-keystore/wiki/images/akt-overview.png)
 
 The data is organized in blocks of 4K whose primary content is encrypted
 either by the wallet master key or by the entry keys.  The data block is
@@ -314,7 +314,7 @@ The project uses a sub-module to help you in the integration and build
 process.  You should checkout the project with the following commands:
 
 ```
-   git clone --recursive https://github.com/stcarrez/ada-keystore.git
+   git clone --recursive https://gitlab.com/stcarrez/ada-keystore.git
    cd ada-keystore
 ```
 
@@ -361,8 +361,8 @@ To use the AKT docker container you can run the following commands:
 
 # Documents
 
-* [Ada Keystore Guide](https://ada-keystore.readthedocs.io/en/latest/) [PDF](https://github.com/stcarrez/ada-keystore/blob/master/docs/keystoreada-book.pdf)
-* Man page: [akt (1)](https://github.com/stcarrez/ada-keystore/blob/master/docs/akt.md)
+* [Ada Keystore Guide](https://ada-keystore.readthedocs.io/en/latest/) [PDF](https://gitlab.com/stcarrez/ada-keystore/blob/master/docs/keystoreada-book.pdf)
+* Man page: [akt (1)](https://gitlab.com/stcarrez/ada-keystore/blob/master/docs/akt.md)
 
 # Presentations
 
