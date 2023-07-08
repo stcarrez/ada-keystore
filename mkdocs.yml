@@ -1,6 +1,6 @@
 site_name: Ada Keystore
 docs_dir: docs
-pages:
+nav:
   - Introduction: index.md
   - Installation: Installation.md
   - Using Ada Keystore Tool: Using.md
