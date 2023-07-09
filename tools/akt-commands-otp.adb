@@ -39,6 +39,8 @@ package body AKT.Commands.OTP is
    function Enter_Digits return String;
    function Enter_Secret return String;
    function Enter_Account return String;
+   function To_String (Code   : in Natural;
+                       Length : in Positive) return String;
 
    function HOTP_SHA1 is
      new Util.Encoders.HMAC.HOTP (Util.Encoders.HMAC.SHA1.HASH_SIZE,
@@ -51,6 +53,15 @@ package body AKT.Commands.OTP is
    function To_Positive (Value : in String;
                          Def   : in Positive) return Positive is
      (if Value'Length = 0 then Def else Positive'Value (Value));
+
+   function To_String (Code   : in Natural;
+                       Length : in Positive) return String is
+      Img    : constant String := Natural'Image (Code);
+      Result : String (1 .. Length) := (others => '0');
+   begin
+      Result (Result'Last - Img'Length + 2 .. Result'Last) := Img (Img'First + 1 .. Img'Last);
+      return Result;
+   end To_String;
 
    --  otpauth://totp/issuer:account?secret=XXX&issuer=issuer
    function Get_Account (URI : in String) return String is
@@ -170,9 +181,9 @@ package body AKT.Commands.OTP is
             raise Error;
          end if;
          if Account'Length > 0 then
-            Context.Console.Notice (N_INFO, Account & ": code:" & Natural'Image (Code));
+            Context.Console.Notice (N_INFO, Account & ": code: " & To_String (Code, D));
          else
-            Context.Console.Notice (N_INFO, "Code:" & Natural'Image (Code));
+            Context.Console.Notice (N_INFO, "Code: " & To_String (Code, D));
          end if;
       end;
 
