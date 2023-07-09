@@ -42,3 +42,4 @@ debian/autoreconf.after
 debian/autoreconf.before
 debian/debhelper-build-stamp
 debian/files
+stamp-test-setup
