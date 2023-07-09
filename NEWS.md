@@ -1,4 +1,4 @@
-Version 1.4.0  - Under development
+Version 1.4.0  - Jul 2023
   - Feature #15: Authenticator with TOTP support
   - Fix #16: Support to build with -gnatW8
   - Fix #17: Test with corrupted data block sometimes dump the corrupted data

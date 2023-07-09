@@ -65,16 +65,11 @@ Generate the TOTP code:
 ```
 
 
-## Version 1.4.0  - Under development
+## Version 1.4.0  - Jul 2023
   - Feature #15: Authenticator with TOTP support
   - Fix #16: Support to build with -gnatW8
   - Fix #17: Test with corrupted data block sometimes dump the corrupted data
   - New genkey and otp commands
-
-## Version 1.3.4  - Feb 2023
-- Fix #14: Constraint_Error raised if the HOME environment variable is not defined
-- Fix fuse detection on FreeBSD
-- Fix building docker image
 
 [List all versions](https://gitlab.com/stcarrez/ada-keystore/blob/master/NEWS.md)
 
