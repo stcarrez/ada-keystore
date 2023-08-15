@@ -60,8 +60,8 @@ executables = ["akt"]
 [[actions]]
 type = "post-fetch"
 command = ["gnatprep", "-DPREFIX=\"/usr/local\"", "-DVERSION=\"1.4.0\"",
-  "tools/akt-configs.gpb",
-  "tools/akt-configs.ads"
+  "../../tools/akt-configs.gpb",
+  "../../tools/akt-configs.ads"
 ]
 
 [[depends-on]]
