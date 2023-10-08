@@ -252,12 +252,15 @@ Sometimes, you may have to force the umount by running:
 
 # AKT Debian Binaries
 
-Ubuntu 22.04 packages are available to help you install the `akt` command
+Ubuntu 22.04 and Debian 12 packages are available to help you install the `akt` command
 more easily.  You can configure your Ubuntu system as follows:
 
 ```
-wget -O - https://apt.vacs.fr/apt.vacs.fr.gpg.key | sudo apt-key add -
+wget -qO- https://apt.vacs.fr/apt.vacs.fr.gpg.asc | sudo tee /etc/apt/trusted.gpg.d/vacs_fr.asc
+# For Ubuntu 22.04, use:
 sudo add-apt-repository "deb https://apt.vacs.fr/ubuntu-jammy jammy main"
+# For Debian 12, use:
+sudo add-apt-repository "deb https://apt.vacs.fr/debian-bookworm bookworm main"
 ```
 
 And then install the `akt` package:
