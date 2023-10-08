@@ -5,9 +5,9 @@
 [![Test Status](https://img.shields.io/endpoint?url=https://porion.vacs.fr/porion/api/v1/projects/ada-keystore/badges/tests.json)](https://porion.vacs.fr/porion/projects/view/ada-keystore/xunits)
 [![Coverage](https://img.shields.io/endpoint?url=https://porion.vacs.fr/porion/api/v1/projects/ada-keystore/badges/coverage.json)](https://porion.vacs.fr/porion/projects/view/ada-keystore/summary)
 [![Documentation Status](https://readthedocs.org/projects/ada-keystore/badge/?version=latest)](https://ada-keystore.readthedocs.io/en/latest/?badge=latest)
-[![Download](https://img.shields.io/badge/download-1.3.3-brightgreen.svg)](http://download.vacs.fr/ada-keystore/ada-keystore-1.3.3.tar.gz)
+[![Download](https://img.shields.io/badge/download-1.4.0-brightgreen.svg)](http://download.vacs.fr/ada-keystore/ada-keystore-1.4.0.tar.gz)
 [![License](http://img.shields.io/badge/license-APACHE2-blue.svg)](LICENSE)
-[![Commits](https://img.shields.io/github/commits-since/stcarrez/ada-keystore/1.3.3.svg)](Commits)
+[![Commits](https://img.shields.io/github/commits-since/stcarrez/ada-keystore/1.4.0.svg)](Commits)
 [![GitLab](https://img.shields.io/badge/repo-GitLab-6C488A.svg)](https://gitlab.com/stcarrez/ada-keystore)
 ![semver](https://img.shields.io/badge/semver-2.0.0-blue.svg?cacheSeconds=2592000)
 
