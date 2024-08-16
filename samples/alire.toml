@@ -1,0 +1,20 @@
+description = "Ada Keystore examples"
+name = "keystoreada_examples"
+version = "1.4.1"
+authors = ["Stephane.Carrez@gmail.com"]
+licenses = "Apache-2.0"
+maintainers = ["Stephane.Carrez@gmail.com"]
+maintainers-logins = ["stcarrez"]
+project-files = ["samples.gpr"]
+tags = ["security", "storage", "nosql"]
+website = "https://gitlab.com/stcarrez/ada-keystore"
+
+[[depends-on]]
+utilada = "^2.6.0"
+keystoreada = "*"
+
+[configuration]
+disabled = true
+
+[[pins]]
+keystoreada = { path = '..' }
