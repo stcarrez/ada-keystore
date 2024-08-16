@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-tests -- Tests for akt command
---  Copyright (C) 2019, 2020, 2021, 2022, 2023 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2021, 2022, 2023, 2024 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -436,7 +436,7 @@ package body Keystore.Tests is
 
       --  Set property with configure file (128K file or more).
       T.Execute (Tool & " store -k " & Path & " -p admin "
-                 & "configure", Result);
+                 & "bin/akt" & Keystore.Tests.EXE, Result);
       Util.Tests.Assert_Equals (T, "", Result, "set command failed");
 
       Size := Ada.Directories.Size (Path);
@@ -444,7 +444,7 @@ package body Keystore.Tests is
 
       --  Remove property.
       T.Execute (Tool & " remove -k " & Path & " -p admin "
-                 & "configure", Result);
+                 & "bin/akt" & Keystore.Tests.EXE, Result);
       Util.Tests.Assert_Equals (T, "", Result, "remove command failed");
 
       Size := Ada.Directories.Size (Path);
@@ -804,7 +804,7 @@ package body Keystore.Tests is
                        "data-makefile", "Makefile");
 
       T.Store_Extract (" -k " & Path & " -d " & Data & " -p admin ",
-                       "data-configure", "configure");
+                       "data-configure", "src/keystore-repository-data.adb");
 
       T.Store_Extract (" -k " & Path & " -d " & Data & " -p admin ",
                        "data-license.txt", "LICENSE.txt");

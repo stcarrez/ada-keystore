@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-gpg_tests -- Test AKT with GPG2
---  Copyright (C) 2019, 2020, 2021, 2023 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2021, 2023, 2024 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -284,7 +284,7 @@ package body Keystore.GPG_Tests is
                  Result);
 
       T.Execute (Tool (User_2) & " store " & Path & " -- LICENSE.txt",
-                 "configure", "",
+                 "src/keystore-repository.adb", "",
                  Result);
 
       T.Execute (Tool (User_2) & " store " & Path & " -- LICENSE.txt",

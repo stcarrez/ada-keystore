@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-files-tests -- Tests for files
---  Copyright (C) 2019, 2020, 2021 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2021, 2024 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -868,8 +868,8 @@ package body Keystore.Files.Tests is
    procedure Test_Update_Stream (T : in out Test) is
       Input1   : constant String := Util.Tests.Get_Path ("LICENSE.txt");
       Input2   : constant String := Util.Tests.Get_Path ("Makefile");
-      Input3   : constant String := Util.Tests.Get_Path ("aclocal.m4");
-      Input4   : constant String := Util.Tests.Get_Path ("config.gpr");
+      Input3   : constant String := Util.Tests.Get_Path ("src/keystore-repository.adb");
+      Input4   : constant String := Util.Tests.Get_Path ("keystoreada_config.gpr");
    begin
       T.Test_File_Stream ("Update_Stream", Input1, Create => True);
       T.Test_File_Stream ("Update_Stream", Input2, Create => False);

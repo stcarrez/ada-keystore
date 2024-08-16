@@ -36,7 +36,7 @@ case $1 in
         sleep 1
         rm -rf regtests/results/mount/obj &&
         rm -rf regtests/results/mount/src &&
-        cp configure LICENSE.txt regtests/results/mount/ &&
+        cp src/*.ad? LICENSE.txt regtests/results/mount/ &&
         diff -rup LICENSE.txt regtests/results/mount/ &&
         echo "PASS"
         res=$?
@@ -50,7 +50,7 @@ case $1 in
             rm -rf regtests/results/mount/bin &&
             cp -r bin regtests/results/mount/bin &&
             diff -r bin regtests/results/mount/bin &&
-            cp configure LICENSE.txt regtests/results/mount/ &&
+            cp src/*.ad? LICENSE.txt regtests/results/mount/ &&
             diff -rup LICENSE.txt regtests/results/mount/
         done
         echo "PASS"
@@ -68,7 +68,7 @@ case $1 in
             rm -rf regtests/results/mount/obj &&
             cp -r obj regtests/results/mount/obj &&
             diff -r obj regtests/results/mount/obj &&
-            cp configure LICENSE.txt regtests/results/mount/ &&
+            cp src/*.ad? LICENSE.txt regtests/results/mount/ &&
             diff -rup LICENSE.txt regtests/results/mount/
         done
         echo "PASS"
