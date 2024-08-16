@@ -27,7 +27,7 @@ build:: tools
 tools:  akt/src/akt-configs.ads setup
 	cd akt && $(BUILD_COMMAND) $(GPRFLAGS) $(MAKE_ARGS) 
 
-akt/src/akt-configs.ads:   Makefile.conf akt/src/akt-configs.gpb
+akt/src/akt-configs.ads:   akt/src/akt-configs.gpb
 	gnatprep -DPREFIX='"${prefix}"' -DVERSION='"$(VERSION)"' \
 		  akt/src/akt-configs.gpb akt/src/akt-configs.ads
 
