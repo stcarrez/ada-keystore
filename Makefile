@@ -1,5 +1,9 @@
 NAME=keystoreada
 
+MAKE_ARGS += -XKEYSTORE_BUILD=$(BUILD)
+PANDOC := $(shell which pandoc)
+DYNAMO := $(shell which dynamo)
+
 -include Makefile.conf
 
 STATIC_MAKE_ARGS = $(MAKE_ARGS) -XKEYSTORE_LIBRARY_TYPE=static
@@ -24,23 +28,23 @@ include Makefile.defaults
 
 # Build executables for all mains defined by the project.
 build-test::	setup
-	$(GNATMAKE) $(GPRFLAGS) -p -P$(NAME)_tests $(MAKE_ARGS)
+	cd regtests && $(BUILD_COMMAND) $(GPRFLAGS) $(MAKE_ARGS) 
 
 build:: tools
 
-tools:  tools/akt-configs.ads setup
-	$(GNATMAKE) $(GPRFLAGS) -p -P$(NAME)_tools $(MAKE_ARGS)
+tools:  akt/src/akt-configs.ads setup
+	cd akt && $(BUILD_COMMAND) $(GPRFLAGS) $(MAKE_ARGS) 
 
-tools/akt-configs.ads:   Makefile.conf tools/akt-configs.gpb
+akt/src/akt-configs.ads:   Makefile.conf akt/src/akt-configs.gpb
 	gnatprep -DPREFIX='"${prefix}"' -DVERSION='"$(VERSION)"' \
-		  tools/akt-configs.gpb tools/akt-configs.ads
+		  akt/src/akt-configs.gpb akt/src/akt-configs.ads
 
 install::
 	mkdir -p $(DESTDIR)$(prefix)/bin
 	$(INSTALL) bin/akt $(DESTDIR)$(prefix)/bin/akt
 	mkdir -p $(DESTDIR)$(prefix)/share/man/man1
 	$(INSTALL) man/man1/akt.1 $(DESTDIR)$(prefix)/share/man/man1/akt.1
-	(cd share && tar --exclude='*~' -cf - .) \
+	(cd akt/share && tar --exclude='*~' -cf - .) \
        | (cd $(DESTDIR)$(prefix)/share/ && tar xf -)
 	mkdir -p $(DESTDIR)$(prefix)/share/locale/fr/LC_MESSAGES
 	$(INSTALL) po/fr.mo $(DESTDIR)$(prefix)/share/locale/fr/LC_MESSAGES/akt.mo

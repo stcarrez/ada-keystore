@@ -2,8 +2,7 @@
 #*
 *.ali
 *.log
-tools/akt-configs.ads
-config.status
+akt/src/akt-configs.ads
 CHANGES
 Makefile.conf
 *.cproject
@@ -13,7 +12,6 @@ Makefile.conf
 *.cov
 ChangeLog
 .settings
-configure.lineno
 util.gpr
 gnatinspect.db*
 clang_ref_cache.db
@@ -21,14 +19,9 @@ gpsauto.cgpr
 keystore-tests.xml
 keystore-test.xml
 keystore-aunit.xml
-autom4te.cache
 bin/
 lib/
 obj/
-keystoreada.gpr
-keystoreada_tools.gpr
-keystoreada_gtk.gpr
-keystoreada_tests.gpr
 docs/Keystore_Random.md
 regtests/files/gnupg
 regtests/results/
