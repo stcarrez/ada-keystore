@@ -8,13 +8,14 @@ GNATMAKE?=gprbuild
 GNATCLEAN?=gnatclean
 GPRINSTALL?=gprinstall
 INSTALL?=install
-DYNAMO?=dynamo
+PANDOC?=$(shell which pandoc)
+DYNAMO?=$(shell which dynamo)
 PROCESSORS?=1
 MKDIR?=mkdir
 CP?=cp
 LN?=ln -s
-ALIRE?=alr --non-interactive
-BUILD_COMMAND?=$(ALIRE) build --
+ALR?=alr --non-interactive
+BUILD_COMMAND?=$(ALR) build --
 
 BUILDS_SHARED?=no
 
@@ -41,7 +42,7 @@ samplesdir?=${prefix}/share/doc/${docdir}
 dynamodir=${prefix}/share/dynamo
 aliredir=${prefix}/alire-index
 
-MAKE_ARGS += -XPROCESSORS=$(PROCESSORS)
+MAKE_ARGS +=
 
 build:: all
 
@@ -104,7 +105,7 @@ define ada_library
 #	$(BUILD_COMMAND) $(GPRFLAGS) -p -P$(2)$(1).gpr $(STATIC_MAKE_ARGS)
 
   install-static::
-	$(ALIRE) exec -- gprinstall -p -f --prefix=$(DESTDIR)${prefix} \
+	$(ALR) exec -- gprinstall -p -f --prefix=$(DESTDIR)${prefix} \
           $(STATIC_MAKE_ARGS) \
           --build-name=static $(2)$(1).gpr  
 
@@ -118,13 +119,13 @@ ifeq ($(BUILDS_SHARED),yes)
 	$(GNATMAKE) $(GPRFLAGS) -p -P$(2)$(1).gpr $(SHARED_MAKE_ARGS)
 
   install-shared::
-	$(ALIRE) exec -- gprinstall -p -f --prefix=$(DESTDIR)${prefix} \
+	$(ALR) exec -- gprinstall -p -f --prefix=$(DESTDIR)${prefix} \
           $(SHARED_MAKE_ARGS) \
           --build-name=relocatable $(2)$(1).gpr
 endif
 
   uninstall::
-	-$(ALIRE) exec -- gprinstall --uninstall -q -f --prefix=$(DESTDIR)${prefix} $(MAKE_ARGS) $(1).gpr
+	-$(ALR) exec -- gprinstall --uninstall -q -f --prefix=$(DESTDIR)${prefix} $(MAKE_ARGS) $(1).gpr
 
 endef
 

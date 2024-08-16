@@ -1,28 +1,20 @@
 NAME=keystoreada
+VERSION=1.4.1
+
+DIST_DIR=ada-keystore-$(VERSION)
+DIST_FILE=ada-keystore-$(VERSION).tar.gz
 
 MAKE_ARGS += -XKEYSTORE_BUILD=$(BUILD)
 PANDOC := $(shell which pandoc)
 DYNAMO := $(shell which dynamo)
 
--include Makefile.conf
+# -include Makefile.conf
 
 STATIC_MAKE_ARGS = $(MAKE_ARGS) -XKEYSTORE_LIBRARY_TYPE=static
 SHARED_MAKE_ARGS = $(MAKE_ARGS) -XKEYSTORE_LIBRARY_TYPE=relocatable
 SHARED_MAKE_ARGS += -XUTILADA_BASE_BUILD=relocatable -XUTIL_LIBRARY_TYPE=relocatable
 SHARED_MAKE_ARGS += -XXMLADA_BUILD=relocatable
 SHARED_MAKE_ARGS += -XLIBRARY_TYPE=relocatable
-
-ifeq ($(HAVE_FUSE),yes)
-FUSE_LIBS := $(shell pkg-config --libs fuse)
-
-export FUSE_LIBS
-
-ifeq ($(USE_GIT_FUSE),yes)
-ADA_FUSE_SYSTEM := $(shell uname -sm | sed "s- -_-g")
-export ADA_FUSE_SYSTEM
-endif
-
-endif
 
 include Makefile.defaults
 
@@ -61,15 +53,6 @@ install::
 	mkdir -p $(DESTDIR)$(prefix)/share/gakt
 	$(INSTALL) gakt.glade $(DESTDIR)$(prefix)/share/gakt/gakt.glade
 
-endif
-
-ifeq ($(HAVE_FUSE),yes)
-ifeq ($(USE_GIT_FUSE),yes)
-
-setup:: ada-fuse/ada_fuse.gpr
-	cd ada-fuse && ./setup.py
-
-endif
 endif
 
 # Build and run the unit tests
@@ -124,17 +107,6 @@ $(eval $(call pandoc_build,keystoreada-book,$(KEYSTORE_DOC),\
 $(eval $(call ada_library,$(NAME)))
 $(eval $(call alire_publish,alire.toml,ke/keystoreada,keystoreada-$(VERSION).toml))
 $(eval $(call alire_publish,alire-akt.toml,ak/akt,akt-$(VERSION).toml))
-
-DIST_DIRS=ada-util ada-fuse
-dist::
-	rm -f $(DIST_FILE)
-	git archive -o $(DIST_DIR).tar --prefix=$(DIST_DIR)/ HEAD
-	for i in $(DIST_DIRS); do \
-	   cd $$i && git archive -o ../$$i.tar --prefix=$(DIST_DIR)/$$i/ HEAD ; \
-           cd .. && tar --concatenate --file=$(DIST_DIR).tar $$i.tar ; \
-           rm -f $$i.tar; \
-        done
-	gzip $(DIST_DIR).tar
 
 .PHONY: tools gtk
 
