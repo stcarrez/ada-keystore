@@ -1,4 +1,4 @@
-with "config";
+with "keystoreada_config";
 with "keystoreada";
 
 project Samples is
@@ -7,17 +7,14 @@ project Samples is
 
    for Main use Mains;
 
-   for Source_Dirs use ("samples");
+   for Source_Dirs use ("src");
 
-   for Object_Dir use "./" & Config'Object_Dir & "/obj";
-   for Exec_Dir use "./" & Config'Exec_Dir & "/bin";
+   for Object_Dir use "./" & KeystoreAda_Config'Object_Dir & "/obj";
+   for Exec_Dir use "../bin";
 
-   package Binder renames Config.Binder;
-
-   package Builder renames Config.Builder;
-
-   package Compiler renames Config.Compiler;
-
-   package Linker renames Config.Linker;
+   package Binder renames KeystoreAda_Config.Binder;
+   package Builder renames KeystoreAda_Config.Builder;
+   package Compiler renames KeystoreAda_Config.Compiler;
+   package Linker renames KeystoreAda_Config.Linker;
 
 end Samples;
