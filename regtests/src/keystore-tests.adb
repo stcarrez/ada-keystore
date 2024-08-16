@@ -436,7 +436,7 @@ package body Keystore.Tests is
 
       --  Set property with configure file (128K file or more).
       T.Execute (Tool & " store -k " & Path & " -p admin "
-                 & "bin/akt" & Keystore.Tests.EXE, Result);
+                 & "src/keystore-repository.ads", Result);
       Util.Tests.Assert_Equals (T, "", Result, "set command failed");
 
       Size := Ada.Directories.Size (Path);
@@ -444,7 +444,7 @@ package body Keystore.Tests is
 
       --  Remove property.
       T.Execute (Tool & " remove -k " & Path & " -p admin "
-                 & "bin/akt" & Keystore.Tests.EXE, Result);
+                 & "keystore-repository.ads", Result);
       Util.Tests.Assert_Equals (T, "", Result, "remove command failed");
 
       Size := Ada.Directories.Size (Path);
