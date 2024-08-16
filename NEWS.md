@@ -1,3 +1,6 @@
+Version 1.4.1 - Under development
+  - Cleanup build environment to drop configure
+
 Version 1.4.0  - Jul 2023
   - Feature #15: Authenticator with TOTP support
   - Fix #16: Support to build with -gnatW8
