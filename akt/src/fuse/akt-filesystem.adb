@@ -29,6 +29,8 @@ package body AKT.Filesystem is
 
    Log     : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Filesystem");
 
+   pragma Linker_Options ("-lfuse");
+
    procedure Initialize (St_Buf : access System.Stat_Type;
                          Mode   : in System.St_Mode_Type);
 

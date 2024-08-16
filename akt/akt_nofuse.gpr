@@ -1,0 +1,42 @@
+with "keystoreada_config";
+with "keystoreada";
+with "intl";
+
+project Akt_Nofuse is
+
+   Use_Fuse    : KeystoreAda_Config.Yes_No := "no";
+
+   Root_Dir := external ("ROOT_DIR", "../");
+
+   for Languages use ("Ada");
+
+   Mains := ("akt-main.adb");
+
+   for Source_Dirs use ("src", "src/no-fuse");
+
+   for Main use Mains;
+
+   for Object_Dir use "../obj/akt_nofuse/" & Project'Library_Kind;
+   for Exec_Dir use Root_Dir & "/bin";
+
+   package binder is
+      for Default_Switches ("Ada") use ("-Es");
+   end binder;
+
+   package Builder is
+      for Default_Switches ("Ada") use
+         KeystoreAda_Config.Builder'Default_Switches ("Ada");
+      for Executable ("akt-main.adb") use "akt";
+   end Builder;
+
+   package Linker is
+      for Default_Switches ("Ada") use KeystoreAda_Config.Linker'Default_Switches ("Ada");
+   end Linker;
+
+   package Compiler renames KeystoreAda_Config.Compiler;
+
+   package Install is
+      for Artifacts (".") use ("share");
+   end Install;
+
+end Akt_Nofuse;
