@@ -31,8 +31,9 @@ project Akt_Fuse is
    end Builder;
 
    package Linker is
-      for Default_Switches ("Ada") use KeystoreAda_Config.Linker'Default_Switches ("Ada");
-      for Linker_Options use ("-lfuse","-pthread");
+      for Default_Switches ("Ada") use KeystoreAda_Config.Linker'Default_Switches ("Ada")
+         & Intl.Linker'Default_Switches ("Ada")
+	 & Ada_Fule.Linker'Default_Switches ("Ada");
    end Linker;
 
    package Compiler renames KeystoreAda_Config.Compiler;

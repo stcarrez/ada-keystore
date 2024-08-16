@@ -30,7 +30,8 @@ project Akt_Nofuse is
    end Builder;
 
    package Linker is
-      for Default_Switches ("Ada") use KeystoreAda_Config.Linker'Default_Switches ("Ada");
+      for Default_Switches ("Ada") use KeystoreAda_Config.Linker'Default_Switches ("Ada")
+         & Intl.Linker'Default_Switches ("Ada");
    end Linker;
 
    package Compiler renames KeystoreAda_Config.Compiler;
