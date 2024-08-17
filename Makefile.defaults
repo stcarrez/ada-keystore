@@ -109,13 +109,13 @@ define ada_library
           $(STATIC_MAKE_ARGS) \
           --build-name=static $(2)$(1).gpr  
 
-  setup:: obj/$(1)/static
+  lib-setup:: obj/$(1)/static
 
   obj/$(1)/static:
 	$(MKDIR) -p obj/$(1)/static
 
 ifeq ($(BUILDS_SHARED),yes)
-  shared:: setup
+  shared:: lib-setup
 	$(GNATMAKE) $(GPRFLAGS) -p -P$(2)$(1).gpr $(SHARED_MAKE_ARGS)
 
   install-shared::
@@ -130,10 +130,10 @@ endif
 endef
 
 define ada_program
-  all:: setup
+  all:: lib-setup
 	$(GNATMAKE) $(GPRFLAGS) -p -P$(2)$(1).gpr $(STATIC_MAKE_ARGS)
 
-  setup:: obj/$(1)/static
+  lib-setup:: obj/$(1)/static
 
   obj/$(1)/static:
 	$(MKDIR) -p obj/$(1)/static
@@ -239,3 +239,5 @@ ifdef DESTDIR
 endif
 
 setup::
+	echo "BUILD=$(BUILD)" > Makefile.conf
+	echo "prefix=$(prefix)" >> Makefile.conf
