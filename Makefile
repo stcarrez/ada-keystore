@@ -104,7 +104,7 @@ $(eval $(call pandoc_build,keystoreada-book,$(KEYSTORE_DOC),\
 		docs/Keystore_Repository_Data.md \
         docs/Design_Implementation.md > docs/Keystore_Design.md))
 
-$(eval $(call ada_library,$(NAME)))
+$(eval $(call ada_library,$(NAME),.))
 $(eval $(call alire_publish,alire.toml,ke/keystoreada,keystoreada-$(VERSION).toml))
 $(eval $(call alire_publish,alire-akt.toml,ak/akt,akt-$(VERSION).toml))
 
