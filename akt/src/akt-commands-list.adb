@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-list -- List content of keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2024 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -30,8 +30,9 @@ package body AKT.Commands.List is
       pragma Unreferenced (Command, Name);
       use AKT.Commands.Consoles;
 
-      List : Keystore.Entry_Map;
-      Iter : Keystore.Entry_Cursor;
+      List    : Keystore.Entry_Map;
+      Iter    : Keystore.Entry_Cursor;
+      Max_Len : Positive := 53;  --  Default name length
    begin
       Context.Open_Keystore (Args);
       Context.Wallet.List (Content => List);
@@ -40,8 +41,21 @@ package body AKT.Commands.List is
          return;
       end if;
 
+      --  Check if we have long names to print to avoid truncating them.
+      Iter := List.First;
+      while Keystore.Entry_Maps.Has_Element (Iter) loop
+         declare
+            Name : constant String := Keystore.Entry_Maps.Key (Iter);
+         begin
+            if Name'Length > Max_Len then
+               Max_Len := Name'Length + 1;
+            end if;
+         end;
+         Keystore.Entry_Maps.Next (Iter);
+      end loop;
+
       Context.Console.Start_Title;
-      Context.Console.Print_Title (1, -("Name"), 53);
+      Context.Console.Print_Title (1, -("Name"), Max_Len);
       Context.Console.Print_Title (2, -("Size"), 9, J_RIGHT);
       Context.Console.Print_Title (3, -("Block"), 7, J_RIGHT);
       Context.Console.Print_Title (4, -("Date"), 20);
