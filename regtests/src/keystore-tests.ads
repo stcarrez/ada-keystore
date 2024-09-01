@@ -89,6 +89,7 @@ package Keystore.Tests is
    --  Test the akt info command on several keystore files.
    procedure Test_Tool_Info (T : in out Test);
    procedure Test_Tool_Info_Error (T : in out Test);
+   procedure Test_Tool_Info_Many_Keys (T : in out Test);
    procedure Test_Tool_List_Error (T : in out Test);
 
    --  Test the akt commands with --wallet-key-file

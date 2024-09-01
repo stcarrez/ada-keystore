@@ -50,6 +50,7 @@ package body Keystore.Tests is
    TEST_WALLET_PATH      : constant String := "regtests/files/test-wallet.akt";
    TEST_SPLIT_PATH       : constant String := "regtests/files/test-split.akt";
    TEST_OTP_PATH         : constant String := "regtests/files/test-otp.akt";
+   TEST_MANY_KEY_PATH    : constant String := "regtests/files/test-info.akt";
 
    function Tool return String;
    function Compare (Path1 : in String;
@@ -159,6 +160,8 @@ package body Keystore.Tests is
                        Test_Tool_Info'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Info (Error)",
                        Test_Tool_Info_Error'Access);
+      Caller.Add_Test (Suite, "Test AKT.Commands.Info (6 keys)",
+                       Test_Tool_Info_Many_Keys'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Create (Wallet_Key)",
                        Test_Tool_With_Wallet_Key_File'Access);
       Caller.Add_Test (Suite, "Test AKT.Commands.Password (Slot limit)",
@@ -864,6 +867,19 @@ package body Keystore.Tests is
          T.Execute (Tool & " info " & Dir & "/" & Id & "-1.dkt -p admin", Result, 0);
       end;
    end Test_Tool_Info;
+
+   --  ------------------------------
+   --  Test the akt info command on several keystore files.
+   --  ------------------------------
+   procedure Test_Tool_Info_Many_Keys (T : in out Test) is
+      Path    : constant String := Util.Tests.Get_Path (TEST_MANY_KEY_PATH);
+      Result  : Ada.Strings.Unbounded.Unbounded_String;
+   begin
+      T.Execute (Tool & " info " & Path & " -p admin", Result, 0);
+      Util.Tests.Assert_Matches (T, "Key slots used:.*1 2 3 4 5 6",
+                                 Result,
+                                 "Bad output for info command");
+   end Test_Tool_Info_Many_Keys;
 
    procedure Test_Tool_Info_Error (T : in out Test) is
       Result  : Ada.Strings.Unbounded.Unbounded_String;
