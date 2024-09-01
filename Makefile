@@ -105,8 +105,8 @@ $(eval $(call pandoc_build,keystoreada-book,$(KEYSTORE_DOC),\
         docs/Design_Implementation.md > docs/Keystore_Design.md))
 
 $(eval $(call ada_library,$(NAME),.))
-$(eval $(call alire_publish,alire.toml,ke/keystoreada,keystoreada-$(VERSION).toml))
-$(eval $(call alire_publish,alire-akt.toml,ak/akt,akt-$(VERSION).toml))
+$(eval $(call alire_publish,.,ke/keystoreada,keystoreada-$(VERSION).toml))
+$(eval $(call alire_publish,akt,ak/akt,akt-$(VERSION).toml))
 
 .PHONY: tools gtk
 
