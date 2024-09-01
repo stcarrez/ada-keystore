@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-password -- Add/Change/Remove the wallet password
---  Copyright (C) 2019, 2022 Stephane Carrez
+--  Copyright (C) 2019, 2022, 2024 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -45,6 +45,9 @@ package body AKT.Commands.Password is
          Parse_Range (Command.Counter_Range.all, Config);
       end if;
 
+      if Context.Info.Header_Count = 0 and then Context.Provider = null then
+         Context.Provider := KP.Input.Create (-("Enter password: "), False);
+      end if;
       if Command.Gpg_User'Length > 0 then
          declare
             GPG : Keystore.Passwords.GPG.Context_Type;

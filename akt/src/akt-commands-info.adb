@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-info -- Info command of keystore
---  Copyright (C) 2019, 2022 Stephane Carrez
+--  Copyright (C) 2019, 2022, 2024 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -33,7 +33,7 @@ package body AKT.Commands.Info is
       function Get_Stat_Info (Stats : in Keystore.Wallet_Stats) return String;
 
       function Get_Stat_Info (Stats : in Keystore.Wallet_Stats) return String is
-         Slots : String (1 .. Stats.Keys'Length) := (others => ' ');
+         Slots : String (1 .. Stats.Keys'Length * 2) := (others => ' ');
          C     : Character := '1';
       begin
          for Slot in Stats.Keys'Range loop
