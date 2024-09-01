@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore -- Ada keystore
---  Copyright (C) 2019, 2020, 2022 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022, 2024 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -344,7 +344,7 @@ package Keystore is
                   Name      : in String;
                   Info      : out Entry_Info;
                   Content   : out Ada.Streams.Stream_Element_Array) is abstract with
-     Pre'Class => Wallet'Class (Container).Is_Open;
+     Pre'Class => Container.Is_Open;
 
    --  Write in the output stream the named entry value from the wallet.
    procedure Get (Container : in out Wallet;
