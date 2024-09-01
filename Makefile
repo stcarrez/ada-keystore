@@ -22,7 +22,7 @@ build-test::	lib-setup
 
 build:: tools
 
-tools:  akt/src/akt-configs.ads setup
+tools:  akt/src/akt-configs.ads
 	cd akt && $(BUILD_COMMAND) $(GPRFLAGS) $(MAKE_ARGS) 
 
 akt/src/akt-configs.ads:   akt/src/akt-configs.gpb
