@@ -5,10 +5,8 @@ DIST_DIR=ada-keystore-$(VERSION)
 DIST_FILE=ada-keystore-$(VERSION).tar.gz
 
 MAKE_ARGS += -XKEYSTORE_BUILD=$(BUILD)
-PANDOC := $(shell which pandoc)
-DYNAMO := $(shell which dynamo)
 
-# -include Makefile.conf
+-include Makefile.conf
 
 STATIC_MAKE_ARGS = $(MAKE_ARGS) -XKEYSTORE_LIBRARY_TYPE=static
 SHARED_MAKE_ARGS = $(MAKE_ARGS) -XKEYSTORE_LIBRARY_TYPE=relocatable
@@ -19,7 +17,7 @@ SHARED_MAKE_ARGS += -XLIBRARY_TYPE=relocatable
 include Makefile.defaults
 
 # Build executables for all mains defined by the project.
-build-test::	setup
+build-test::	lib-setup
 	cd regtests && $(BUILD_COMMAND) $(GPRFLAGS) $(MAKE_ARGS) 
 
 build:: tools
@@ -57,7 +55,7 @@ endif
 
 # Build and run the unit tests
 test:	build stamp-test-setup
-	bin/keystore_harness -l $(NAME): -t 120 -xml keystore-aunit.xml -config tests.properties
+	bin/keystore_harness -v -l $(NAME): -t 120 -xml keystore-aunit.xml -config tests.properties
 
 stamp-test-setup:
 	# Apply access constraints to the test key and directory.
