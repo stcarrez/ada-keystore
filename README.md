@@ -276,9 +276,8 @@ sudo apt-get install akt
 
 # Building Ada Keystore
 
-To build the Ada Keystore you will need the GNAT Ada compiler, either
-the FSF version available in Debian, FreeBSD systems NetBSD or the
-AdaCore GNAT Community 2019 edition.
+To build the Ada Keystore you will need the GNAT Ada compiler as well
+as the [Alire](https://alire.ada.dev/) package manager.
 
 ## Development Host Installation
 
@@ -286,7 +285,7 @@ AdaCore GNAT Community 2019 edition.
 
 Install the following packages:
 ```
-sudo apt-get install -y make gnat-7 gprbuild git gnupg2
+sudo apt-get install -y make gnat gprbuild git gnupg2 alr
 ```
 
 ### FreeBSD 13
@@ -294,13 +293,12 @@ sudo apt-get install -y make gnat-7 gprbuild git gnupg2
 Install the following packages:
 
 ```
-pkg install gmake gnat12 gprbuild gnupg
+pkg install gmake gprbuild gnat12 git gnupg alire
 ```
 
 ### Windows
 
-Get the Ada compiler from [AdaCore Download](https://www.adacore.com/download)
-site and install.
+Get the Alire package manager [Alire](https://alire.ada.dev/) site and install.
 
 Install the following packages:
 
@@ -312,32 +310,16 @@ pacman -S base-devel --needed
 
 ## Getting the sources
 
-The project uses a sub-module to help you in the integration and build
-process.  You should checkout the project with the following commands:
+You should checkout the project with the following commands:
 
 ```
-   git clone --recursive https://gitlab.com/stcarrez/ada-keystore.git
-   cd ada-keystore
-```
-
-## Configuration
-
-To configure Ada Keystore, use the following command:
-```
-   ./configure
-```
-
-The GTK application is not compiled by default unless to configure with
-the `--enable-gtk` option.  Be sure to install the GtkAda library before
-configuring and building the project.
-
-```
-   ./configure  --enable-gtk
+git clone https://gitlab.com/stcarrez/ada-keystore.git
+cd ada-keystore
 ```
 
 ## Build
 
-Then, build the application:
+Build the application:
 ```
    make
 ```
