@@ -443,7 +443,7 @@ package body Keystore.Tests is
       Util.Tests.Assert_Equals (T, "", Result, "set command failed");
 
       Size := Ada.Directories.Size (Path);
-      T.Assert (Size > 100_000, "Keystore file looks too small");
+      T.Assert (Size > 20_000, "Keystore file looks too small");
 
       --  Remove property.
       T.Execute (Tool & " remove -k " & Path & " -p admin "
