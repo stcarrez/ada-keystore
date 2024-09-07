@@ -1,0 +1,10 @@
+# Default configuration
+[default]
+ignore=[
+"*.md",
+"*.akt",
+"*.gpg",
+".readthedocs.yaml",
+"docs/pagebreak.tex"
+]
+
