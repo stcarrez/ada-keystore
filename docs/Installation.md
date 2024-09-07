@@ -4,29 +4,27 @@ This chapter explains how to build and install the library.
 
 ## Before Building
 
-To build the Ada Keystore you will need the GNAT Ada compiler, either
-the FSF version available in Debian, FreeBSD systems NetBSD or the
-AdaCore GNAT Community 2019 edition.
+To build the Ada Keystore you will need the GNAT Ada compiler as well
+as the [Alire](https://alire.ada.dev/) package manager.
 
 ### Ubuntu
 
 Install the following packages:
 ```
-sudo apt-get install -y make gnat gprbuild git gnupg2
+sudo apt-get install -y make gnat gprbuild git gnupg2 alr
 ```
 
-### FreeBSD 12
+### FreeBSD 13
 
 Install the following packages:
 
 ```
-pkg install gmake gcc6-aux-20180516_1,1 gprbuild-20160609_1 git gnupg-2.2.17_2
+pkg install gmake gprbuild gnat12 git gnupg alire
 ```
 
 ### Windows
 
-Get the Ada compiler from [AdaCore Download](https://www.adacore.com/download)
-site and install.
+Get the Alire package manager [Alire](https://alire.ada.dev/) site and install.
 
 Install the following packages:
 
@@ -38,54 +36,16 @@ pacman -S base-devel --needed
 
 ## Getting the sources
 
-The project uses a sub-module to help you in the integration and build
-process.  You should checkout the project with the following commands:
+You should checkout the project with the following commands:
 
 ```
-git clone --recursive https://gitlab.com/stcarrez/ada-keystore.git
+git clone https://gitlab.com/stcarrez/ada-keystore.git
 cd ada-keystore
-```
-
-## Configuration
-
-The library uses the `configure` script to detect the build environment,
-check which Ada Utility Library to use.
-If some component is missing, the
-`configure` script will report an error or it will disable the feature.
-The `configure` script provides several standard options
-and you may use:
-
-  * `--prefix=DIR` to control the installation directory,
-  * `--enable-fuse` to enable building the `mount` command with FUSE,
-  * `--enable-gtk` to enable building the Gtk tool,
-  * `--enable-shared` to enable the build of shared libraries,
-  * `--disable-static` to disable the build of static libraries,
-  * `--disable-nls` to disable NLS support,
-  * `--with-ada-util=PATH` to control the installation path of [Ada Utility Library](https://github.com/stcarrez/ada-util),
-  * `--with-gtkada=PATH` to control the installation path of [Gtk Ada Library](https://github.com/AdaCore/GtkAda),
-  * `--help` to get a detailed list of supported options.
-
-In most cases you will configure with the following command:
-```
-./configure
-```
-
-The GTK application is not compiled by default unless you configure with
-the `--enable-gtk` option.  Be sure to install the GtkAda library before
-configuring and building the project.
-
-```
-./configure  --enable-gtk
-```
-
-On Windows, FreeBSD and NetBSD you have to disable the NLS support:
-```
-./configure --disable-nls
 ```
 
 ## Build
 
-After configuration is successful, you can build the library by running:
+You can build the library by running:
 ```
 make
 ```
