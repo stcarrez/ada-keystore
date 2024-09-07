@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-tools-tests -- Tests for files
---  Copyright (C) 2019, 2021, 2022 Stephane Carrez
+--  Copyright (C) 2019, 2021, 2022, 2024 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --
 --  Licensed under the Apache License, Version 2.0 (the "License");
@@ -84,7 +84,7 @@ package body Keystore.Tools.Tests is
          W.Open (Password => Password, Path => Path);
          Check ("store/src/keystore.ads");
          Check ("store/src/keystore-repository.ads");
-         Check ("store/obj/b__akt-main.ads");
+         Check ("store/obj/b__keystore_harness.ads");
       end;
    end Test_Store_Directory;
 

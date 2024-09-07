@@ -661,11 +661,11 @@ package body Keystore.Tests is
       T.Execute (Tool & " extract " & Path & " -p admin -o " & Obj & " obj",
                  Result, 0);
 
-      T.Assert (Compare ("obj/akt.o", Obj & "/obj/akt.o"),
-                "store+extract failed for obj/akt.o");
+      T.Assert (Compare ("obj/keystore-tests.o", Obj & "/obj/keystore-tests.o"),
+                "store+extract failed for obj/keystore-tests.o");
 
-      T.Assert (Compare ("obj/akt-commands.o", Obj & "/obj/akt-commands.o"),
-                "store+extract failed for obj/akt-commands.o");
+      T.Assert (Compare ("obj/keystore-testsuite.o", Obj & "/obj/keystore-testsuite.o"),
+                "store+extract failed for obj/keystore-testsuite.o");
 
    end Test_Tool_Store_Extract_Tree;
 
