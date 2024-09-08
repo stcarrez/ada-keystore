@@ -285,7 +285,7 @@ package body Keystore.GPG_Tests is
                  Result);
 
       T.Execute (Tool (User_2) & " store " & Path & " -- LICENSE.txt",
-                 "Makefile.conf", "",
+                 "keystoreada.gpr", "",
                  Result);
 
    end Test_Update_File;
@@ -300,7 +300,7 @@ package body Keystore.GPG_Tests is
    begin
       T.Execute ("bin/akt --config " & Config & "bad-list-user1-akt.properties store "
                  & Path & " -- LICENSE.txt",
-                 "Makefile.conf", "",
+                 "keystoreada.gpr", "",
                  Result, 1);
 
       Util.Tests.Assert_Matches (T, "^akt: invalid password to unlock the keystore file",
@@ -308,7 +308,7 @@ package body Keystore.GPG_Tests is
 
       T.Execute ("bin/akt --config " & Config & "bad-decrypt-user1-akt.properties store "
                  & Path & " -- LICENSE.txt",
-                 "Makefile.conf", "",
+                 "keystoreada.gpr", "",
                  Result, 1);
 
       Util.Tests.Assert_Matches (T, "^akt: invalid password to unlock the keystore file",
