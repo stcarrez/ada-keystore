@@ -29,7 +29,9 @@ akt/src/akt-configs.ads:   akt/src/akt-configs.gpb
 	$(ALR) exec -- gnatprep -DPREFIX='"${prefix}"' -DVERSION='"$(VERSION)"' \
 		  akt/src/akt-configs.gpb akt/src/akt-configs.ads
 
-install::
+install:: install-akt
+
+install-akt::
 	mkdir -p $(DESTDIR)$(prefix)/bin
 	$(INSTALL) bin/akt $(DESTDIR)$(prefix)/bin/akt
 	mkdir -p $(DESTDIR)$(prefix)/share/man/man1
