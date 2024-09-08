@@ -1,4 +1,4 @@
-Version 1.4.1 - Under development
+Version 1.4.1 - Sep 2024
   - Cleanup build environment to drop configure
   - Fix #21: list command limit 50
   - Fix #24: Cannot add a GPG user on a keystore having a password

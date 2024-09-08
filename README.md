@@ -64,16 +64,10 @@ Generate the TOTP code:
    akt otp secure.akt GitHub
 ```
 
-## Version 1.4.1 - Under development
+## Version 1.4.1 - Sep 2024
   - Cleanup build environment to drop configure
   - Fix #21: list command limit 50
   - Fix #24: Cannot add a GPG user on a keystore having a password
-
-## Version 1.4.0  - Jul 2023
-  - Feature #15: Authenticator with TOTP support
-  - Fix #16: Support to build with -gnatW8
-  - Fix #17: Test with corrupted data block sometimes dump the corrupted data
-  - New genkey and otp commands
 
 [List all versions](https://gitlab.com/stcarrez/ada-keystore/blob/master/NEWS.md)
 
