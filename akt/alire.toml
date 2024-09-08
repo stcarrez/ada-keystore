@@ -54,7 +54,6 @@ maintainers = ["Stephane.Carrez@gmail.com"]
 maintainers-logins = ["stcarrez"]
 tags = ["security", "storage", "nosql"]
 website = "https://gitlab.com/stcarrez/ada-keystore"
-executables = ["../bin/akt"]
 
 [project-files.'case(os)']
 linux   = ["akt_fuse.gpr"]
