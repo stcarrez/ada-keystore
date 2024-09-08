@@ -53,7 +53,7 @@ package body Keystore.Files.Tests is
                        Test_Open_Close'Access);
       Caller.Add_Test (Suite, "Test Keystore.Add (Name_Exist)",
                        Test_Add_Error'Access);
-      Caller.Add_Test (Suite, "Test Keystore.Write",
+      Caller.Add_Test (Suite, "Test Keystore.Get_Stream",
                        Test_Get_Stream'Access);
       Caller.Add_Test (Suite, "Test Keystore.Add (Empty)",
                        Test_Add_Empty'Access);
