@@ -26,7 +26,7 @@ tools:  akt/src/akt-configs.ads
 	cd akt && $(BUILD_COMMAND) $(GPRFLAGS) $(MAKE_ARGS) 
 
 akt/src/akt-configs.ads:   akt/src/akt-configs.gpb
-	gnatprep -DPREFIX='"${prefix}"' -DVERSION='"$(VERSION)"' \
+	$(ALR) exec -- gnatprep -DPREFIX='"${prefix}"' -DVERSION='"$(VERSION)"' \
 		  akt/src/akt-configs.gpb akt/src/akt-configs.ads
 
 install::
@@ -38,20 +38,6 @@ install::
        | (cd $(DESTDIR)$(prefix)/share/ && tar xf -)
 	mkdir -p $(DESTDIR)$(prefix)/share/locale/fr/LC_MESSAGES
 	$(INSTALL) po/fr.mo $(DESTDIR)$(prefix)/share/locale/fr/LC_MESSAGES/akt.mo
-
-ifeq ($(HAVE_GTK),yes)
-build:: gtk
-
-gtk:
-	$(GNATMAKE) $(GPRFLAGS) -p -P$(NAME)_gtk $(MAKE_ARGS)
-
-install::
-	$(INSTALL) bin/gakt $(DESTDIR)$(prefix)/bin/gakt
-	$(INSTALL) man/man1/akt.1 $(DESTDIR)$(prefix)/share/man/man1/gakt.1
-	mkdir -p $(DESTDIR)$(prefix)/share/gakt
-	$(INSTALL) gakt.glade $(DESTDIR)$(prefix)/share/gakt/gakt.glade
-
-endif
 
 # Build and run the unit tests
 test:	build stamp-test-setup
