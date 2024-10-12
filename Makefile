@@ -8,6 +8,9 @@ MAKE_ARGS += -XKEYSTORE_BUILD=$(BUILD)
 
 -include Makefile.conf
 
+HAVE_FUSE?=yes
+HAVE_AKT?=yes
+
 STATIC_MAKE_ARGS = $(MAKE_ARGS) -XKEYSTORE_LIBRARY_TYPE=static
 SHARED_MAKE_ARGS = $(MAKE_ARGS) -XKEYSTORE_LIBRARY_TYPE=relocatable
 SHARED_MAKE_ARGS += -XUTILADA_BASE_BUILD=relocatable -XUTIL_LIBRARY_TYPE=relocatable
@@ -16,19 +19,36 @@ SHARED_MAKE_ARGS += -XLIBRARY_TYPE=relocatable
 
 include Makefile.defaults
 
+setup::
+	echo "HAVE_FUSE=$(HAVE_FUSE)" >> Makefile.conf
+	echo "HAVE_AKT=$(HAVE_AKT)" >> Makefile.conf
+
 # Build executables for all mains defined by the project.
 build-test::	lib-setup
 	cd regtests && $(BUILD_COMMAND) $(GPRFLAGS) $(MAKE_ARGS) 
 
 build:: tools
 
+ifeq ($(HAVE_AKT),yes)
 tools:  akt/src/akt-configs.ads
+ifeq ($(HAVE_ALIRE),yes)
 	cd akt && $(BUILD_COMMAND) $(GPRFLAGS) $(MAKE_ARGS) 
+else
+ifeq ($(HAVE_FUSE),yes)
+	cd akt && $(BUILD_COMMAND) $(GPRFLAGS) $(MAKE_ARGS) -Pakt_fuse.gpr
+else
+	cd akt && $(BUILD_COMMAND) $(GPRFLAGS) $(MAKE_ARGS) -Pakt_nofuse.gpr
+endif
+endif
+else
+tools:
+endif
 
 akt/src/akt-configs.ads:   akt/src/akt-configs.gpb
-	$(ALR) exec -- gnatprep -DPREFIX='"${prefix}"' -DVERSION='"$(VERSION)"' \
+	$(GNATPREP) -DPREFIX='"${prefix}"' -DVERSION='"$(VERSION)"' \
 		  akt/src/akt-configs.gpb akt/src/akt-configs.ads
 
+ifeq ($(HAVE_AKT),yes)
 install:: install-akt
 
 install-akt::
@@ -40,6 +60,7 @@ install-akt::
        | (cd $(DESTDIR)$(prefix)/share/ && tar xf -)
 	mkdir -p $(DESTDIR)$(prefix)/share/locale/fr/LC_MESSAGES
 	$(INSTALL) po/fr.mo $(DESTDIR)$(prefix)/share/locale/fr/LC_MESSAGES/akt.mo
+endif
 
 # Build and run the unit tests
 test:	build stamp-test-setup
