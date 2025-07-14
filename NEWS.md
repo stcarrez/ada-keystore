@@ -1,3 +1,6 @@
+Version 1.4.2 - Jul 2025
+  - Update build environment and Alire crate installation
+
 Version 1.4.1 - Sep 2024
   - Cleanup build environment to drop configure
   - Fix #21: list command limit 50
