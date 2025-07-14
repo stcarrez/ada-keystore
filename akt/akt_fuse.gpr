@@ -39,7 +39,9 @@ project Akt_Fuse is
    package Compiler renames KeystoreAda_Config.Compiler;
 
    package Install is
-      for Artifacts (".") use ("share");
+      for Artifacts ("share/akt") use ("share/akt/*");
+      for Artifacts ("share/man") use ("man/*");
+      for Artifacts ("share/locale") use ("po/locale/*");
    end Install;
 
 end Akt_Fuse;

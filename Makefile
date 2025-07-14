@@ -17,6 +17,12 @@ SHARED_MAKE_ARGS += -XUTILADA_BASE_BUILD=relocatable -XUTIL_LIBRARY_TYPE=relocat
 SHARED_MAKE_ARGS += -XXMLADA_BUILD=relocatable
 SHARED_MAKE_ARGS += -XLIBRARY_TYPE=relocatable
 
+ifeq ($(HAVE_FUSE),yes)
+AKT_GPRNAME=akt_fuse.gpr
+else
+AKT_GPRNAME=akt_nofuse.gpr
+endif
+
 include Makefile.defaults
 
 setup::
@@ -34,11 +40,7 @@ tools:  akt/src/akt-configs.ads
 ifeq ($(HAVE_ALIRE),yes)
 	cd akt && $(BUILD_COMMAND) $(GPRFLAGS) $(MAKE_ARGS) 
 else
-ifeq ($(HAVE_FUSE),yes)
-	cd akt && $(BUILD_COMMAND) $(GPRFLAGS) $(MAKE_ARGS) -Pakt_fuse.gpr
-else
-	cd akt && $(BUILD_COMMAND) $(GPRFLAGS) $(MAKE_ARGS) -Pakt_nofuse.gpr
-endif
+	cd akt && $(BUILD_COMMAND) $(GPRFLAGS) $(MAKE_ARGS) -P$(AKT_GPRNAME)
 endif
 else
 tools:
@@ -52,14 +54,11 @@ ifeq ($(HAVE_AKT),yes)
 install:: install-akt
 
 install-akt::
-	mkdir -p $(DESTDIR)$(prefix)/bin
-	$(INSTALL) bin/akt $(DESTDIR)$(prefix)/bin/akt
-	mkdir -p $(DESTDIR)$(prefix)/share/man/man1
-	$(INSTALL) man/man1/akt.1 $(DESTDIR)$(prefix)/share/man/man1/akt.1
-	(cd share && tar --exclude='*~' -cf - .) \
-       | (cd $(DESTDIR)$(prefix)/share/ && tar xf -)
-	mkdir -p $(DESTDIR)$(prefix)/share/locale/fr/LC_MESSAGES
-	$(INSTALL) po/fr.mo $(DESTDIR)$(prefix)/share/locale/fr/LC_MESSAGES/akt.mo
+ifeq ($(HAVE_ALIRE),yes)
+	cd akt && $(ALR) exec -- $(GPRINSTALL) -p -f --prefix=$(DESTDIR)${prefix} $(AKT_GPRNAME)
+else
+	cd akt && $(GPRINSTALL) -p -f --prefix=$(DESTDIR)${prefix} $(AKT_GPRNAME)
+endif
 endif
 
 # Build and run the unit tests
