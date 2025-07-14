@@ -10,7 +10,7 @@ tags = ["security", "storage", "nosql"]
 website = "https://gitlab.com/stcarrez/ada-keystore"
 
 [[depends-on]]
-utilada = "^2.6.0"
+utilada = "^2.8.0"
 keystoreada = "*"
 
 [configuration]

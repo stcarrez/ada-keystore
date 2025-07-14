@@ -63,7 +63,7 @@ windows = ["akt_nofuse.gpr"]
 
 [[actions]]
 type = "post-fetch"
-command = ["gnatprep", "-DPREFIX=\"/usr/local\"", "-DVERSION=\"1.4.1\"",
+command = ["gnatprep", "-DPREFIX=\"/usr/local\"", "-DVERSION=\"1.4.2\"",
   "src/akt-configs.gpb",
   "src/akt-configs.ads"
 ]

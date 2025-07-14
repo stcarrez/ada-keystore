@@ -1,5 +1,5 @@
 NAME=keystoreada
-VERSION=1.4.1
+VERSION=1.4.2
 
 DIST_DIR=ada-keystore-$(VERSION)
 DIST_FILE=ada-keystore-$(VERSION).tar.gz
