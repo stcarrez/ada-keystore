@@ -1,3 +1,6 @@
+Version 1.4.3 - Under development
+  - Fix #28: Ada.Calendar.Conversions.To_Unix_Time is deprecated
+
 Version 1.4.2 - Jul 2025
   - Update build environment and Alire crate installation
 
