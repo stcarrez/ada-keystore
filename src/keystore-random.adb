@@ -1,10 +1,9 @@
 -----------------------------------------------------------------------
 --  security-random -- Random numbers for nonce, secret keys, token generation
---  Copyright (C) 2017 Stephane Carrez
+--  Copyright (C) 2017, 2025 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
-with Interfaces.C;
 with Ada.Calendar;
 with Ada.Calendar.Conversions;
 with Util.Encoders.Base64;
@@ -66,10 +65,15 @@ package body Keystore.Random is
       Encoder.Set_URL_Mode (True);
       Encoder.Transform (Data => Rand, Into => Buffer,
                          Last => Last, Encoded => Encoded);
+      Encoder.Finish (Into => Buffer (Last + 1 .. Buffer'Last),
+                      Last => Last);
+      while Character'Val (Buffer (Last)) = '=' loop
+         Last := Last - 1;
+      end loop;
       declare
-         Result : String (1 .. Natural (Encoded + 1));
+         Result : String (1 .. Natural (Last + 1));
       begin
-         for I in 0 .. Encoded loop
+         for I in 0 .. Last loop
             Result (Natural (I + 1)) := Character'Val (Buffer (I));
          end loop;
          return Result;
@@ -127,12 +131,12 @@ package body Keystore.Random is
 
       procedure Reset is
          Now  : constant Ada.Calendar.Time := Ada.Calendar.Clock;
-         S    : constant Ada.Calendar.Day_Duration := Ada.Calendar.Seconds (Now);
-         Sec  : Interfaces.C.long;
-         Nsec : Interfaces.C.long;
+         Nsec : constant Unsigned_64
+           := Unsigned_64 (Ada.Calendar.Conversions.To_Unix_Nano_Time (Now));
+         Low  : constant Unsigned_32 := Unsigned_32 (Nsec and 16#0ffff_ffff#);
+         High : constant Unsigned_32 := Unsigned_32 (Shift_Right (Nsec, 32));
       begin
-         Ada.Calendar.Conversions.To_Struct_Timespec (S, Sec, Nsec);
-         Id_Random.Reset (Rand, Integer (Unsigned_32 (Sec) xor Unsigned_32 (Nsec)));
+         Id_Random.Reset (Rand, Integer ((Low xor High) and 16#07fff_ffff#));
       end Reset;
 
    end Raw_Generator;

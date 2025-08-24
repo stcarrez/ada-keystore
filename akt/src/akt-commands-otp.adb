@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-commands-otp -- One-time-password generation with otpauth
---  Copyright (C) 2023 Stephane Carrez
+--  Copyright (C) 2023, 2025 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
@@ -8,14 +8,12 @@ with Ada.Calendar.Conversions;
 with Ada.IO_Exceptions;
 with Ada.Text_IO;
 with Util.Strings;
-with Interfaces.C;
+with Interfaces;
 with GNAT.Command_Line;
 with Util.Encoders.HMAC.SHA1;
 with Util.Encoders.HMAC.SHA256;
 with Util.Encoders.HMAC.HOTP;
 package body AKT.Commands.OTP is
-
-   use type Interfaces.C.long;
 
    procedure Generate (Account : in String;
                        URI     : in String;
@@ -152,19 +150,21 @@ package body AKT.Commands.OTP is
       end if;
 
       declare
+         use Interfaces;
          P       : constant Positive := To_Positive (Period, 30);
          D       : constant Positive := To_Positive (Digit, 6);
          Now     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
-         Time    : constant Interfaces.C.long := Ada.Calendar.Conversions.To_Unix_Time (Now);
-         Steps   : constant Interfaces.C.long := Time / Interfaces.C.long (P);
+         Time    : constant Unsigned_64 :=
+           Unsigned_64 (Ada.Calendar.Conversions.To_Unix_Nano_Time (Now));
+         Steps   : constant Unsigned_64 := Time / (Unsigned_64 (P) * 1_000_000_000);
          Decoder : constant Util.Encoders.Decoder := Util.Encoders.Create (Util.Encoders.BASE_32);
          Key     : constant Util.Encoders.Secret_Key := Decoder.Decode_Key (Secret);
          Code    : Natural;
       begin
          if Algo = "SHA1" or else Algo = "" then
-            Code := HOTP_SHA1 (Key, Interfaces.Unsigned_64 (Steps), D);
+            Code := HOTP_SHA1 (Key, Steps, D);
          elsif Algo = "SHA256" then
-            Code := HOTP_SHA256 (Key, Interfaces.Unsigned_64 (Steps), D);
+            Code := HOTP_SHA256 (Key, Steps, D);
          else
             AKT.Commands.Log.Error (-("algorithm '{0}' is not supported"), Algo);
             raise Error;

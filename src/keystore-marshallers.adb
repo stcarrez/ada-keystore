@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-marshallers -- Data marshaller for the keystore
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2025 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
@@ -129,10 +129,10 @@ package body Keystore.Marshallers is
 
    procedure Put_Date (Into  : in out Marshaller;
                        Value : in Ada.Calendar.Time) is
-      Unix_Time : Interfaces.C.long;
+      Unix_Time : constant Unsigned_64 :=
+        Unsigned_64 (Ada.Calendar.Conversions.To_Unix_Nano_Time (Value));
    begin
-      Unix_Time := Ada.Calendar.Conversions.To_Unix_Time (Value);
-      Put_Unsigned_64 (Into, Unsigned_64 (Unix_Time));
+      Put_Unsigned_64 (Into, Unix_Time / 1_000_000_000);
    end Put_Date;
 
    procedure Put_Storage_Block (Into  : in out Marshaller;

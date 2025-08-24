@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  akt-filesystem -- Fuse filesystem operations
---  Copyright (C) 2019, 2020, 2022 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022, 2025 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
@@ -15,6 +15,7 @@ package body AKT.Filesystem is
    use type Interfaces.Unsigned_64;
    use type Keystore.Entry_Type;
    use Ada.Streams;
+   use Interfaces;
 
    Log     : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Filesystem");
 
@@ -24,7 +25,8 @@ package body AKT.Filesystem is
                          Mode   : in System.St_Mode_Type);
 
    function To_Unix (Date : in Ada.Calendar.Time) return Interfaces.Integer_64 is
-      (Interfaces.Integer_64 (Ada.Calendar.Conversions.To_Unix_Time (Date)));
+     (Integer_64
+        (Ada.Calendar.Conversions.To_Unix_Nano_Time (Date)) / 1_000_000_000);
 
    procedure Initialize (St_Buf : access System.Stat_Type;
                          Mode   : in System.St_Mode_Type) is
