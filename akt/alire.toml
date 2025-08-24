@@ -47,7 +47,7 @@ Get a content:
 
 """
 name = "akt"
-version = "1.4.2"
+version = "1.4.3"
 authors = ["Stephane.Carrez@gmail.com"]
 licenses = "Apache-2.0"
 maintainers = ["Stephane.Carrez@gmail.com"]
@@ -63,14 +63,14 @@ windows = ["akt_nofuse.gpr"]
 
 [[actions]]
 type = "post-fetch"
-command = ["gnatprep", "-DPREFIX=\"/usr/local\"", "-DVERSION=\"1.4.2\"",
+command = ["gnatprep", "-DPREFIX=\"/usr/local\"", "-DVERSION=\"1.4.3\"",
   "src/akt-configs.gpb",
   "src/akt-configs.ads"
 ]
 
 [[depends-on]]
 utilada = "^2.8.0"
-keystoreada = "^1.4.0"
+keystoreada = "^1.4.3"
 intl = "^1.0.1"
 
 [depends-on.'case(os)'.linux]
