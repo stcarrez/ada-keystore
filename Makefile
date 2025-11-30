@@ -31,7 +31,7 @@ setup::
 
 # Build executables for all mains defined by the project.
 build-test::	lib-setup
-	cd regtests && $(BUILD_COMMAND) $(GPRFLAGS) $(MAKE_ARGS) 
+	cd regtests && $(BUILD_COMMAND) $(GPRFLAGS) $(MAKE_ARGS)
 
 build:: tools
 
