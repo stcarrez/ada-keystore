@@ -53,11 +53,18 @@ akt/src/akt-configs.ads:   akt/src/akt-configs.gpb
 ifeq ($(HAVE_AKT),yes)
 install:: install-akt
 
-install-akt::
+install-akt:: uninstall-akt
 ifeq ($(HAVE_ALIRE),yes)
 	cd akt && $(ALR) exec -- $(GPRINSTALL) -p -f --prefix=$(DESTDIR)${prefix} $(AKT_GPRNAME)
 else
 	cd akt && $(GPRINSTALL) -p -f --prefix=$(DESTDIR)${prefix} $(AKT_GPRNAME)
+endif
+
+uninstall-akt::
+ifeq ($(HAVE_ALIRE),yes)
+	-cd akt && $(ALR) exec -- $(GPRINSTALL) --uninstall -q -f --prefix=$(DESTDIR)${prefix} $(AKT_GPRNAME)
+else
+	-cd akt && $(GPRINSTALL) --uninstall -q -f --prefix=$(DESTDIR)${prefix} $(AKT_GPRNAME)
 endif
 endif
 
