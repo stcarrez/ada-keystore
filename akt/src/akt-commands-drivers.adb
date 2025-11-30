@@ -31,9 +31,10 @@ package body AKT.Commands.Drivers is
    end Setup;
 
    function Get_Resources_Directory return String is
+      Dir : constant String := AKT_Resources.Prefix_Path;
    begin
-      if Ada.Directories.Exists (AKT.Configs.PREFIX & AKT.Configs.RESOURCES) then
-         return AKT.Configs.PREFIX & AKT.Configs.RESOURCES;
+      if Ada.Directories.Exists (Dir & AKT.Configs.RESOURCES) then
+         return Dir & AKT.Configs.RESOURCES;
       end if;
       declare
          Name : constant String := Ada.Command_Line.Command_Name;

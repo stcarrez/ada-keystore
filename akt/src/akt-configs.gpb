@@ -9,7 +9,6 @@ package AKT.Configs is
 
    VERSION   : constant String := $VERSION;
    RELEASE   : constant String := "Ada Keystore Tool " & $VERSION;
-   PREFIX    : constant String := $PREFIX;
    RESOURCES : constant String := "/share/akt/resources/";
 
    FILL_CONFIG        : constant String := "fill-mode";

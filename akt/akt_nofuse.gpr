@@ -1,12 +1,13 @@
 with "keystoreada_config";
 with "keystoreada";
 with "intl";
+with "resources";
 
 project Akt_Nofuse is
 
    Use_Fuse    : KeystoreAda_Config.Yes_No := "no";
 
-   Root_Dir := external ("ROOT_DIR", "../");
+   Root_Dir := external ("ROOT_DIR", "./");
 
    for Languages use ("Ada");
 

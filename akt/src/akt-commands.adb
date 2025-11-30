@@ -169,8 +169,9 @@ package body AKT.Commands is
    --  ------------------------------
    overriding
    procedure Initialize (Context : in out Context_Type) is
+      Dir : constant String := AKT_Resources.Resource_Path;
    begin
-      Intl.Initialize ("akt", AKT.Configs.PREFIX & "/share/locale");
+      Intl.Initialize ("akt", Dir & "/share/locale");
 
       Context.Worker_Count := Positive (System.Multiprocessors.Number_Of_CPUs);
 

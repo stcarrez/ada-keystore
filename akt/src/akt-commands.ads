@@ -11,6 +11,7 @@ with Keystore;
 with Util.Strings;
 with Util.Commands.Consoles.Text;
 with Util.Commands.Raw_IO;
+with Resources;
 private with Util.Log.Loggers;
 private with Keystore.Files;
 private with Keystore.Passwords.Keys;
@@ -84,6 +85,8 @@ private
    Log     : constant Util.Log.Loggers.Logger := Util.Log.Loggers.Create ("AKT.Commands");
 
    package GC renames GNAT.Command_Line;
+
+   package AKT_Resources is new Resources ("akt");
 
    procedure Flush_Input;
 
