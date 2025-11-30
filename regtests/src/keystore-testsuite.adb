@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-testsuite -- Testsuite for keystore
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2025 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
@@ -31,5 +31,13 @@ package body Keystore.Testsuite is
       Keystore.Coverage.Add_Tests (Tests'Access);
       return Tests'Access;
    end Suite;
+
+   --  ------------------------------
+   --  Get the dynamo executable path.
+   --  ------------------------------
+   function Tool return String is
+   begin
+      return "akt/bin/akt";
+   end Tool;
 
 end Keystore.Testsuite;

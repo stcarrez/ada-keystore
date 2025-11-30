@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-gpg_tests -- Test AKT with GPG2
---  Copyright (C) 2019, 2020, 2021, 2023, 2024 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2021, 2023, 2024, 2025 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
@@ -9,12 +9,15 @@ with Ada.Directories;
 with Ada.Strings.Unbounded;
 with Util.Test_Caller;
 with Keystore.Tests;
+with Keystore.Testsuite;
 package body Keystore.GPG_Tests is
 
    TEST_TOOL_PATH  : constant String := "test-gpg-1.akt";
    TEST_TOOL2_PATH : constant String := "test-gpg-2.akt";
    TEST_TOOL3_PATH : constant String := "test-gpg-3.akt";
    TEST_TOOL4_PATH : constant String := "test-gpg-4.akt";
+
+   function Tool return String renames Keystore.Testsuite.Tool;
 
    type User_Type is (User_1, User_2, User_3);
 
@@ -50,13 +53,13 @@ package body Keystore.GPG_Tests is
    begin
       case User is
          when User_1 =>
-            return "bin/akt --config " & Path & "user1-akt.properties";
+            return Tool & " --config " & Path & "user1-akt.properties";
 
          when User_2 =>
-            return "bin/akt --config " & Path & "user2-akt.properties";
+            return Tool & " --config " & Path & "user2-akt.properties";
 
          when User_3 =>
-            return "bin/akt --config " & Path & "user3-akt.properties";
+            return Tool & " --config " & Path & "user3-akt.properties";
 
       end case;
    end Tool;
@@ -281,7 +284,7 @@ package body Keystore.GPG_Tests is
                  Result);
 
       T.Execute (Tool (User_2) & " store " & Path & " -- LICENSE.txt",
-                 "bin/akt" & Keystore.Tests.EXE, "",
+                 Tool & Keystore.Tests.EXE, "",
                  Result);
 
       T.Execute (Tool (User_2) & " store " & Path & " -- LICENSE.txt",
@@ -298,7 +301,7 @@ package body Keystore.GPG_Tests is
       Path   : constant String := Util.Tests.Get_Test_Path (TEST_TOOL_PATH);
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
-      T.Execute ("bin/akt --config " & Config & "bad-list-user1-akt.properties store "
+      T.Execute (Tool & " --config " & Config & "bad-list-user1-akt.properties store "
                  & Path & " -- LICENSE.txt",
                  "keystoreada.gpr", "",
                  Result, 1);
@@ -306,7 +309,7 @@ package body Keystore.GPG_Tests is
       Util.Tests.Assert_Matches (T, "^akt: invalid password to unlock the keystore file",
                                  Result, "password-set command failed");
 
-      T.Execute ("bin/akt --config " & Config & "bad-decrypt-user1-akt.properties store "
+      T.Execute (Tool & " --config " & Config & "bad-decrypt-user1-akt.properties store "
                  & Path & " -- LICENSE.txt",
                  "keystoreada.gpr", "",
                  Result, 1);

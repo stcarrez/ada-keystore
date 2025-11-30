@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-tests -- Tests for akt command
---  Copyright (C) 2019, 2020, 2021, 2022, 2023, 2024 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2021, 2022, 2023, 2024, 2025 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
@@ -17,11 +17,14 @@ with Util.Processes;
 with Util.Streams.Pipes;
 with Util.Streams.Texts;
 with Util.Streams.Files;
+with Keystore.Testsuite;
 package body Keystore.Tests is
 
    use type Ada.Directories.File_Size;
    use type Ada.Streams.Stream_Element_Offset;
    use type Ada.Streams.Stream_Element_Array;
+
+   function Tool return String renames Keystore.Testsuite.Tool;
 
    TEST_CONFIG_PATH : constant String := "test-config.properties";
    TEST_TOOL_PATH   : constant String := "test-tool.akt";
@@ -41,7 +44,6 @@ package body Keystore.Tests is
    TEST_OTP_PATH         : constant String := "regtests/files/test-otp.akt";
    TEST_MANY_KEY_PATH    : constant String := "regtests/files/test-info.akt";
 
-   function Tool return String;
    function Compare (Path1 : in String;
                      Path2 : in String) return Boolean;
 
@@ -178,14 +180,6 @@ package body Keystore.Tests is
       Caller.Add_Test (Suite, "Test AKT.Commands.Genkey",
                        Test_Tool_Genkey'Access);
    end Add_Tests;
-
-   --  ------------------------------
-   --  Get the dynamo executable path.
-   --  ------------------------------
-   function Tool return String is
-   begin
-      return "bin/akt";
-   end Tool;
 
    function Compare (Path1 : in String;
                      Path2 : in String) return Boolean is
@@ -607,7 +601,7 @@ package body Keystore.Tests is
    begin
       T.Execute (Tool & " create -k " & Path & " -p admin -c 1:10 --force", Result, 0);
       T.Execute (Tool & " store -k " & Path & " -p admin -- store-extract",
-                 "bin/akt" & EXE, "",
+                 Tool & EXE, "",
                  Result, 0);
       T.Execute (Tool & " extract -k " & Path & " -p admin -- store-extract",
                  "", Util.Tests.Get_Test_Path ("akt"),
@@ -636,12 +630,12 @@ package body Keystore.Tests is
       Result : Ada.Strings.Unbounded.Unbounded_String;
    begin
       T.Execute (Tool & " create " & Path & " -p admin -c 1:10 --force", Result, 0);
-      T.Execute (Tool & " store " & Path & " -p admin obj bin", Result, 0);
-      T.Execute (Tool & " extract " & Path & " -p admin -o " & Dir & " bin",
+      T.Execute (Tool & " store " & Path & " -p admin obj bin akt", Result, 0);
+      T.Execute (Tool & " extract " & Path & " -p admin -o " & Dir & " bin akt/bin",
                  Result, 0);
 
-      T.Assert (Compare ("bin/akt" & EXE, Dir & "/bin/akt" & EXE),
-                "store+extract failed for bin/akt");
+      T.Assert (Compare (Tool & EXE, Dir & "/" & Tool & EXE),
+                "store+extract failed for " & Tool);
 
       T.Assert (Compare ("bin/keystore_harness" & EXE,
                 Dir & "/bin/keystore_harness" & EXE),
@@ -802,7 +796,7 @@ package body Keystore.Tests is
                        "data-license.txt", "LICENSE.txt");
 
       T.Store_Extract (" -k " & Path & " -d " & Data & " -p admin ",
-                       "data-bin-akt", "bin/akt" & EXE);
+                       "data-bin-akt", Tool & EXE);
 
    end Test_Tool_Separate_Data;
 
