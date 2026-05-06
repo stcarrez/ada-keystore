@@ -17,7 +17,7 @@ project Akt_Nofuse is
 
    for Main use Mains;
 
-   for Object_Dir use "../obj/akt_nofuse/" & Project'Library_Kind;
+   for Object_Dir use "../obj/akt_nofuse/";
    for Exec_Dir use Root_Dir & "/bin";
 
    package binder is
