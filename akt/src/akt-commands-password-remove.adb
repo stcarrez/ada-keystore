@@ -1,12 +1,16 @@
 -----------------------------------------------------------------------
 --  akt-commands-password-remove -- Remove a wallet password
---  Copyright (C) 2019, 2021, 2022, 2023 Stephane Carrez
+--  Copyright (C) 2019, 2021, 2022, 2023, 2026 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
+with Keystore.Passwords.Input;
 package body AKT.Commands.Password.Remove is
 
+   package KP renames Keystore.Passwords;
+
    use type Keystore.Header_Slot_Count_Type;
+   use type Keystore.Passwords.Provider_Access;
    use type Keystore.Passwords.Keys.Key_Provider_Access;
 
    function Get_Slot (Value : in String) return Keystore.Key_Slot;
@@ -44,6 +48,9 @@ package body AKT.Commands.Password.Remove is
       if not Context.No_Password_Opt or else Context.Info.Header_Count = 0 then
          if Context.Key_Provider /= null then
             Context.Wallet.Set_Master_Key (Context.Key_Provider.all);
+         end if;
+         if Context.Provider = null then
+            Context.Provider := KP.Input.Create (-("Enter password: "), False);
          end if;
          Context.Wallet.Unlock (Context.Provider.all, Context.Slot);
          Slot := Context.Slot;
