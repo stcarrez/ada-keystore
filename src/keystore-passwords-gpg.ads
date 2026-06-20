@@ -8,6 +8,7 @@ with Ada.Streams;
 with Ada.Strings.Unbounded;
 with Ada.Finalization;
 with Util.Strings.Sets;
+with Util.Strings.Vectors;
 with Keystore.Files;
 with Keystore.Passwords.Keys;
 private with Keystore.IO;
@@ -92,6 +93,8 @@ package Keystore.Passwords.GPG is
 
 private
 
+   subtype Vector_String is Util.Strings.Vectors.Vector;
+
    type Secret_Provider;
    type Secret_Provider_Access is access all Secret_Provider;
 
@@ -140,7 +143,7 @@ private
 
    --  Get the command to encrypt the secret for the given GPG user/keyid.
    function Get_Encrypt_Command (Context : in Context_Type;
-                                 User    : in String) return String;
+                                 User    : in String) return Vector_String;
 
    overriding
    procedure Initialize (Context : in out Context_Type);

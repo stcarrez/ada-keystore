@@ -1,18 +1,18 @@
 -----------------------------------------------------------------------
 --  keystore-passwords-gpg -- Password protected by GPG
---  Copyright (C) 2019, 2020, 2022 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022, 2026 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
 with Ada.Unchecked_Deallocation;
 with Ada.Exceptions;
-with Ada.Strings.Fixed;
 with GNAT.Regpat;
 with Util.Streams;
 with Util.Log.Loggers;
 with Util.Encoders;
 with Util.Processes;
 with Util.Streams.Texts;
+with Util.Strings.Tokenizers;
 with Keystore.Random;
 
 --  === GPG Header data ===
@@ -41,6 +41,7 @@ package body Keystore.Passwords.GPG is
    function Get_Unsigned_32 (Data : in Stream_Element_Array) return Interfaces.Unsigned_32;
    procedure Put_Unsigned_32 (Data  : out Stream_Element_Array;
                               Value : in Interfaces.Unsigned_32);
+   function To_Command (Args : in Vector_String) return String;
 
    --  Headers of GPG packet.
    GPG_OLD_TAG_1   : constant Ada.Streams.Stream_Element := 16#85#;
@@ -234,6 +235,18 @@ package body Keystore.Passwords.GPG is
       end if;
    end Create_Secret;
 
+   function To_Command (Args : in Vector_String) return String is
+      Result : Unbounded_String;
+   begin
+      for Arg of Args loop
+         if Length (Result) > 0 then
+            Append (Result, " ");
+         end if;
+         Append (Result, Arg);
+      end loop;
+      return To_String (Result);
+   end To_Command;
+
    --  ------------------------------
    --  Save the GPG secret by encrypting it using the user's GPG key and storing
    --  the encrypted data in the keystore data header.
@@ -242,7 +255,8 @@ package body Keystore.Passwords.GPG is
                           User    : in String;
                           Index   : in Keystore.Header_Slot_Index_Type;
                           Wallet  : in out Keystore.Files.Wallet_File) is
-      Cmd    : constant String := Context.Get_Encrypt_Command (User);
+      Args   : constant Vector_String := Context.Get_Encrypt_Command (User);
+      Cmd    : constant String := To_Command (Args);
       Proc   : Util.Processes.Process;
       Result : Ada.Streams.Stream_Element_Array (1 .. MAX_ENCRYPT_SIZE);
       Last   : Ada.Streams.Stream_Element_Offset := 0;
@@ -254,9 +268,9 @@ package body Keystore.Passwords.GPG is
 
       Put_Unsigned_32 (Result, Context.Current.Tag);
       Last := 4;
-      Util.Processes.Spawn (Proc    => Proc,
-                            Command => Cmd,
-                            Mode    => Util.Processes.READ_WRITE);
+      Util.Processes.Spawn (Proc      => Proc,
+                            Arguments => Args,
+                            Mode      => Util.Processes.READ_WRITE);
 
       Input := Util.Processes.Get_Input_Stream (Proc);
       Input.Write (Context.Data (POS_LOCK_KEY .. Context.Data'Last));
@@ -387,25 +401,28 @@ package body Keystore.Passwords.GPG is
    --  Get the command to encrypt the secret for the given GPG user/keyid.
    --  ------------------------------
    function Get_Encrypt_Command (Context : in Context_Type;
-                                 User    : in String) return String is
-      use Ada.Strings.Fixed;
+                                 User    : in String)
+                                 return Vector_String is
+      procedure Process (Item : in String; Done : out Boolean);
 
       USER_LABEL : constant String := "$USER";
       Cmd        : constant String := To_String (Context.Encrypt_Command);
-      Result     : Unbounded_String;
-      First      : Positive := Cmd'First;
-      Pos        : Natural;
-   begin
-      loop
-         Pos := Index (Cmd, USER_LABEL, First);
-         if Pos = 0 then
-            Append (Result, Cmd (First .. Cmd'Last));
-            return To_String (Result);
+      Result     : Vector_String;
+
+      procedure Process (Item : in String; Done : out Boolean) is
+      begin
+         if Item = USER_LABEL then
+            Result.Append (User);
+         else
+            Result.Append (Item);
          end if;
-         Append (Result, Cmd (First .. Pos - 1));
-         Append (Result, User);
-         First := Pos + USER_LABEL'Length;
-      end loop;
+         Done := False;
+      end Process;
+   begin
+      --  Split the command to execute in a list of arguments
+      --  before expanding the $USER.
+      Util.Strings.Tokenizers.Iterate_Tokens (Cmd, " ", Process'Access);
+      return Result;
    end Get_Encrypt_Command;
 
    --  ------------------------------
