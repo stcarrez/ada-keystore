@@ -1,13 +1,13 @@
 -----------------------------------------------------------------------
 --  keystore-marshallers -- Data marshaller for the keystore
---  Copyright (C) 2019, 2020, 2025 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2025, 2026 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
-with Interfaces.C;
 with Ada.Calendar.Conversions;
 with Util.Encoders.HMAC.SHA256;
 with Util.Encoders.AES;
+with Util.Dates;
 
 package body Keystore.Marshallers is
 
@@ -254,7 +254,8 @@ package body Keystore.Marshallers is
    function Get_Date (From : in out Marshaller) return Ada.Calendar.Time is
       Unix_Time : constant Unsigned_64 := Get_Unsigned_64 (From);
    begin
-      return Ada.Calendar.Conversions.To_Ada_Time (Interfaces.C.long (Unix_Time));
+      return Util.Dates.To_Ada_Time
+        (Util.Dates.Nanosecond_Type (Unix_Time * 1_000_000_000));
    end Get_Date;
 
    function Get_Kind (From : in out Marshaller) return Entry_Type is
