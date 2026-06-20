@@ -1,3 +1,9 @@
+akt (1.4.3-1) unstable; urgency=medium
+
+  * Update release 1.4.3-1.
+
+ -- Stephane Carrez <Stephane.Carrez@gmail.com>  Sat, 20 Jun 2026 12:27:02 +0200
+
 keystoreada (1.4.0-2) unstable; urgency=medium
 
   * Update release 1.4.0-2.

@@ -14,13 +14,10 @@ include /usr/share/dpkg/buildflags.mk
 ADAFLAGS += -gnatafno -gnatVa -gnatwa
 
 %:
-	dh $@ --with ada-library
-
-override_dh_auto_configure:
-	dh_auto_configure -- --disable-shared --enable-default-shared --with-ada-util=no --enable-fuse
+	dh $@
 
 override_dh_auto_build:
-	make GPRFLAGS="-R -m -q"
+	make MAKE_ARGS="-XUTIL_TIME_64=no" GPRFLAGS="-R -m -q"
 
 override_dh_auto_test::
 

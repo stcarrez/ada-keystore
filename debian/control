@@ -1,16 +1,14 @@
-Source: keystoreada
-Priority: optional
-Section: libdevel
+Source: akt
+Priority: extra
+Section: utils
 Maintainer: Stephane Carrez <Stephane.Carrez@gmail.com>
 Build-Depends: debhelper (>= 11), autotools-dev,
- dh-ada-library,
- gnat,
+# dh-ada-library,
+ gnat-14,
 # This line is parsed by debian/rules.
  gprbuild (>= 2015-2),
  pkg-config,
  libfuse-dev,
-# 2015-2 is compatible with gnat-7
-# dh-ada-library (>= 6.7)
 # pandoc requires texlive-fonts-extra for PDF
  pandoc, texlive-fonts-extra
 Standards-Version: 4.1.4
