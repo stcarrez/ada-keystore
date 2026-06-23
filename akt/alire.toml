@@ -69,7 +69,7 @@ command = ["gnatprep", "-DVERSION=\"1.4.3\"",
 ]
 
 [[depends-on]]
-utilada = "^2.8.0"
+utilada = "^2.9.0"
 keystoreada = "^1.4.3"
 intl = "^1.0.1"
 resources = "~0.1.0"

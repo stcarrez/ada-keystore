@@ -1,5 +1,5 @@
 NAME=keystoreada
-VERSION=1.4.2
+VERSION=1.4.3
 
 DIST_DIR=ada-keystore-$(VERSION)
 DIST_FILE=ada-keystore-$(VERSION).tar.gz
@@ -8,8 +8,19 @@ MAKE_ARGS += -XKEYSTORE_BUILD=$(BUILD)
 
 -include Makefile.conf
 
+UTIL_OS?=
+UTIL_TIME_64?=yes
+
 HAVE_FUSE?=yes
 HAVE_AKT?=yes
+
+ifneq ($(UTIL_OS),)
+MAKE_ARGS += -XUTIL_OS=$(UTIL_OS)
+endif
+
+ifneq ($(UTIL_TIME_64),yes)
+MAKE_ARGS += -XUTIL_TIME_64=$(UTIL_TIME_64)
+endif
 
 STATIC_MAKE_ARGS = $(MAKE_ARGS) -XKEYSTORE_LIBRARY_TYPE=static
 SHARED_MAKE_ARGS = $(MAKE_ARGS) -XKEYSTORE_LIBRARY_TYPE=relocatable
@@ -28,6 +39,8 @@ include Makefile.defaults
 setup::
 	echo "HAVE_FUSE=$(HAVE_FUSE)" >> Makefile.conf
 	echo "HAVE_AKT=$(HAVE_AKT)" >> Makefile.conf
+	echo "UTIL_OS=$(UTIL_OS)" >> Makefile.conf
+	echo "UTIL_TIME_64=$(UTIL_TIME_64)" >> Makefile.conf
 
 # Build executables for all mains defined by the project.
 build-test::	lib-setup
