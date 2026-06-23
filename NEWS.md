@@ -1,4 +1,4 @@
-Version 1.4.3 - Under development
+Version 1.4.3 - Jun 2026
   - Fix #28: Ada.Calendar.Conversions.To_Unix_Time is deprecated
   - Fix #30: akt-commands-password-remove.adb:48 access check failed
   - Fix #34: Argv Injection via User Parameter

@@ -65,7 +65,7 @@ Generate the TOTP code:
    akt otp secure.akt GitHub
 ```
 
-## Version 1.4.3 - Under development
+## Version 1.4.3 - Jun 2026
   - Fix #28: Ada.Calendar.Conversions.To_Unix_Time is deprecated
   - Fix #30: akt-commands-password-remove.adb:48 access check failed
   - Fix #34: Argv Injection via User Parameter
@@ -254,13 +254,13 @@ Sometimes, you may have to force the umount by running:
 
 # AKT Debian Binaries
 
-Ubuntu 22.04 and Debian 12 packages are available to help you install the `akt` command
+Ubuntu 24.04 and Debian 12 packages are available to help you install the `akt` command
 more easily.  You can configure your Ubuntu system as follows:
 
 ```
 wget -qO- https://apt.vacs.fr/apt.vacs.fr.gpg.asc | sudo tee /etc/apt/trusted.gpg.d/vacs_fr.asc
-# For Ubuntu 22.04, use:
-sudo add-apt-repository "deb https://apt.vacs.fr/ubuntu-jammy jammy main"
+# For Ubuntu 24.04, use:
+sudo add-apt-repository "deb https://apt.vacs.fr/ubuntu-noble noble main"
 # For Debian 12, use:
 sudo add-apt-repository "deb https://apt.vacs.fr/debian-bookworm bookworm main"
 ```
