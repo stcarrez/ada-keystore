@@ -1,7 +1,8 @@
 Version 1.4.3 - Jun 2026
   - Fix #28: Ada.Calendar.Conversions.To_Unix_Time is deprecated
   - Fix #30: akt-commands-password-remove.adb:48 access check failed
-  - Fix #34: Argv Injection via User Parameter
+  - Fix #34: Argv Injection via User Parameter:
+    [PVD-20260516-4B1C: Argv Injection via User Parameter in ada-keystore (GPG)](https://www.pragmaticscanner.com/disclosures/PVD-20260516-4B1C.html)
 
 Version 1.4.2 - Jul 2025
   - Update build environment and Alire crate installation
