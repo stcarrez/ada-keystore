@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-repository-keys -- Data keys management
---  Copyright (C) 2019, 2020, 2022 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022, 2026 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
@@ -186,7 +186,7 @@ package body Keystore.Repository.Keys is
          Buf.Data (Key_Pos + 1 + Del_Size .. Key_Start_Pos + Del_Size)
            := Buf.Data (Key_Pos + 1 .. Key_Start_Pos);
       end if;
-      Buf.Data (Key_Pos + 1 .. Key_Pos + Del_Size) := (others => 0);
+      Buf.Data (Key_Pos + 1 .. Key_Pos + Del_Size) := [others => 0];
 
       --  Release Del_Size bytes from the directory block.
       Directory.Key_Pos := Key_Pos + Del_Size;

@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-properties -- Property manager on top of keystore
---  Copyright (C) 2020, 2022 Stephane Carrez
+--  Copyright (C) 2020, 2022, 2026 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
@@ -140,7 +140,7 @@ package body Keystore.Properties is
       List  : Keystore.Entry_Map;
       Iter  : Keystore.Entry_Cursor;
    begin
-      Self.Wallet.List (Filter => (T_STRING => True, others => False), Content => List);
+      Self.Wallet.List (Filter => [T_STRING => True, others => False], Content => List);
       Iter := List.First;
       while Keystore.Entry_Maps.Has_Element (Iter) loop
          declare

@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-files -- Ada keystore files
---  Copyright (C) 2019, 2020, 2022 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022, 2026 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
@@ -433,7 +433,7 @@ package body Keystore.Files is
    --  ------------------------------
    overriding
    procedure List (Container : in out Wallet_File;
-                   Filter    : in Filter_Type := (others => True);
+                   Filter    : in Filter_Type := [others => True];
                    Content   : out Entry_Map) is
    begin
       Container.Container.List (Filter, Content);
@@ -446,7 +446,7 @@ package body Keystore.Files is
    overriding
    procedure List (Container : in out Wallet_File;
                    Pattern   : in GNAT.Regpat.Pattern_Matcher;
-                   Filter    : in Filter_Type := (others => True);
+                   Filter    : in Filter_Type := [others => True];
                    Content   : out Entry_Map) is
    begin
       Container.Container.List (Pattern, Filter, Content);

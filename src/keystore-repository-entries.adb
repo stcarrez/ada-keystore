@@ -329,7 +329,7 @@ package body Keystore.Repository.Entries is
       if Manager.Config.Randomize then
          Manager.Random.Generate (Manager.Current.Buffer.Data.Value.Data);
       else
-         Manager.Current.Buffer.Data.Value.Data := (others => 0);
+         Manager.Current.Buffer.Data.Value.Data := [others => 0];
       end if;
       Marshallers.Set_Header (Into => Manager.Current,
                               Tag  => IO.BT_WALLET_DIRECTORY,
@@ -466,12 +466,12 @@ package body Keystore.Repository.Entries is
             --  (except the first DATA_KEY_SEPARATOR = 4 bytes).
             Buf.Data (Directory.Last_Pos - Size + 1
                         .. Directory.Last_Pos - Size + DATA_KEY_SEPARATOR)
-              := (others => 0);
+              := [others => 0];
             Manager.Random.Generate
               (Buf.Data (Directory.Last_Pos - Size + DATA_KEY_SEPARATOR + 1
                            .. Directory.Last_Pos));
          else
-            Buf.Data (Directory.Last_Pos - Size + 1 .. Directory.Last_Pos) := (others => 0);
+            Buf.Data (Directory.Last_Pos - Size + 1 .. Directory.Last_Pos) := [others => 0];
          end if;
 
          Directory.Last_Pos := Directory.Last_Pos - Size;

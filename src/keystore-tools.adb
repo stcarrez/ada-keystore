@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-tools -- Tools for the keystore
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2026 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
@@ -47,9 +47,9 @@ package body Keystore.Tools is
                     Filter  : not null
                     access function (Ent : in Directory_Entry_Type) return Boolean) is
       Search_Filter : constant Ada.Directories.Filter_Type
-        := (Ada.Directories.Ordinary_File => True,
+        := [Ada.Directories.Ordinary_File => True,
             Ada.Directories.Directory     => True,
-            Ada.Directories.Special_File  => False);
+            Ada.Directories.Special_File  => False];
       Search   : Ada.Directories.Search_Type;
       Ent      : Directory_Entry_Type;
    begin

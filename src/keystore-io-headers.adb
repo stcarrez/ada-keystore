@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-io-headers -- Keystore file header operations
---  Copyright (C) 2019, 2020, 2022 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022, 2026 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
@@ -96,7 +96,7 @@ package body Keystore.IO.Headers is
       Marshallers.Put_Unsigned_32 (Buffer, Interfaces.Unsigned_32 (Storage));
       Marshallers.Put_Unsigned_32 (Buffer, Buffers.Block_Size);
       Marshallers.Put_Unsigned_32 (Buffer, 0);
-      Buffer.Buffer.Data.Value.Data (Buffer.Pos .. Buffers.Block_Type'Last) := (others => 0);
+      Buffer.Buffer.Data.Value.Data (Buffer.Pos .. Buffers.Block_Type'Last) := [others => 0];
    end Build_Header;
 
    --  ------------------------------

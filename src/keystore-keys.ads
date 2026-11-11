@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-keys -- Keystore key management
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2026 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
@@ -31,7 +31,7 @@ private package Keystore.Keys is
 
    type Wallet_Config is limited record
       UUID        : UUID_Type;
-      Keys        : Key_Slot_Allocation := (others => False);
+      Keys        : Key_Slot_Allocation := [others => False];
       Slot        : Key_Slot;
       Data        : Cryptor;
       Dir         : Cryptor;

@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-keys -- Keystore key management
---  Copyright (C) 2019, 2020, 2022 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022, 2026 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
@@ -130,7 +130,7 @@ package body Keystore.Keys is
    procedure Set_IV (Into  : in out Cryptor;
                      Block : in IO.Block_Number) is
       Block_IV : constant Util.Encoders.AES.Word_Block_Type
-      := (others => Interfaces.Unsigned_32 (Block));
+      := [others => Interfaces.Unsigned_32 (Block)];
    begin
       Into.Decipher.Set_IV (Into.IV, Block_IV);
       Into.Cipher.Set_IV (Into.IV, Block_IV);
@@ -390,7 +390,7 @@ package body Keystore.Keys is
       Util.Encoders.HMAC.SHA256.Set_Key (Hmac, Slot_Sign);
 
       Buffer.Pos := Key_Position (Slot);
-      Buf.Data (Buffer.Pos + 1 .. Buffer.Pos + WH_KEY_SIZE) := (others => 0);
+      Buf.Data (Buffer.Pos + 1 .. Buffer.Pos + WH_KEY_SIZE) := [others => 0];
 
       if Password in Keystore.Passwords.Slot_Provider'Class then
          Save_GPG_Key (Keystore.Passwords.Slot_Provider'Class (Password));
@@ -417,7 +417,7 @@ package body Keystore.Keys is
       Buf : constant Buffers.Buffer_Accessor := Buffer.Buffer.Data.Value;
    begin
       Buffer.Pos := Key_Position (Slot);
-      Buf.Data (Buffer.Pos + 1 .. Buffer.Pos + WH_KEY_SIZE) := (others => 0);
+      Buf.Data (Buffer.Pos + 1 .. Buffer.Pos + WH_KEY_SIZE) := [others => 0];
 
       Stream.Write (Cipher  => Manager.Crypt.Cipher,
                     Sign    => Manager.Crypt.Sign,
@@ -592,7 +592,7 @@ package body Keystore.Keys is
       if Config.Randomize then
          Manager.Random.Generate (Buffer.Buffer.Data.Value.Data);
       else
-         Buffer.Buffer.Data.Value.Data := (others => 0);
+         Buffer.Buffer.Data.Value.Data := [others => 0];
       end if;
       Marshallers.Set_Header (Into => Buffer,
                               Tag  => IO.BT_WALLET_HEADER,

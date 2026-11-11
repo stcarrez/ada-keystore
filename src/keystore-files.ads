@@ -254,7 +254,7 @@ package Keystore.Files is
    --  Get the list of entries contained in the wallet that correspond to the optional filter.
    overriding
    procedure List (Container : in out Wallet_File;
-                   Filter    : in Filter_Type := (others => True);
+                   Filter    : in Filter_Type := [others => True];
                    Content   : out Entry_Map) with
      Pre => Container.Is_Open;
 
@@ -263,7 +263,7 @@ package Keystore.Files is
    overriding
    procedure List (Container : in out Wallet_File;
                    Pattern   : in GNAT.Regpat.Pattern_Matcher;
-                   Filter    : in Filter_Type := (others => True);
+                   Filter    : in Filter_Type := [others => True];
                    Content   : out Entry_Map) with
      Pre => Container.Is_Open;
 

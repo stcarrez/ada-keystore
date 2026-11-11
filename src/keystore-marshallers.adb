@@ -151,7 +151,7 @@ package body Keystore.Marshallers is
       Pos        : constant Block_Index := Into.Pos + 1;
       Buf        : constant Buffers.Buffer_Accessor := Into.Buffer.Data.Value;
       IV         : constant Util.Encoders.AES.Word_Block_Type
-        := (others => Interfaces.Unsigned_32 (Into.Buffer.Block.Block));
+        := [others => Interfaces.Unsigned_32 (Into.Buffer.Block.Block)];
    begin
       Cipher_Key.Set_Key (Protect_Key, Util.Encoders.AES.CBC);
       Cipher_Key.Set_IV (Protect_IV, IV);
@@ -295,7 +295,7 @@ package body Keystore.Marshallers is
       Pos           : constant Block_Index := From.Pos + 1;
       Buf           : constant Buffers.Buffer_Accessor := From.Buffer.Data.Value;
       IV            : constant Util.Encoders.AES.Word_Block_Type
-        := (others => Interfaces.Unsigned_32 (From.Buffer.Block.Block));
+        := [others => Interfaces.Unsigned_32 (From.Buffer.Block.Block)];
    begin
       Decipher_Key.Set_Key (Protect_Key, Util.Encoders.AES.CBC);
       Decipher_Key.Set_IV (Protect_IV, IV);

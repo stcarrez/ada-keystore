@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-io-tests -- Tests for keystore IO
---  Copyright (C) 2019, 2021 Stephane Carrez
+--  Copyright (C) 2019, 2021, 2026 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
@@ -47,7 +47,7 @@ package body Keystore.IO.Tests is
          T.Assert (Block.Block = 1, "Allocate should return first block");
 
          Buffer.Buffer := Buffers.Allocate (Block);
-         Buffer.Buffer.Data.Value.Data := (others => 0);
+         Buffer.Buffer.Data.Value.Data := [others => 0];
          Marshallers.Set_Header (Buffer, Tag => BT_WALLET_HEADER, Id => 12);
          Marshallers.Put_Unsigned_32 (Buffer, 12345);
          Stream.Write (Cipher => Cipher,
@@ -140,7 +140,7 @@ package body Keystore.IO.Tests is
          T.Assert (Block.Block = 1, "Allocate should return first block");
 
          Buffer.Buffer := Buffers.Allocate (Block);
-         Buffer.Buffer.Data.Value.Data := (others => 0);
+         Buffer.Buffer.Data.Value.Data := [others => 0];
          Marshallers.Set_Header (Buffer, Tag => BT_WALLET_HEADER, Id => 12);
          Marshallers.Put_Unsigned_32 (Buffer, 12345);
          Stream.Write (Cipher => Cipher,
@@ -150,7 +150,7 @@ package body Keystore.IO.Tests is
          for I in 1 .. 1000 loop
             Stream.Allocate (IO.DATA_BLOCK, Block);
             Buffer.Buffer := Buffers.Allocate (Block);
-            Buffer.Buffer.Data.Value.Data := (others => Stream_Element (I mod 255));
+            Buffer.Buffer.Data.Value.Data := [others => Stream_Element (I mod 255)];
             Marshallers.Set_Header (Buffer, Tag => BT_WALLET_DATA, Id => 12);
             Stream.Write (Cipher => Cipher,
                           Sign   => Sign,

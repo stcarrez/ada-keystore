@@ -462,7 +462,7 @@ package body Keystore.Passwords.GPG is
          Log.Warn ("GPG decrypt command '{0}' terminated with exit code{1}", Cmd,
                    Natural'Image (Status));
       end if;
-      Context.Data (POS_TAG .. POS_LOCK_IV_LAST) := (others => 0);
+      Context.Data (POS_TAG .. POS_LOCK_IV_LAST) := [others => 0];
 
    exception
       when E : Util.Processes.Process_Error =>
@@ -513,7 +513,7 @@ package body Keystore.Passwords.GPG is
         new Ada.Unchecked_Deallocation (Object => Secret_Provider,
                                         Name   => Secret_Provider_Access);
    begin
-      Context.Data := (others => 0);
+      Context.Data := [others => 0];
       while Context.First /= null loop
          Context.Current := Context.First.Next;
          Free (Context.First);

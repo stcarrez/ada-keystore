@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-passwords -- Password provider
---  Copyright (C) 2019 Stephane Carrez
+--  Copyright (C) 2019, 2026 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
@@ -46,7 +46,7 @@ package body Keystore.Passwords is
         := new Default_Provider '(Len => Password'Length, others => <>);
    begin
       Util.Encoders.Create (Password, P.Password);
-      Password := (others => 0);
+      Password := [others => 0];
       return P.all'Access;
    end Create;
 

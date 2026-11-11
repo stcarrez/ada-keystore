@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-repository -- Repository management for the keystore
---  Copyright (C) 2019, 2020 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2026 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
@@ -142,7 +142,7 @@ package body Keystore.Repository is
       if Repository.Config.Randomize then
          Repository.Random.Generate (Repository.Current.Buffer.Data.Value.Data);
       else
-         Repository.Current.Buffer.Data.Value.Data := (others => 0);
+         Repository.Current.Buffer.Data.Value.Data := [others => 0];
       end if;
       Marshallers.Set_Header (Into => Repository.Current,
                               Tag  => IO.BT_WALLET_DIRECTORY,
@@ -289,7 +289,7 @@ package body Keystore.Repository is
       Entries.Save (Repository);
 
       Wallet.Current.Buffer := Buffers.Allocate (Wallet.Root);
-      Wallet.Current.Buffer.Data.Value.Data := (others => 0);
+      Wallet.Current.Buffer.Data.Value.Data := [others => 0];
       Marshallers.Set_Header (Into => Wallet.Current,
                               Tag  => IO.BT_WALLET_DIRECTORY,
                               Id   => Wallet.Id);

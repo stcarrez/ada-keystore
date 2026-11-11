@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-repository-data -- Data access and management for the keystore
---  Copyright (C) 2019, 2020, 2022, 2023 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022, 2023, 2026 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
@@ -445,7 +445,7 @@ package body Keystore.Repository.Workers is
             if Work.Manager.Config.Randomize then
                Work.Random.Generate (Buf.Data (Data_Block.Pos + 1 .. Work.Start_Data - 1));
             else
-               Buf.Data (Data_Block.Pos + 1 .. Work.Start_Data - 1) := (others => 0);
+               Buf.Data (Data_Block.Pos + 1 .. Work.Start_Data - 1) := [others => 0];
             end if;
          end if;
          Encrypt_Size := IO.Block_Index (Work.Fragment_Count * DATA_ENTRY_SIZE);
@@ -526,7 +526,7 @@ package body Keystore.Repository.Workers is
                Buf.Data (Start_Entry .. Last_Entry - DATA_ENTRY_SIZE)
                  := Buf.Data (Start_Entry + DATA_ENTRY_SIZE .. Last_Entry);
             end if;
-            Buf.Data (Last_Entry - DATA_ENTRY_SIZE + 1 .. Last_Entry) := (others => 0);
+            Buf.Data (Last_Entry - DATA_ENTRY_SIZE + 1 .. Last_Entry) := [others => 0];
 
             Start_Pos := Work.Start_Data;
             Data_Block.Pos := Start_Entry + 4;
@@ -543,7 +543,7 @@ package body Keystore.Repository.Workers is
             end if;
 
             --  Erase the content that was dropped.
-            Buf.Data (Start_Pos .. Start_Pos + Data_Size - 1) := (others => 0);
+            Buf.Data (Start_Pos .. Start_Pos + Data_Size - 1) := [others => 0];
 
             --  Write the data block.
             Work.Stream.Write (Encrypt_Size => Encrypt_Size,

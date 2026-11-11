@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore -- Ada keystore
---  Copyright (C) 2019, 2020, 2022, 2024 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2022, 2024, 2026 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
@@ -196,7 +196,7 @@ package Keystore is
 
    type Wallet_Stats is record
       UUID             : UUID_Type;
-      Keys             : Key_Slot_Allocation := (others => False);
+      Keys             : Key_Slot_Allocation := [others => False];
       Entry_Count      : Natural := 0;
       Total_Size       : Natural := 0;
       Block_Count      : Natural := 0;
@@ -343,7 +343,7 @@ package Keystore is
 
    --  Get the list of entries contained in the wallet that correspond to the optional filter.
    procedure List (Container : in out Wallet;
-                   Filter    : in Filter_Type := (others => True);
+                   Filter    : in Filter_Type := [others => True];
                    Content   : out Entry_Map) is abstract with
      Pre'Class => Container.Is_Open;
 
@@ -351,7 +351,7 @@ package Keystore is
    --  and whose name matches the pattern.
    procedure List (Container : in out Wallet;
                    Pattern   : in GNAT.Regpat.Pattern_Matcher;
-                   Filter    : in Filter_Type := (others => True);
+                   Filter    : in Filter_Type := [others => True];
                    Content   : out Entry_Map) is abstract with
      Pre'Class => Container.Is_Open;
 

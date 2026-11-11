@@ -1,6 +1,6 @@
 -----------------------------------------------------------------------
 --  keystore-files-tests -- Tests for files
---  Copyright (C) 2019, 2020, 2021, 2024 Stephane Carrez
+--  Copyright (C) 2019, 2020, 2021, 2024, 2026 Stephane Carrez
 --  Written by Stephane Carrez (Stephane.Carrez@gmail.com)
 --  SPDX-License-Identifier: Apache-2.0
 -----------------------------------------------------------------------
@@ -989,7 +989,7 @@ package body Keystore.Files.Tests is
             Util.Tests.Assert_Equals (T, "a first short value", W.Get ("Update_Value"),
                                       "Invalid Get()");
 
-            Data := (others => Character'Pos ('x'));
+            Data := [others => Character'Pos ('x')];
             W.Write ("Update_Value", 1, Data);
             W.Read ("Update_Value", 1, Data, Last);
             Util.Tests.Assert_Equals (T, 100, Natural (Last), "Invalid read at 1");
@@ -1029,7 +1029,7 @@ package body Keystore.Files.Tests is
             Util.Tests.Assert_Matches (T, ".*CONDITIONS FOR USE", S,
                                        "Invalid Read at 165");
 
-            Data := (others => Character'Pos ('A'));
+            Data := [others => Character'Pos ('A')];
             W.Write ("Update_Stream", 1000, Data);
             W.Read ("Update_Stream", 1000, Data, Last);
             Util.Tests.Assert_Equals (T, 1000, Natural (Last),
@@ -1037,7 +1037,7 @@ package body Keystore.Files.Tests is
             T.Assert ((for all C of Data => C = Character'Pos ('A')),
                       "Invalid read at 1000");
 
-            Data := (others => Character'Pos ('B'));
+            Data := [others => Character'Pos ('B')];
             W.Write ("Update_Stream", 3800, Data);
 
             W.Read ("Update_Stream", 3800, Data, Last);
@@ -1054,7 +1054,7 @@ package body Keystore.Files.Tests is
          begin
             W.Open (Path => Path, Password => Password, Config => Unsecure_Config);
 
-            Data := (others => Character'Pos ('C'));
+            Data := [others => Character'Pos ('C')];
             W.Write ("Update_Stream", 1000, Data);
             W.Read ("Update_Stream", 1000, Data, Last);
             Util.Tests.Assert_Equals (T, Natural (Data'Last), Natural (Last),
@@ -1062,7 +1062,7 @@ package body Keystore.Files.Tests is
             T.Assert ((for all C of Data => C = Character'Pos ('C')),
                       "Invalid read at 1000");
 
-            Data := (others => Character'Pos ('D'));
+            Data := [others => Character'Pos ('D')];
             W.Write ("Update_Stream", 3800, Data);
 
             W.Read ("Update_Stream", 3800, Data, Last);
@@ -1106,7 +1106,7 @@ package body Keystore.Files.Tests is
             W.Set_Work_Manager (Worker);
             W.Set ("Write_Stream", "");
             for C of Pattern loop
-               Data := (others => Character'Pos (C));
+               Data := [others => Character'Pos (C)];
                W.Write ("Write_Stream", Offset, Data);
                Offset := Offset + Data'Length - 1367;
             end loop;
@@ -1115,7 +1115,7 @@ package body Keystore.Files.Tests is
             Offset := 0;
             W.Set ("Write_Stream_2", "");
             for C of Pattern loop
-               Data := (others => Character'Pos (C));
+               Data := [others => Character'Pos (C)];
                W.Write ("Write_Stream_2", Offset, Data);
                Offset := Offset + Data'Length - 1873;
             end loop;
@@ -1137,7 +1137,7 @@ package body Keystore.Files.Tests is
             W.Open (Path => Path, Password => Password, Config => Config);
             W.Set_Work_Manager (Worker);
             for C of Pattern loop
-               Data := (others => Character'Pos (C));
+               Data := [others => Character'Pos (C)];
                W.Read ("Write_Stream", Offset, Data, Last);
                Util.Tests.Assert_Equals (T, 60_000, Natural (Last),
                                          "Invalid last position after Read");
@@ -1151,7 +1151,7 @@ package body Keystore.Files.Tests is
 
             Offset := 0;
             for C of Pattern loop
-               Data := (others => Character'Pos (C));
+               Data := [others => Character'Pos (C)];
                W.Read ("Write_Stream_2", Offset, Data, Last);
                Util.Tests.Assert_Equals (T, 60_000, Natural (Last),
                                          "Invalid last position after Read");
@@ -1199,7 +1199,7 @@ package body Keystore.Files.Tests is
          Data  : String (1 .. 80);
       begin
          for I in 1 .. 10_000 loop
-            Data := (others => Character'Val (30 + I mod 64));
+            Data := [others => Character'Val (30 + I mod 64)];
             W.Add ("Item" & Natural'Image (I), Data);
          end loop;
          Util.Measures.Report (S, "Keystore.Add", 10_000);
@@ -1221,7 +1221,7 @@ package body Keystore.Files.Tests is
       W.Create (Path => Path, Password => Password, Config => Config);
       for I in 1 .. Count loop
          declare
-            D1       : constant Ada.Streams.Stream_Element_Array (10 .. 40) := (others => Value);
+            D1       : constant Ada.Streams.Stream_Element_Array (10 .. 40) := [others => Value];
          begin
             W.Set_Header_Data (I, Kind, D1);
             Kind := Kind + 1;
@@ -1247,7 +1247,7 @@ package body Keystore.Files.Tests is
 
       for I in 1 .. Count loop
          declare
-            D1       : constant Ada.Streams.Stream_Element_Array (10 .. 40) := (others => Value);
+            D1       : constant Ada.Streams.Stream_Element_Array (10 .. 40) := [others => Value];
          begin
             W.Get_Header_Data (I, Kind, Data, Last);
             Util.Tests.Assert_Equals (T, D1'Length, Natural (Last - Data'First + 1),
@@ -1299,7 +1299,7 @@ package body Keystore.Files.Tests is
       W.Create (Path => Path, Password => Password, Config => Config);
       for I in 1 .. 31 loop
          declare
-            D1 : constant Ada.Streams.Stream_Element_Array (1 .. 140) := (others => Value);
+            D1 : constant Ada.Streams.Stream_Element_Array (1 .. 140) := [others => Value];
          begin
             W.Set_Header_Data (Header_Slot_Count_Type (I), Kind, D1);
             Kind := Kind + 1;
@@ -1328,7 +1328,7 @@ package body Keystore.Files.Tests is
       W.Create (Path => Path, Password => Password, Config => Config);
       for I in 1 .. 10 loop
          declare
-            D1 : constant Ada.Streams.Stream_Element_Array (1 .. 140) := (others => Value);
+            D1 : constant Ada.Streams.Stream_Element_Array (1 .. 140) := [others => Value];
          begin
             W.Set_Header_Data (Header_Slot_Count_Type (I), Kind, D1);
             Kind := Kind + 1;
@@ -1337,7 +1337,7 @@ package body Keystore.Files.Tests is
       end loop;
       for I in 1 .. 10 loop
          declare
-            D1 : constant Ada.Streams.Stream_Element_Array (1 .. 80) := (others => Value);
+            D1 : constant Ada.Streams.Stream_Element_Array (1 .. 80) := [others => Value];
          begin
             W.Set_Header_Data (Header_Slot_Count_Type (I), Kind, D1);
             Kind := Kind + 1;
